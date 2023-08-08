@@ -2,9 +2,9 @@
 <addon id="ADDON_ID_HERE" name="MR-Z" version="0.0.1" provider-name="MR-Z">
     <extension point="xbmc.addon.repository" name="MR-Z Repository">
         <dir>
-            <info compressed="false">https://raw.githubusercontent.com/YOUR_USERNAME_HERE/MR-Z/DEFAULT_BRANCH_NAME_HERE/repo/zips/addons.xml</info>
-            <checksum>https://raw.githubusercontent.com/YOUR_USERNAME_HERE/MR-Z/DEFAULT_BRANCH_NAME_HERE/repo/zips/addons.xml.md5</checksum>
-            <datadir zip="true">https://raw.githubusercontent.com/YOUR_USERNAME_HERE/MR-Z/DEFAULT_BRANCH_NAME_HERE/repo/zips/</datadir>
+            <info compressed="false">https://raw.githubusercontent.com/joezito129/MR-Z/main/repo/zips/addons.xml</info>
+            <checksum>https://raw.githubusercontent.com/joezito129/MR-Z/main/repo/zips/addons.xml.md5</checksum>
+            <datadir zip="true">https://raw.githubusercontent.com/joezito129/MR-Z/main/repo/zips/</datadir>
         </dir>
     </extension>
     <extension point="xbmc.addon.metadata">
