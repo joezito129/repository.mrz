@@ -1,3 +1,9 @@
+Changelog v5.0.7 (2023-08-09):
+- added setting to change reuselanguageinvoker
+- fixed context menus
+- cleaned skins folder and images
+- added dub_data to database
+
 Changelog v5.0.6 (2023-08-06):
 - fixed playnext icon
 - reuselanguageinvoker set to true

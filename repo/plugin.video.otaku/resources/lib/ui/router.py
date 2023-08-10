@@ -11,11 +11,8 @@ class route:
 
     def __call__(self, func):
         self._func = func
-        self._register_route()
-        return func
-
-    def _register_route(self):
         _REGISTERED_ROUTES.append(self)
+        return func
 
     @property
     def path(self):
@@ -35,4 +32,3 @@ def router_process(url, params={}):
     for route_obj in _REGISTERED_ROUTES:
         if (route_obj.wildcard and url.startswith(route_obj.path)) or (not route_obj.wildcard and url == route_obj.path):
             return route_obj.func(payload, params)
-    return False

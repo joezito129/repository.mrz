@@ -51,7 +51,7 @@ class AniListWLF(WatchlistFlavorBase):
         return self._parse_view(base)
 
     def _process_watchlist_view(self, base_plugin_url, page):
-        all_results = list(map(self._base_watchlist_view, self.__anilist_statuses()))
+        all_results = map(self._base_watchlist_view, self.__anilist_statuses())
         all_results = list(itertools.chain(*all_results))
         return all_results
 
@@ -225,9 +225,11 @@ class AniListWLF(WatchlistFlavorBase):
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
         lists = results['data']['MediaListCollection']['lists']
-
-        entries = [mlist['entries'] for mlist in lists][0]
-        get_meta.collect_meta(entries)
+        try:
+            entries = [mlist['entries'] for mlist in lists][0]
+            get_meta.collect_meta(entries)
+        except IndexError:
+            entries = []
         if next_up:
             all_results = map(self._base_next_up_view, reversed(entries))
         else:
@@ -246,13 +248,21 @@ class AniListWLF(WatchlistFlavorBase):
         info = {
             'title': title,
             'genre': res.get('genres'),
-            'duration': res.get('duration') * 60,
             'status': res.get('status'),
             'mediatype': 'tvshow',
             'country': res.get('countryOfOrigin', ''),
-            'studio': [x['node'].get('name') for x in res['studios'].get('edges')],
-            'rating': res.get('averageScore') / 10.0
+            'studio': [x['node'].get('name') for x in res['studios'].get('edges')]
         }
+
+        try:
+            info['duration'] = res.get('duration') * 60
+        except TypeError:
+            pass
+
+        try:
+            info['rating'] = res.get('averageScore') / 10.0
+        except TypeError:
+            pass
 
         desc = res.get('description')
         if desc:
@@ -262,8 +272,11 @@ class AniListWLF(WatchlistFlavorBase):
             desc = desc.replace('\n', '')
             info['plot'] = desc
 
-        start_date = res.get('startDate')
-        info['aired'] = '{}-{:02}-{:02}'.format(start_date['year'], start_date['month'], start_date['day'])
+        try:
+            start_date = res.get('startDate')
+            info['aired'] = '{}-{:02}-{:02}'.format(start_date['year'], start_date['month'], start_date['day'])
+        except TypeError:
+            pass
 
         cast = []
         try:

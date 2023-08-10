@@ -14,7 +14,6 @@ class GetSources(BaseWindow):
         self.return_data = None
         self.args = actionArgs
         self.progress = 0
-        self.background_dialog = None
         self.setProperty('progress', '0')
         self.silent = False
         control.closeBusyDialog()
@@ -24,7 +23,6 @@ class GetSources(BaseWindow):
         self.embedSources = []
         self.cloud_files = []
         self.remainingProviders = []
-        self.embedSources = []
         self.remaining_providers_list = []
 
     def onInit(self):

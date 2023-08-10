@@ -1,5 +1,64 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addons><addon id="mrz" name="Mr. Z" version="1.0" provider-name="Mr. Z">
+<addons><addon id="context.otaku" version="1.0.13" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
+  <requires>
+    
+  </requires>
+  <extension point="kodi.context.item">
+    <menu id="kodi.core.main">
+      <item library="download.py">
+        <label>Download</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+      <item library="watchlistLogout.py">
+        <label>Logout</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.Contains(ListItem.folderpath,/watchlist/)]</visible>
+      </item>
+      <item library="findRecommendations.py">
+        <label>Find Recommendations</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+      <item library="findRelations.py">
+        <label>Find Relations</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+      <item library="watchorder.py">
+        <label>Watch Order</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+      <item library="rescrape.py">
+        <label>Rescrape Item</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+      <item library="sourceSelect.py">
+        <label>Source Select</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+      <item library="watchList.py">
+        <label>WatchList</label>
+        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+      </item>
+    </menu>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">otaku - This Addon is currently in beta. Please be aware there may be bugs present</summary>
+    <description lang="en">Adds Global Contextual Menu Items for otaku menu items throughout Kodi
+    </description>
+    <platform>all</platform>
+    <license>GPL-3.0</license>
+    <forum />
+    <website />
+    <source />
+    <disclaimer lang="en" />
+    <assets>
+      <icon>icon.png</icon>
+      <fanart>fanart.jpg</fanart>
+    </assets>
+    <news>
+Changelog v1.0.13 (2023-08-01):
+- added download
+    </news>
+  </extension>
+</addon><addon id="mrz" name="Mr. Z" version="1.0" provider-name="Mr. Z">
     <extension point="xbmc.addon.repository" name="MR-Z Repository">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/joezito129/mrz/main/repo/zips/addons.xml</info>
@@ -17,7 +76,7 @@
             <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.6">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.7">
   <requires>
 
     <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -43,9 +102,42 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
-Changelog v5.0.6 (2023-08-06):
-- fixed playnext icon
-- reuselanguageinvoker set to true
+Changelog v5.0.7 (2023-08-09):
+- added setting to change reuselanguageinvoker
+- fixed context menus
+- cleaned skins folder and images
+- added dub_data to database
     </news>
   </extension>
+</addon><addon id="plugin.video.watchnixtoons2" name="WatchNixtoons2" version="1.11.2" provider-name="WNT2">
+    <requires>
+        <import addon="script.module.requests" />
+        <import addon="script.module.six" />
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <reuselanguageinvoker>true</reuselanguageinvoker> 
+        <summary lang="en">WatchNixtoons2</summary>
+        <description lang="en">
+Watch cartoons and anime from [COLOR orange][B]www.wcofun.org[/B][/COLOR].
+
+Support the WatchCartoonOnline website with a PayPal donation to:
+[COLOR khaki][B]wcohelp@yandex.com[/B][/COLOR]
+
+Add-on originally by doko.
+Random updates by lolage.
+        </description>
+        <disclaimer lang="en">The authors of this addon do not host any of the content found or have any affiliation with the content providers. This add-on only scrapes web pages.</disclaimer>
+        <language>en</language>
+        <platform lang="en">all</platform>
+        
+        <news>[COLOR orange][B]WatchNixtoons2[/B][/COLOR] - Cartoons &amp; Anime
+
+</news>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
+    </extension>
 </addon></addons>

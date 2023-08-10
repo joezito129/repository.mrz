@@ -11,11 +11,9 @@ class BaseWindow(control.xmlWindow):
 
         control.closeBusyDialog()
         self._title_lang = control.title_lang(control.getSetting("titlelanguage"))
-        self.setProperty('texture.white', os.path.join(control.IMAGES_PATH, 'white.png'))
         self.setProperty('otaku.logo', control.OTAKU_LOGO_PATH)
         self.setProperty('otaku.fanart', control.OTAKU_FANART_PATH)
         self.setProperty('settings.color', 'deepskyblue')
-        self.setProperty('test.pattern', os.path.join(control.IMAGES_PATH, 'test_pattern.png'))
         self.setProperty('skin.dir', control.ADDON_PATH)
 
         if actionArgs is None or actionArgs.get('item_type') == 'skip_intro':
@@ -41,6 +39,8 @@ class BaseWindow(control.xmlWindow):
         fanart = self.item_information.get('fanart')
         clearlogo = self.item_information.get('clearlogo', control.OTAKU_LOGO2_PATH)
 
+        if not actionArgs.get('playnext') and not fanart:
+            fanart = control.OTAKU_FANART_PATH
 
         if isinstance(fanart, list):
             fanart = control.OTAKU_FANART_PATH if control.getSetting('scraping.fanart') == 'true' else random.choice(fanart)

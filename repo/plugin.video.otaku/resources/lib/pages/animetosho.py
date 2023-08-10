@@ -9,22 +9,25 @@ from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.ui import database, source_utils
 from resources.lib import debrid
 
+
 class sources(BrowserBase):
     _BASE_URL = 'https://animetosho.org'
 
     def get_sources(self, query, anilist_id, episode, status, media_type, rescrape):
         query = self._clean_title(query)
+        query = self._sphinx_clean(query)
 
         if rescrape:
-            #todo add rescrape stuff here
+            # todo add rescrape stuff here
             pass
             # return self._get_episode_sources_pack(quary, anilist_id, episode)
-
-        query = '%s "- %s"' % (query, episode.zfill(2))
-
-        season = database.get_season_list(anilist_id)['season']
-        season = str(season).zfill(2)
-        query += '|"S%sE%s "' % (season, episode.zfill(2))
+        if media_type != "movie":
+            query = '%s "\- %s"' % (query, episode.zfill(2))
+            season = database.get_season_list(anilist_id)['season']
+            season = str(season).zfill(2)
+            query += '|"S%sE%s "' % (season, episode.zfill(2))
+        else:
+            season = None
 
         rex = r'(magnet:)+[^"]*'
         show_meta = database.get_show_meta(anilist_id)
@@ -59,7 +62,8 @@ class sources(BrowserBase):
                 torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(1)
             except AttributeError:
                 continue
-            if not params.get('aids'):
+
+            if season:
                 title = torrent['name'].lower()
 
                 ep_match = rex_ep.findall(title)

@@ -20,7 +20,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "username": self._auth_var,
             "password": self._password
         }
-        resp = requests.post(f'{self._URL}/oauth/token', params=params, json='')
+        resp = requests.post(f'{self._URL}/oauth/token', params=params)
 
         if not resp:
             return
@@ -45,7 +45,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "grant_type": "refresh_token",
             "refresh_token": control.getSetting('kitsu.refresh'),
         }
-        resp = requests.post(f'{self._URL}/oauth/token', params=params, json='')
+        resp = requests.post(f'{self._URL}/oauth/token', params=params)
 
         if not resp:
             return
@@ -89,7 +89,7 @@ class KitsuWLF(WatchlistFlavorBase):
         return self._parse_view(base)
 
     def _process_watchlist_status_view(self, url, params, base_plugin_url, page):
-        all_results = list(map(self._base_watchlist_status_view, self.__kitsu_statuses()))
+        all_results = map(self._base_watchlist_status_view, self.__kitsu_statuses())
         all_results = list(itertools.chain(*all_results))
         return all_results
 
@@ -130,13 +130,12 @@ class KitsuWLF(WatchlistFlavorBase):
             result['included'] = []
 
         el = result["included"][:len(_list)]
-        # self._mapping = filter(lambda x: x['type'] == 'mappings', result['included'])
         self._mapping = [x for x in result['included'] if x['type'] == 'mappings']
 
         if next_up:
-            all_results = list(map(self._base_next_up_view, _list, el))
+            all_results = map(self._base_next_up_view, _list, el)
         else:
-            all_results = list(map(self._base_watchlist_view, _list, el))
+            all_results = map(self._base_watchlist_view, _list, el)
 
         all_results = list(itertools.chain(*all_results))
 

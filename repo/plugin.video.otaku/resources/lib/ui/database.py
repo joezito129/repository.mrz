@@ -231,9 +231,6 @@ def _update_show_meta(anilist_id, meta_ids, art):
         control.try_release_lock(control.anilistSyncDB_lock)
 
 
-
-
-
 def add_mapping_id(anilist_id, column, value):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
@@ -246,8 +243,7 @@ def add_mapping_id(anilist_id, column, value):
 def update_kodi_meta(anilist_id, kodi_meta):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
-    if isinstance(kodi_meta, dict):
-        kodi_meta = pickle.dumps(kodi_meta)
+    kodi_meta = pickle.dumps(kodi_meta)
     cursor.execute('UPDATE shows SET kodi_meta=? WHERE anilist_id=?', (kodi_meta, anilist_id))
     cursor.connection.commit()
     cursor.close()
@@ -272,12 +268,31 @@ def _update_season(show_id, season):
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
+def _update_show_data(anilist_id, data={}, last_updated=''):
+    control.anilistSyncDB_lock.acquire()
+    cursor = _get_cursor()
+    data = pickle.dumps(data)
+    try:
+        cursor.execute('PRAGMA foreign_keys=OFF')
+        cursor.execute(
+            "REPLACE INTO show_data ("
+            "anilist_id, data, last_updated)"
+            "VALUES "
+            "(?, ?, ?)",
+            (anilist_id, data, last_updated))
+        cursor.execute('PRAGMA foreign_keys=ON')
+        cursor.connection.commit()
+        cursor.close()
+
+    except:
+        cursor.close()
+    finally:
+        control.try_release_lock(control.anilistSyncDB_lock)
 
 def _update_episode(show_id, season=0, number=0, number_abs=0, update_time='', kodi_meta={}, filler=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
-    if isinstance(kodi_meta, dict):
-        kodi_meta = pickle.dumps(kodi_meta)
+    kodi_meta = pickle.dumps(kodi_meta)
     try:
         cursor.execute(
             "REPLACE INTO episodes ("
@@ -313,6 +328,15 @@ def get_season_list(show_id):
     control.try_release_lock(control.anilistSyncDB_lock)
     return seasons
 
+def get_show_data(anilist_id):
+    control.anilistSyncDB_lock.acquire()
+    cursor = _get_connection_cursor(control.anilistSyncDB)
+    db_query = 'SELECT * FROM show_data WHERE anilist_id IN (%s)' % anilist_id
+    cursor.execute(db_query)
+    show_data = cursor.fetchone()
+    cursor.close()
+    control.try_release_lock(control.anilistSyncDB_lock)
+    return show_data
 
 def get_episode_list(show_id):
     control.anilistSyncDB_lock.acquire()

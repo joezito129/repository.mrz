@@ -117,6 +117,7 @@ class ENIMEAPI:
             filler = ''
 
         code = jz.get_second_label(info, dub_data)
+
         if not code and filler_enable:
             filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
@@ -191,6 +192,7 @@ class ENIMEAPI:
             show_meta = database.get_show_meta(anilist_id)
             if not show_meta:
                 return [], 'episodes'
+
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
@@ -199,19 +201,28 @@ class ENIMEAPI:
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
-        if episodes:
+        dub_data = None
+        if control.getSetting('jz.dub') == 'true':
+            show_data = database.get_show_data(anilist_id)
+            if show_data:
+                data = pickle.loads(show_data['data'])
+                dub_data = data['dub_data']
+
             import datetime
             import time
-            last_updated = datetime.datetime(*(time.strptime(episodes[0]['last_updated'], "%Y-%m-%d")[0:6]))
-            diff = (datetime.datetime.today() - last_updated).days
+            update_time = datetime.date.today().isoformat()
+            try:
+                last_updated = datetime.datetime(*(time.strptime(show_data['last_updated'], "%Y-%m-%d")[0:6]))
+                diff = (datetime.datetime.today() - last_updated).days
+            except TypeError:
+                diff = 10
             if diff > 3:
-                database.remove_episodes(anilist_id)
-                episodes = []
-
-        dub_data =  None
-        if control.getSetting('jz.dub') == 'true':
-            from resources.jz.TeamUp import teamup
-            dub_data = teamup.get_dub_data(kodi_meta['ename'])
+                from resources.jz.TeamUp import teamup
+                dub_data = teamup.get_dub_data(kodi_meta['ename'])
+                update_data = {
+                    'dub_data': dub_data,
+                }
+                database._update_show_data(anilist_id, update_data, update_time)
 
         # if control.getSetting('jz.sub') == 'true':
         #     from resources.jz import AniList
@@ -227,6 +238,7 @@ class ENIMEAPI:
                                             dub_data, filler_enable, title_disable), 'episodes'
             return self.process_episodes(episodes, eps_watched, dub_data=dub_data, filler_enable=filler_enable,
                                           title_disable=title_disable), 'episodes'
+
 
         from resources.jz import anime_filler
         filler_data = anime_filler.get_data(kodi_meta['ename'])

@@ -167,10 +167,9 @@ class sources(BrowserBase):
 
 
     def get_sources(self, query, anilist_id, episode, status, media_type, rescrape):
-        query = self._clean_title(query)
+        query = self._clean_title(query).replace('-', ' ')
         if media_type == 'movie':
             return self._get_movie_sources(query, anilist_id, episode)
-
 
         sources = self._get_episode_sources(query, anilist_id, episode, status, rescrape)
 
@@ -191,14 +190,11 @@ class sources(BrowserBase):
         if rescrape:
             return self._get_episode_sources_pack(show, anilist_id, episode)
 
+        # if media_type != "movie":
         query = '%s "- %s"' % (show, episode.zfill(2))
         season = database.get_season_list(anilist_id)['season']
-        # season = None
-        # if season > 1:
-        #     season = str(season).zfill(2)
-        #     query += '|"S%sE%s "' % (season, episode.zfill(2))
-        # else:
-        #     season = None
+        season = str(season).zfill(2)
+        query += '|"S%sE%s "' % (season, episode.zfill(2))
 
         url = '%s?f=0&c=1_0&q=%s&s=downloads&o=desc' % (self._BASE_URL, parse.quote_plus(query))
         nyaa_sources += self._process_nyaa_episodes(url, episode.zfill(2), season)

@@ -40,7 +40,7 @@ class Sources(DisplayWindow):
         self.aniwatchSources = []
         self.threads = []
         self.usercloudSources = []
-        self.terminate_on_cloud = control.getSetting('rd.terminate') == 'true'
+        self.terminate_on_cloud = control.getSetting('general.terminate.oncloud') == 'true'
 
     def getSources(self, args):
         query = args['query']
@@ -137,7 +137,7 @@ class Sources(DisplayWindow):
 
         while runtime < timeout:
             if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or \
-                self.terminate_on_cloud and len(self.cloud_files) > 0 and not (source_select or rescrape):
+                self.terminate_on_cloud and len(self.cloud_files) > 0:
                     self.updateProgress()
                     self.setProgress()
                     self.setText("4K: %s | 1080: %s | 720: %s | SD: %s" % (

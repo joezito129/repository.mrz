@@ -1,12 +1,10 @@
-import sys
 import xbmc, xbmcgui, xbmcplugin
-
+import sys
 
 from resources.lib.ui import client, control, utils, database
 from urllib import parse
 from resources.lib.indexers import aniskip
 
-HANDLE = control.HANDLE
 playList = control.playList
 player = control.player
 
@@ -172,6 +170,7 @@ class watchlistPlayer(player):
         self.onWatchedPercent()
 
         endpoint = int(control.getSetting('playingnext.time')) if control.getSetting('smartplay.playingnextdialog') == 'true' else False
+
         if endpoint:
             while self.isPlaying():
                 self.current_time = int(self.getTime())
@@ -225,7 +224,7 @@ class PlayerDialogs(xbmc.Player):
 
 def cancelPlayback():
     playList.clear()
-    xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
+    xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem())
 
 
 def _prefetch_play_link(link):
@@ -293,7 +292,7 @@ def play_source(link, anilist_id=None, watchlist_update=None, build_playlist=Non
         watchlistPlayer().handle_player(anilist_id, watchlist_update, None, episode, filter_lang)
         return
 
-    xbmcplugin.setResolvedUrl(HANDLE, True, item)
+    xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
     watchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode, filter_lang)
 
 

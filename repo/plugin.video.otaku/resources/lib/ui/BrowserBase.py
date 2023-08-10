@@ -10,6 +10,19 @@ class BrowserBase:
         return text.replace(u'×', ' x ')
 
     @staticmethod
+    def _sphinx_clean(text):
+        text = text.replace('+', '\+')  # noQA
+        text = text.replace('-', '\-')  # noQA
+        text = text.replace('!', '\!')  # noQA
+        text = text.replace('^', '\^')  # noQA
+        text = text.replace('"', '\\"') # noQA
+        text = text.replace('~', '\~')  # noQA
+        text = text.replace('*', '\*')  # noQA
+        text = text.replace('?', '\?')  # noQA
+        text = text.replace(':', '\:')  # noQA
+        return text
+
+    @staticmethod
     def _send_request(url, data=None, headers=None, XHR=False):
         return client.request(url, post=data, headers=headers, XHR=XHR)
 

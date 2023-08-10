@@ -18,10 +18,11 @@
 	<!-- General -->
 	<category label="40300">
 		<!-- General -->
-		<setting id="titlelanguage" type="labelenum" label="40369" lvalues="40370|40371" default ="40370"/>
+		<setting id="titlelanguage" type="labelenum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default ="English (Attack on Titan)"/>
 		<setting id="searchhistory" type="labelenum" label="40301" values="Yes|No" default="Yes"/>
-<!--		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker" type="action" option="close"-->
-<!--			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>-->
+		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker" type="action" option="close"
+			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
+		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" enable="false" />
 
 		<!-- Interface -->
 		<setting type="lsep" label="Meta Api" />
@@ -29,7 +30,6 @@
 		<setting id="consumet.selfhost.enable" type="bool" label="Enable Consumet Self Hosting" default="false" />
 		<setting id="consumet.selfhost.ip" type="ipaddress" label="SelfHosting IP Address: "/>
 		<setting type="lsep" label="40302"/>
-		<setting id="sep"/>
 		<setting id="interface.viewtypes" type="labelenum" label="40303" values="Default|Poster|Icon Wall|Shift|Info Wall|Wide List|Wall|Banner|Fanart" default="Default" />
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="scraping.fanart" type="bool" label="40433" default="true" />
@@ -63,10 +63,10 @@
 		<setting id="general.autotrynext" type="bool" label="40312" default="true" />
 		<setting id="general.timeout" type="slider" label="40425" option="int" range="2, 60" default="9" />
 		<setting id="general.manual.select" type="bool" label="Manual select Source in batch files" default="false" />
+		<setting id="general.terminate.oncloud" type="bool" subsetting="true" label="Terminate on cloud sources" default="true" />
 
 		<!-- Skip Intro Dialog -->
 		<setting type="lsep" label="40323" />
-		<setting type="sep" />
 		<setting id="smartplay.skipintrodialog" type="bool" label="40324" default="true" />
 		<setting id="skipintro.aniskip.enable" type="bool" subsetting="true" label="40431" default="false" visible="eq(-1,true)" />
 		<setting id="skipintro.aniskip.offset" type="slider" subsetting="true" label="40432" visible="eq(-1,true) + eq(-2,true)" range="-10,10" default="-3"/>
@@ -92,7 +92,6 @@
 		<setting id="general.maxResolution" type="enum" label="40328" values="4k|1080p|720p|NA" default="0" />
 		<setting id="general.disable265" type="bool" label="40329" default="false" />
 		<setting id="general.source" type="labelenum" label="40330" default="Both" values="Sub|Dub|Both" />
-		<setting type="sep" />
 
 		<!-- Source Sorting -->
 		<setting type="lsep" label="40331"/>
@@ -123,18 +122,15 @@
 	<category label="40334">
 		<!-- Real-Debrid -->
 		<setting type="lsep" label="40335" />
-		<setting type="sep" />
 		<setting id="realdebrid.enabled" type="bool" default="false" label="40336" />
 		<setting id="rd.username" type="text" label="40337" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="rd.auth.status" type="text" label="Real-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="rd.auth_start" type="action" label="40338" option="close" action="RunPlugin(plugin://plugin.video.otaku/authRealDebrid)" visible="eq(-3,true)" />
 		<setting id="rd.priority" type="slider" subsetting="true" label="40339" option="int" range="1,10" default="10" visible="eq(-4,true)" />
 		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-5,true)" />
-		<setting id="rd.terminate" type="bool" subsetting="true" label="Terminate on cloud sources" default="true" visible="eq(-6,true)" />
 
 		<!-- All Debrid -->
 		<setting type="lsep" label="40340" />
-		<setting type="sep" />
 		<setting id="alldebrid.enabled" type="bool" default="false" label="40341" />
 		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
 		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/authAllDebrid)" visible="eq(-2,true)" />
@@ -142,7 +138,6 @@
 
 		<!-- Debrid-Link -->
 		<setting type="lsep" label="40411" />
-		<setting type="sep" />
 		<setting id="dl.enabled" type="bool" default="false" label="40412" />
 		<setting id="dl.username" type="text" default="" label="40413" enable="false" visible="eq(-1,true)"/>
 		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/authDebridLink)" visible="eq(-2,true)" />
@@ -151,7 +146,6 @@
 
 		<!-- Premiumize -->
 		<setting type="lsep" label="40363" />
-		<setting type="sep" />
 		<setting id="premiumize.enabled" type="bool" default="false" label="40364" />
 		<setting id="premiumize.username" type="text" label="40365" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/authPremiumize)" visible="eq(-2,true)" />
@@ -163,7 +157,6 @@
 	<category label="40345">
 		<!-- General -->
 		<setting type="lsep" label="40300"/>
-		<setting id="sep"/>
 		<setting id="watchlist.update.enabled" label="40346" type="bool" default="false"/>
 		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList" default="MAL" visible="eq(-1,true)"/>
 		<setting id="watchlist.update.percent" type="slider" subsetting="true" label="Set Percent to Mark as Watched" default="80" range="70,90" option="int"/>
@@ -171,7 +164,6 @@
 
 		<!-- MyAnimeList -->
 		<setting type="lsep" label="40361"/>
-		<setting id="sep"/>
 		<setting id="mal.enabled" label="40362" type="bool" default="false"/>
     	<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="mal.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)" visible="eq(-2,true)"/>
@@ -184,7 +176,6 @@
 
 		<!-- Anilist -->
 		<setting type="lsep" label="40348"/>
-		<setting id="sep"/>
 		<setting id="anilist.enabled" label="40349" type="bool" default="false"/>
 		<setting id="anilist.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="anilist.token" type="text" subsetting="true" label="40351" default="" enable="false" visible="eq(-2,true)" />
@@ -194,7 +185,6 @@
 
 		<!-- Kitsu -->
 		<setting type="lsep" label="40355"/>
-		<setting id="sep"/>
 		<setting id="kitsu.enabled" label="40356" type="bool" default="false"/>
     	<setting id="kitsu.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="kitsu.authvar" type="text" subsetting="true" label="40357" default="" visible="eq(-2,true)"/>
@@ -210,7 +200,6 @@
 	<category label="40400">
 		<!-- Main Menu Items -->	
 		<setting type="lsep" label="40400"/>
-		<setting id="sep"/>
 		<setting id="anilist_airing_anime" label="50001" type="bool" default="true"/>
 		<setting id="anilist_upcoming_next_season" label="50034" type="bool" default="true"/>
 		<setting id="anilist_top_100_anime" label="50009" type="bool" default="true"/>
@@ -225,7 +214,6 @@
 	<category label="40416">
 		<!-- Tools -->
 		<setting type="lsep" label="50005"/>
-		<setting id="sep"/>
 		<setting id="change_log" type="action" label="30027" action="RunPlugin(plugin://plugin.video.otaku/change_log)"/>
 		<setting id="clear_cache" type="action" label="30021" action="RunPlugin(plugin://plugin.video.otaku/clear_cache)"/>
 		<setting id="clear_torrent_cache" type="action" label="30022" action="RunPlugin(plugin://plugin.video.otaku/clear_torrent_cache)"/>

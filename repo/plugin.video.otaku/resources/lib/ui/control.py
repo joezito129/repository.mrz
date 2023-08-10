@@ -1,12 +1,15 @@
-import sys
 import threading
 import xbmc, xbmcgui, xbmcaddon, xbmcplugin, xbmcvfs
 import os
+import sys
 
 from urllib import parse
 
-try: HANDLE = int(sys.argv[1])
-except IndexError: HANDLE = -1
+
+try:
+    HANDLE = int(sys.argv[1])
+except IndexError:
+    HANDLE = -1
 
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_NAME = addonInfo('name')
@@ -61,6 +64,7 @@ execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
 player = xbmc.Player
+infolabel = xbmc.getInfoLabel
 
 
 def closeBusyDialog():
@@ -356,7 +360,6 @@ def bulk_draw_items(video_data, draw_cm=None, bulk_add=True):
         item_list.append(item)
     return item_list
 
-
 def title_lang(title_key):
     title_lang_dict = {
         "Romaji (Shingeki no Kyojin)": "userPreferred",
@@ -388,6 +391,30 @@ def getChangeLog():
 #     url_parts[4] = parse.urlencode(query)
 #     return parse.urlunparse(url_parts)
 
+def toggle_reuselanguageinvoker(forced_state=None):
+    def _store_and_reload(output):
+        with open(file_path, "w+") as addon_xml:
+            addon_xml.writelines(output)
+        ok_dialog(ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
+        execute('LoadProfile({})'.format(xbmc.getInfoLabel("system.profilename")))
+
+    file_path = os.path.join(ADDON_PATH, "addon.xml")
+
+    with open(file_path, "r") as addon_xml:
+        file_lines = addon_xml.readlines()
+
+    for i in range(len(file_lines)):
+        line_string = file_lines[i]
+        if "reuselanguageinvoker" in file_lines[i]:
+            if ("false" in line_string and forced_state is None) or ("false" in line_string and forced_state):
+                file_lines[i] = file_lines[i].replace("false", "true")
+                setSetting("reuselanguageinvoker.status", "Enabled")
+                _store_and_reload(file_lines)
+            elif ("true" in line_string and forced_state is None) or ("true" in line_string and forced_state is False):
+                file_lines[i] = file_lines[i].replace("true", "false")
+                setSetting("reuselanguageinvoker.status", "Disabled")
+                _store_and_reload(file_lines)
+            break
 
 def print(string, *args):
     for i in list(args):

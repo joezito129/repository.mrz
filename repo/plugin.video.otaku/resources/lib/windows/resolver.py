@@ -118,7 +118,6 @@ class Resolver(BaseWindow):
             self.canceled = True
             self.close()
 
-
     def close(self):
         if not self.silent:
             control.dialogWindow.close(self)
