@@ -14,7 +14,6 @@ class AniListWLF(WatchlistFlavorBase):
     _NAME = "anilist"
     _IMAGE = "anilist.png"
 
-    # Not login, but retrieveing userId for watchlist
     def login(self):
         query = '''
         query ($name: String) {
@@ -230,11 +229,7 @@ class AniListWLF(WatchlistFlavorBase):
             get_meta.collect_meta(entries)
         except IndexError:
             entries = []
-        if next_up:
-            all_results = map(self._base_next_up_view, reversed(entries))
-        else:
-            all_results = map(self._base_watchlist_status_view, reversed(entries))
-
+        all_results = map(self._base_next_up_view, reversed(entries)) if next_up else map(self._base_watchlist_status_view, reversed(entries))
 
         all_results = [i for i in all_results if i is not None]
         all_results = list(itertools.chain(*all_results))

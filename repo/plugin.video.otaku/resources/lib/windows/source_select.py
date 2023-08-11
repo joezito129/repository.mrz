@@ -10,6 +10,7 @@ class SourceSelect(BaseWindow):
 
     def __init__(self, xml_file, location, actionArgs=None, sources=None, anilist_id=None, rescrape=None, **kwargs):
         super(SourceSelect, self).__init__(xml_file, location, actionArgs=actionArgs)
+
         self.actionArgs = actionArgs
         self.sources = sources
         self.anilist_id = anilist_id
@@ -25,40 +26,39 @@ class SourceSelect(BaseWindow):
             anime_init = OtakuBrowser.get_anime_init(actionArgs.get('anilist_id'))
             episode = int(episode)
             try:
-                seasonNum = anime_init[0][episode - 1].get('info').get('season')
-            except IndexError:
-                seasonNum = 1
-            try:
-                episodeNum = anime_init[0][episode - 1].get('info').get('episode')
-            except IndexError:
-                episodeNum = 1
-            self.setProperty('item.info.season', str(seasonNum))
-            self.setProperty('item.info.episode', str(episodeNum))
-            try:
+                self.setProperty('item.info.season', str(anime_init[0][episode - 1].get('info').get('season')))
+                self.setProperty('item.info.episode', str(anime_init[0][episode - 1].get('info').get('episode')))
+                self.setProperty('item.info.title', anime_init[0][episode - 1]['info'].get('title'))
+                self.setProperty('item.info.plot', anime_init[0][episode - 1]['info'].get('plot'))
+                self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
                 self.setProperty('item.art.poster', anime_init[0][episode - 1]['image'].get('poster'))
                 self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image'].get('thumb'))
-                self.setProperty('item.art.fanart', anime_init[0][episode - 1]['image'].get('fanart'))
-                self.setProperty('item.info.title', anime_init[0][episode - 1]['info'].get('title'))
-                self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
-                self.setProperty('item.info.plot', anime_init[0][episode - 1]['info'].get('plot'))
+                if control.getSetting('scraping.fanart') == 'false':
+                    self.setProperty('item.art.fanart', anime_init[0][episode - 1]['image'].get('fanart', control.OTAKU_FANART_PATH))
             except IndexError:
-                pass
+                self.setProperty('item.info.season', '-1')
+                self.setProperty('item.info.episode', '-1')
+                self.setProperty('item.art.fanart', control.OTAKU_FANART_PATH)
+
             try:
                 year, month, day = anime_init[0][episode - 1]['info'].get('aired', '0000-00-00').split('-')
                 self.setProperty('item.info.year', year)
             except ValueError:
                 pass
+
         else:
             show = database.get_show(actionArgs.get('anilist_id'))
             if show:
                 kodi_meta = pickle.loads(show.get('kodi_meta'))
-                self.setProperty('item.info.title', kodi_meta.get('title'))
+                self.setProperty('item.info.title', kodi_meta.get('name'))
                 self.setProperty('item.info.plot', kodi_meta.get('plot'))
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
                 self.setProperty('item.art.poster', kodi_meta.get('poster'))
                 self.setProperty('item.art.thumb', kodi_meta.get('thumb'))
-                self.setProperty('item.art.fanart', kodi_meta.get('fanart'))
-                self.setProperty('item.info.aired', kodi_meta.get('aired'))
+                if control.getSetting('scraping.fanart') == 'false':
+                    self.setProperty('item.art.fanart', kodi_meta.get('fanart', control.OTAKU_FANART_PATH))
+                self.setProperty('item.info.aired', kodi_meta.get('start_date'))
+
                 try:
                     self.setProperty('item.info.year', kodi_meta.get('start_date').split('-')[0])
                 except AttributeError:

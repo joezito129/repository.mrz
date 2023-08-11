@@ -2,8 +2,8 @@ import itertools
 import json
 import pickle
 import re
-from functools import partial
 
+from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui import database, source_utils
 from resources.lib.ui.BrowserBase import BrowserBase

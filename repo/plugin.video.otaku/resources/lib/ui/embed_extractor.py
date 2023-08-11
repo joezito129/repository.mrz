@@ -64,7 +64,6 @@ def __extract_mp4upload(url, page_content, referer=None):
                'verifypeer': 'false'}
     if r:
         return r.group(1) + __append_headers(headers)
-    return
 
 
 def __extract_kwik(url, page_content, referer=None):
@@ -238,7 +237,7 @@ def __extract_goload(url, page_content, referer=None):
 
 
 def __register_extractor(urls, function, url_preloader=None, datas=[]):
-    if type(urls) is not list:
+    if not isinstance(urls, list):
         urls = [urls]
 
     if not datas:

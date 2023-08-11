@@ -9,7 +9,7 @@ from resources import jz
 
 class CONSUMETAPI:
     def __init__(self):
-        self.baseUrl = f'http://{control.getSetting("consumet.selfhost.ip")}:3000/' if control.getSetting('consumet.selfhost.enable') == 'true' else 'https://api.consumet.org/'
+        self.baseUrl = f'http://{control.getSetting("consumet.selfhost.ip")}:3000/' if control.getSetting('consumet.selfhost.enable') == 'true' else ''
 
     def get_anilist_meta(self, anilist_id):
         r = requests.get(f'{self.baseUrl}meta/anilist/info/{anilist_id}')
@@ -75,7 +75,6 @@ class CONSUMETAPI:
         if s_id:
             season = int(s_id[0])
         database._update_season(anilist_id, season)
-
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
                           poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,

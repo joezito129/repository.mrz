@@ -68,7 +68,7 @@ class AniListBrowser:
         if self.countryOfOrigin_type:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        airing = self.get_base_res(variables, page)
+        airing = database._get(self.get_base_res, 24, variables, page)
         return self.process_anilist_view(airing, "anilist_airing_anime/%d", page)
 
     def get_upcoming_next_season(self, page=1):
@@ -87,7 +87,7 @@ class AniListBrowser:
         if self.countryOfOrigin_type:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        upcoming = self.get_base_res(variables, page)
+        upcoming = database._get(self.get_base_res, 24, variables, page)
         return self.process_anilist_view(upcoming, "anilist_upcoming_next_season/%d", page)
 
     def get_top_100_anime(self, page=1):
@@ -103,7 +103,7 @@ class AniListBrowser:
         if self.countryOfOrigin_type:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        top_100_anime = self.get_base_res(variables, page)
+        top_100_anime = database._get(self.get_base_res, 24, variables, page)
         return self.process_anilist_view(top_100_anime, "anilist_top_100_anime/%d", page)
 
     def get_search(self, query, page=1):
@@ -129,14 +129,14 @@ class AniListBrowser:
             'id': anilist_id
         }
 
-        recommendations = self.get_recommendations_res(variables, page)
+        recommendations = database._get(self.get_recommendations_res, 24, variables, page)
         return self.process_recommendations_view(recommendations, "recommendations_next/{}/%d".format(anilist_id), page)
 
     def get_relations(self, anilist_id):
         variables = {
             'id': anilist_id
         }
-        relations = self.get_relations_res(variables)
+        relations = database._get(self.get_relations_res, 24, variables)
         return self.process_relations_view(relations)
 
     def get_watch_order(self, mal_id):
@@ -159,7 +159,7 @@ class AniListBrowser:
         variables = {
             'id': idmal
         }
-        anilist_item = self.anilist_res_with_mal_id(variables)
+        anilist_item = database._get(self.anilist_res_with_mal_id, 24, variables)
         if anilist_item:
             self.watch_order_list.append(anilist_item)
 
@@ -169,7 +169,7 @@ class AniListBrowser:
             'type': "ANIME"
         }
 
-        mal_to_anilist = self.anilist_res_with_mal_id(variables)
+        mal_to_anilist = database._get(self.anilist_res_with_mal_id, 24, variables)
         return self._process_mal_to_anilist(mal_to_anilist)
 
     def get_base_res(self, variables, page=1):
@@ -661,6 +661,7 @@ class AniListBrowser:
             info['duration'] = res['duration'] * 60
         except TypeError:
             pass
+
         # try:
         #     if res['trailer']['site'] == 'youtube':
         #         info['trailer'] = 'plugin://plugin.video.youtube/play/?video_id={0}'.format(res['trailer']['id'])

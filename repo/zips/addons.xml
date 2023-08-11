@@ -58,7 +58,7 @@ Changelog v1.0.13 (2023-08-01):
 - added download
     </news>
   </extension>
-</addon><addon id="mrz" name="Mr. Z" version="1.0" provider-name="Mr. Z">
+</addon><addon id="mrz" name="Mr. Z's Repository" version="1.0" provider-name="Mr. Z">
     <extension point="xbmc.addon.repository" name="MR-Z Repository">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/joezito129/mrz/main/repo/zips/addons.xml</info>
@@ -67,7 +67,7 @@ Changelog v1.0.13 (2023-08-01):
         </dir>
     </extension>
     <extension point="xbmc.addon.metadata">
-        <summary>Mr. Z's Repository</summary>
+        <summary>Only the best Addons</summary>
         <description>Mr. Z's Repository</description>
         <disclaimer />
         <platform>all</platform>
@@ -76,7 +76,7 @@ Changelog v1.0.13 (2023-08-01):
             <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.7">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.8">
   <requires>
 
     <import addon="script.module.beautifulsoup4" version="4.5.3" />
@@ -91,7 +91,7 @@ Changelog v1.0.13 (2023-08-01):
   </extension>
   <extension point="xbmc.service" library="service.py" />
   <extension point="xbmc.addon.metadata">
-    <reuselanguageinvoker>true</reuselanguageinvoker> 
+    <reuselanguageinvoker>false</reuselanguageinvoker> 
     <summary lang="en">Otaku video plugin</summary>
     <description lang="en">HD Animes</description>
     <platform>all</platform>
@@ -102,11 +102,8 @@ Changelog v1.0.13 (2023-08-01):
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
-Changelog v5.0.7 (2023-08-09):
-- added setting to change reuselanguageinvoker
-- fixed context menus
-- cleaned skins folder and images
-- added dub_data to database
+Changelog v5.0.8 (2023-08-11):
+- added database._get for AnilistBrowser store for 24 hrs
     </news>
   </extension>
 </addon><addon id="plugin.video.watchnixtoons2" name="WatchNixtoons2" version="1.11.2" provider-name="WNT2">

@@ -16,6 +16,59 @@ except ImportError:
 
 cache_table = 'cache'
 
+def _get(function, duration, *args, **kwargs):
+    ## type: (function, int, object) -> object or None
+    """
+    Gets cached value for provided function with optional arguments, or executes and stores the result
+    :param function: Function to be executed
+    :param duration: Duration of validity of cache in hours
+    :param args: Optional arguments for the provided function
+    """
+    try:
+        sources = False
+        reload = False
+        if 'animepahe_reload' in kwargs:
+            reload = kwargs['otaku_reload']
+            kwargs.pop('otaku_reload')
+
+        if 'animepahe_sources' in kwargs:
+            sources = True
+            kwargs.pop('otaku_sources')
+
+        key = _hash_function(function, args, kwargs)
+        cache_result = cache_get(key)
+        if not reload:
+            if cache_result:
+                if _is_cache_valid(cache_result['date'], duration):
+                    try:
+                        return_data = ast.literal_eval(cache_result['value'])
+                        return return_data
+                    except:
+                        return ast.literal_eval(cache_result['value'])
+
+        fresh_result = repr(function(*args, **kwargs))
+
+        if fresh_result is None or fresh_result == 'None':
+            # If the cache is old, but we didn't get fresh result, return the old cache
+            if cache_result:
+                return cache_result
+            return None
+
+        data = ast.literal_eval(fresh_result)
+
+        # Because I'm lazy, I've added this crap code so sources won't cache if there are no results
+        if not sources:
+            cache_insert(key, fresh_result)
+        elif len(data[1]) > 0:
+            cache_insert(key, fresh_result)
+        else:
+            return None
+
+        return data
+
+    except Exception:
+        pass
+
 
 def get(function, duration, *args, **kwargs):
     ## type: (function, int, object) -> object or None

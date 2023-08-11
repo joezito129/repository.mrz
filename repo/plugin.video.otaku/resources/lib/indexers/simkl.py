@@ -56,7 +56,6 @@ class SIMKLAPI:
         if title_disable and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["number"]}'
             parsed['info']['plot'] = None
-
         return parsed
 
     def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
@@ -80,6 +79,23 @@ class SIMKLAPI:
                           title_disable=title_disable)
 
         all_results = list(map(mapfunc, episodes))
+        if len(all_results) == 0:
+            empty_ep = []
+            for i in range(1, result['totalEpisodes'] + 1):
+                empty_ep.append({
+                    'id': f'{tvshowtitle}-season-{season}-episode-{i}',
+                    # 'title': control.colorString(f'Episode {i}', 'red'),
+                    'title': f'Episode {i}',
+                    'number': i,
+                    'image': poster,
+                    'airDate': '',
+                })
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
+                              poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
+                              tvshowtitle=tvshowtitle, episode_count=len(result_ep), dub_data=dub_data,
+                              filler_data=filler_data, filler_enable=filler_enable,
+                              title_disable=title_disable)
+            all_results = list(map(mapfunc_emp, empty_ep))
         control.ok_dialog("SIMKL", "Added To Database")
         return all_results
 
@@ -112,7 +128,6 @@ class SIMKLAPI:
             mapfunc1 = partial(enime.ENIMEAPI().parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable,
                            title_disable=title_disable)
             all_results = list(map(mapfunc1, episodes))
-
         return all_results
 
 

@@ -44,13 +44,13 @@ maldubFile = os.path.join(dataPath, 'mal_dub.json')
 
 # IMAGES_PATH = f'{ADDON_PATH}resources\images'
 IMAGES_PATH = os.path.join(ADDON_PATH, 'resources', 'images')
+
 # OTAKU_FANART_PATH = f'{ADDON_PATH}fanart.jpg'
 OTAKU_FANART_PATH = os.path.join(ADDON_PATH, 'fanart.jpg')
 
-# OTAKU_LOGO_PATH = f'{IMAGES_PATH}\\trans-goku.png'
-OTAKU_LOGO_PATH = os.path.join(IMAGES_PATH, 'trans-goku.png')
-# OTAKU_LOGO2_PATH = f'{IMAGES_PATH}\\trans-goku-small.png'
-OTAKU_LOGO2_PATH = os.path.join(IMAGES_PATH, 'trans-goku-small.png')
+# OTAKU_LOGO2_PATH = f'{Addon_PATH}\\resources\skins\Default\media\common\trans-goku-small.png'
+OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
+
 # OTAKU_ICONS_PATH = f'{IMAGES_PATH}\\icons\\{__settings__.getSetting("general.icons")}'
 OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', __settings__.getSetting("general.icons"))
 
@@ -301,6 +301,7 @@ def xbmc_add_dir(name, url, art={}, info=None, draw_cm=None):
     if not art.get('fanart'):
         art['fanart'] = OTAKU_FANART_PATH
     liz.setArt(art)
+
     return xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=True)
 
 
@@ -323,6 +324,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
         else:
             xbmc_add_player_item(vid['name'], vid['url'], vid['image'],
                                  vid['info'], draw_cm, bulk_add)
+
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%P")
@@ -382,7 +384,6 @@ def getChangeLog():
     windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=heading, text=changelog_text)
     windows.run()
     del windows
-
 
 # def append_params(url, params):
 #     url_parts = list(parse.urlparse(url))

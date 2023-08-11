@@ -1,4 +1,3 @@
-import os
 import pickle
 import random
 
@@ -11,10 +10,7 @@ class BaseWindow(control.xmlWindow):
 
         control.closeBusyDialog()
         self._title_lang = control.title_lang(control.getSetting("titlelanguage"))
-        self.setProperty('otaku.logo', control.OTAKU_LOGO_PATH)
-        self.setProperty('otaku.fanart', control.OTAKU_FANART_PATH)
         self.setProperty('settings.color', 'deepskyblue')
-        self.setProperty('skin.dir', control.ADDON_PATH)
 
         if actionArgs is None or actionArgs.get('item_type') == 'skip_intro':
             return

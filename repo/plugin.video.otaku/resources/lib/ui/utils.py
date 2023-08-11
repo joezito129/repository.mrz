@@ -5,7 +5,8 @@ import xbmcvfs
 
 from resources.lib.ui import control
 
-def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poster=None, cast=[], landscape=None, banner=None, clearart=None, clearlogo=None):
+def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poster=None, cast=[], landscape=None,
+                  banner=None, clearart=None, clearlogo=None):
     if image and '/' not in image:
         # image = f'{control.OTAKU_ICONS_PATH}\{image}'
         image = os.path.join(control.OTAKU_ICONS_PATH, image)
