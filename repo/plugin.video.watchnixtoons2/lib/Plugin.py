@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re, sys, requests
+import re, requests
 import six
 
 from itertools import chain
@@ -8,8 +8,7 @@ from time import time, sleep
 from six.moves import urllib_parse
 from string import ascii_uppercase
 
-import xbmc, xbmcgui, xbmcaddon, xbmcplugin
-import xbmcvfs
+import xbmcplugin
 import ssl
 
 from lib.constants import *
@@ -1383,16 +1382,21 @@ def actionResolve(params):
     def _decodeSource(subContent):
         if six.PY3:
             subContent = str(subContent)
-        chars = subContent[subContent.find('[') : subContent.find(']')]
-        spread = int(re.search(r' - (\d+)\)\; }', subContent[subContent.find(' - '):]).group(1))
-        xbmc.log( chars, level=xbmc.LOGINFO )
-        xbmc.log( str(spread), level=xbmc.LOGINFO )
-        iframe = ''.join(
-            chr(
-                int(''.join(c for c in str(b64decode(char)) if c.isdigit())) - spread
+
+        try:
+            chars = subContent[subContent.find('[') : subContent.find(']')]
+            spread = int(re.search(r' - (\d+)\)\; }', subContent[subContent.find(' - '):]).group(1))
+            xbmc.log( chars, level=xbmc.LOGINFO )
+            xbmc.log( str(spread), level=xbmc.LOGINFO )
+            iframe = ''.join(
+                chr(
+                    int(''.join(c for c in str(b64decode(char)) if c.isdigit())) - spread
+                )
+                for char in chars.replace('"', '').split(',')
             )
-            for char in chars.replace('"', '').split(',')
-        )
+        except Exception:
+            # quick dirty fix
+            iframe = subContent
         try:
             returnUrl = re.search(r'src="([^"]+)', iframe).group(1)
             if not returnUrl.startswith('\\') and not returnUrl.startswith('http'):
@@ -1419,14 +1423,7 @@ def actionResolve(params):
         # If more than one "embedURL" statement found
         # make a selection dialog and call them "chapters".
         if len(dataIndices) > 1:
-            if six.PY3:
-                selectedIndex = xbmcgui.Dialog().select(
-                    'Select Chapter', ['Chapter '+str(n) for n in range(1, len(dataIndices)+1)]
-                )
-            else:
-                selectedIndex = xbmcgui.Dialog().select(
-                    'Select Chapter', ['Chapter '+str(n) for n in xrange(1, len(dataIndices)+1)]
-                )
+            selectedIndex = xbmcgui.Dialog().select('Select Chapter', ['Chapter '+str(n) for n in range(1, len(dataIndices)+1)])
         else:
             selectedIndex = 0
 
@@ -1712,6 +1709,8 @@ def requestHelper(url, data=None, extraHeaders=None):
 
     return response
 
+def toggleLanguageInvoker(params):
+    toggle_reuselanguageinvoker()
 
 # Defined after all the functions exist.
 CATALOG_FUNCS = {
@@ -1723,7 +1722,6 @@ CATALOG_FUNCS = {
 
 # Main add-on routing function, calls a certain action (function).
 def main():
-
     # The 'action' parameter is the direct name of the function.
     params = dict(urllib_parse.parse_qsl(sys.argv[2][1:], keep_blank_values=True))
     # Defaults to 'actionMenu()'.

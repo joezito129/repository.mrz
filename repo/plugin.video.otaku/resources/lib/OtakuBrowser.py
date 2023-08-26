@@ -21,16 +21,16 @@ def get_episodeList(anilist_id, pass_idx, filter_lang=None):
     show = database.get_show(anilist_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
     if kodi_meta['format'] == 'MOVIE' and kodi_meta['episodes'] == 1:
-        title = kodi_meta['ename']
+        title = kodi_meta['userPreferred'] or kodi_meta['name']
         info = {
             "title": title,
             "mediatype": 'movie',
             'plot': kodi_meta['plot'],
             'rating': kodi_meta['rating'],
             'premiered': str(kodi_meta['start_date']),
+            'year': int(str(kodi_meta['start_date'])[:4])
         }
 
-        info['year'] = int(info['premiered'][:4])
         items = [
             utils.allocate_item(title, 'null', info=info, poster=kodi_meta['poster'])
         ]
@@ -76,14 +76,27 @@ def get_backup(anilist_id, source):
 
 
 def get_anime_init(anilist_id):
-    meta_api = control.getSetting('meta.api')
-    if meta_api == 'consumet':
-        return consumet.CONSUMETAPI().get_episodes(anilist_id)
-    elif meta_api == 'simkl':
-        return simkl.SIMKLAPI().get_episodes(anilist_id)
-    else:
-        return enime.ENIMEAPI().get_episodes(anilist_id)
+    show_meta = database.get_show_meta(anilist_id)
+    if not show_meta:
+        from resources.lib.ui import get_meta
+        get_meta.get_meta(anilist_id)
+        show_meta = database.get_show_meta(anilist_id)
+        if not show_meta:
+            return [], 'episodes'
 
+    data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
+    if not data[0]:
+        data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+
+    if control.getSetting('overide.meta.api') == 'true':
+        meta_api = control.getSetting('meta.api')
+        if meta_api == 'consumet':
+            data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
+        elif meta_api == 'simkl':
+            data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+        else:
+            data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
+    return data
 
 def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):
     show = database.get_show(anilist_id)

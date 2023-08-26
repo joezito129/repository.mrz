@@ -1,8 +1,8 @@
 import itertools
 import pickle
+
 from functools import partial
 from urllib import parse
-
 from resources.lib.ui import control, database
 from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.indexers import anify
@@ -13,7 +13,7 @@ class sources(BrowserBase):
         all_results = []
         show = database.get_show(anilist_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta.get('ename') or kodi_meta.get('name')
+        title = kodi_meta['ename'] or kodi_meta['name']
         title = self._clean_title(title)
         title = '{0} Ep-{1}'.format(title, episode)
         langs = ['sub', 'dub']
@@ -23,7 +23,8 @@ class sources(BrowserBase):
             langs.remove('sub')
 
         for lang in langs:
-            r = anify.ANIFYAPI().get_sources_json(anilist_id, episode, '9anime', lang)
+            r = database.get_(anify.ANIFYAPI().get_sources_json, 8,
+                              anilist_id, episode, '9anime', lang)
 
             if r and r.get('sources'):
                 srcs = r['sources']

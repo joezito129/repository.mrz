@@ -70,7 +70,7 @@ Do you want to download "[I]{self.output_filename}[/I]" to:
         r = requests.get(url, stream=True)
         chunks = r.iter_content(chunk_size=1024 * 1024 * 8)
 
-        control.notify(control.ADDON_NAME, 'Download Started', control.ADDON_ICON)
+        control.notify(control.ADDON_NAME, 'Download Started')
         control.progressDialog.create(control.ADDON_NAME, 'Downlaod Starting')
 
         with open(self._output_path, 'wb') as f:

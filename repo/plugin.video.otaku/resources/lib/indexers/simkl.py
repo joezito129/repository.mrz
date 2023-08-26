@@ -1,7 +1,7 @@
 import requests
 import pickle
 from functools import partial
-from resources.lib.ui import database, utils, control, get_meta
+from resources.lib.ui import database, utils, control
 from resources.lib.indexers import enime
 from resources import jz
 
@@ -50,8 +50,8 @@ class SIMKLAPI:
         info['code'] = code
 
         parsed = utils.allocate_item(title, "play/%s" % url, False, image, info, fanart, poster)
-        database._update_episode(anilist_id, season=season, number=res['episode'], update_time=update_time,
-                                 kodi_meta=parsed, filler=filler, number_abs=episode_count)
+        database.update_episode(anilist_id, season=season, number=res['episode'], number_abs=episode_count,
+                                update_time=update_time, kodi_meta=parsed, filler=filler)
 
         if title_disable and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["number"]}'
@@ -68,7 +68,7 @@ class SIMKLAPI:
         s_id = utils.get_season(result)
         if s_id:
             season = int(s_id[0])
-        database._update_season(anilist_id, season)
+        database.update_season(anilist_id, season)
 
         result_ep = self.get_anilist_meta(anilist_id)
         episodes = [x for x in result_ep if x['type'] == 'episode']
@@ -96,7 +96,7 @@ class SIMKLAPI:
                               filler_data=filler_data, filler_enable=filler_enable,
                               title_disable=title_disable)
             all_results = list(map(mapfunc_emp, empty_ep))
-        control.ok_dialog("SIMKL", "Added To Database")
+        control.notify("SIMKL", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
     def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None,
@@ -146,13 +146,7 @@ class SIMKLAPI:
         r = r.json()
         return r
 
-    def get_episodes(self, anilist_id):
-        show_meta = database.get_show_meta(anilist_id)
-        if not show_meta:
-            get_meta.get_meta(anilist_id)
-            show_meta = database.get_show_meta(anilist_id)
-            if not show_meta:
-                return [], 'episodes'
+    def get_episodes(self, anilist_id, show_meta):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')

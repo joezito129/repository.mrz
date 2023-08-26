@@ -2,58 +2,48 @@ import json
 import pickle
 import re
 
+import requests
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
-from resources.lib.ui import control, database
+from resources.lib.ui import control, database, utils
 from resources.lib.ui.jscrypto import jscrypto
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
 class sources(BrowserBase):
-    _BASE_URL = 'https://aniwatch.to/ajax/'
+    _BASE_URL = 'https://aniwatch.to/'
     keyurl = 'https://raw.githubusercontent.com/enimax-anime/key/e6/key.txt'
     keyhints = [[53, 59], [71, 78], [119, 126], [143, 150]]
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta.get('name')
+        title = kodi_meta['name']
         title = self._clean_title(title)
 
-        srcs = ['sub', 'dub']
+        langs = ['sub', 'dub']
         if control.getSetting('general.source') == 'Sub':
-            srcs.remove('dub')
+            langs.remove('dub')
         elif control.getSetting('general.source') == 'Dub':
-            srcs.remove('sub')
+            langs.remove('sub')
 
-        headers = {'Referer': self._BASE_URL}
-        params = {'keyword': title}
-        r = self._get_request(
-            self._BASE_URL + 'search/suggest',
-            data=params,
-            headers=headers,
-            XHR=True
-        )
-        res = json.loads(r).get('html')
+        headers = {
+            'Referer': self._BASE_URL
+        }
+        params = {
+            'keyword': title
+        }
+        html = database.get_(utils.database_request_get, 8,
+                             f'{self._BASE_URL}search', params=params, headers=headers, text=True)
 
-        if not res and ':' in title:
-            title = title.split(':')[0]
-            params.update({'q': title})
-            r = self._get_request(
-                self._BASE_URL + 'search/suggest',
-                data=params,
-                headers=headers,
-                XHR=True
-            )
-            res = json.loads(r).get('html')
-
-        mdiv = BeautifulSoup(res, "html.parser")
-        sdivs = mdiv.find_all('a', {'class': 'nav-item'})
+        mlink = SoupStrainer('div', {'class': 'flw-item'})
+        mdiv = BeautifulSoup(html, "html.parser", parse_only=mlink)
+        sdivs = mdiv.find_all('h3')
         sitems = []
         for sdiv in sdivs:
             try:
-                slug = sdiv.get('href').split('?')[0]
-                stitle = sdiv.h3.get('data-jname')
+                slug = sdiv.find('a').get('href').split('?')[0]
+                stitle = sdiv.find('a').get('data-jname')
                 sitems.append({'title': stitle, 'slug': slug})
             except AttributeError:
                 pass
@@ -67,67 +57,62 @@ class sources(BrowserBase):
             if not items and ':' in title:
                 title = title.split(':')[0]
                 items = [x.get('slug') for x in sitems if (title.lower() + '  ') in (x.get('title').lower() + '  ')]
+
             if items:
                 slug = items[0]
-                all_results = self._process_aw(slug, title=title, episode=episode, langs=srcs)
+                all_results = self._process_aw(slug, title=title, episode=episode, langs=langs)
         return all_results
 
     def _process_aw(self, slug, title, episode, langs):
-        sources = []
-        headers = {'Referer': self._BASE_URL}
-        r = self._get_request(
-            self._BASE_URL + 'v2/episode/list/' + slug.split('-')[-1],
-            headers=headers,
-            XHR=True
-        )
-        res = json.loads(r).get('html')
+        sources_ = []
+        headers = {
+            'Referer': self._BASE_URL
+        }
+        r = database.get_(utils.database_request_get, 8,
+                          f'{self._BASE_URL}ajax/v2/episode/list/{slug.split("-")[-1]}', headers=headers)
+        res = r.get('html')
         elink = SoupStrainer('div', {'class': re.compile('^ss-list')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
         items = ediv.find_all('a')
         e_id = [x.get('data-id') for x in items if x.get('data-number') == episode][0]
 
-        params = {'episodeId': e_id}
-        r = self._get_request(
-            self._BASE_URL + 'v2/episode/servers',
-            data=params,
-            headers=headers,
-            XHR=True
-        )
-        eres = json.loads(r).get('html')
+        params = {
+            'episodeId': e_id
+        }
+        r = database.get_(utils.database_request_get, 8,
+            f'{self._BASE_URL}ajax/v2/episode/servers', params=params, headers=headers)
+        eres = r.get('html')
         for lang in langs:
             elink = SoupStrainer('div', {'class': re.compile('servers-{0}$'.format(lang))})
             sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
             edata_id = sdiv.find('div', {'data-server-id': '4'})
             if edata_id:
-                params = {'id': edata_id.get('data-id')}
-                r = self._get_request(
-                    self._BASE_URL + 'v2/episode/sources',
-                    data=params,
-                    headers=headers,
-                    XHR=True
-                )
-                slink = json.loads(r).get('link')
-                headers = {'Referer': slink}
+                params = {
+                    'id': edata_id.get('data-id')
+                }
+                r = database.get_(utils.database_request_get, 8,
+                                  f'{self._BASE_URL}ajax/v2/episode/sources', params=params, headers=headers)
+                slink = r.get('link')
+                headers = {
+                    'Referer': slink
+                }
                 sl = parse.urlparse(slink)
                 spath = sl.path.split('/')
                 spath.insert(2, 'ajax')
                 sid = spath.pop(-1)
                 eurl = '{}://{}{}/getSources'.format(sl.scheme, sl.netloc, '/'.join(spath))
-                params = {'id': sid}
-                res = self._get_request(
-                    eurl,
-                    data=params,
-                    headers=headers,
-                    XHR=True
-                )
-                res = json.loads(res)
+                params = {
+                    'id': sid
+                }
+                res = database.get_(utils.database_request_get, 8,
+                                    eurl, params=params, headers=headers)
                 subs = res.get('tracks')
                 if subs:
                     subs = [{'url': x.get('file'), 'lang': x.get('label')} for x in subs if x.get('kind') == 'captions']
                 slink = self._process_link(res.get('sources'))
                 if not slink:
                     continue
-                res = self._get_request(slink, headers=headers)
+                res = requests.get(slink, headers=headers).text
                 quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).+\n(?!#)(.+)', res)
 
                 for item in quals:
@@ -152,21 +137,25 @@ class sources(BrowserBase):
                         'lang': 2 if lang == 'dub' else 0,
                         'subs': subs
                     }
-                    sources.append(source)
+                    sources_.append(source)
 
-        return sources
+        return sources_
 
-    def _process_link(self, sources):
-        r = self._get_request(self.keyurl)
-        keyhints = json.loads(r) or self.keyhints
+    def _process_link(self, sources_):
+        r = database.get_(utils.database_request_get, 4,
+                          self.keyurl)
+
+        keyhints = r or self.keyhints
         key = ''
-        orig_src = sources
+        orig_src = sources_
         for start, end in keyhints:
             key += orig_src[start:end]
-            sources = sources.replace(orig_src[start:end], '')
-        try:
-            if 'file' not in sources:
-                sources = json.loads(jscrypto.decode(sources, key))
-            return sources[0].get('file')
-        except:
-            return ''
+            sources_ = sources_.replace(orig_src[start:end], '')
+
+        # try:
+        if 'file' not in sources_:
+            sources_ = json.loads(jscrypto.decode(sources_, key))
+        return sources_[0].get('file')
+        # except Exception as e:
+        #     control.print(f'172 {e}')
+        #     return ''

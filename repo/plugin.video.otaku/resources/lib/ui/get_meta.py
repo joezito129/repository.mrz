@@ -44,4 +44,4 @@ def update_meta(anilist_id, meta_ids={}, mtype='tv'):
         meta2 = TMDBAPI().getArt(meta_ids, mtype)
         if meta2.get('fanart'):
             meta.update({'fanart': meta2['fanart']})
-    database._update_show_meta(anilist_id, meta_ids, meta)
+    database.update_show_meta(anilist_id, meta_ids, meta)

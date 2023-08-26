@@ -1,7 +1,3 @@
-from resources.lib.ui import client
-from urllib import parse
-
-
 class BrowserBase:
     _BASE_URL = None
 
@@ -21,15 +17,6 @@ class BrowserBase:
         text = text.replace('?', '\?')  # noQA
         text = text.replace(':', '\:')  # noQA
         return text
-
-    @staticmethod
-    def _send_request(url, data=None, headers=None, XHR=False):
-        return client.request(url, post=data, headers=headers, XHR=XHR)
-
-    def _get_request(self, url, data=None, headers=None, XHR=False):
-        if data:
-            url = "%s?%s" % (url, parse.urlencode(data))
-        return self._send_request(url, data=None, headers=headers, XHR=XHR)
 
     @staticmethod
     def get_size(size=0):

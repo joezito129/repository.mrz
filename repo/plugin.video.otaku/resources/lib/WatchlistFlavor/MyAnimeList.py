@@ -45,7 +45,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         login_data = {
             'token': res['access_token'],
             'refresh': res['refresh_token'],
-            'expiry': str(time.time() + int(res['expires_in'])),
+            'expiry': str(int(time.time()) + int(res['expires_in'])),
             'username': user['name']
         }
         return login_data
@@ -83,7 +83,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "image": '%s.png' % res[0].lower(),
             "info": {}
         }
-
         return self._parse_view(base)
 
     def _process_watchlist_view(self):
@@ -94,7 +93,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             ("On Hold", "on_hold"),
             ("Dropped", "dropped"),
             ("Plan to Watch", "plan_to_watch"),
-            ("All Anime", ""),
+            ("All Anime", "")
         ]
         all_results = map(self._base_watchlist_view, statuses)
         all_results = list(itertools.chain(*all_results))
@@ -122,9 +121,9 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "offset": offset,
             "fields": ','.join(fields)
         }
-
         url = f'{self._URL}/users/@me/animelist'
-        return self._process_status_view(url, params, next_up, "watchlist_status_type_pages/mal//%s%%s/%%d" % status, page)
+        return self._process_status_view(url, params, next_up, f'watchlist_status_type_pages/mal/{status}/%s/%d', page)
+
 
     def get_watchlist_anime_entry(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
@@ -152,7 +151,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if results.ok:
             results = results.json()
         else:
-            control.ok_dialog(control.ADDON_NAME, "Can't connect MyAnimeList 'API'")
+            control.notify(control.ADDON_NAME, "Can't connect MyAnimeList 'API'")
             return []
 
         if next_up:
@@ -164,13 +163,14 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return all_results
 
     def _base_watchlist_status_view(self, res):
-        # show = database.get_show_mal(res['node']['id'])
-        # anilist_id = show['anilist_id'] if show else ''
+        mal_id = res['node']['id']
+        anilist_id = ''
+        kitsu_id = ''
+
         title = res['node'].get('title')
         if self._title_lang == 'english':
             title = res['node']['alternative_titles'].get('en') or title
 
-        anilist_id = ''
         info = {
             'title': title,
             'plot': res['node']['synopsis'],
@@ -192,23 +192,24 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
         base = {
             "name": '%s - %d/%d' % (title, res['list_status']["num_episodes_watched"], res['node']["num_episodes"]),
-            "url": "watchlist_to_ep/%s/%d/%d" % (anilist_id, res['node']['id'], res['list_status']["num_episodes_watched"]),
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["list_status"]["num_episodes_watched"]}',
             "image": res['node']['main_picture'].get('large', res['node']['main_picture']['medium']),
-            "info": info,
+            "info": info
         }
 
-
         if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
-            base['url'] = "play_movie/%s/%d" % (anilist_id, res['node']['id'])
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
         return self._parse_view(base)
 
     def _base_next_up_view(self, res):
         mal_id = res['node']['id']
+        kitsu_id = ''
         progress = res['list_status']["num_episodes_watched"]
         next_up = progress + 1
         episode_count = res['node']["num_episodes"]
+
         if 0 < episode_count < next_up:
             return None
 
@@ -241,15 +242,15 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": "watchlist_to_ep/%s/%d/%d" % (anilist_id, res['node']['id'], res['list_status']["num_episodes_watched"]),
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["list_status"]["num_episodes_watched"]}',
             "image": image,
             "info": info,
             "fanart": image,
-            "poster": poster,
+            "poster": poster
         }
 
         if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
-            base['url'] = "play_movie/%d/%d" % (anilist_id, res['node']['id'])
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
 
@@ -266,13 +267,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "Anime Start Date": "anime_start_date",
             "List Score": "list_score"
         }
-
         return sort_types[self._sort]
 
     def update_num_episodes(self, anilist_id, episode):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
         if not mal_id:
-            return
+            return False
         data = {
             'num_watched_episodes': int(episode)
         }
@@ -282,7 +282,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def update_list_status(self, anilist_id, status):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
         if not mal_id:
-            return
+            return False
         data = {
             "status": status,
         }
@@ -293,7 +293,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def update_score(self, anilist_id, score):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
         if not mal_id:
-            return
+            return False
         data = {
             "score": score,
         }
@@ -303,6 +303,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def delete_anime(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
         if not mal_id:
-            return
+            return False
         r = requests.delete(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers())
         return r.json() if r.ok else False

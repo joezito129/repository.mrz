@@ -66,10 +66,7 @@ class WatchlistFlavor:
         flavor_class = WatchlistFlavor.__instance_flavor(flavor)
         login_ts = ''  # int(time())
 
-        return WatchlistFlavor.__set_login(flavor,
-                                           flavor_class.login(),
-                                           str(login_ts)
-                                           )
+        return WatchlistFlavor.__set_login(flavor,flavor_class.login(),str(login_ts))
 
     @staticmethod
     def logout_request(flavor):
@@ -123,7 +120,6 @@ class WatchlistFlavor:
     @staticmethod
     def watchlist_set_status(anilist_id, status):
         return WatchlistFlavor.get_update_flavor().update_list_status(anilist_id, status)
-
 
     @staticmethod
     def watchlist_set_score(anilist_id, score):

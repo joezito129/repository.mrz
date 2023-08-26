@@ -5,14 +5,15 @@ import random
 import re
 import string
 import time
+import requests
 
 from resources.lib.ui import client, control, jsunpack
 from resources.lib.ui.pyaes import AESModeOfOperationCBC, Decrypter, Encrypter
 from urllib import error, parse
 
+
 _EMBED_EXTRACTORS = {}
 _EDGE_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.18363'
-
 
 def load_video_from_url(in_url):
     found_extractor = None
@@ -35,11 +36,9 @@ def load_video_from_url(in_url):
                                              data)
 
         control.log("Probing source: %s" % in_url)
-        reqObj = client.request(in_url, output='extended')
+        res = requests.get(in_url)
 
-        return found_extractor['parser'](reqObj[5],
-                                         reqObj[0],
-                                         reqObj[2].get('Referer'))
+        return found_extractor['parser'](res.url, res.text, res.headers.get('Referer'))
     except error.URLError:
         pass  # Dead link, Skip result
 
@@ -59,9 +58,11 @@ def __append_headers(headers):
 def __extract_mp4upload(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
     r = re.search(r'src\("([^"]+)', page_content) or re.search(r'src:\s*"([^"]+)', page_content)
-    headers = {'User-Agent': _EDGE_UA,
-               'Referer': url,
-               'verifypeer': 'false'}
+    headers = {
+        'User-Agent': _EDGE_UA,
+        'Referer': url,
+        'verifypeer': 'false'
+    }
     if r:
         return r.group(1) + __append_headers(headers)
 
@@ -70,8 +71,10 @@ def __extract_kwik(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
     r = re.search(r"const\s*source\s*=\s*'([^']+)", page_content)
     if r:
-        headers = {'User-Agent': _EDGE_UA,
-                   'Referer': url}
+        headers = {
+            'User-Agent': _EDGE_UA,
+            'Referer': url
+        }
         return r.group(1) + __append_headers(headers)
 
 
@@ -79,14 +82,16 @@ def __extract_okru(url, page_content, referer=None):
     pattern = r'(?://|\.)(ok\.ru|odnoklassniki\.ru)/(?:videoembed|video|live)/(\d+)'
     host, media_id = re.findall(pattern, url)[0]
     aurl = "http://www.ok.ru/dk"
-    data = {'cmd': 'videoPlayerMetadata', 'mid': media_id}
+    data = {
+        'cmd': 'videoPlayerMetadata',
+        'mid': media_id
+    }
     data = parse.urlencode(data)
-    html = client.request(aurl, post=data)
-    json_data = json.loads(html)
-    if 'error' in json_data:
-        return
-    strurl = json_data.get('hlsManifestUrl')
-    return strurl
+    r = requests.post(aurl, data=data)
+    if r.ok:
+        json_data = r.json()
+        strurl = json_data.get('hlsManifestUrl')
+        return strurl
 
 
 def __extract_mixdrop(url, page_content, referer=None):
@@ -95,8 +100,10 @@ def __extract_mixdrop(url, page_content, referer=None):
         surl = r.group(1)
         if surl.startswith('//'):
             surl = 'https:' + surl
-        headers = {'User-Agent': _EDGE_UA,
-                   'Referer': url}
+        headers = {
+            'User-Agent': _EDGE_UA,
+            'Referer': url
+        }
         return surl + __append_headers(headers)
 
 def __extract_dood(url, page_content, referer=None):
@@ -111,63 +118,69 @@ def __extract_dood(url, page_content, referer=None):
         token = match.group(2)
         nurl = 'https://{0}{1}'.format(host, match.group(1))
         html = client.request(nurl, referer=url)
-        headers = {'User-Agent': _EDGE_UA,
-                   'Referer': url}
+        headers = {
+            'User-Agent': _EDGE_UA,
+            'Referer': url
+        }
         return dood_decode(html) + token + str(int(time.time() * 1000)) + __append_headers(headers)
 
 
 def __extract_streamlare(url, page_content, referer=None):
     pattern = r'(?://|\.)((?:streamlare|sl(?:maxed|tube|watch))\.(?:com?|org))/(?:e|v)/([0-9A-Za-z]+)'
     host, media_id = re.findall(pattern, url)[0]
-    headers = {'User-Agent': _EDGE_UA, 'Referer': url}
+    headers = {
+        'User-Agent': _EDGE_UA,
+        'Referer': url
+    }
     api_durl = 'https://{0}/api/video/download/get'.format(host)
     api_surl = 'https://{0}/api/video/stream/get'.format(host)
-    data = {'id': media_id}
-    html = json.loads(client.request(api_surl, XHR=True, headers=headers, post=data, jpost=True))
-    result = html.get('result', {})
-    source = result.get('file') \
-        or result.get('Original', {}).get('file') \
-        or result.get(list(result.keys())[0], {}).get('file')
+    data = {
+        'id': media_id
+    }
+    r = requests.post(api_surl, headers=headers, json=data)
+    r = r.json()
+    result = r.get('result', {})
+    source = result.get('file') or result.get('Original', {}).get('file') or result.get(list(result.keys())[0], {}).get('file')
     if not source:
-        html = client.request(api_durl, XHR=True, headers=headers, post=data, jpost=True)
-        source = json.loads(html).get('result', {}).get('Original', {}).get('url')
+        r = requests.post(api_durl, headers=headers, json=data)
+        source = r.json().get('result', {}).get('Original', {}).get('url')
 
     if source:
         if '?token=' in source:
-            t = client.request(source, redirect=False, headers=headers, output='extended')
-            if t:
-                source = t[2].get('Location')
+            r = requests.get(source, allow_redirects=False, headers=headers)
+            if r.ok:
+                source = r.headers.get('Location')
         return source + __append_headers(headers)
 
 
 def __extract_streamtape(url, page_content, referer=None):
-    groups = re.search(
-        r"document\.getElementById\(.*?\)\.innerHTML = [\"'](.*?)[\"'] \+ [\"'](.*?)[\"']",
-        page_content)
-    stream_link = "https:" + groups.group(1) + groups.group(2)
+    groups = re.search(r"document\.getElementById\(.*?\)\.innerHTML = [\"'](.*?)[\"'] \+ [\"'](.*?)[\"']", page_content)
+    stream_link = f'https:{groups.group(1)}{groups.group(2)}'
     return stream_link
 
 
 def __extract_streamsb(url, page_content, referer=None):
-    def get_embedurl(host, media_id):
+    def get_embedurl(host_, media_id_):
         def makeid(length):
             t = string.ascii_letters + string.digits
             return ''.join([random.choice(t) for _ in range(length)])
 
-        x = '{0}||{1}||{2}||streamsb'.format(makeid(12), media_id, makeid(12))
+        x = '{0}||{1}||{2}||streamsb'.format(makeid(12), media_id_, makeid(12))
         c1 = binascii.hexlify(x.encode('utf8')).decode('utf8')
         x = '7Vd5jIEF2lKy||nuewwgxb1qs'
         c2 = binascii.hexlify(x.encode('utf8')).decode('utf8')
-        return 'https://{0}/{1}7/{2}'.format(host, c2, c1)
+        return 'https://{0}/{1}7/{2}'.format(host_, c2, c1)
 
     pattern = r'(?://|\.)((?:streamsb|streamsss|sb(?:lanh|ani|rapic))\.(?:net|com|pro))/e/([0-9a-zA-Z]+)'
     host, media_id = re.findall(pattern, url)[0]
     eurl = get_embedurl(host, media_id)
-    headers = {'User-Agent': _EDGE_UA,
-               'Referer': 'https://{0}/'.format(host),
-               'watchsb': 'sbstream'}
-    html = client.request(eurl, headers=headers, cookie='lang=1')
-    data = json.loads(html).get("stream_data", {})
+    headers = {
+        'User-Agent': _EDGE_UA,
+        'Referer': 'https://{0}/'.format(host),
+        'watchsb': 'sbstream'
+    }
+    r = requests.get(eurl, headers=headers, cookies={'lang': '1'})
+    data = r.json().get("stream_data", {})
     strurl = data.get('file') or data.get('backup')
     if strurl:
         headers.pop('watchsb')
@@ -176,32 +189,30 @@ def __extract_streamsb(url, page_content, referer=None):
 
 
 def __extract_xstreamcdn(url, data):
-    res = client.request(url, post=data)
-    try:
-        res = json.loads(res)['data']
-    except:
-        return
-    if res == 'Video not found or has been removed':
-        return
-    stream_file = res[-1]['file']
-    r = client.request(stream_file, redirect=False, output='extended')
-    stream_link = (r[2]['Location']).replace('https', 'http')
-    return stream_link
+    r = requests.post(url, data=data)
+    if r.ok:
+        res = r.json()['data']
+        if res == 'Video not found or has been removed':
+            return
+        stream_file = res[-1]['file']
+        r = requests.get(stream_file, allow_redirects=False)
+        stream_link = (r.headers['Location']).replace('https', 'http')
+        return stream_link
 
 
 def __extract_goload(url, page_content, referer=None):
-    def _encrypt(msg, key, iv):
+    def _encrypt(msg, key, iv_):
         key = key.encode()
-        encrypter = Encrypter(AESModeOfOperationCBC(key, iv))
+        encrypter = Encrypter(AESModeOfOperationCBC(key, iv_))
         ciphertext = encrypter.feed(msg)
         ciphertext += encrypter.feed()
         ciphertext = base64.b64encode(ciphertext)
         return ciphertext.decode()
 
-    def _decrypt(msg, key, iv):
+    def _decrypt(msg, key, iv_):
         ct = base64.b64decode(msg)
         key = key.encode()
-        decrypter = Decrypter(AESModeOfOperationCBC(key, iv))
+        decrypter = Decrypter(AESModeOfOperationCBC(key, iv_))
         decrypted = decrypter.feed(ct)
         decrypted += decrypter.feed()
         return decrypted.decode()
@@ -216,24 +227,22 @@ def __extract_goload(url, page_content, referer=None):
         params = _decrypt(r.group(1), keys[0], iv)
         eurl = 'https://{0}/encrypt-ajax.php?id={1}&alias={2}'.format(
             host, _encrypt(media_id, keys[0], iv), params)
-        response = client.request(eurl, XHR=True)
-        try:
-            response = json.loads(response).get('data')
-        except:
-            return
-        if response:
-            result = _decrypt(response, keys[1], iv)
-            result = json.loads(result)
-            str_url = ''
-            if len(result.get('source')) > 0:
-                str_url = result.get('source')[0].get('file')
-            if not str_url and len(result.get('source_bk')) > 0:
-                str_url = result.get('source_bk')[0].get('file')
-            if str_url:
-                headers = {'User-Agent': _EDGE_UA,
-                           'Referer': 'https://{0}/'.format(host),
-                           'Origin': 'https://{0}'.format(host)}
-                return str_url + __append_headers(headers)
+        r = requests.get(eurl)
+        if r.ok:
+            response = r.json().get('data')
+            if response:
+                result = _decrypt(response, keys[1], iv)
+                result = json.loads(result)
+                str_url = ''
+                if len(result.get('source')) > 0:
+                    str_url = result.get('source')[0].get('file')
+                if not str_url and len(result.get('source_bk')) > 0:
+                    str_url = result.get('source_bk')[0].get('file')
+                if str_url:
+                    headers = {'User-Agent': _EDGE_UA,
+                               'Referer': 'https://{0}/'.format(host),
+                               'Origin': 'https://{0}'.format(host)}
+                    return str_url + __append_headers(headers)
 
 
 def __register_extractor(urls, function, url_preloader=None, datas=[]):

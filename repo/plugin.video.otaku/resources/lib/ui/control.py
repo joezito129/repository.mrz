@@ -5,11 +5,12 @@ import sys
 
 from urllib import parse
 
-
 try:
     HANDLE = int(sys.argv[1])
 except IndexError:
     HANDLE = -1
+
+__sys__ = sys
 
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_NAME = addonInfo('name')
@@ -64,7 +65,6 @@ execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
 player = xbmc.Player
-infolabel = xbmc.getInfoLabel
 
 
 def closeBusyDialog():
@@ -203,7 +203,7 @@ def yesno_dialog(title, text, nolabel=None, yeslabel=None):
     return xbmcgui.Dialog().yesno(title, text, nolabel, yeslabel)
 
 
-def notify(title, text, icon='', time=5000, sound=True):
+def notify(title, text, icon=OTAKU_LOGO2_PATH, time=5000, sound=True):
     return xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -283,8 +283,7 @@ def xbmc_add_player_item(name, url, art={}, info=None, draw_cm=None, bulk_add=Fa
     liz.setArt(art)
 
     liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
-    return u, liz, False if bulk_add else xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz,
-                                                                      isFolder=False)
+    return u, liz, False if bulk_add else xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=False)
 
 
 def xbmc_add_dir(name, url, art={}, info=None, draw_cm=None):
@@ -301,7 +300,7 @@ def xbmc_add_dir(name, url, art={}, info=None, draw_cm=None):
     if not art.get('fanart'):
         art['fanart'] = OTAKU_FANART_PATH
     liz.setArt(art)
-
+    # liz.setProperty('IsPlayable', 'false')
     return xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=True)
 
 
@@ -337,8 +336,8 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
         xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(viewType))
 
     # move to episode position currently watching
-    if contentType == "episodes" and getSetting('jz.wait.enable') == 'true':
-        sleep(int(getSetting('jz.wait.time')))
+    if contentType == "episodes" and getSetting('general.smart.scroll.enable') == 'true':
+        sleep(int(getSetting('general.scroll.wait.time')))
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
             total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
@@ -369,6 +368,8 @@ def title_lang(title_key):
     }
     return title_lang_dict[title_key]
 
+def exit_(code):
+    sys.exit(code)
 
 def getChangeLog():
     addon_version = xbmcaddon.Addon('plugin.video.otaku').getAddonInfo('version')
@@ -394,8 +395,8 @@ def getChangeLog():
 
 def toggle_reuselanguageinvoker(forced_state=None):
     def _store_and_reload(output):
-        with open(file_path, "w+") as addon_xml:
-            addon_xml.writelines(output)
+        with open(file_path, "w+") as addon_xml_:
+            addon_xml_.writelines(output)
         ok_dialog(ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
         execute('LoadProfile({})'.format(xbmc.getInfoLabel("system.profilename")))
 

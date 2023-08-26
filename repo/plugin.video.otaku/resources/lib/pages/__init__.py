@@ -1,7 +1,7 @@
 import threading
 import time
 
-from resources.lib.pages import nyaa, animetosho, animixplay, debrid_cloudfiles, nineanime, gogoanime, gogohd, animepahe, zoro, aniwatch, apahehd
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, nineanime, gogoanime, gogohd, animepahe, zoro, aniwatch, apahehd
 from resources.lib.ui import control
 from resources.lib.windows.get_sources_window import GetSources as DisplayWindow
 
@@ -20,8 +20,9 @@ class Sources(DisplayWindow):
         self.torrentCacheSources = []
         self.embedSources = []
         self.cloud_files = []
-        self.remainingProviders = ['nyaa', 'animetosho', '9anime', 'gogo', 'gogohd', 'animix', 'animepahe', 'zoro', 'aniwatch', 'apahehd']
-        self.embedProviders = ['9anime', 'gogo', 'gogohd', 'animix', 'animepahe', 'zoro', 'aniwatch', 'apahehd']
+        self.torrentProviders = ['nyaa', 'animetosho']
+        self.embedProviders = ['9anime', 'gogo', 'gogohd', 'animepahe', 'zoro', 'aniwatch', 'apahehd']
+        self.remainingProviders = self.embedProviders + self.torrentProviders
         self.torrents_qual_len = [0, 0, 0, 0]
         self.hosters_qual_len = [0, 0, 0, 0]
         self.silent = False
@@ -50,7 +51,7 @@ class Sources(DisplayWindow):
         filter_lang = args['filter_lang']
         media_type = args['media_type']
         rescrape = args['rescrape']
-        source_select = args['source_select']
+        # source_select = args['source_select']
         get_backup = args['get_backup']
         download = args['download']
         self.setProperty('process_started', 'true')
@@ -94,12 +95,6 @@ class Sources(DisplayWindow):
                     threading.Thread(target=self.gogohd_worker, args=(anilist_id, episode, rescrape)))
             else:
                 self.remainingProviders.remove('gogohd')
-
-            if control.getSetting('provider.animix') == 'true':
-                self.threads.append(
-                    threading.Thread(target=self.animixplay_worker, args=(anilist_id, episode, rescrape)))
-            else:
-                self.remainingProviders.remove('animix')
 
             if control.getSetting('provider.animepahe') == 'true':
                 self.threads.append(
@@ -195,11 +190,6 @@ class Sources(DisplayWindow):
         self.nineSources = nineanime.sources().get_sources(anilist_id, episode)
         self.embedSources += self.nineSources
         self.remainingProviders.remove('9anime')
-
-    def animixplay_worker(self, anilist_id, episode, rescrape):
-        self.animixplaySources = animixplay.sources().get_sources(anilist_id, episode)
-        self.embedSources += self.animixplaySources
-        self.remainingProviders.remove('animix')
 
     def animepahe_worker(self, anilist_id, episode, rescrape):
         self.animepaheSources = animepahe.sources().get_sources(anilist_id, episode)

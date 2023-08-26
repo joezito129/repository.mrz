@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.1.8">
+<addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.10">
   <requires>
 <!--    <import addon="xbmc.python" version="3.0.0"/>-->
     <import addon="script.module.beautifulsoup4" version="4.5.3" />
     <import addon="script.module.inputstreamhelper" version="0.3.3" />
     <import addon="context.otaku" version="1.0.13"/>
     <import addon="script.module.requests" version="2.31.0" />
-<!--    <import addon="script.module.six" version="1.15.0"/>-->
 
   </requires>
   <extension library="default.py" point="xbmc.python.pluginsource">
@@ -23,10 +22,18 @@
     <assets>
       <icon>icon.png</icon>
       <fanart>fanart.jpg</fanart>
+<!--      <screenshot>screenshot-1.jpg</screenshot>-->
+<!--      <screenshot>screenshot-2.jpg</screenshot>-->
+<!--      <screenshot>screenshot-3.jpg</screenshot>-->
+<!--      <screenshot>screenshot-4.jpg</screenshot>-->
+<!--      <screenshot>screenshot-5.jpg</screenshot>-->
+<!--      <screenshot>screenshot-6.jpg</screenshot>-->
+<!--      <screenshot>screenshot-7.jpg</screenshot>-->
+<!--      <screenshot>screenshot-8.jpg</screenshot>-->
+<!--      <screenshot>screenshot-9.jpg</screenshot>-->
+<!--      <screenshot>screenshot-10.jpg</screenshot>-->
     </assets>
-    <news>
-Changelog v5.0.8 (2023-08-11):
-- added database._get for AnilistBrowser store for 24 hrs
-    </news>
+<!--    <news>-->
+<!--    </news>-->
   </extension>
 </addon>

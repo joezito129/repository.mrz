@@ -12,7 +12,7 @@ class sources(BrowserBase):
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta.get('ename') or kodi_meta.get('name')
+        title = kodi_meta['ename'] or kodi_meta['name']
         title = self._clean_title(title)
         title = '{0} Ep-{1}'.format(title, episode)
         langs = ['sub', 'dub']
@@ -23,7 +23,7 @@ class sources(BrowserBase):
 
         all_results = []
         for lang in langs:
-            r = anify.ANIFYAPI().get_sources_json(anilist_id, episode, 'gogoanime', lang)
+            r = database.get_(anify.ANIFYAPI().get_sources_json, 8, anilist_id, episode, 'gogoanime', lang)
 
             if r and r.get('sources'):
                 srcs = r['sources']

@@ -2,14 +2,14 @@ import pickle
 import requests
 
 from functools import partial
-from resources.lib.ui import database, utils, control, get_meta
+from resources.lib.ui import database, utils, control
 from resources.lib.indexers import enime
 from resources import jz
 
 
 class CONSUMETAPI:
     def __init__(self):
-        self.baseUrl = f'http://{control.getSetting("consumet.selfhost.ip")}:3000/' if control.getSetting('consumet.selfhost.enable') == 'true' else ''
+        self.baseUrl = f'http://{control.getSetting("consumet.selfhost.ip")}:3000/' if control.getSetting('consumet.selfhost.enable') == 'true' else 'https://api.consumet.org/'
 
     def get_anilist_meta(self, anilist_id):
         r = requests.get(f'{self.baseUrl}meta/anilist/info/{anilist_id}')
@@ -52,13 +52,12 @@ class CONSUMETAPI:
         info['code'] = code
 
         parsed = utils.allocate_item(title, "play/%s" % url, False, image, info, fanart, poster)
-        database._update_episode(anilist_id, season=season, number=res['number'], update_time=update_time,
-                                 kodi_meta=parsed, filler=filler, number_abs=episode_count)
+        database.update_episode(anilist_id, season=season, number=res['number'], number_abs=episode_count,
+                                update_time=update_time, kodi_meta=parsed, filler=filler)
 
         if title_disable and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["number"]}'
             parsed['info']['plot'] = None
-
         return parsed
 
 
@@ -68,13 +67,14 @@ class CONSUMETAPI:
         update_time = date.today().isoformat()
 
         result = self.get_anilist_meta(anilist_id)
-        result_ep = result['episodes']
-
+        result_ep = result.get('episodes')
+        if not result or not result_ep:
+            return []
         season = 1
         s_id = utils.get_season(result)
         if s_id:
             season = int(s_id[0])
-        database._update_season(anilist_id, season)
+        database.update_season(anilist_id, season)
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
                           poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
@@ -106,7 +106,7 @@ class CONSUMETAPI:
                 if i['url'] == "":
                     all_results.pop(inx)
             all_results = sorted(all_results, key=lambda x: x['info']['episode'])
-        control.ok_dialog("Consumet", "Added to Database")
+        control.notify("Consumet", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
     def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None,
@@ -143,13 +143,7 @@ class CONSUMETAPI:
 
         return all_results
 
-    def get_episodes(self, anilist_id):
-        show_meta = database.get_show_meta(anilist_id)
-        if not show_meta:
-            get_meta.get_meta(anilist_id)
-            show_meta = database.get_show_meta(anilist_id)
-            if not show_meta:
-                return [], 'episodes'
+    def get_episodes(self, anilist_id, show_meta):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')

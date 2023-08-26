@@ -10,7 +10,6 @@ class Sources(DisplayWindow):
         self.silent = False
         self.return_data = (None, None, None)
         self.progress = 1
-        self.background_dialog = None
 
     def getSources(self, args):
         self.setProperty('process_started', 'true')

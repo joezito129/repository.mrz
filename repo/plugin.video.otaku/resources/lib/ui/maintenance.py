@@ -6,6 +6,7 @@ from resources.lib.ui import control
 def refresh_apis():
     rd_token = control.getSetting('rd.auth')
     # dl_token = control.getSetting('dl.auth')
+
     kitsu_token = control.getSetting('kitsu.token')
     mal_token = control.getSetting('mal.token')
 

@@ -35,15 +35,14 @@ class KitsuWLF(WatchlistFlavorBase):
             'userid': data2['id'],
             'token': data['access_token'],
             'refresh': data['refresh_token'],
-            'expiry': str(time.time() + int(data['expires_in']))
+            'expiry': str(int(time.time()) + int(data['expires_in']))
         }
-
         return login_data
 
     def refresh_token(self):
         params = {
             "grant_type": "refresh_token",
-            "refresh_token": control.getSetting('kitsu.refresh'),
+            "refresh_token": control.getSetting('kitsu.refresh')
         }
         resp = requests.post(f'{self._URL}/oauth/token', params=params)
 
@@ -53,15 +52,14 @@ class KitsuWLF(WatchlistFlavorBase):
         data = resp.json()
         control.setSetting('kitsu.token', data['access_token'])
         control.setSetting('kitsu.refresh', data['refresh_token'])
-        control.setSetting('kitsu.expiry', str(time.time() + int(data['expires_in'])))
+        control.setSetting('kitsu.expiry', str(int(time.time()) + int(data['expires_in'])))
 
     def __headers(self):
         headers = {
             'Content-Type': 'application/vnd.api+json',
             'Accept': 'application/vnd.api+json',
-            'Authorization': "Bearer {}".format(self._token),
+            'Authorization': "Bearer {}".format(self._token)
         }
-
         return headers
 
     def _handle_paging(self, hasNextPage, base_url, page):
@@ -82,10 +80,9 @@ class KitsuWLF(WatchlistFlavorBase):
         base = {
             "name": res[0],
             "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
-            "image": res[0].lower() + '.png',
-            "plot": '',
+            "image": f'{res[0].lower()}.png',
+            'info': {}
         }
-
         return self._parse_view(base)
 
     def _process_watchlist_status_view(self, url, params, base_plugin_url, page):
@@ -107,7 +104,6 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         url = f'{self._URL}/edge/library-entries'
-
         params = {
             "fields[anime]": "titles,canonicalTitle,posterImage,episodeCount,synopsis,episodeLength,subtype,averageRating,ageRating,youtubeVideoId",
             "filter[user_id]": self._user_id,
@@ -118,8 +114,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "page[offset]": offset,
             "sort": self.__get_sort(),
         }
-
-        return self._process_watchlist_view(url, params, next_up, "watchlist_status_type_pages/kitsu/%s/%%s/%%d" % status, page)
+        return self._process_watchlist_view(url, params, next_up, f'watchlist_status_type_pages/kitsu/{status}/%s/%d', page)
 
     def _process_watchlist_view(self, url, params, next_up, base_plugin_url, page):
         result = requests.get(url, headers=self.__headers(), params=params)
@@ -143,8 +138,9 @@ class KitsuWLF(WatchlistFlavorBase):
         return all_results
 
     def _base_watchlist_view(self, res, eres):
-        _id = eres['id']
-        mal_id = self._mapping_mal(_id)
+        kitsu_id = eres['id']
+        anilist_id = ''
+        mal_id = self._mapping_mal(kitsu_id)
 
         info = {
             'plot': eres['attributes'].get('synopsis'),
@@ -158,22 +154,22 @@ class KitsuWLF(WatchlistFlavorBase):
         base = {
             "name": '%s - %d/%d' % (eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
                                     res["attributes"]['progress'],
-                                    eres["attributes"]['episodeCount'] if eres["attributes"]['episodeCount'] else 0),
-            "url": "watchlist_to_ep/%s/%s/%s" % (mal_id, _id, res["attributes"]['progress']),
+                                    eres["attributes"].get('episodeCount', 0) if eres["attributes"]['episodeCount'] else 0),
+            "url": f'watchlist_to_ep//{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
             "image": eres["attributes"]['posterImage']['large'],
-            "plot": info,
+            "info": info
         }
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = "watchlist_to_movie//%d" % mal_id
-            base['plot']['mediatype'] = 'movie'
+            base['url'] = f'watchlist_to_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
 
         return self._parse_view(base)
 
     def _base_next_up_view(self, res, eres):
-        _id = eres['id']
-        mal_id = self._mapping_mal(_id)
+        kitsu_id = eres['id']
+        mal_id = self._mapping_mal(kitsu_id)
 
         progress = res["attributes"]['progress']
         next_up = progress + 1
@@ -192,6 +188,7 @@ class KitsuWLF(WatchlistFlavorBase):
                 image = next_up_meta['image']
             plot = next_up_meta.get('plot')
             aired = next_up_meta.get('aired')
+
         info = {
             'episode': next_up,
             'title': title,
@@ -203,11 +200,11 @@ class KitsuWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": "watchlist_to_ep/%s/%s/%s" % (mal_id, _id, res["attributes"]['progress']),
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
             "image": image,
-            "plot": info,
+            "info": info,
             "fanart": image,
-            "poster": poster,
+            "poster": poster
         }
 
         if next_up_meta:
@@ -215,8 +212,8 @@ class KitsuWLF(WatchlistFlavorBase):
             return self._parse_view(base, False)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = "play_movie//%d" % mal_id
-            base['plot']['mediatype'] = 'movie'
+            base['url'] = f"play_movie/{anilist_id}/{mal_id}/{kitsu_id}"
+            base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
 
         return self._parse_view(base)

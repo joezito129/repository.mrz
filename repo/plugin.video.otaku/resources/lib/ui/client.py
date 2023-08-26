@@ -1,5 +1,4 @@
 import re
-import sys
 import http.cookiejar
 import gzip
 import time
@@ -74,7 +73,7 @@ def request(
         except BaseException:
             node = ''
 
-        if verify is False and sys.version_info >= (2, 7, 12):
+        if verify is False and control.__sys__.version_info >= (2, 7, 12):
             try:
                 import ssl
                 ssl_context = ssl._create_unverified_context()
@@ -86,7 +85,7 @@ def request(
             except BaseException:
                 pass
 
-        if verify and ((2, 7, 8) < sys.version_info < (2, 7, 12)
+        if verify and ((2, 7, 8) < control.__sys__.version_info < (2, 7, 12)
                        or node == 'XboxOne'):
             try:
                 import ssl
@@ -116,9 +115,9 @@ def request(
         if 'User-Agent' in _headers:
             pass
         elif mobile:
-            _headers['User-Agent'] = database.get(randommobileagent, 1)
+            _headers['User-Agent'] = database.get_(randommobileagent, 1)
         else:
-            _headers['User-Agent'] = database.get(randomagent, 1)
+            _headers['User-Agent'] = database.get_(randomagent, 1)
 
         if 'Referer' in _headers:
             pass
@@ -153,7 +152,7 @@ def request(
                 @staticmethod
                 def http_error_302(req, fp, code, msg, headers):
                     infourl = urllib.response.addinfourl(fp, headers, req.get_full_url())
-                    if sys.version_info < (3, 9, 0):
+                    if control.__sys__.version_info < (3, 9, 0):
                         infourl.status = code
                         infourl.code = code
                     return infourl

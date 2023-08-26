@@ -10,8 +10,6 @@ class ANIFYAPI:
     def get_sources_json(self, anilist_id, episode, provider, lang=''):
         sources = []
         episodes = []
-        if provider not in ['gogoanime', '9anime', 'zoro', 'animepahe']:
-            return sources
 
         params = {
             'apikey': self.apikey

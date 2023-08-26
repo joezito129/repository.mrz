@@ -6,17 +6,12 @@ import time
 import xbmcvfs
 
 from resources.lib.ui import control
+from sqlite3 import OperationalError, dbapi2
 
-try:
-    from sqlite3 import OperationalError
-    from sqlite3 import dbapi2 as db
-except ImportError:
-    from pysqlite2 import OperationalError
-    from pysqlite2 import dbapi2 as db
 
 cache_table = 'cache'
 
-def _get(function, duration, *args, **kwargs):
+def get_(function, duration, *args, **kwargs):
     ## type: (function, int, object) -> object or None
     """
     Gets cached value for provided function with optional arguments, or executes and stores the result
@@ -24,104 +19,46 @@ def _get(function, duration, *args, **kwargs):
     :param duration: Duration of validity of cache in hours
     :param args: Optional arguments for the provided function
     """
-    try:
-        sources = False
-        reload = False
-        if 'animepahe_reload' in kwargs:
-            reload = kwargs['otaku_reload']
-            kwargs.pop('otaku_reload')
+    sources = False
+    reload = False
+    if 'animepahe_reload' in kwargs:
+        reload = kwargs['otaku_reload']
+        kwargs.pop('otaku_reload')
 
-        if 'animepahe_sources' in kwargs:
-            sources = True
-            kwargs.pop('otaku_sources')
+    if 'animepahe_sources' in kwargs:
+        sources = True
+        kwargs.pop('otaku_sources')
 
-        key = _hash_function(function, args, kwargs)
-        cache_result = cache_get(key)
-        if not reload:
-            if cache_result:
-                if _is_cache_valid(cache_result['date'], duration):
-                    try:
-                        return_data = ast.literal_eval(cache_result['value'])
-                        return return_data
-                    except:
-                        return ast.literal_eval(cache_result['value'])
+    key = _hash_function(function, args, kwargs)
+    cache_result = cache_get(key)
+    if not reload:
+        if cache_result:
+            if _is_cache_valid(cache_result['date'], duration):
+                try:
+                    return_data = ast.literal_eval(cache_result['value'])
+                    return return_data
+                except Exception as e:
+                    control.print(f'41: {e}')
+                    return ast.literal_eval(cache_result['value'])
 
-        fresh_result = repr(function(*args, **kwargs))
+    fresh_result = repr(function(*args, **kwargs))
 
-        if fresh_result is None or fresh_result == 'None':
-            # If the cache is old, but we didn't get fresh result, return the old cache
-            if cache_result:
-                return cache_result
-            return None
+    if fresh_result is None or fresh_result == 'None':
+        # If the cache is old, but we didn't get fresh result, return the old cache
+        if cache_result:
+            return cache_result
+        return None
 
-        data = ast.literal_eval(fresh_result)
+    data = ast.literal_eval(fresh_result)
 
-        # Because I'm lazy, I've added this crap code so sources won't cache if there are no results
-        if not sources:
-            cache_insert(key, fresh_result)
-        elif len(data[1]) > 0:
-            cache_insert(key, fresh_result)
-        else:
-            return None
-
-        return data
-
-    except Exception:
-        pass
-
-
-def get(function, duration, *args, **kwargs):
-    ## type: (function, int, object) -> object or None
-    """
-    Gets cached value for provided function with optional arguments, or executes and stores the result
-    :param function: Function to be executed
-    :param duration: Duration of validity of cache in hours
-    :param args: Optional arguments for the provided function
-    """
-    try:
-        sources = False
-        reload = False
-        if 'animepahe_reload' in kwargs:
-            reload = kwargs['otaku_reload']
-            kwargs.pop('otaku_reload')
-
-        if 'animepahe_sources' in kwargs:
-            sources = True
-            kwargs.pop('otaku_sources')
-
-        key = _hash_function(function, args, kwargs)
-        cache_result = cache_get(key)
-        if not reload:
-            if cache_result:
-                if _is_cache_valid(cache_result['date'], duration):
-                    try:
-                        return_data = ast.literal_eval(cache_result['value'])
-                        return return_data
-                    except:
-                        return ast.literal_eval(cache_result['value'])
-
-        fresh_result = repr(function(*args, **kwargs))
-
-        if fresh_result is None or fresh_result == 'None':
-            # If the cache is old, but we didn't get fresh result, return the old cache
-            if cache_result:
-                return cache_result
-            return None
-
-        data = ast.literal_eval(fresh_result)
-
-        # Because I'm lazy, I've added this crap code so sources won't cache if there are no results
-        if not sources:
-            cache_insert(key, fresh_result)
-        elif len(data[1]) > 0:
-            cache_insert(key, fresh_result)
-        else:
-            return None
-
-        return data
-
-    except Exception:
-        pass
+    # Because I'm lazy, I've added this crap code so sources won't cache if there are no results
+    if not sources:
+        cache_insert(key, fresh_result)
+    elif len(data[1]) > 0:
+        cache_insert(key, fresh_result)
+    else:
+        return None
+    return data
 
 
 def _hash_function(function_instance, *args):
@@ -134,32 +71,29 @@ def _get_function_name(function_instance):
 
 def _generate_md5(*args):
     md5_hash = hashlib.md5()
-    try:
-        [md5_hash.update(str(arg)) for arg in args]
-    except:
-        [md5_hash.update(str(arg).encode('utf-8')) for arg in args]
+    [md5_hash.update(str(arg).encode('utf-8')) for arg in args]
     return str(md5_hash.hexdigest())
 
 
 def cache_get(key):
+    control.cacheFile_lock.acquire()
+    cursor = _get_connection_cursor(control.cacheFile)
     try:
-        control.cacheFile_lock.acquire()
-        cursor = _get_connection_cursor(control.cacheFile)
         cursor.execute("SELECT * FROM %s WHERE key = ?" % cache_table, [key])
         results = cursor.fetchone()
         cursor.close()
         return results
     except OperationalError:
-        return None
+        cursor.close()
     finally:
         control.try_release_lock(control.cacheFile_lock)
 
 
 def cache_insert(key, value):
     control.cacheFile_lock.acquire()
+    cursor = _get_connection_cursor(control.cacheFile)
+    now = int(time.time())
     try:
-        cursor = _get_connection_cursor(control.cacheFile)
-        now = int(time.time())
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS %s (key TEXT, value TEXT, date INTEGER, UNIQUE(key))"
             % cache_table
@@ -168,30 +102,23 @@ def cache_insert(key, value):
         cursor.execute("REPLACE INTO %s (key, value, date) VALUES (?, ?, ?)" % cache_table, (key, value, now))
         cursor.connection.commit()
         cursor.close()
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+    except OperationalError:
+        cursor.close()
     finally:
         control.try_release_lock(control.cacheFile_lock)
 
 
 def cache_clear():
+    control.cacheFile_lock.acquire()
+    cursor = _get_connection_cursor(control.cacheFile)
     try:
-        control.cacheFile_lock.acquire()
-        cursor = _get_connection_cursor(control.cacheFile)
-
         for t in [cache_table, 'rel_list', 'rel_lib']:
-            try:
-                cursor.execute("DROP TABLE IF EXISTS %s" % t)
-                cursor.execute("VACUUM")
-                cursor.connection.commit()
-            except:
-                pass
+            cursor.execute("DROP TABLE IF EXISTS %s" % t)
+            cursor.execute("VACUUM")
+            cursor.connection.commit()
         control.showDialog.notification('{}: {}'.format(control.ADDON_NAME, control.lang(30200)), control.lang(30201), time=5000, sound=False)
-    except:
-        pass
+    except OperationalError:
+        cursor.close()
     finally:
         control.try_release_lock(control.cacheFile_lock)
 
@@ -203,11 +130,7 @@ def _is_cache_valid(cached_time, cache_timeout):
 
 
 def makeFile(path):
-    try: xbmcvfs.mkdir(path)
-    except:
-        try:
-            with open(path, 'a+'): pass
-        except: pass
+    xbmcvfs.mkdir(path)
 
 
 def _get_connection_cursor(filepath):
@@ -217,14 +140,14 @@ def _get_connection_cursor(filepath):
 
 def _get_connection(filepath):
     makeFile(control.dataPath)
-    conn = db.connect(filepath)
+    conn = dbapi2.connect(filepath)
     conn.row_factory = _dict_factory
     return conn
 
 
 def _get_db_connection():
     makeFile(control.dataPath)
-    conn = db.connect(control.anilistSyncDB, timeout=60.0)
+    conn = dbapi2.connect(control.anilistSyncDB, timeout=60.0)
     conn.row_factory = _dict_factory
     return conn
 
@@ -252,14 +175,13 @@ def _update_show(anilist_id, mal_id, kodi_meta, last_updated=''):
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
-
-    except:
+    except OperationalError:
         cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
 
-def _update_show_meta(anilist_id, meta_ids, art):
+def update_show_meta(anilist_id, meta_ids, art):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     if isinstance(meta_ids, dict):
@@ -277,8 +199,7 @@ def _update_show_meta(anilist_id, meta_ids, art):
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
-
-    except:
+    except OperationalError:
         cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
@@ -303,7 +224,7 @@ def update_kodi_meta(anilist_id, kodi_meta):
     control.try_release_lock(control.anilistSyncDB_lock)
 
 
-def _update_season(show_id, season):
+def update_season(show_id, season):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     try:
@@ -316,7 +237,7 @@ def _update_season(show_id, season):
         cursor.connection.commit()
         cursor.close()
 
-    except:
+    except OperationalError:
         cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
@@ -336,13 +257,12 @@ def _update_show_data(anilist_id, data={}, last_updated=''):
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
-
-    except:
+    except OperationalError:
         cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
-def _update_episode(show_id, season=0, number=0, number_abs=0, update_time='', kodi_meta={}, filler=''):
+def update_episode(show_id, season=0, number=0, number_abs=0, update_time='', kodi_meta={}, filler=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     kodi_meta = pickle.dumps(kodi_meta)
@@ -355,8 +275,7 @@ def _update_episode(show_id, season=0, number=0, number_abs=0, update_time='', k
             (show_id, season, kodi_meta, update_time, number, number_abs, filler))
         cursor.connection.commit()
         cursor.close()
-
-    except:
+    except OperationalError:
         cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
@@ -441,11 +360,8 @@ def remove_season(anilist_id):
         cursor.execute("DELETE FROM seasons WHERE anilist_id = ?", (anilist_id,))
         cursor.connection.commit()
         cursor.close()
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+    except OperationalError:
+        cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
@@ -457,49 +373,43 @@ def remove_episodes(anilist_id):
         cursor.execute("DELETE FROM episodes WHERE anilist_id = ?", (anilist_id,))
         cursor.connection.commit()
         cursor.close()
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+    except OperationalError:
+        cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
 
 def getSearchHistory(media_type='show'):
+    control.searchHistoryDB_lock.acquire()
+    cursor = _get_connection_cursor(control.searchHistoryDB)
     try:
-        control.searchHistoryDB_lock.acquire()
-        cursor = _get_connection_cursor(control.searchHistoryDB)
         cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
         cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON show (value)")
-
         cursor.execute("SELECT * FROM %s" % media_type)
+
         history = cursor.fetchall()
         cursor.close()
         history.reverse()
         history = history[:50]
-        filter = []
+        filter_ = []
         for i in history:
-            if i['value'] not in filter:
-                filter.append(i['value'])
+            if i['value'] not in filter_:
+                filter_.append(i['value'])
 
-        return filter
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+        return filter_
+    except OperationalError:
+        cursor.close()
         return []
     finally:
         control.try_release_lock(control.searchHistoryDB_lock)
 
 
 def addSearchHistory(search_string, media_type):
+    control.searchHistoryDB_lock.acquire()
+    cursor = _get_connection_cursor(control.searchHistoryDB)
     try:
-        control.searchHistoryDB_lock.acquire()
-        cursor = _get_connection_cursor(control.searchHistoryDB)
         cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
         cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
@@ -512,17 +422,14 @@ def addSearchHistory(search_string, media_type):
 
         cursor.connection.commit()
         cursor.close()
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+    except OperationalError:
+        cursor.close()
         return []
     finally:
         control.try_release_lock(control.searchHistoryDB_lock)
 
 
-def _try_create_torrent_cache(cursor):
+def create_torrent_cache(cursor):
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS %s ("
         "anilist_id INTEGER NOT NULL, "
@@ -535,51 +442,36 @@ def _try_create_torrent_cache(cursor):
 
 
 def addTorrentList(anilist_id, torrent_list, zfill_int):
+    control.torrentScrapeCacheFile_lock.acquire()
+    cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
     try:
-        control.torrentScrapeCacheFile_lock.acquire()
-        cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
-        _try_create_torrent_cache(cursor)
+        create_torrent_cache(cursor)
 
         if isinstance(torrent_list, list):
             torrent_list = pickle.dumps(torrent_list)
-
-        try:
-            cursor.execute("REPLACE INTO %s (anilist_id, sources, zfill) "
-                           "VALUES (?, ?, ?)" % cache_table,
-                           (anilist_id, torrent_list, int(zfill_int)))
-        except:
-            pass
+        cursor.execute("REPLACE INTO %s (anilist_id, sources, zfill) "
+                       "VALUES (?, ?, ?)" % cache_table,
+                       (anilist_id, torrent_list, int(zfill_int)))
 
         cursor.connection.commit()
         cursor.close()
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+    except OperationalError:
+        cursor.close()
         return []
     finally:
         control.try_release_lock(control.torrentScrapeCacheFile_lock)
 
 
 def torrent_cache_clear():
+    control.torrentScrapeCacheFile_lock.acquire()
+    cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
     try:
-        control.torrentScrapeCacheFile_lock.acquire()
-        cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
         for t in [cache_table, 'rel_list', 'rel_lib']:
-            try:
-                cursor.execute("DROP TABLE IF EXISTS %s" % t)
-                cursor.execute("VACUUM")
-                cursor.connection.commit()
-            except:
-                pass
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
-        import traceback
-        traceback.print_exc()
+            cursor.execute("DROP TABLE IF EXISTS %s" % t)
+            cursor.execute("VACUUM")
+            cursor.connection.commit()
+    except OperationalError:
+        cursor.close()
     finally:
         control.try_release_lock(control.torrentScrapeCacheFile_lock)
 
@@ -587,27 +479,21 @@ def torrent_cache_clear():
 
 
 def clearSearchHistory():
+    control.searchHistoryDB_lock.acquire()
+    confirmation = control.yesno_dialog(control.ADDON_NAME, "Clear search history?")
+    if not confirmation:
+        return
+    cursor = _get_connection_cursor(control.searchHistoryDB)
     try:
-        control.searchHistoryDB_lock.acquire()
-        confirmation = control.yesno_dialog(control.ADDON_NAME, "Clear search history?")
-        if not confirmation:
-            return
-        cursor = _get_connection_cursor(control.searchHistoryDB)
         cursor.execute("DROP TABLE IF EXISTS movie")
         cursor.execute("DROP TABLE IF EXISTS show")
-        try:
-            cursor.execute("VACCUM")
-        except:
-            pass
+        cursor.execute("VACCUM")
         cursor.connection.commit()
         cursor.close()
         control.refresh()
         control.showDialog.notification(control.ADDON_NAME, "Search History has been cleared", time=5000)
-    except:
-        try:
-            cursor.close()
-        except:
-            pass
+    except OperationalError:
+        cursor.close()
         return []
     finally:
         control.try_release_lock(control.searchHistoryDB_lock)

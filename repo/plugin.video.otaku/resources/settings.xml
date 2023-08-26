@@ -4,29 +4,31 @@
 	<category label="JZ Settings">
 		<!-- General -->
 		<setting type="lsep" label="General"/>
-		<setting id="jz.wait.enable" label="enable move to episode on" type="bool" default="true" />
-		<setting id="jz.wait.time" label="Wait time in ms" type="slider" option="int" range="300,100,3000" default="500" subsetting="true" visible="eq(-1,true) "/>
 		<setting id="jz.dub" label="Show Dub Release Dates" type="bool" default="true"/>
 <!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true"/>-->
+
 		<setting id="jz.filler" label="Show Filler Info If Found" type="bool" default="true" />
+
 		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
 		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
-<!--		<setting id="general.download.enable" label="Enable Downloads" type="bool" default="false"/>-->
 		<setting id="download.location" label="Download Location" type="folder" default="" />
-<!--		<setting id="context.mal.enable" label="[COLOR red]Testing MAL global context menu[/COLOR]" type="bool" default="true" />-->
 	</category>
 	<!-- General -->
 	<category label="40300">
 		<!-- General -->
 		<setting id="titlelanguage" type="labelenum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="English (Attack on Titan)"/>
 		<setting id="searchhistory" type="labelenum" label="40301" values="Yes|No" default="Yes"/>
+		<setting id="general.smart.scroll.enable" label="enable move to episode on" type="bool" default="true" />
+		<setting id="general.scroll.wait.time" label="Wait time in ms" type="slider" option="int" range="300,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
+		<setting type="lsep" label="Language Invoker"/>
 		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:    [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
 			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
 		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
 
 		<!-- Interface -->
 		<setting type="lsep" label="Meta Api" />
-		<setting id="meta.api" type="labelenum" label="Meta Api" values="enime|consumet|simkl" default="enime" />
+		<setting id="overide.meta.api" type="bool" label="Enable Choose Meta Api" default="false" />
+		<setting id="meta.api" type="labelenum" label="Meta Api" values="enime|consumet|simkl" default="enime" visible="eq(-1,true)"/>
 		<setting id="consumet.selfhost.enable" type="bool" label="Enable Consumet Self Hosting" default="false" />
 		<setting id="consumet.selfhost.ip" type="ipaddress" label="SelfHosting IP Address: " visible="eq(-1,true)" />
 		<setting type="lsep" label="40302"/>
@@ -50,8 +52,10 @@
 		<setting id="provider.nineanime" type="bool" label="9Anime" default="true" />
 		<setting id="provider.apahehd" type="bool" label="ApaheHD" default="true" />
 		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
-		<setting id="provider.animix" type="bool" label="Animix" default="false" />
-		<setting id="provider.aniwatch" type="bool" label="Aniwatch" default="false" />
+		<setting id="provider.aniwatch" type="bool" label="Aniwatch" default="true" />
+
+		<!-- Broken providers -->
+		<setting id="provider.animix" type="bool" label="Animix" default="false" visible="false"/>
 	</category>
 
 	<!-- Playback -->

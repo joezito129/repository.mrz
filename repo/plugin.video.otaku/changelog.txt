@@ -1,3 +1,15 @@
+Changelog v5.0.10 (2023-08-26):
+- Fixed naming with watchlist context menu
+- Fixed delete from database payload error
+- Removed bare excepts
+
+Changelog v5.0.9 (2023-08-21):
+- Started fixing kitsu watchlist
+- Changed ok dialog to notify
+- Fixed Mark as Watched Watchlist
+- Improved Meta Api
+- Fixed Aniwatch
+
 Changelog v5.0.8 (2023-08-11):
 - added database._get for AnilistBrowser store for 24 hrs
 

@@ -133,7 +133,7 @@ class Premiumize:
         return self.post_url('/cache/check', data=post_data)
 
     def updateRelevantHosters(self):
-        hoster_list = database.get(self.post_url, 1, '/services/list', {})
+        hoster_list = database.get_(self.post_url, 1, '/services/list', {})
         return hoster_list
 
     def resolve_hoster(self, source):
@@ -240,7 +240,7 @@ class Premiumize:
 
     def get_hosters(self, hosters):
 
-        host_list = database.get(self.updateRelevantHosters, 1)
+        host_list = database.get_(self.updateRelevantHosters, 1)
         if host_list is None:
             host_list = self.updateRelevantHosters()
 

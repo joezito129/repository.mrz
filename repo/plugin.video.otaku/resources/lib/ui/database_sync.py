@@ -2,19 +2,14 @@ import os
 import xbmcvfs
 
 from resources.lib.ui import control
+from sqlite3 import dbapi2
 
-
-try:
-    from sqlite3 import dbapi2 as db
-except ImportError:
-    from pysqlite2 import dbapi2 as db
 
 database_path = control.anilistSyncDB
 
 
 class AnilistSyncDatabase:
     def __init__(self):
-
         self.activites = {}
 
         self._build_show_table()
@@ -163,8 +158,7 @@ class AnilistSyncDatabase:
                        'number_abs INTEGER,'
                        'filler TEXT, '
                        'FOREIGN KEY(anilist_id) REFERENCES shows(anilist_id) ON DELETE CASCADE)')
-        cursor.execute(
-            'CREATE UNIQUE INDEX IF NOT EXISTS ix_episodes ON episodes (anilist_id ASC, season ASC, number ASC)')
+        cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_episodes ON episodes (anilist_id ASC, season ASC, number ASC)')
         cursor.connection.commit()
         cursor.close()
         control.try_release_lock(control.anilistSyncDB_lock)
@@ -224,6 +218,6 @@ def _dict_factory(cursor, row):
 
 def _get_connection():
     xbmcvfs.mkdir(control.dataPath)
-    conn = db.connect(database_path, timeout=60.0)
+    conn = dbapi2.connect(database_path, timeout=60.0)
     conn.row_factory = _dict_factory
     return conn

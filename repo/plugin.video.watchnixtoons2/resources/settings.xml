@@ -35,5 +35,9 @@
     <category label="14260">
         <setting type="lsep" label="30019"/>
         <setting id="useHTTP" label="30020" type="bool" default="false"/>
+        <setting type="lsep" label="Language Invoker"/>
+        <setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
+			 action="RunPlugin(plugin://plugin.video.watchnixtoons2?action=toggleLanguageInvoker)" />
+		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
     </category>
 </settings>

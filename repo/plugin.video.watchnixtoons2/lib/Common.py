@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-
 import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcvfs
-
 import json
-
-import six
 
 try:
     import md5
@@ -17,7 +13,14 @@ except ImportError:
     from hashlib import md5
 
 ADDON = xbmcaddon.Addon()
-KODI_VERSION = float(xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')[:4])
+ADDON_NAME = ADDON.getAddonInfo('name')
+ADDON_PATH = ADDON.getAddonInfo('path')
+
+def print(string, *args):
+    for i in list(args):
+        string = f'{string} {i}'
+    xbmcgui.Dialog().textviewer('print', f'{string}')
+    del args, string
 
 def getWindowProperty(prop):
     window = xbmcgui.Window(xbmcgui.getCurrentWindowId())
@@ -54,9 +57,6 @@ def setViewMode():
 
 
 def unescapeHTMLText(text):
-
-    if isinstance(text, six.text_type) and six.PY2:
-        text = text.encode('utf-8')
     # Unescape HTML entities.
     if r'&#' in text:
         # Strings found by regex-searching on all lists in the source website.
@@ -72,32 +72,25 @@ def xbmcDebug(*args):
     xbmc.log('WatchNixtoons2 > ' + ' '.join((val if isinstance(val, str) else repr(val)) for val in args), xbmc.LOGWARNING)
 
 
-# line item set info
-# Fix listitem deprecated warnings
-def item_set_info( line_item, properties ):
-    if KODI_VERSION > 19.8:
-        vidtag = line_item.getVideoInfoTag()
-        if properties.get( 'title' ):
-            vidtag.setTitle( properties.get( 'title' ) )
-        if properties.get( 'plot' ):
-            vidtag.setPlot( properties.get( 'plot' ) )
-        if properties.get( 'tvshowtitle' ):
-            vidtag.setTvShowTitle( properties.get( 'tvshowtitle' ) )
-        if properties.get( 'season' ):
-            vidtag.setSeason( properties.get( 'season' ) )
-        if properties.get( 'episode' ):
-            vidtag.setEpisode( properties.get( 'episode' ) )
-        if properties.get('mediatype'):
-            vidtag.setMediaType(properties.get('mediatype'))
-    else:
-        line_item.setInfo('video', properties)
+def item_set_info(line_item, properties):
+    vidtag = line_item.getVideoInfoTag()
+    if properties.get('title'):
+        vidtag.setTitle( properties['title'])
+    if properties.get('plot'):
+        vidtag.setPlot(properties['plot'])
+    if properties.get('tvshowtitle'):
+        vidtag.setTvShowTitle( properties['tvshowtitle'])
+    if properties.get('season'):
+        vidtag.setSeason(properties['season'])
+    if properties.get('episode'):
+        vidtag.setEpisode(properties['episode'])
+    if properties.get('mediatype'):
+        vidtag.setMediaType(properties['mediatype'])
 
 
 # method to translate path for both PY2 & PY3
 # stops all the if else statements
 def translate_path(path):
-    if six.PY2:
-        return xbmc.translatePath( path )
     return xbmcvfs.translatePath( path )
 
 def ensure_path_exists(path):
@@ -110,17 +103,39 @@ def ensure_path_exists(path):
         os.mkdir(addon_data_path)
         xbmc.sleep(1)
         return True
-
     return False
 
 # generates a MD5 hash
 def generateMd5(strToMd5):
-
-    if six.PY2:
-        md5_instance = md5.new()
-    else:
-        md5_instance = md5()
-        strToMd5 = bytes(strToMd5, 'UTF-8')
-
+    md5_instance = md5()
+    strToMd5 = bytes(strToMd5, 'UTF-8')
     md5_instance.update(strToMd5)
     return md5_instance.hexdigest()
+
+def toggle_reuselanguageinvoker(forced_state=None):
+    import os
+    import xbmc
+
+    def _store_and_reload(output):
+        with open(file_path, "w+") as addon_xml_:
+            addon_xml_.writelines(output)
+        xbmcgui.Dialog().ok(ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
+        xbmc.executebuiltin('LoadProfile({})'.format(xbmc.getInfoLabel("system.profilename")))
+
+    file_path = os.path.join(ADDON_PATH, "addon.xml")
+
+    with open(file_path, "r") as addon_xml:
+        file_lines = addon_xml.readlines()
+
+    for i in range(len(file_lines)):
+        line_string = file_lines[i]
+        if "reuselanguageinvoker" in file_lines[i]:
+            if ("false" in line_string and forced_state is None) or ("false" in line_string and forced_state):
+                file_lines[i] = file_lines[i].replace("false", "true")
+                ADDON.setSetting("reuselanguageinvoker.status", "Enabled")
+                _store_and_reload(file_lines)
+            elif ("true" in line_string and forced_state is None) or ("true" in line_string and forced_state is False):
+                file_lines[i] = file_lines[i].replace("true", "false")
+                ADDON.setSetting("reuselanguageinvoker.status", "Disabled")
+                _store_and_reload(file_lines)
+            break

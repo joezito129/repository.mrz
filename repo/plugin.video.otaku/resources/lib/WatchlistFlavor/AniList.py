@@ -45,7 +45,7 @@ class AniListWLF(WatchlistFlavorBase):
             "name": res[0],
             "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
             "image": '%s.png' % res[0].lower(),
-            "info": '',
+            "info": {}
         }
         return self._parse_view(base)
 
@@ -238,6 +238,10 @@ class AniListWLF(WatchlistFlavorBase):
     def _base_watchlist_status_view(self, res):
         progress = res['progress']
         res = res['media']
+
+        anilist_id = res['id']
+        mal_id = res.get('idMal', '')
+        kitsu_id = ''
         title = res['title'].get(self._title_lang) or res['title'].get('userPreferred')
 
         info = {
@@ -287,7 +291,7 @@ class AniListWLF(WatchlistFlavorBase):
 
         base = {
             "name": '%s - %d/%d' % (title, progress, res['episodes'] if res['episodes'] else 0),
-            "url": "watchlist_to_ep/%d/%s/%d" % (res['id'], res.get('idMal', ''), progress),
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{progress}',
             "image": res['coverImage']['extraLarge'],
             "poster": res['coverImage']['extraLarge'],
             "fanart": res['coverImage']['extraLarge'],
@@ -295,7 +299,7 @@ class AniListWLF(WatchlistFlavorBase):
             "info": info
         }
 
-        show_meta = database.get_show_meta(res['id'])
+        show_meta = database.get_show_meta(anilist_id)
         if show_meta:
             art = pickle.loads(show_meta['art'])
             if art.get('fanart'):
@@ -308,7 +312,7 @@ class AniListWLF(WatchlistFlavorBase):
                 base['clearlogo'] = random.choice(art['clearlogo'])
 
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = "watchlist_to_movie/%d/%s" % (res['id'], res.get('idMal', ''))
+            base['url'] = f'watchlist_to_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
 
@@ -317,6 +321,11 @@ class AniListWLF(WatchlistFlavorBase):
     def _base_next_up_view(self, res):
         progress = res['progress']
         res = res['media']
+
+        anilist_id = res['id']
+        mal_id = res.get('idMal', '')
+        kitsu_id = ''
+
         next_up = progress + 1
         episode_count = res['episodes'] if res['episodes'] is not None else 0
         base_title = res['title'].get(self._title_lang) or res['title'].get('userPreferred')
@@ -327,7 +336,7 @@ class AniListWLF(WatchlistFlavorBase):
         if (0 < episode_count < next_up) or (res['nextAiringEpisode'] and next_up == res['nextAiringEpisode']['episode']):
             return None
 
-        anilist_id, next_up_meta = self._get_next_up_meta('', progress, res['id'])
+        anilist_id, next_up_meta = self._get_next_up_meta('', progress, anilist_id)
         if next_up_meta:
             url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):
@@ -349,14 +358,14 @@ class AniListWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": "watchlist_to_ep/%d/%s/%d" % (res['id'], res.get('idMal', ''), progress),
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{progress}',
             "image": image,
             "info": info,
             "fanart": image,
-            "poster": poster,
+            "poster": poster
         }
 
-        show_meta = database.get_show_meta(res['id'])
+        show_meta = database.get_show_meta(anilist_id)
         if show_meta:
             art = pickle.loads(show_meta['art'])
             if art.get('fanart'):
@@ -369,9 +378,10 @@ class AniListWLF(WatchlistFlavorBase):
                 base['clearlogo'] = random.choice(art['clearlogo'])
 
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = "play_movie/%d/%s" % (res['id'], res.get('idMal', ''))
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
+
         if next_up_meta:
             base['url'] = url
             return self._parse_view(base, False)
@@ -391,9 +401,9 @@ class AniListWLF(WatchlistFlavorBase):
 
     def __headers(self):
         headers = {
-            'Authorization': 'Bearer ' + self._token,
+            'Authorization': f'Bearer {self._token}',
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            'Accept': 'application/json'
         }
         return headers
 
@@ -463,7 +473,7 @@ class AniListWLF(WatchlistFlavorBase):
         '''
 
         variables = {
-            'id': int(list_id),
+            'id': int(list_id)
         }
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         return r

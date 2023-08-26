@@ -1,7 +1,7 @@
 import xbmc, xbmcgui, xbmcplugin
-import sys
+import requests
 
-from resources.lib.ui import client, control, utils, database
+from resources.lib.ui import control, utils, database, client
 from urllib import parse
 from resources.lib.indexers import aniskip
 
@@ -99,7 +99,7 @@ class watchlistPlayer(player):
 
     def onPlayBackError(self):
         playList.clear()
-        sys.exit(1)
+        control.exit_(1)
 
     def getWatchedPercent(self):
         current_position = self.getTime()
@@ -121,7 +121,6 @@ class watchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
-
         for _ in range(60):
             xbmc.sleep(500)
             if self.isPlayingVideo():
@@ -151,10 +150,10 @@ class watchlistPlayer(player):
                         break
                     elif self.skipintro_end_skip_time == 9999:
                         if self.current_time >= self.delay_time:
-                            PlayerDialogs()._show_skip_intro()
+                            PlayerDialogs().show_skip_intro()
                             break
                     elif self.current_time > self.skipintro_start_skip_time:
-                        PlayerDialogs()._show_skip_intro()
+                        PlayerDialogs().show_skip_intro()
                         break
                     xbmc.sleep(500)
             else:
@@ -163,7 +162,7 @@ class watchlistPlayer(player):
                     if self.current_time > 240:
                         break
                     elif self.current_time >= self.delay_time:
-                        PlayerDialogs()._show_skip_intro()
+                        PlayerDialogs().show_skip_intro()
                         break
                     xbmc.sleep(500)
 
@@ -202,7 +201,7 @@ class PlayerDialogs(xbmc.Player):
                         actionArgs=self._get_next_item_args()).doModal()
 
     @staticmethod
-    def _show_skip_intro():
+    def show_skip_intro():
         from resources.lib.windows.skip_intro import SkipIntro
         SkipIntro(*('skip_intro.xml', control.ADDON_PATH), actionArgs={'item_type': 'skip_intro'}).doModal()
 
@@ -228,42 +227,43 @@ def cancelPlayback():
 
 
 def _prefetch_play_link(link):
-    if callable(link):
-        control.print('callable link')
-        link = link()
-
     if not link:
         return
     url = link
-    headers = {}
 
     if '|' in url:
         url, hdrs = link.split('|')
         headers = dict([item.split('=') for item in hdrs.split('&')])
         for header in headers:
             headers[header] = parse.unquote_plus(headers[header])
+    else:
+        headers = None
 
-    limit = None if '.m3u8' in url else '0'
-
-    linkInfo = client.request(url, headers=headers, limit=limit, output='extended', error=True)
+    try:
+        r = requests.get(url, headers=headers, stream=True)
+    except requests.exceptions.SSLError:
+        limit = None if '.m3u8' in url else '0'
+        linkInfo = client.request(url, headers=headers, limit=limit, output='extended', error=True)
+        return {
+            "url": link if '|' in link else linkInfo[5],
+            "headers": linkInfo[2]
+        }
+    except Exception as e:
+        control.ok_dialog(control.ADDON_NAME, str(e))
+        return
 
     return {
-        "url": link if '|' in link else linkInfo[5],
-        "headers": linkInfo[2]
+        "url": link if '|' in link else r.url,
+        "headers": r.headers
     }
 
 
 def play_source(link, anilist_id=None, watchlist_update=None, build_playlist=None, episode=None, filter_lang=None, rescrape=False, source_select=False, subs=None):
-    try:
-        if isinstance(link, tuple):
-            link, subs = link
-        linkInfo = _prefetch_play_link(link)
-        if not linkInfo:
-            cancelPlayback()
-            return
-    except Exception as e:
+    if isinstance(link, tuple):
+        link, subs = link
+    linkInfo = _prefetch_play_link(link)
+    if not linkInfo:
         cancelPlayback()
-        control.ok_dialog(control.ADDON_NAME, str(e))
         return
 
     item = xbmcgui.ListItem(path=linkInfo['url'])

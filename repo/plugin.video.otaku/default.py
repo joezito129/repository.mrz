@@ -48,10 +48,10 @@ def add_last_watched(items):
 @route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
     payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 3:
-        path, anilist_id, mal_id = payload_list
+    if len(payload_list) == 4:
+        path, anilist_id, mal_id, kitsu_id = payload_list
     else:
-        path, anilist_id, mal_id, eps_watched = payload_list
+        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
 
     if not anilist_id:
         try:
@@ -71,12 +71,11 @@ def RECOMMENDATIONS_NEXT(payload, params):
 
 @route('find_relations/*')
 def FIND_RELATIONS(payload, params):
-    control.print(payload)
     payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 3:
-        path, anilist_id, mal_id = payload_list
+    if len(payload_list) == 4:
+        path, anilist_id, mal_id, kitsu_id = payload_list
     else:
-        path, anilist_id, mal_id, eps_watched = payload_list
+        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -89,19 +88,22 @@ def FIND_RELATIONS(payload, params):
 @route('watch_order/*')
 def WATCH_ORDER(payload, params):
     payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 3: path, anilist_id, mal_id = payload_list
-    else: path, anilist_id, mal_id, eps_watched = payload_list
-    if not mal_id: mal_id = database.get_show(anilist_id)['mal_id']
+    if len(payload_list) == 4:
+        path, anilist_id, mal_id, kitsu_id = payload_list
+    else:
+        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+    if not mal_id:
+        mal_id = database.get_show(anilist_id)['mal_id']
     return control.draw_items(_ANILIST_BROWSER.get_watch_order(mal_id))
 
 @route('animes/*')
 def ANIMES_PAGE(payload, params):
     payload_list = payload.rsplit("/")
-    if len(payload_list) == 2:
-        anilist_id, mal_id = payload_list
+    if len(payload_list) == 3:
+        anilist_id, mal_id, kitsu_id = payload_list
     else:
         from resources.lib.WatchlistFlavor import WatchlistFlavor
-        anilist_id, mal_id, null = payload_list
+        anilist_id, mal_id, kitsu_id, null = payload_list
         flavor = WatchlistFlavor.get_update_flavor()
         data = flavor.get_watchlist_anime_entry(anilist_id)
         show_meta = database.get_show(anilist_id)
@@ -214,7 +216,7 @@ def PLAY(payload, params):
 @route('play_movie/*')
 def PLAY_MOVIE(payload, params):
     payload_list = payload.rsplit("/")
-    anilist_id, mal_id = payload_list
+    anilist_id, mal_id, kitsu_id = payload_list
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     if not anilist_id:
@@ -235,6 +237,7 @@ def PLAY_MOVIE(payload, params):
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
         link = resolver.doModal(sources, {}, False)
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, source_select=source_select, rescrape=rescrape)
+
 
 @route('download/*')
 def DOWNLOAD(payload, params):
@@ -259,19 +262,24 @@ def MARKED_AS_WATCHED(payload, params):
     play, anilist_id, episode, filter_lang = payload.rsplit("/")
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(anilist_id, episode)
-    control.ok_dialog(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
+    control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
     plugin = 'plugin://plugin.video.otaku'
-    mal_id = database.get_show(anilist_id)['mal_id']
-    control.execute('ActivateWindow(Videos,%s/watchlist_to_ep/%s/%s/%s)' % (plugin, anilist_id, mal_id, episode))
+    show_meta  = database.get_show(anilist_id)
+    kitsu_id = show_meta['kitsu_id'] # todo kitsu_id is None right now needs to be fixed
+    mal_id = show_meta['mal_id']
+    control.execute(f'ActivateWindow(Videos,{plugin}/watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{episode})')
 
 
 @route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload, params):
     payload_list = payload.rsplit("/")
-    if len(payload_list) == 3: path, anilist_id, mal_id = payload_list
-    else: path, anilist_id, mal_id, eps_watched = payload_list
+    if len(payload_list) == 4:
+        path, anilist_id, mal_id, kitsu_id = payload_list
+    else:
+        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
     if not anilist_id:
-        try: anilist_id = database.get_show_mal(mal_id)['anilist_id']
+        try:
+            anilist_id = database.get_show_mal(mal_id)['anilist_id']
         except TypeError:
             from resources.lib.AniListBrowser import AniListBrowser
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
@@ -279,7 +287,7 @@ def DELETE_ANIME_DATABASE(payload, params):
 
     database.remove_episodes(anilist_id)
     database.remove_season(anilist_id)
-    control.ok_dialog(control.ADDON_NAME, 'Removed from database')
+    control.notify(control.ADDON_NAME, 'Removed from database')
 
 
 @route('authRealDebrid')
@@ -287,21 +295,20 @@ def authRealDebrid(payload, params):
     from resources.lib.debrid.real_debrid import RealDebrid
     RealDebrid().auth()
 
-# @route('authAllDebrid')
-# def authAllDebrid(payload, params):
-#     from resources.lib.debrid.all_debrid import AllDebrid
-#     AllDebrid().auth()
-#
-#
-# @route('authDebridLink')
-# def authDebridLink(payload, params):
-#     from resources.lib.debrid.debrid_link import DebridLink
-#     DebridLink().auth()
-#
-# @route('authPremiumize')
-# def authPremiumize(payload, params):
-#     from resources.lib.debrid.premiumize import Premiumize
-#     Premiumize().auth()
+@route('authAllDebrid')
+def authAllDebrid(payload, params):
+    from resources.lib.debrid.all_debrid import AllDebrid
+    AllDebrid().auth()
+
+@route('authDebridLink')
+def authDebridLink(payload, params):
+    from resources.lib.debrid.debrid_link import DebridLink
+    DebridLink().auth()
+
+@route('authPremiumize')
+def authPremiumize(payload, params):
+    from resources.lib.debrid.premiumize import Premiumize
+    Premiumize().auth()
 
 
 @route('settings')
@@ -341,8 +348,7 @@ def TOOLS_MENU(payload, params):
         (control.lang(30021), "clear_cache", 'clear_cache.png'),
         (control.lang(30022), "clear_torrent_cache", 'clear_local_torrent_cache.png'),
         (control.lang(30023), "clear_history", 'clear_search_history.png'),
-        (control.lang(30026), "rebuild_database", 'rebuild_database.png'),
-
+        (control.lang(30026), "rebuild_database", 'rebuild_database.png')
         # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
         # ("Check Python Version", "py_version", "")
     ]
@@ -372,19 +378,18 @@ def LIST_MENU(payload, params):
 
 
 if __name__ == "__main__":
-    # from urllib import parse
-    # import sys
-    # addon_base = "plugin://%s/" % control.ADDON_ID
-    # router_process(sys.argv[0][len(addon_base):], dict(parse.parse_qsl(sys.argv[2].replace('?', ''))))
-
     router_process(control.get_plugin_url(), control.get_plugin_params())
-    if not player.player().isPlaying() and len(player.playList) != 0: player.playList.clear()
+    if len(player.playList) != 0 and not player.player().isPlaying():
+        player.playList.clear()
 
-    # t1 = time.perf_counter_ns()
-    # totaltime = (t1-t0)/1_000_000
-    # control.print(totaltime, 'ms')
+
+# t1 = time.perf_counter_ns()
+# totaltime = (t1-t0)/1_000_000
+# control.print(totaltime, 'ms')
 
 # todo
 # get rid of bare excepts
+# get rid of client module
 
+# fix last_watching when not signed into watchlist
 # todo

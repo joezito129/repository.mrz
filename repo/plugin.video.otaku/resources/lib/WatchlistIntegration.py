@@ -12,9 +12,8 @@ def get_anilist_res(mal_id):
 
 
 def get_auth_dialog(flavor):
-    import sys
     from resources.lib.windows import wlf_auth
-    platform = sys.platform
+    platform = control.__sys__.platform
     if 'linux' in platform:
         auth = wlf_auth.AltWatchlistFlavorAuth(flavor).set_settings()
     else:
@@ -55,7 +54,7 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
 @route('watchlist_to_ep/*')
 def WATCHLIST_TO_EP(payload, params):
     payload_list = payload.rsplit("/")
-    anilist_id, mal_id, eps_watched = payload_list
+    anilist_id, mal_id, kitsu_id, eps_watched = payload_list
     if mal_id:
         show_meta = database.get_show_mal(mal_id)
         if not show_meta:
@@ -74,20 +73,22 @@ def WATCHLIST_TO_EP(payload, params):
 
 @route('watchlist_context/*')
 def CONTEXT_MENU(payload, params):
-    payload_list = payload.rsplit('/')
+    payload_list = payload.rsplit('/')[1:]
     if len(payload_list) == 5:
-        none, path, anilist_id, mal_id, eps_watched = payload_list
+        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
     else:
-        none, path, anilist_id, mal_id = payload_list
+        path, anilist_id, mal_id, kitsu_id = payload_list
 
     if not mal_id:
-        show_meta = database.get_show(anilist_id)
-        if show_meta:
-            mal_id = show_meta['mal_id']
+        show = database.get_show(anilist_id)
+        if show:
+            mal_id = show['mal_id']
     if not anilist_id:
-        show_meta = database.get_show_mal(mal_id)
-        if show_meta:
-            anilist_id = show_meta['anilist_id']
+        show = database.get_show_mal(mal_id)
+        if show:
+            anilist_id = show['anilist_id']
+    else:
+        show = None
 
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor.flavor_name == 'mal':
@@ -112,11 +113,11 @@ def CONTEXT_MENU(payload, params):
             ("Delete", "DELETE")
         ]
 
-    show = database.get_show(anilist_id)
     if not show:
         show = get_anilist_res(mal_id)
+
     kodi_meta = pickle.loads(show['kodi_meta'])
-    title = kodi_meta['ename']
+    title = kodi_meta['title_userPreferred'] or kodi_meta['name']
 
     mal_context = control.select_dialog(title, list(map(lambda x: x[0], actions)))
     if mal_context != -1:
@@ -126,7 +127,7 @@ def CONTEXT_MENU(payload, params):
                                          f'Are you sure you want to delete "{title}" from {flavor.flavor_name}\n    Press YES to Continue')
             if yesno:
                 delete_watchlist_anime(anilist_id)
-                control.ok_dialog(control.ADDON_NAME, f'"{title}" was deleted from {flavor.flavor_name}')
+                control.notify(control.ADDON_NAME, f'"{title}" was deleted from {flavor.flavor_name}')
         elif status == 'set_score':
             score_list = [
                 "(10) Masterpiece",
@@ -145,10 +146,10 @@ def CONTEXT_MENU(payload, params):
             if score != -1:
                 score = 10 - score
                 set_watchlist_score(anilist_id, score)
-                control.ok_dialog(control.ADDON_NAME, f'{title} was set to {score}')
+                control.notify(control.ADDON_NAME, f'{title} was set to {score}')
         else:
             set_watchlist_status(anilist_id, status)
-            control.ok_dialog(control.ADDON_NAME, f'"{title}" was added to "{status}"')
+            control.notify(control.ADDON_NAME, f'"{title}" was added to "{status}"')
 
 def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()
@@ -160,7 +161,6 @@ def add_watchlist(items):
                 flavor.image,
             ))
     return items
-
 
 def watchlist_update_episode(anilist_id, episode):
     flavor = WatchlistFlavor.get_update_flavor()

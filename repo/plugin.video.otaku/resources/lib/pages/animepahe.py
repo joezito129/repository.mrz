@@ -1,8 +1,7 @@
-import json
 import pickle
 
 from bs4 import BeautifulSoup, SoupStrainer
-from resources.lib.ui import database, source_utils
+from resources.lib.ui import database, source_utils, utils
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
@@ -12,33 +11,25 @@ class sources(BrowserBase):
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta.get('name')
+        title = kodi_meta['name']
         title = self._clean_title(title)
-        headers = {'Referer': self._BASE_URL}
-        params = {'m': 'search',
-                  'q': title}
-        r = database.get(
-            self._get_request,
-            8,
-            self._BASE_URL + 'api',
-            data=params,
-            headers=headers,
-            XHR=True
-        )
-        items = json.loads(r).get('data')
+        headers = {
+            'Referer': self._BASE_URL
+        }
+        params = {
+            'm': 'search',
+            'q': title
+        }
+        r = database.get_(utils.database_request_get, 8,
+                          f'{self._BASE_URL}api', params=params, headers=headers)
 
+        items = r.get('data')
         if not items and ':' in title:
             title = title.split(':')[0]
             params.update({'q': title})
-            r = database.get(
-                self._get_request,
-                8,
-                self._BASE_URL + 'api',
-                data=params,
-                headers=headers,
-                XHR=True
-            )
-            items = json.loads(r).get('data')
+            r = database.get_(utils.database_request_get, 8,
+                f'{self._BASE_URL}api', params=params, headers=headers)
+            items = r.get('data')
 
         all_results = []
         if items:
@@ -52,7 +43,7 @@ class sources(BrowserBase):
         return all_results
 
     def _process_ap(self, slug, title, episode):
-        sources = []
+        sources_ = []
         e_num = int(episode)
         big_series = e_num > 30
         page = 1
@@ -65,16 +56,12 @@ class sources(BrowserBase):
             'sort': 'episode_asc',
             'page': page
         }
-        headers = {'Referer': self._BASE_URL}
-        r = database.get(
-            self._get_request,
-            8,
-            self._BASE_URL + 'api',
-            data=params,
-            headers=headers,
-            XHR=True
-        )
-        r = json.loads(r)
+        headers = {
+            'Referer': self._BASE_URL
+        }
+        r = database.get_(utils.database_request_get, 8,
+                          f'{self._BASE_URL}api', params=params, headers=headers)
+
         items = r.get('data')
         items = sorted(items, key=lambda x: x.get('episode'))
 
@@ -83,8 +70,9 @@ class sources(BrowserBase):
 
         items = [x for x in items if x.get('episode') == e_num]
         if items:
-            eurl = self._BASE_URL + 'play/' + slug + '/' + items[0].get('session')
-            html = self._get_request(eurl, headers=headers)
+            eurl = f'{self._BASE_URL}play/{slug}/{items[0].get("session")}'
+            html = database.get_(utils.database_request_get, 8,
+                                 eurl, headers=headers, text=True)
             mlink = SoupStrainer('div', {'id': 'resolutionMenu'})
             mdiv = BeautifulSoup(html, "html.parser", parse_only=mlink)
             items = mdiv.find_all('button')
@@ -110,6 +98,6 @@ class sources(BrowserBase):
                     'info': [source_utils.get_embedhost(item.get('data-src')), 'DUB' if item.get('data-audio') == 'eng' else 'SUB'],
                     'lang': 2 if item.get('data-audio') == 'eng' else 0
                 }
-                sources.append(source)
+                sources_.append(source)
 
-        return sources
+        return sources_
