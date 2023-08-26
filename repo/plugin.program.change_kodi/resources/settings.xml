@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+	<category label="Video">
+		<!-- Video -->
+		<setting type="lsep" label="Video"/>
+		<setting id="video.ignoresecondsatstart" label="Ignore Seconds at Start" type="slider" option="int" default="180" range="0,5,300"/>
+		<setting id="video.ignorepercentatend" label="Ignore Percent at End.    [COLOR red][B]This is % not seconds[/B][/COLOR]" type="slider" option="int" default="20" range="0,101" />
+		<setting id="video.playcountminimumpercent" label="Playcount Minimum Percent" type="slider" option="int" default="80" range="0,101" />
+	</category>
+	<category label="Network">
+		<!-- Network -->
+		<setting type="lsep" label="Network"/>
+		<setting id="network.curllowspeedtime" label="Curl low speed time" type="slider" option="int" default="120" range="10,200"/>
+		<setting id="network.curlclienttimeout" label="Curl Client timeout" type="slider" option="int" default="120" range="10,200"/>
+		<setting id="network.disablehttp2" label="Disable http2" type="bool" default="false" />
+		<setting id="network.disableipv6" label="Disable ipv6" type="bool" default="true" />
+	</category>
+	<category label="Video Database">
+		<!-- Video Database -->
+		<setting type="lsep" label="Video Database"/>
+		<setting id="database.enable" label="Enable Video Database" type="bool" default="false" />
+		<setting id="database.ipaddress" label="Ip Address of Server for Database" type="ipaddress" visible="eq(-1,true)" default="192.168.0.113"/>
+	</category>
+</settings>
