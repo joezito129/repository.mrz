@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="mrz" name="Mr. Z's Repository" version="1.0" provider-name="Mr. Z">
-    <extension point="xbmc.addon.repository" name="MR-Z Repository">
+<addon id="mrz" name="mrz" version="1.0" provider-name="Mr. Z">
+    <extension point="xbmc.addon.repository" name="mrz">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/joezito129/mrz/main/repo/zips/addons.xml</info>
             <checksum>https://raw.githubusercontent.com/joezito129/mrz/main/repo/zips/addons.xml.md5</checksum>
