@@ -1,0 +1,20 @@
+Changelog v0.11.3.1 (2023-08-25):
+- Added Re-Use Language Invoker
+
+[COLOR orange][B]WatchNixtoons2[/B][/COLOR] - Cartoons &amp; Anime
+[B]0.11.3:[/B]
+- Quick fix for decoding source
+
+[B]0.11.2:[/B]
+- Fix dubbed listing
+- Some code cleanup
+- Update Thumbnail Hashes
+
+[B]0.11.1:[/B]
+- Fix dubbed listing
+- Add Recently Watched Remove Context Menu
+- Update Thumbnail Hashes
+
+[B]0.11.0:[/B]
+- Add Recently Watched
+- Update Thumbnail Hashes
