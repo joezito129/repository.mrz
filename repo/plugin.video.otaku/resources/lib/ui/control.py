@@ -127,6 +127,10 @@ def anilist_enabled():
     return True if getSetting('anilist.token') != '' and getSetting('anilist.enabled') == 'true' else False
 
 
+def simkl_enabled():
+    return True if getSetting('simkl.token') != '' and getSetting('simkl.enabled') == 'true' else False
+
+
 def watchlist_to_update():
     if getSetting('watchlist.update.enabled') == 'true':
         flavor = getSetting('watchlist.update.flavor').lower()
@@ -263,6 +267,10 @@ def set_videotags(li, info):
         vinfo.setProductionCode(info['code'])
     if info.get('cast'):
         vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
+    if info.get('IMDBNumber'):
+        vinfo.setIMDBNumber(info['IMDBNumber'])
+    if info.get('OriginalTitle'):
+        vinfo.setOriginalTitle(info['OriginalTitle'])
     # if info.get('trailer'):
     #     vinfo.setTrailer(info['trailer'])
 
@@ -371,6 +379,7 @@ def title_lang(title_key):
 def exit_(code):
     sys.exit(code)
 
+
 def getChangeLog():
     addon_version = xbmcaddon.Addon('plugin.video.otaku').getAddonInfo('version')
     changelog_file = f'{ADDON_PATH}changelog.txt'
@@ -417,6 +426,10 @@ def toggle_reuselanguageinvoker(forced_state=None):
                 setSetting("reuselanguageinvoker.status", "Disabled")
                 _store_and_reload(file_lines)
             break
+
+def format_string(string, format_):
+    # format_ = B, I
+    return f'[{format_}]{string}[/{format_}]'
 
 def print(string, *args):
     for i in list(args):

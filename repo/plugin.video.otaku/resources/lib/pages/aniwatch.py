@@ -152,10 +152,9 @@ class sources(BrowserBase):
             key += orig_src[start:end]
             sources_ = sources_.replace(orig_src[start:end], '')
 
-        # try:
-        if 'file' not in sources_:
-            sources_ = json.loads(jscrypto.decode(sources_, key))
-        return sources_[0].get('file')
-        # except Exception as e:
-        #     control.print(f'172 {e}')
-        #     return ''
+        try:
+            if 'file' not in sources_:
+                sources_ = json.loads(jscrypto.decode(sources_, key))
+            return sources_[0].get('file')
+        except:
+            return ''

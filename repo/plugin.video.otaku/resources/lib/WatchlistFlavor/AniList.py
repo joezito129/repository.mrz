@@ -336,7 +336,7 @@ class AniListWLF(WatchlistFlavorBase):
         if (0 < episode_count < next_up) or (res['nextAiringEpisode'] and next_up == res['nextAiringEpisode']['episode']):
             return None
 
-        anilist_id, next_up_meta = self._get_next_up_meta('', progress, anilist_id)
+        anilist_id, next_up_meta, show = self._get_next_up_meta('', progress, anilist_id)
         if next_up_meta:
             url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):

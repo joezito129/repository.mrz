@@ -19,6 +19,6 @@
 		<!-- Video Database -->
 		<setting type="lsep" label="Video Database"/>
 		<setting id="database.enable" label="Enable Video Database" type="bool" default="false" />
-		<setting id="database.ipaddress" label="Ip Address of Server for Database" type="ipaddress" visible="eq(-1,true)" default="192.168.0.113"/>
+		<setting id="database.ipaddress" label="Ip Address of Server for Database" type="ipaddress" visible="eq(-1,true)" />
 	</category>
 </settings>

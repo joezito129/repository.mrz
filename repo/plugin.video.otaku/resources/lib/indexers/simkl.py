@@ -1,5 +1,6 @@
 import requests
 import pickle
+
 from functools import partial
 from resources.lib.ui import database, utils, control
 from resources.lib.indexers import enime
@@ -130,7 +131,22 @@ class SIMKLAPI:
             all_results = list(map(mapfunc1, episodes))
         return all_results
 
+    def get_anime_info(self, anilist_id):
+        show_ids = database.get_show(anilist_id)
+        simkl_id = show_ids['simkl_id']
+        if not simkl_id:
+            mal_id = show_ids['mal_id']
+            simkl_id = self.get_simkl_id(mal_id)
+            database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
 
+        params = {
+            'extended': 'full',
+            'client_id': self.ClientID
+        }
+        r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params)
+        if r.ok:
+            r = r.json()
+        return r
 
     def get_anilist_meta(self, anilist_id):
         show_ids = database.get_show(anilist_id)
@@ -148,6 +164,7 @@ class SIMKLAPI:
 
     def get_episodes(self, anilist_id, show_meta):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
+
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')

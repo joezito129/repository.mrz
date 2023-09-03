@@ -1,5 +1,5 @@
 from resources.lib.ui import control
-from resources.lib.WatchlistFlavor import AniList, Kitsu, MyAnimeList
+from resources.lib.WatchlistFlavor import AniList, Kitsu, MyAnimeList, Simkl
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 
 
@@ -21,6 +21,8 @@ class WatchlistFlavor:
             enabled_watchlists.append(WatchlistFlavor.__instance_flavor('kitsu'))
         if control.anilist_enabled():
             enabled_watchlists.append(WatchlistFlavor.__instance_flavor('anilist'))
+        if control.simkl_enabled():
+            enabled_watchlists.append(WatchlistFlavor.__instance_flavor('simkl'))
 
         return enabled_watchlists
 
@@ -33,13 +35,6 @@ class WatchlistFlavor:
             WatchlistFlavor.__SELECTED = WatchlistFlavor.__instance_flavor(selected)
         return WatchlistFlavor.__SELECTED
 
-    @staticmethod
-    def get_mal_flavor():
-        return MyAnimeList.MyAnimeListWLF
-
-    @staticmethod
-    def get_anilist_flavor():
-        return AniList.AniListWLF
 
     @staticmethod
     def watchlist_request(name):
@@ -64,9 +59,8 @@ class WatchlistFlavor:
             raise Exception("Invalid flavor %s" % flavor)
 
         flavor_class = WatchlistFlavor.__instance_flavor(flavor)
-        login_ts = ''  # int(time())
 
-        return WatchlistFlavor.__set_login(flavor,flavor_class.login(),str(login_ts))
+        return WatchlistFlavor.__set_login(flavor, flavor_class.login())
 
     @staticmethod
     def logout_request(flavor):
@@ -105,7 +99,7 @@ class WatchlistFlavor:
         return flavor_class(auth_var, username, password, user_id, token, refresh, sort, title_lang)
 
     @staticmethod
-    def __set_login(flavor, res, login_ts):
+    def __set_login(flavor, res):
         if not res:
             return control.ok_dialog('Login', 'Incorrect username or password')
         for _id, value in list(res.items()):

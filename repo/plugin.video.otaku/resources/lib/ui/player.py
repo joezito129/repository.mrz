@@ -52,6 +52,7 @@ class watchlistPlayer(player):
         self.skipintro_aniskip_offset = int(control.getSetting('skipintro.aniskip.offset'))
         self.skipoutro_aniskip_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
+
     def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, filter_lang):
         self._anilist_id = anilist_id
         self._watchlist_update = watchlist_update

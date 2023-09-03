@@ -242,7 +242,7 @@ def update_season(show_id, season):
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
-def _update_show_data(anilist_id, data={}, last_updated=''):
+def update_show_data(anilist_id, data={}, last_updated=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     data = pickle.dumps(data)

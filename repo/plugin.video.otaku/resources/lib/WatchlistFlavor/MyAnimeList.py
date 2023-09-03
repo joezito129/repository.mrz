@@ -25,8 +25,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         from urllib import parse
         parsed = parse.urlparse(self._auth_var)
         params = dict(parse.parse_qsl(parsed.query))
-        code = params['code']
-        code_verifier = params['state']
+        code = params.get('code')
+        code_verifier = params.get('state')
 
         oauth_url = 'https://myanimelist.net/v1/oauth2/token'
         data = {
@@ -36,6 +36,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'grant_type': 'authorization_code'
         }
         r = requests.post(oauth_url, data=data)
+        if not r.ok:
+            return
         res = r.json()
 
         self._token = res['access_token']
@@ -74,18 +76,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return self._parse_view({'name': name, 'url': base_url % (offset, next_page), 'image': 'next.png', 'info': None, 'fanart': 'next.png'})
 
     def watchlist(self):
-        return self._process_watchlist_view()
-
-    def _base_watchlist_view(self, res):
-        base = {
-            "name": res[0],
-            "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
-            "image": '%s.png' % res[0].lower(),
-            "info": {}
-        }
-        return self._parse_view(base)
-
-    def _process_watchlist_view(self):
         statuses = [
             ("Next Up", "watching?next_up=true"),
             ("Currently Watching", "watching"),
@@ -98,6 +88,16 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         all_results = map(self._base_watchlist_view, statuses)
         all_results = list(itertools.chain(*all_results))
         return all_results
+
+    def _base_watchlist_view(self, res):
+        base = {
+            "name": res[0],
+            "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
+            "image": '%s.png' % res[0].lower(),
+            "info": {}
+        }
+        return self._parse_view(base)
+
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         fields = [
@@ -151,7 +151,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if results.ok:
             results = results.json()
         else:
-            control.notify(control.ADDON_NAME, "Can't connect MyAnimeList 'API'")
+            control.ok_dialog(control.ADDON_NAME, "Can't connect MyAnimeList 'API'")
             return []
 
         if next_up:
@@ -166,6 +166,11 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         mal_id = res['node']['id']
         anilist_id = ''
         kitsu_id = ''
+
+        # show = database.get_show_mal(mal_id)
+        # if show:
+        #     anilist_id = show['anilist_id']
+        #     kitsu_id = show['kitsu_id']
 
         title = res['node'].get('title')
         if self._title_lang == 'english':
@@ -206,6 +211,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def _base_next_up_view(self, res):
         mal_id = res['node']['id']
         kitsu_id = ''
+
         progress = res['list_status']["num_episodes_watched"]
         next_up = progress + 1
         episode_count = res['node']["num_episodes"]
@@ -220,7 +226,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         title = '%s - %s/%s' % (base_title, next_up, episode_count)
         poster = image = res['node']['main_picture'].get('large', res['node']['main_picture']['medium'])
         plot = aired = None
-        anilist_id, next_up_meta = self._get_next_up_meta(mal_id, int(progress))
+        anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
             url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):

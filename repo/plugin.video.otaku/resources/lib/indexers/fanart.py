@@ -8,7 +8,9 @@ class FANARTAPI:
         self.lang = ['en', 'ja', '']
 
     def get_request(self, url):
-        headers = {'Api-Key': self.apiKey}
+        headers = {
+            'Api-Key': self.apiKey
+        }
         r = requests.get(url, headers=headers)
         if r.ok:
             return r.json()

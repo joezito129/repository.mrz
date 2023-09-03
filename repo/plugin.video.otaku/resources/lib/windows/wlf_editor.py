@@ -40,6 +40,14 @@ class SourceSelect(BaseWindow):
 
             self.anime_list_entry['myanimelist'] = WatchlistFlavor.watchlist_anime_entry_request('mal', '235')
 
+        if control.simkl_enabled():
+            menu_item = control.menuItem(label='Simkl')
+            menu_item.setProperty('username', control.getSetting('simkl.username'))
+            self.flavors_list.addItem(menu_item)
+
+            self.anime_list_entry['simkl'] = WatchlistFlavor.watchlist_anime_entry_request('simkl', '235')
+
+
         selected_flavor_item = self.flavors_list.getSelectedItem()
         self.selected_flavor = (selected_flavor_item.getLabel()).lower()
         for _id, value in list(self.anime_list_entry[self.selected_flavor].items()):

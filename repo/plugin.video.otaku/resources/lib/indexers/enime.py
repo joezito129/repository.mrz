@@ -4,6 +4,7 @@ import requests
 from functools import partial
 from resources.lib.ui import control, database, utils
 from resources import jz
+from resources.lib.indexers.simkl import SIMKLAPI
 
 
 class ENIMEAPI:
@@ -17,8 +18,8 @@ class ENIMEAPI:
         if r.ok:
             return r.json()
 
-    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
-                             filler_enable, title_disable):
+    def process_episode_view(self, anilist_id, meta_ids, poster, fanart, eps_watched, tvshowtitle,
+                             dub_data, filler_data, filler_enable, title_disable):
         from datetime import date
         update_time = date.today().isoformat()
 
@@ -34,10 +35,9 @@ class ENIMEAPI:
         database.update_season(anilist_id, season)
 
 
-        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
-                          poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                          tvshowtitle=tvshowtitle, episode_count=len(result_ep), dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable,
-                          title_disable=title_disable)
+        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, meta_ids=meta_ids, season=season, poster=poster, fanart=fanart,
+                          eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle,
+                          episode_count=len(result_ep), dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
 
         all_results = list(map(mapfunc, result_ep))
 
@@ -52,9 +52,8 @@ class ENIMEAPI:
         return all_results
 
     @staticmethod
-    def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
+    def parse_episode_view(res, anilist_id, meta_ids, season, poster, fanart, eps_watched, update_time, tvshowtitle,
                             episode_count, dub_data, filler_data, filler_enable, title_disable):
-
         if res['number'] == 0:
             return utils.allocate_item('', '')
 
@@ -71,7 +70,9 @@ class ENIMEAPI:
             'season': season,
             'episode': int(res['number']),
             'tvshowtitle': tvshowtitle,
-            'mediatype': 'episode'
+            'mediatype': 'episode',
+            # "IMDBNumber": meta_ids['imdb'],
+            'OriginalTitle': title
         }
         if eps_watched:
             if int(eps_watched) >= res['number']:
@@ -158,10 +159,32 @@ class ENIMEAPI:
 
     def get_episodes(self, anilist_id, show_meta):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
+        meta_ids = pickle.loads(show_meta['meta_ids'])
+
+        if meta_ids.get('simkl_id') is None:
+            show_meta_simkl = SIMKLAPI().get_anime_info(anilist_id)
+            meta_id_simkl = show_meta_simkl['ids']
+            meta_ids['imdb'] = meta_id_simkl.get('imdb', '')
+            meta_ids['simkl'] = meta_id_simkl['simkl']
+            database.add_mapping_id(anilist_id, 'simkl_id', meta_id_simkl['simkl'])
+            database.update_show_meta(anilist_id, meta_ids, show_meta['art'])
+            show_meta = database.get_show_meta(anilist_id)
+            meta_ids = pickle.loads(show_meta['meta_ids'])
+
+        # if kodi_meta.get('imdb') is None:
+        #     show_meta_simkl = SIMKLAPI().get_anime_info(anilist_id)
+        #     meta_id_simkl = show_meta_simkl['ids']
+        #     meta_ids['imdb'] = meta_id_simkl.get('imdb', '')
+        #     meta_ids['simkl_id'] = meta_id_simkl['simkl']
+        #     database.add_mapping_id(anilist_id, 'simkl_id', meta_id_simkl['simkl'])
+        #     database.update_show_meta(anilist_id, meta_ids, show_meta['art'])
+        #     show_meta = database.get_show_meta(anilist_id)
+        #     meta_ids = pickle.loads(show_meta['meta_ids'])
+
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
-        eps_watched = kodi_meta.get('eps_watched')
+        eps_watched = kodi_meta.get('eps_watched', 0)
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
@@ -186,7 +209,7 @@ class ENIMEAPI:
                 update_data = {
                     'dub_data': dub_data,
                 }
-                database._update_show_data(anilist_id, update_data, update_time)
+                database.update_show_data(anilist_id, update_data, update_time)
 
         # if control.getSetting('jz.sub') == 'true':
         #     from resources.jz import AniList
@@ -206,7 +229,7 @@ class ENIMEAPI:
 
         from resources.jz import anime_filler
         filler_data = anime_filler.get_data(kodi_meta['ename'])
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched,
+        return self.process_episode_view(anilist_id, meta_ids, poster, fanart, eps_watched,
                                           tvshowtitle=tvshowtitle, dub_data=dub_data,
                                           filler_data=filler_data, filler_enable=filler_enable,
                                           title_disable=title_disable), 'episodes'

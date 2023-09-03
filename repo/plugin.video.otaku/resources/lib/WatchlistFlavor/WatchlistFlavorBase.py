@@ -74,12 +74,12 @@ class WatchlistFlavorBase:
                     next_up_meta['image'] = episode_meta['image']['thumb']
                     next_up_meta['aired'] = episode_meta['info'].get('aired')
 
-        return anilist_id, next_up_meta
+        return anilist_id, next_up_meta, show
 
 
     def _get_mapping_id(self, anilist_id, flavor):
         show = database.get_show(anilist_id)
-        mapping_id = show[flavor] if show else self._get_flavor_id(anilist_id, flavor)
+        mapping_id = show[flavor] if show and show.get(flavor) else self._get_flavor_id(anilist_id, flavor)
         return mapping_id
 
     @staticmethod
@@ -91,6 +91,7 @@ class WatchlistFlavorBase:
         r = requests.get('https://armkai.vercel.app/api/search', params=params)
         res = r.json()
         flavor_id = res.get(flavor[:-3])
+        database.add_mapping_id(anilist_id, flavor, flavor_id)
         return flavor_id
 
     @staticmethod

@@ -37,7 +37,7 @@ def add_last_watched(items):
         last_watched = kodi_meta.get('title_userPreferred')
         items.insert(0, (
             "%s[I]%s[/I]" % (control.lang(30000), last_watched),
-            "animes/%s//" % anilist_id,
+            "animes/%s///" % anilist_id,
             kodi_meta['poster']
         ))
     except TypeError:
@@ -85,6 +85,7 @@ def FIND_RELATIONS(payload, params):
             anilist_id = show_meta['anilist_id']
     return control.draw_items(_ANILIST_BROWSER.get_relations(anilist_id))
 
+
 @route('watch_order/*')
 def WATCH_ORDER(payload, params):
     payload_list = payload.rsplit("/")[1:]
@@ -95,6 +96,7 @@ def WATCH_ORDER(payload, params):
     if not mal_id:
         mal_id = database.get_show(anilist_id)['mal_id']
     return control.draw_items(_ANILIST_BROWSER.get_watch_order(mal_id))
+
 
 @route('animes/*')
 def ANIMES_PAGE(payload, params):
@@ -220,7 +222,8 @@ def PLAY_MOVIE(payload, params):
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     if not anilist_id:
-        try: anilist_id = database.get_show_mal(mal_id)['anilist_id']
+        try:
+            anilist_id = database.get_show_mal(mal_id)['anilist_id']
         except TypeError:
             from resources.lib.AniListBrowser import AniListBrowser
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
@@ -381,7 +384,6 @@ if __name__ == "__main__":
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(player.playList) != 0 and not player.player().isPlaying():
         player.playList.clear()
-
 
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000

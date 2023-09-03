@@ -162,7 +162,7 @@
 		<!-- General -->
 		<setting type="lsep" label="40300"/>
 		<setting id="watchlist.update.enabled" label="40346" type="bool" default="false"/>
-		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList" default="MAL" visible="eq(-1,true)"/>
+		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList|Simkl" default="MAL" visible="eq(-1,true)"/>
 		<setting id="watchlist.update.percent" type="slider" subsetting="true" label="Set Percent to Mark as Watched" default="80" range="70,90" option="int"/>
 		<setting type="text" label="NOTE:   Next up Dialog will not begin until this percentage is met" />
 
@@ -198,6 +198,11 @@
 		<setting id="kitsu.sort" type="labelenum" subsetting="true" label="40354" values="Date Updated|Progress|Title" default="Date Updated" visible="eq(-6,true)"/>
 		<setting id="kitsu.titles" type="labelenum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="Canonical" visible="eq(-7,true)"/>
 
+		<setting type="lsep" label="SIMKL"/>
+		<setting id="simkl.enabled" label="Enable Simkl" type="bool" default="false"/>
+		<setting id="simkl.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
+		<setting id="simkl.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)" visible="eq(-2,true)"/>
+		<setting id="simkl.sort" type="labelenum" subsetting="true" label="40354" values="Anime Title" default="Anime Title" />
 	</category>
 
 	<!-- Menus -->
