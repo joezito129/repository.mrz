@@ -15,10 +15,11 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
 
     def __headers(self):
-        return {
+        headers = {
             'Authorization': f'Bearer {self._token}',
             'Content-Type': 'application/x-www-form-urlencoded'
         }
+        return headers
 
 
     def login(self):
@@ -52,7 +53,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         }
         return login_data
 
-
     @staticmethod
     def refresh_token():
         oauth_url = 'https://myanimelist.net/v1/oauth2/token'
@@ -67,13 +67,23 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         control.setSetting('mal.refresh', res['refresh_token'])
         control.setSetting('mal.expiry', str(int(time.time()) + int(res['expires_in'])))
 
+
     def _handle_paging(self, hasNextPage, base_url, page):
         if not hasNextPage:
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
         offset = (re.compile("offset=(.+?)&").findall(hasNextPage))[0]
-        return self._parse_view({'name': name, 'url': base_url % (offset, next_page), 'image': 'next.png', 'info': None, 'fanart': 'next.png'})
+        return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+
+    def __get_sort(self):
+        sort_types = {
+            "Anime Title": "anime_title",
+            "Last Updated": "list_updated_at",
+            "Anime Start Date": "anime_start_date",
+            "List Score": "list_score"
+        }
+        return sort_types[self._sort]
 
     def watchlist(self):
         statuses = [
@@ -97,6 +107,19 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "info": {}
         }
         return self._parse_view(base)
+
+    @staticmethod
+    def action_statuses():
+        actions = [
+            ("Add to On Currently Watching", "watching"),
+            ("Add to Completed", "completed"),
+            ("Add to On Hold", "on_hold"),
+            ("Add to Dropped", "dropped"),
+            ("Add to Plan to Watch", "plan_to_watch"),
+            ("Set Score", "set_score"),
+            ("Delete", "DELETE")
+        ]
+        return actions
 
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
@@ -122,34 +145,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "fields": ','.join(fields)
         }
         url = f'{self._URL}/users/@me/animelist'
-        return self._process_status_view(url, params, next_up, f'watchlist_status_type_pages/mal/{status}/%s/%d', page)
-
-
-    def get_watchlist_anime_entry(self, anilist_id):
-        mal_id = self._get_mapping_id(anilist_id, 'mal_id')
-
-        if not mal_id:
-            return
-
-        params = {
-            "fields": 'my_list_status'
-        }
-
-        url = f'{self._URL}/anime/{mal_id}'
-        r = requests.get(url, headers=self.__headers(), params=params)
-        results = r.json()['my_list_status']
-
-        anime_entry = {
-            'eps_watched': results['num_episodes_watched'],
-            'status': results['status'].title(),
-            'score': results['score']
-        }
-        return anime_entry
+        return self._process_status_view(url, params, next_up, f'watchlist_status_type_pages/mal/{status}', page)
 
     def _process_status_view(self, url, params, next_up, base_plugin_url, page):
-        results = requests.get(url, headers=self.__headers(), params=params)
-        if results.ok:
-            results = results.json()
+        r = requests.get(url, headers=self.__headers(), params=params)
+        if r.ok:
+            results = r.json()
         else:
             control.ok_dialog(control.ADDON_NAME, "Can't connect MyAnimeList 'API'")
             return []
@@ -159,6 +160,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         else:
             all_results = map(self._base_watchlist_status_view, results['data'])
         all_results = list(itertools.chain(*all_results))
+
         all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
@@ -266,24 +268,26 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
         return self._parse_view(base)
 
-    def __get_sort(self):
-        sort_types = {
-            "Anime Title": "anime_title",
-            "Last Updated": "list_updated_at",
-            "Anime Start Date": "anime_start_date",
-            "List Score": "list_score"
-        }
-        return sort_types[self._sort]
-
-    def update_num_episodes(self, anilist_id, episode):
+    def get_watchlist_anime_entry(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
+
         if not mal_id:
-            return False
-        data = {
-            'num_watched_episodes': int(episode)
+            return
+
+        params = {
+            "fields": 'my_list_status'
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
-        return r.json() if r.ok else False
+
+        url = f'{self._URL}/anime/{mal_id}'
+        r = requests.get(url, headers=self.__headers(), params=params)
+        results = r.json()['my_list_status']
+
+        anime_entry = {
+            'eps_watched': results['num_episodes_watched'],
+            'status': results['status'].title(),
+            'score': results['score']
+        }
+        return anime_entry
 
     def update_list_status(self, anilist_id, status):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
@@ -293,7 +297,17 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "status": status,
         }
         r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
-        return r.json() if r.ok else False
+        return r.ok
+
+    def update_num_episodes(self, anilist_id, episode):
+        mal_id = self._get_mapping_id(anilist_id, 'mal_id')
+        if not mal_id:
+            return False
+        data = {
+            'num_watched_episodes': int(episode)
+        }
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
+        return r.ok
 
 
     def update_score(self, anilist_id, score):
@@ -304,11 +318,11 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "score": score,
         }
         r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
-        return r.json() if r.ok else False
+        return r.ok
 
     def delete_anime(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
         if not mal_id:
             return False
         r = requests.delete(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers())
-        return r.json() if r.ok else False
+        return r.ok

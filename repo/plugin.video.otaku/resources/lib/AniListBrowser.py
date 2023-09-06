@@ -745,7 +745,7 @@ class AniListBrowser:
                 desc = desc.replace('\n', '')
                 kodi_meta['plot'] = desc
 
-        database._update_show(anilist_id, mal_id, pickle.dumps(kodi_meta))
+        database.update_show(anilist_id, mal_id, pickle.dumps(kodi_meta))
 
     @staticmethod
     def _get_titles(res):

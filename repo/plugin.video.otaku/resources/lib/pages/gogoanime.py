@@ -100,18 +100,19 @@ class sources(BrowserBase):
             link = element.a.get('data-video')
             quality = 'EQ'
 
-            if server == 'doodstream': # works
+
+            if server == 'vidcdn':
                 type_ = 'embed'
-            # elif server == 'vidcdn': # broken
-            #     type_ = 'embed'
-            # elif server == 'xstreamcdn': # broken
-            #     type_ = 'embed'
-            elif server == 'mp4upload': # works
+                if link.startswith('//'):
+                    link = 'https:' + link
+            elif server == 'streamwish':
                 type_ = 'embed'
-            # elif server == 'streamsb': # broken
-            #     type_ = 'embed'
-            # elif server == "anime": # broken
-            #     type_ = 'embed'
+            elif server == 'mp4upload':
+                type_ = 'embed'
+            elif server == 'doodstream':
+                type_ = 'embed'
+            elif server == 'filelions':
+                type_ = 'embed'
             else:
                 continue
 

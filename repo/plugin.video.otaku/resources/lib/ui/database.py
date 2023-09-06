@@ -159,7 +159,7 @@ def _get_cursor():
     return cursor
 
 
-def _update_show(anilist_id, mal_id, kodi_meta, last_updated=''):
+def update_show(anilist_id, mal_id, kodi_meta, last_updated=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     if isinstance(kodi_meta, dict):

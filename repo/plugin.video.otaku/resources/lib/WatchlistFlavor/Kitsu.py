@@ -14,6 +14,14 @@ class KitsuWLF(WatchlistFlavorBase):
     _IMAGE = "kitsu.png"
     _mapping = None
 
+    def __headers(self):
+        headers = {
+            'Content-Type': 'application/vnd.api+json',
+            'Accept': 'application/vnd.api+json',
+            'Authorization': f'Bearer {self._token}'
+        }
+        return headers
+
     def login(self):
         params = {
             "grant_type": "password",
@@ -54,13 +62,6 @@ class KitsuWLF(WatchlistFlavorBase):
         control.setSetting('kitsu.refresh', data['refresh_token'])
         control.setSetting('kitsu.expiry', str(int(time.time()) + int(data['expires_in'])))
 
-    def __headers(self):
-        headers = {
-            'Content-Type': 'application/vnd.api+json',
-            'Accept': 'application/vnd.api+json',
-            'Authorization': "Bearer {}".format(self._token)
-        }
-        return headers
 
     def _handle_paging(self, hasNextPage, base_url, page):
         if not hasNextPage:
@@ -69,14 +70,38 @@ class KitsuWLF(WatchlistFlavorBase):
         name = "Next Page (%d)" % next_page
         parsed = parse.urlparse(hasNextPage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
-        return self._parse_view({'name': name, 'url': base_url % (offset, next_page), 'image': 'next.png', 'info': None, 'fanart': 'next.png'})
+        return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+
+
+    def __get_sort(self):
+        sort_types = {
+            "Date Updated": "-progressed_at",
+            "Progress": "-progress",
+            "Title": "anime.titles." + self.__get_title_lang(),
+        }
+        return sort_types[self._sort]
+
+    def __get_title_lang(self):
+        title_langs = {
+            "Canonical": "canonical",
+            "English": "en",
+            "Romanized": "en_jp",
+        }
+        return title_langs[self._title_lang]
 
 
     def watchlist(self):
-        params = {"filter[user_id]": self._user_id}
-        url = f'{self._URL}/edge/library-entries'
-        return self._process_watchlist_status_view(url, params, "watchlist/%d", page=1)
-
+        statuses = [
+            ("Next Up", "current?next_up=true"),
+            ("Current", "current"),
+            ("Want to Watch", "planned"),
+            ("Completed", "completed"),
+            ("On Hold", "on_hold"),
+            ("Dropped", "dropped")
+        ]
+        all_results = map(self._base_watchlist_status_view, statuses)
+        all_results = list(itertools.chain(*all_results))
+        return all_results
 
     def _base_watchlist_status_view(self, res):
         base = {
@@ -87,22 +112,19 @@ class KitsuWLF(WatchlistFlavorBase):
         }
         return self._parse_view(base)
 
-    def _process_watchlist_status_view(self, url, params, base_plugin_url, page):
-        all_results = map(self._base_watchlist_status_view, self.__kitsu_statuses())
-        all_results = list(itertools.chain(*all_results))
-        return all_results
-
     @staticmethod
-    def __kitsu_statuses():
-        statuses = [
-            ("Next Up", "current?next_up=true"),
-            ("Current", "current"),
-            ("Want to Watch", "planned"),
-            ("Completed", "completed"),
-            ("On Hold", "on_hold"),
-            ("Dropped", "dropped"),
+    def action_statuses():
+        actions = [
+            ("Add to Current", "current"),
+            ("Add to Want to Watch", "planned"),
+            ("Add to On Hold", "on_hold"),
+            ("Add to Completed", "completed"),
+            ("Add to Dropped", "dropped"),
+            ("Set Score", "set_score"),
+            ("Delete", "DELETE")
         ]
-        return statuses
+        return actions
+
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         url = f'{self._URL}/edge/library-entries'
@@ -116,7 +138,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "page[offset]": offset,
             "sort": self.__get_sort(),
         }
-        return self._process_watchlist_view(url, params, next_up, f'watchlist_status_type_pages/kitsu/{status}/%s/%d', page)
+        return self._process_watchlist_view(url, params, next_up, f'watchlist_status_type_pages/kitsu/{status}', page)
 
     def _process_watchlist_view(self, url, params, next_up, base_plugin_url, page):
         result = requests.get(url, headers=self.__headers(), params=params)
@@ -147,7 +169,8 @@ class KitsuWLF(WatchlistFlavorBase):
         info = {
             'plot': eres['attributes'].get('synopsis'),
             'title': eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
-            'rating': float(eres['attributes']['averageRating']) / 10, 'mpaa': eres['attributes']['ageRating'],
+            'rating': float(eres['attributes']['averageRating']) / 10,
+            'mpaa': eres['attributes']['ageRating'],
             'trailer': 'plugin://plugin.video.youtube/play/?video_id={0}'.format(eres['attributes']['youtubeVideoId']),
             'mediatype': 'tvshow'
         }
@@ -158,13 +181,13 @@ class KitsuWLF(WatchlistFlavorBase):
             pass
 
         # 'rating': float(eres['attributes']['averageRating']) / 10, 'mpaa': eres['attributes']['ageRating'],
-
+        poster_image = eres["attributes"]['posterImage']
         base = {
             "name": '%s - %d/%d' % (eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
                                     res["attributes"]['progress'],
                                     eres["attributes"].get('episodeCount', 0) if eres["attributes"]['episodeCount'] else 0),
             "url": f'watchlist_to_ep//{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
-            "image": eres["attributes"]['posterImage']['large'],
+            "image":poster_image.get('large', poster_image['original']),
             "info": info
         }
 
@@ -184,7 +207,7 @@ class KitsuWLF(WatchlistFlavorBase):
         anime_title = eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle'])
         episode_count = eres["attributes"]['episodeCount'] if eres["attributes"]['episodeCount'] else 0
         title = '%s - %d/%d' % (anime_title, next_up, episode_count)
-        poster = image = eres["attributes"]['posterImage']['large']
+        poster = image = eres["attributes"]['posterImage'].get('large', eres["attributes"]['posterImage']['original'])
         plot = aired = None
 
         anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
@@ -235,33 +258,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     break
         return mal_id
 
-    def get_watchlist_anime_entry(self, anilist_id):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
-        if not kitsu_id:
-            return False
-
-        url = f'{self._URL}/edge/library-entries'
-        params = {
-            "filter[user_id]": self._user_id,
-            "filter[anime_id]": kitsu_id
-        }
-        result = requests.get(url, headers=self.__headers(), params=params)
-        result = result.json()
-        item_dict = result['data'][0]['attributes']
-
-        anime_entry = {
-            'eps_watched': item_dict['progress'],
-            'status': item_dict['status'],
-            'score': item_dict['ratingTwenty']
-        }
-
-        return anime_entry
-
-    def update_num_episodes(self, anilist_id, episode):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
-        if not kitsu_id:
-            return False
-
+    def get_library_entries(self, kitsu_id):
         url = f'{self._URL}/edge/library-entries'
         params = {
             "filter[user_id]": self._user_id,
@@ -269,6 +266,74 @@ class KitsuWLF(WatchlistFlavorBase):
         }
         r = requests.get(url, headers=self.__headers(), params=params)
         r = r.json()
+        return r
+
+    def get_watchlist_anime_entry(self, anilist_id):
+        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+        if not kitsu_id:
+            return False
+
+        result = self.get_library_entries(kitsu_id)
+        item_dict = result['data'][0]['attributes']
+
+        anime_entry = {
+            'eps_watched': item_dict['progress'],
+            'status': item_dict['status'],
+            'score': item_dict['ratingTwenty']
+        }
+        return anime_entry
+
+    def update_list_status(self, anilist_id, status):
+        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+        if not kitsu_id:
+            return False
+
+        r = self.get_library_entries(kitsu_id)
+        if len(r['data']) == 0:
+            data = {
+                "data": {
+                    "type": "libraryEntries",
+                    "attributes": {
+                        'status': status
+                    },
+                    "relationships": {
+                        "user": {
+                            "data": {
+                                "id": self._user_id,
+                                "type": "users"
+                            }
+                        },
+                        "anime": {
+                            "data": {
+                                "id": kitsu_id,
+                                "type": "anime"
+                            }
+                        }
+                    }
+                }
+            }
+            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
+            return r.ok
+
+        animeid = int(r['data'][0]['id'])
+        data = {
+            'data': {
+                'id': animeid,
+                'type': 'libraryEntries',
+                'attributes': {
+                    'status': status
+                }
+            }
+        }
+        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
+        return r.ok
+
+    def update_num_episodes(self, anilist_id, episode):
+        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+        if not kitsu_id:
+            return False
+
+        r = self.get_library_entries(kitsu_id)
         if len(r['data']) == 0:
             data = {
                 "data": {
@@ -286,102 +351,43 @@ class KitsuWLF(WatchlistFlavorBase):
                         },
                         "anime": {
                             "data": {
-                                "id": int(kitsu_id),
+                                "id": kitsu_id,
                                 "type": "anime"
                             }
                         }
                     }
                 }
             }
-            r = requests.post(url, headers=self.__headers(), json=data)
+            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
             return r.ok
 
-        animeid = r['data'][0]['id']
+        animeid = int(r['data'][0]['id'])
 
         data = {
             'data': {
-                'id': int(animeid),
+                'id': animeid,
                 'type': 'libraryEntries',
                 'attributes': {
                     'progress': int(episode)}
             }
         }
-        r = requests.patch("%s/%s" % (url, animeid), headers=self.__headers(), json=data)
+        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
         return r.ok
-
-    def update_list_status(self, anilist_id, status):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
-        if not kitsu_id:
-            return False
-
-        url = f'{self._URL}/edge/library-entries'
-        params = {
-            "filter[user_id]": self._user_id,
-            "filter[anime_id]": kitsu_id
-        }
-        r = requests.get(url, headers=self.__headers(), params=params)
-        r = r.json()
-        if len(r['data']) == 0:
-            data = {
-                "data": {
-                    "type": "libraryEntries",
-                    "attributes": {
-                        'status': status
-                    },
-                    "relationships": {
-                        "user": {
-                            "data": {
-                                "id": self._user_id,
-                                "type": "users"
-                            }
-                        },
-                        "anime": {
-                            "data": {
-                                "id": int(kitsu_id),
-                                "type": "anime"
-                            }
-                        }
-                    }
-                }
-            }
-            r = requests.post(url, headers=self.__headers(), json=data)
-            return r.ok
-
-        animeid = r['data'][0]['id']
-
-        data = {
-            'data': {
-                'id': int(animeid),
-                'type': 'libraryEntries',
-                'attributes': {
-                    'status': status
-                }
-            }
-        }
-        r = requests.patch("%s/%s" % (url, animeid), headers=self.__headers(), json=data)
-        return r.json() if r.ok else False
-
 
     def update_score(self, anilist_id, score):
         kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
         if not kitsu_id:
             return False
+        # todo needs to be finished
 
-    def __get_sort(self):
-        sort_types = {
-            "Date Updated": "-progressed_at",
-            "Progress": "-progress",
-            "Title": "anime.titles." + self.__get_title_lang(),
-        }
+    def delete_anime(self, anilist_id):
+        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+        if not kitsu_id:
+            return False
 
-        return sort_types[self._sort]
+        r = self.get_library_entries(kitsu_id)
+        animeid = r['data'][0]['id']
 
-    def __get_title_lang(self):
-        title_langs = {
-            "Canonical": "canonical",
-            "English": "en",
-            "Romanized": "en_jp",
-        }
-
-        return title_langs[self._title_lang]
+        r = requests.delete(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers())
+        return r.ok
     

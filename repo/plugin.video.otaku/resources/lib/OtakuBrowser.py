@@ -72,7 +72,9 @@ def get_backup(anilist_id, source):
     if r.ok:
         r = r.json()
         result = r.get('Pages', {}).get(source, {})
-        return result
+    else:
+        result = {}
+    return result
 
 
 def get_anime_init(anilist_id):
@@ -92,19 +94,11 @@ def get_anime_init(anilist_id):
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
         else:
             data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
+
     else:
         data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
-
-        if control.getSetting('overide.meta.api') == 'true':
-            meta_api = control.getSetting('meta.api')
-            if meta_api == 'consumet':
-                data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
-            elif meta_api == 'simkl':
-                data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
-            else:
-                data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
     return data
 
 def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):

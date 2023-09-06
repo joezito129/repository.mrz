@@ -21,5 +21,4 @@ class Sources(DisplayWindow):
             control.colorString(self.torrents_qual_len[2] + self.hosters_qual_len[2]),
             control.colorString(self.torrents_qual_len[3] + self.hosters_qual_len[3]),
         ))
-        control.sleep(5000)
         self.close()

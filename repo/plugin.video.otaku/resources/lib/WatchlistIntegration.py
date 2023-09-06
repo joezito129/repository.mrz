@@ -90,56 +90,28 @@ def CONTEXT_MENU(payload, params):
     else:
         show = None
 
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor.flavor_name == 'mal':
-        actions = [
-            ("Add to On Currently Watching", "watching"),
-            ("Add to Completed", "completed"),
-            ("Add to On Hold", "on_hold"),
-            ("Add to Dropped", "dropped"),
-            ("Add to Plan to Watch", "plan_to_watch"),
-            ("Set Score", "set_score"),
-            ("Delete", "DELETE")
-        ]
-    elif flavor.flavor_name == 'simkl':
-        actions = [
-            ("Add to On Currently Watching", "watching"),
-            ("Add to Completed", "completed"),
-            ("Add to On Hold", "hold"),
-            ("Add to Dropped", "nontinteresting"),
-            ("Add to Plan to Watch", "plantowatch"),
-            ("Set Score", "set_score"),
-            ("Delete", "DELETE")
-        ]
-    else:
-        actions = [
-            ("Add to Current", "current"),
-            ("Add to Want to Watch", "planned"),
-            ("Add to On Hold", "on_hold"),
-            ("Add to Completed", "completed"),
-            ("Add to Dropped", "dropped"),
-            ("Set Score", "set_score"),
-            ("Delete", "DELETE")
-        ]
-
     if not show:
         show = get_anilist_res(mal_id)
+
+    flavor = WatchlistFlavor.get_update_flavor()
+    actions = WatchlistFlavor.context_statuses()
 
     kodi_meta = pickle.loads(show['kodi_meta'])
     title = kodi_meta['title_userPreferred'] or kodi_meta['name']
 
-    mal_context = control.select_dialog(title, list(map(lambda x: x[0], actions)))
-    if mal_context != -1:
-        status = actions[mal_context][1]
+    context = control.select_dialog(f'{title}  {control.colorString("(" + str(flavor.flavor_name).capitalize() + ")", "blue")}', list(map(lambda x: x[0], actions)))
+    if context != -1:
+        heading = f'{control.ADDON_NAME} - ({str(flavor.flavor_name).capitalize()})'
+        status = actions[context][1]
         if status == 'DELETE':
-            yesno = control.yesno_dialog(control.ADDON_NAME,
-                                         f'Are you sure you want to delete {control.format_string(title, "I")}  from {control.format_string(flavor.flavor_name, "B")}\n\nPress YES to Continue:       ')
+            yesno = control.yesno_dialog(heading,
+                f'Are you sure you want to delete {control.format_string(title, "I")}  from {control.format_string(flavor.flavor_name, "B")}\n\nPress YES to Continue:')
             if yesno:
                 delete = delete_watchlist_anime(anilist_id)
                 if delete:
-                    control.ok_dialog(control.ADDON_NAME, f'{control.format_string(title, "I")}  was deleted from {control.format_string(flavor.flavor_name, "B")}')
+                    control.ok_dialog(heading, f'{control.format_string(title, "I")}  was deleted from {control.format_string(flavor.flavor_name, "B")}')
                 else:
-                    control.ok_dialog(control.ADDON_NAME, 'Unable to delete from Watchlist')
+                    control.ok_dialog(heading, 'Unable to delete from Watchlist')
         elif status == 'set_score':
             score_list = [
                 "(10) Masterpiece",
@@ -154,23 +126,23 @@ def CONTEXT_MENU(payload, params):
                 "(1) Appalling",
                 "(0) No Score"
             ]
-            score = control.select_dialog(title, score_list)
+            score = control.select_dialog(f'{title} ({str(flavor.flavor_name).capitalize()})', score_list)
             if score != -1:
                 score = 10 - score
                 set_score = set_watchlist_score(anilist_id, score)
                 if set_score:
-                    control.ok_dialog(control.ADDON_NAME, f'{control.format_string(title, "I")}  was set to {control.format_string(score, "B")}')
+                    control.ok_dialog(heading, f'{control.format_string(title, "I")}  was set to {control.format_string(score, "B")}')
                 else:
-                    control.ok_dialog(control.ADDON_NAME, 'Unable to Set Score')
+                    control.ok_dialog(heading, 'Unable to Set Score')
         else:
             set_status = set_watchlist_status(anilist_id, status)
             if set_status == 'watching':
-                control.ok_dialog(control.ADDON_NAME,
-                    'This show is still airing, so we\'re keeping it in your "Watching" list and marked all aired episodes as watched. You will receive notifications when new episodes airs in you Watching list')
+                control.ok_dialog(heading,
+                    'This show is still airing, so we\'re keeping it in your "Watching" list and marked all aired episodes as watched.')
             elif set_status:
-                control.ok_dialog(control.ADDON_NAME, f'{control.format_string(title, "I")}  was added to {control.format_string(status, "B")}')
+                control.ok_dialog(heading, f'{control.format_string(title, "I")}  was added to {control.format_string(status, "B")}')
             else:
-                control.ok_dialog(control.ADDON_NAME, 'Unable to Set Watchlist')
+                control.ok_dialog(heading, 'Unable to Set Watchlist')
 
 def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()

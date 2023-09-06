@@ -50,8 +50,7 @@ def request(
         handlers = []
 
         if proxy is not None:
-            handlers += [urllib.request.ProxyHandler(
-                {'http': '%s' % proxy}), urllib.request.HTTPHandler]
+            handlers += [urllib.request.ProxyHandler({'http': '%s' % proxy}), urllib.request.HTTPHandler]
 
         if params is not None:
             if isinstance(params, dict):
@@ -60,9 +59,7 @@ def request(
 
         if output == 'cookie' or output == 'extended' or not close:
             cookies = http.cookiejar.LWPCookieJar()
-            handlers += [urllib.request.HTTPHandler(),
-                         urllib.request.HTTPSHandler(),
-                         urllib.request.HTTPCookieProcessor(cookies)]
+            handlers += [urllib.request.HTTPHandler(), urllib.request.HTTPSHandler(), urllib.request.HTTPCookieProcessor(cookies)]
 
         if output == 'elapsed':
             start_time = time.time() * 1000
@@ -361,6 +358,37 @@ def _add_request_header(_request, headers):
     except BaseException:
         pass
 
+def strip_cookie_url(url):
+    url, headers = _strip_url(url)
+    if _COOKIE_HEADER in headers.keys():
+        del headers[_COOKIE_HEADER]
+
+    return _url_with_headers(url, headers)
+
+def _strip_url(url):
+    if url.find('|') == -1:
+        return url, {}
+
+    headers = url.split('|')
+    target_url = headers.pop(0)
+    out_headers = {}
+    for h in headers:
+        m = _HEADER_RE.findall(h)
+        if not len(m):
+            continue
+
+        out_headers[m[0][0]] = urllib.parse.unquote_plus(m[0][1])
+
+    return target_url, out_headers
+
+
+def _url_with_headers(url, headers):
+    if not len(headers.keys()):
+        return url
+
+    headers_arr = ["%s=%s" % (key, urllib.parse.quote_plus(value)) for key, value in headers.items()]
+
+    return "|".join([url] + headers_arr)
 
 def randomagent():
     _agents = [

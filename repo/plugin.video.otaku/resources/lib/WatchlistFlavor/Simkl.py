@@ -14,8 +14,6 @@ class SimklWLF(WatchlistFlavorBase):
     _IMAGE = "simkl.png"
 
     client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'
-    # client_id = '503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0'
-    # client_secret = '5a485939898f496c57191d0ca364527e612ee9c5f01f03fa220acb1b60710737'
 
     def __headers(self):
         headers = {
@@ -66,6 +64,14 @@ class SimklWLF(WatchlistFlavorBase):
             )
             time.sleep(device_code['interval'])
 
+    def _handle_paging(self, hasNextPage, base_url, page):
+        if not hasNextPage:
+            return []
+        next_page = page + 1
+        name = "Next Page (%d)" % next_page
+        offset = ''
+        return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+
     def __get_sort(self):
         sort_types = {
             "Anime Title": "anime_title",
@@ -75,15 +81,6 @@ class SimklWLF(WatchlistFlavorBase):
         }
         return sort_types[self._sort]
 
-    def get_all_items(self, status):
-        # status values: watching, plantowatch, hold ,completed ,dropped (notinteresting for old api's).
-        params = {
-            'extended': 'full',
-            # 'next_watch_info': 'yes'
-        }
-        r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params)
-        r = r.json()
-        return r
 
     def watchlist(self):
         statuses = [
@@ -98,6 +95,19 @@ class SimklWLF(WatchlistFlavorBase):
         all_results = map(self._base_watchlist_view, statuses)
         all_results = list(itertools.chain(*all_results))
         return all_results
+
+    @staticmethod
+    def action_statuses():
+        actions = [
+            ("Add to On Currently Watching", "watching"),
+            ("Add to Completed", "completed"),
+            ("Add to On Hold", "hold"),
+            ("Add to Dropped", "nontinteresting"),
+            ("Add to Plan to Watch", "plantowatch"),
+            ("Set Score", "set_score"),
+            ("Delete", "DELETE")
+        ]
+        return actions
 
     def _base_watchlist_view(self, res):
         base = {
@@ -122,6 +132,7 @@ class SimklWLF(WatchlistFlavorBase):
         sort_pref = self.__get_sort()
         if sort_pref == 'anime_title':
             all_results = sorted(all_results, key=lambda x: x['info']['title'])
+
         # all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
@@ -226,21 +237,15 @@ class SimklWLF(WatchlistFlavorBase):
         return self._parse_view(base)
 
 
-    def update_num_episodes(self, anilist_id, episode):
-        data = {
-            "shows": [{
-                "ids": {
-                    "anilist": anilist_id
-                },
-                "episodes": [{'number': i} for i in range(1, int(episode) + 1)]
-            }]
+    def get_all_items(self, status):
+        # status values: watching, plantowatch, hold ,completed ,dropped (notinteresting for old api's).
+        params = {
+            'extended': 'full',
+            # 'next_watch_info': 'yes'
         }
-        r = requests.post(f'{self._URL}/sync/history', headers=self.__headers(), json=data)
-        if r.ok:
-            r = r.json()
-            if not r['not_found']['shows'] or not r['not_found']['movies']:
-                return r
-        return False
+        r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params)
+        r = r.json()
+        return r
 
     def update_list_status(self, anilist_id, status):
         data = {
@@ -257,7 +262,23 @@ class SimklWLF(WatchlistFlavorBase):
             if not r['not_found']['shows'] or not r['not_found']['shows']:
                 if status == 'completed' and r.get('added', {}).get('shows', [{}])[0].get('to') == 'watching':
                     return 'watching'
-                return r
+                return True
+        return False
+
+    def update_num_episodes(self, anilist_id, episode):
+        data = {
+            "shows": [{
+                "ids": {
+                    "anilist": anilist_id
+                },
+                "episodes": [{'number': i} for i in range(1, int(episode) + 1)]
+            }]
+        }
+        r = requests.post(f'{self._URL}/sync/history', headers=self.__headers(), json=data)
+        if r.ok:
+            r = r.json()
+            if not r['not_found']['shows'] or not r['not_found']['movies']:
+                return True
         return False
 
     def update_score(self, anilist_id, score):
@@ -277,7 +298,7 @@ class SimklWLF(WatchlistFlavorBase):
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:
-                return r
+                return True
         return False
 
     def delete_anime(self, anilist_id):
@@ -292,5 +313,5 @@ class SimklWLF(WatchlistFlavorBase):
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:
-                return r
+                return True
         return False
