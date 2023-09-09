@@ -32,7 +32,7 @@ class sources(BrowserBase):
 
         if not r and ':' in title:
             title = title.split(':')[0]
-            params.update({'keyword': title})
+            params['keyword'] = title
             r = database.get_(utils.database_request_get, 8,
                               'https://ajax.gogo-load.com/site/loadAjaxSearch', params=params, headers=headers)
             r = r.get('content')

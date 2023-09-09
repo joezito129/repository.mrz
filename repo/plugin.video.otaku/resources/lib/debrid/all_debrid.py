@@ -14,11 +14,11 @@ class AllDebrid:
         self.cache_check_results = []
 
     def get(self, url, **params):
-        params.update({'agent': self.agent_identifier})
+        params['agent'] =  self.agent_identifier
         return requests.get(parse.urljoin(self.base_url, url), params=params).text
 
     def post(self, url, post_data=None, **params):
-        params.update({'agent': self.agent_identifier})
+        params['agent'] =  self.agent_identifier
         return requests.post(parse.urljoin(self.base_url, url), data=post_data, params=params).text
 
     @staticmethod

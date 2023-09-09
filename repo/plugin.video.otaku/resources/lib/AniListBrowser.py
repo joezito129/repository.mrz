@@ -583,7 +583,7 @@ class AniListBrowser:
         for edge in json_res['edges']:
             if edge['relationType'] != 'ADAPTATION':
                 tnode = edge['node']
-                tnode.update({'relationType': edge['relationType']})
+                tnode['relationType'] = edge['relationType']
                 res.append(tnode)
         mapfunc = partial(self._base_anilist_view)
         all_results = map(mapfunc, res)

@@ -15,7 +15,7 @@ class ANIFYAPI:
             'apikey': self.apikey
         }
         r = requests.get(f'{self.baseUrl}/episodes/{anilist_id}', params=params)
-        res = r.json() if r.ok else None
+        res = r.json() if r.ok else []
         for r in res:
             if r.get('providerId') == provider:
                 episodes = r.get('episodes')

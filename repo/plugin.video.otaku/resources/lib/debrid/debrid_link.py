@@ -11,9 +11,10 @@ class DebridLink:
         self.USER_AGENT = 'Otaku for Kodi'
         self.token = control.getSetting('dl.auth')
         self.refresh = control.getSetting('dl.refresh')
-        self.headers = {'User-Agent': self.USER_AGENT,
-                        'Authorization': 'Bearer {0}'.format(
-                            self.token)}
+        self.headers = {
+            'User-Agent': self.USER_AGENT,
+            'Authorization': 'Bearer {0}'.format(self.token)
+        }
         self.api_url = "https://debrid-link.fr/api/v2"
         self.cache_check_results = {}
 
@@ -23,9 +24,11 @@ class DebridLink:
             return
         time.sleep(self.OauthTimeStep)
         url = '{0}/oauth/token'.format(self.api_url[:-3])
-        data = {'client_id': self.ClientID,
-                'code': self.DeviceCode,
-                'grant_type': 'urn:ietf:params:oauth:grant-type:device_code'}
+        data = {
+            'client_id': self.ClientID,
+            'code': self.DeviceCode,
+            'grant_type': 'urn:ietf:params:oauth:grant-type:device_code'
+        }
         r = requests.post(url, data=data, headers={'User-Agent': self.USER_AGENT})
         if r.ok:
             response = r.json()
@@ -35,7 +38,7 @@ class DebridLink:
             control.setSetting('dl.auth', self.token)
             control.setSetting('dl.refresh', self.refresh)
             control.setSetting('dl.expiry', str(int(time.time()) + int(response['expires_in'])))
-            self.headers.update({'Authorization': 'Bearer {0}'.format(self.token)})
+            self.headers['Authorization'] = 'Bearer {0}'.format(self.token)
         return True
 
     def auth(self):
@@ -72,9 +75,11 @@ class DebridLink:
         return response['value'].get('premiumLeft') > 3600
 
     def refreshToken(self):
-        postData = {'grant_type': 'refresh_token',
-                    'refresh_token': self.refresh,
-                    'client_id': self.ClientID}
+        postData = {
+            'grant_type': 'refresh_token',
+            'refresh_token': self.refresh,
+            'client_id': self.ClientID
+        }
         url = '{0}/oauth/token'.format(self.api_url[:-3])
         response = requests.post(url, data=postData, headers={'User-Agent': self.USER_AGENT}).json()
         if 'access_token' in response:
@@ -91,7 +96,8 @@ class DebridLink:
                 t = threading.Thread(target=self._check_hash_thread, args=[arg])
                 threads.append(t)
                 t.start()
-            for i in threads: i.join()
+            for i in threads:
+                i.join()
             return self.cache_check_results
         else:
             url = "{0}/seedbox/cached?url={1}".format(self.api_url, hashList)
@@ -106,8 +112,10 @@ class DebridLink:
             self.cache_check_results.update(response.json().get('value'))
 
     def addMagnet(self, magnet):
-        postData = {'url': magnet,
-                    'async': 'true'}
+        postData = {
+            'url': magnet,
+            'async': 'true'
+        }
         url = '{0}/seedbox/add'.format(self.api_url)
         response = requests.post(url, data=postData, headers=self.headers).json()
         return response.get('value')

@@ -26,7 +26,7 @@ class sources(BrowserBase):
         items = r.get('data')
         if not items and ':' in title:
             title = title.split(':')[0]
-            params.update({'q': title})
+            params['q'] = title
             r = database.get_(utils.database_request_get, 8,
                 f'{self._BASE_URL}api', params=params, headers=headers)
             items = r.get('data')

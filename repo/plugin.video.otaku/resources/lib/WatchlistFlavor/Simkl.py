@@ -14,7 +14,8 @@ class SimklWLF(WatchlistFlavorBase):
     _IMAGE = "simkl.png"
 
     client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'
-
+    # client_id = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0"
+    
     def __headers(self):
         headers = {
             "Content-Type": "application/json",
@@ -76,11 +77,9 @@ class SimklWLF(WatchlistFlavorBase):
         sort_types = {
             "Anime Title": "anime_title",
             "Last Updated": "list_updated_at",
-            "Anime Start Date": "anime_start_date",
-            "List Score": "list_score"
+            "User Rating": "user_rating"
         }
         return sort_types[self._sort]
-
 
     def watchlist(self):
         statuses = [
@@ -102,7 +101,7 @@ class SimklWLF(WatchlistFlavorBase):
             ("Add to On Currently Watching", "watching"),
             ("Add to Completed", "completed"),
             ("Add to On Hold", "hold"),
-            ("Add to Dropped", "nontinteresting"),
+            ("Add to Dropped", "notinteresting"),
             ("Add to Plan to Watch", "plantowatch"),
             ("Set Score", "set_score"),
             ("Delete", "DELETE")
@@ -130,14 +129,18 @@ class SimklWLF(WatchlistFlavorBase):
 
         all_results = list(itertools.chain(*all_results))
         sort_pref = self.__get_sort()
+
         if sort_pref == 'anime_title':
             all_results = sorted(all_results, key=lambda x: x['info']['title'])
+        elif sort_pref == 'list_updated_at':
+            all_results = sorted(all_results, key=lambda x: x['info']['last_watched'] or "0", reverse=True)
+        elif sort_pref == 'user_rating':
+            all_results = sorted(all_results, key=lambda x: x['info']['user_rating'] or 0, reverse=True)
 
         # all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
     def _base_watchlist_status_view(self, res):
-
         show_ids = res['show']['ids']
 
         mal_id = show_ids.get('mal', '')
@@ -157,7 +160,9 @@ class SimklWLF(WatchlistFlavorBase):
         info = {
             'title': title,
             'mediatype': 'tvshow',
-            'year': res['show']['year']
+            'year': res['show']['year'],
+            'last_watched': res['last_watched_at'],
+            'user_rating': res['user_rating']
         }
 
         base = {
@@ -236,6 +241,14 @@ class SimklWLF(WatchlistFlavorBase):
 
         return self._parse_view(base)
 
+    def get_watchlist_anime_entry(self, anilist_id):
+        return {}
+        # anime_entry = {
+        #     'eps_watched': item_dict['progress'],
+        #     'status': item_dict['status'],
+        #     'score': item_dict['ratingTwenty']
+        # }
+        # return anime_entry
 
     def get_all_items(self, status):
         # status values: watching, plantowatch, hold ,completed ,dropped (notinteresting for old api's).

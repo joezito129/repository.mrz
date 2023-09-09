@@ -281,7 +281,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         url = f'{self._URL}/anime/{mal_id}'
         r = requests.get(url, headers=self.__headers(), params=params)
         results = r.json()['my_list_status']
-
+        if not results:
+            return {}
         anime_entry = {
             'eps_watched': results['num_episodes_watched'],
             'status': results['status'].title(),

@@ -17,6 +17,8 @@ class ENIMEAPI:
         r = requests.get(f'{self.baseUrl}/mapping/anilist/{anilist_id}')
         if r.ok:
             return r.json()
+        else:
+            return {}
 
     def process_episode_view(self, anilist_id, meta_ids, poster, fanart, eps_watched, tvshowtitle,
                              dub_data, filler_data, filler_enable, title_disable):
@@ -105,7 +107,7 @@ class ENIMEAPI:
         return parsed
 
 
-    def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None,
+    def append_episodes(self, anilist_id, meta_ids, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None,
                         dub_data=None, filler_enable=False, title_disable=False):
         import datetime
         import time
@@ -119,7 +121,7 @@ class ENIMEAPI:
         if len(result) > episodes[0]['number_abs']:
             season = database.get_season_list(anilist_id)['season']
             result = result.get('episodes')
-            mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
+            mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, meta_ids=meta_ids, season=season, poster=poster, fanart=fanart,
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, episode_count=len(result),
                                dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable,
                                title_disable=title_disable)

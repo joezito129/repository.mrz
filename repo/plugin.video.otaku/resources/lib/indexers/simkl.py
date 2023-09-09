@@ -136,7 +136,7 @@ class SIMKLAPI:
         simkl_id = show_ids['simkl_id']
         if not simkl_id:
             mal_id = show_ids['mal_id']
-            simkl_id = self.get_simkl_id(mal_id)
+            simkl_id = self.get_simkl_id('mal', mal_id)
             database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
 
         params = {
@@ -153,7 +153,7 @@ class SIMKLAPI:
         simkl_id = show_ids['simkl_id']
         if not simkl_id:
             mal_id = show_ids['mal_id']
-            simkl_id = self.get_simkl_id(mal_id)
+            simkl_id = self.get_simkl_id('mal', mal_id)
             database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
         params = {
             'extended': 'full',
@@ -199,12 +199,24 @@ class SIMKLAPI:
                                          filler_data=filler_data, filler_enable=filler_enable,
                                          title_disable=title_disable), 'episodes'
 
-    def get_simkl_id(self, mal_id):
+    def get_simkl_id(self, send_id, anime_id):
         params = {
-            "mal": mal_id,
+            send_id: anime_id,
             "client_id": self.ClientID,
         }
         r = requests.get(f'{self.baseUrl}/search/id', params=params)
         r = r.json()
         anime_id = r[0]['ids']['simkl']
         return anime_id
+
+    def get_mapping_ids(self, send_id, anime_id):
+        # return_id = anidb, ann, mal, offjp, wikien, wikijp, instagram, imdb, tmdb, tw, tvdbslug, anilist, animeplanet, anisearch, kitsu, livechart, traktslug,
+        simkl_id = self.get_simkl_id(send_id, anime_id)
+        params = {
+            'extended': 'full',
+            'client_id': self.ClientID
+        }
+        r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params)
+        if r.ok:
+            r = r.json()
+            return r['ids']

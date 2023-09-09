@@ -29,7 +29,7 @@ class sources(BrowserBase):
             if r and r.get('sources'):
                 srcs = r['sources']
                 for i in range(len(srcs)):
-                    srcs[i].update({'type': lang.upper()})
+                    srcs[i]['type'] = lang.upper()
                 referer = r.get('headers', {}).get('Referer', '')
                 if referer:
                     referer = parse.urljoin(referer, '/')

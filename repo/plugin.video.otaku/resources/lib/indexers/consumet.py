@@ -116,7 +116,7 @@ class CONSUMETAPI:
         import time
         update_time = datetime.date.today().isoformat()
         last_updated = datetime.datetime(*(time.strptime(episodes[0]['last_updated'], "%Y-%m-%d")[0:6]))
-        # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d") #todo add when python 11 is added
+        # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d") # todo add when python 11 is added
 
         diff = (datetime.datetime.today() - last_updated).days
         result = self.get_anilist_meta(anilist_id) if diff > 3 else []

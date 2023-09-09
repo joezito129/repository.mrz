@@ -33,10 +33,8 @@ class TMDBAPI:
                 'include_image_language': 'en,ja,null'
             }
             r = requests.get(f'{self.baseUrl}{mtype[0:5]}/{mid}/images', params=params)
-            if r.ok:
-                res = r.json()
-            else:
-                res = {}
+            res = r.json() if r.ok else {}
+
             if res:
                 if res.get('backdrops'):
                     items = []
@@ -48,10 +46,12 @@ class TMDBAPI:
                     art.update({'fanart': items, 'thumb': items2})
 
                 if res.get('logos'):
-                    items = []
-                    for item in res['logos']:
-                        if item.get('url'):
-                            items.append(self.backgroundPath + item['url'])
-                    art.update({'clearart': items})
+
+                    items = [self.backgroundPath + item["url"] for item in res['logos'] if item.get('url')]
+                    # items = []
+                    # for item in res['logos']:
+                    #     if item.get('url'):
+                    #         items.append(self.backgroundPath + item["url"])
+                    art['clearart'] = items
 
         return art

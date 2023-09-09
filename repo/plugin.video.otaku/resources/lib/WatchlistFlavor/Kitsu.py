@@ -2,8 +2,9 @@ import itertools
 import time
 import requests
 
-from resources.lib.ui import control
+from resources.lib.ui import control, database
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
+from resources.lib.indexers.simkl import SIMKLAPI
 from urllib import parse
 
 
@@ -169,7 +170,6 @@ class KitsuWLF(WatchlistFlavorBase):
         info = {
             'plot': eres['attributes'].get('synopsis'),
             'title': eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
-            'rating': float(eres['attributes']['averageRating']) / 10,
             'mpaa': eres['attributes']['ageRating'],
             'trailer': 'plugin://plugin.video.youtube/play/?video_id={0}'.format(eres['attributes']['youtubeVideoId']),
             'mediatype': 'tvshow'
@@ -180,19 +180,23 @@ class KitsuWLF(WatchlistFlavorBase):
         except TypeError:
             pass
 
-        # 'rating': float(eres['attributes']['averageRating']) / 10, 'mpaa': eres['attributes']['ageRating'],
+        try:
+            info['rating'] = float(eres['attributes']['averageRating']) / 10
+        except TypeError:
+            pass
+
         poster_image = eres["attributes"]['posterImage']
         base = {
             "name": '%s - %d/%d' % (eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
                                     res["attributes"]['progress'],
                                     eres["attributes"].get('episodeCount', 0) if eres["attributes"]['episodeCount'] else 0),
-            "url": f'watchlist_to_ep//{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
-            "image":poster_image.get('large', poster_image['original']),
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
+            "image": poster_image.get('large', poster_image['original']),
             "info": info
         }
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f'watchlist_to_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
 
@@ -256,6 +260,10 @@ class KitsuWLF(WatchlistFlavorBase):
                 if i['relationships']['item']['data']['id'] == kitsu_id:
                     mal_id = i['attributes']['externalId']
                     break
+        if not mal_id:
+            ids = SIMKLAPI().get_mapping_ids('kitsu', kitsu_id)
+            mal_id = ids['mal']
+            database.add_mapping_id(ids['anilist'], 'mal_id', mal_id)
         return mal_id
 
     def get_library_entries(self, kitsu_id):
@@ -274,8 +282,10 @@ class KitsuWLF(WatchlistFlavorBase):
             return False
 
         result = self.get_library_entries(kitsu_id)
-        item_dict = result['data'][0]['attributes']
-
+        try:
+            item_dict = result['data'][0]['attributes']
+        except IndexError:
+            return {}
         anime_entry = {
             'eps_watched': item_dict['progress'],
             'status': item_dict['status'],
@@ -314,7 +324,6 @@ class KitsuWLF(WatchlistFlavorBase):
             }
             r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
             return r.ok
-
         animeid = int(r['data'][0]['id'])
         data = {
             'data': {
@@ -378,7 +387,49 @@ class KitsuWLF(WatchlistFlavorBase):
         kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
         if not kitsu_id:
             return False
-        # todo needs to be finished
+
+        score = int(score / 10 * 20)
+        if score == 0:
+            score = None
+        r = self.get_library_entries(kitsu_id)
+        if len(r['data']) == 0:
+            data = {
+                "data": {
+                    "type": "libraryEntries",
+                    "attributes": {
+                        'ratingTwenty': score
+                    },
+                    "relationships": {
+                        "user": {
+                            "data": {
+                                "id": self._user_id,
+                                "type": "users"
+                            }
+                        },
+                        "anime": {
+                            "data": {
+                                "id": kitsu_id,
+                                "type": "anime"
+                            }
+                        }
+                    }
+                }
+            }
+            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
+            return r.ok
+
+        animeid = int(r['data'][0]['id'])
+        data = {
+            'data': {
+                'id': animeid,
+                'type': 'libraryEntries',
+                'attributes': {
+                    'ratingTwenty': score
+                }
+            }
+        }
+        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
+        return r.ok
 
     def delete_anime(self, anilist_id):
         kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')

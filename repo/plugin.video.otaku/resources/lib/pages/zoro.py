@@ -53,6 +53,6 @@ class sources(BrowserBase):
                     'lang': 0
                 }
                 if r.get('subtitle'):
-                    source.update({'subs': [{'url': r['subtitle'], 'lang': 'English'}]})
+                    source['subs'] = [{'url': r['subtitle'], 'lang': 'English'}]
                 all_results.append(source)
         return all_results
