@@ -351,7 +351,7 @@ def TOOLS_MENU(payload, params):
         (control.lang(30021), "clear_cache", 'clear_cache.png'),
         (control.lang(30022), "clear_torrent_cache", 'clear_local_torrent_cache.png'),
         (control.lang(30023), "clear_history", 'clear_search_history.png'),
-        (control.lang(30026), "rebuild_database", 'rebuild_database.png')
+        (control.lang(30026), "rebuild_database", 'rebuild_database.png'),
         # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
         # ("Check Python Version", "py_version", "")
     ]

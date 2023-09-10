@@ -112,13 +112,13 @@ class ENIMEAPI:
         import datetime
         import time
         update_time = datetime.date.today().isoformat()
-        last_updated = datetime.datetime(*(time.strptime(episodes[0]['last_updated'], "%Y-%m-%d")[0:6]))
+        last_updated = datetime.datetime(*(time.strptime(str(episodes[0]['last_updated']), "%Y-%m-%d")[0:6]))
         # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d") #todo add when python 11 is added
 
         diff = (datetime.datetime.today() - last_updated).days
         result = self.get_anilist_meta(anilist_id) if diff > 3 else []
 
-        if len(result) > episodes[0]['number_abs']:
+        if len(result) > len(episodes):
             season = database.get_season_list(anilist_id)['season']
             result = result.get('episodes')
             mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, meta_ids=meta_ids, season=season, poster=poster, fanart=fanart,
@@ -223,7 +223,7 @@ class ENIMEAPI:
             if kodi_meta['status'] != "FINISHED":
                 from resources.jz import anime_filler
                 filler_data = anime_filler.get_data(kodi_meta['ename'])
-                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data,
+                return self.append_episodes(anilist_id, meta_ids, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data,
                                             dub_data, filler_enable, title_disable), 'episodes'
             return self.process_episodes(episodes, eps_watched, dub_data=dub_data, filler_enable=filler_enable,
                                           title_disable=title_disable), 'episodes'
