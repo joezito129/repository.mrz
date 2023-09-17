@@ -15,18 +15,14 @@ class ENIMEAPI:
 
     def get_anilist_meta(self, anilist_id):
         r = requests.get(f'{self.baseUrl}/mapping/anilist/{anilist_id}')
-        if r.ok:
-            return r.json()
-        else:
-            return {}
+        return r.json() if r.ok else {}
 
     def process_episode_view(self, anilist_id, meta_ids, poster, fanart, eps_watched, tvshowtitle,
                              dub_data, filler_data, filler_enable, title_disable):
         from datetime import date
         update_time = date.today().isoformat()
-
         result = self.get_anilist_meta(anilist_id)
-        result_ep = result['episodes']
+        result_ep = result.get('episodes')
         if not result or not result_ep:
             return []
 

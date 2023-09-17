@@ -1,10 +1,9 @@
 import itertools
 import pickle
 import re
+import requests
 
 from functools import partial
-
-import requests
 from bs4 import BeautifulSoup
 from resources.lib.ui import database, source_utils, utils
 from resources.lib.ui.BrowserBase import BrowserBase
@@ -92,6 +91,10 @@ class sources(BrowserBase):
                     eslug = eslug.get('href').strip()
                     url = "{0}{1}".format(self._BASE_URL[:-1], eslug)
                     r = requests.get(url, headers=headers)
+                    if r.ok:
+                        r = r.text
+                    else:
+                        return
         soup = BeautifulSoup(r, 'html.parser')
         sources_ = []
 

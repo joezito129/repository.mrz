@@ -21,6 +21,7 @@ class WatchlistFlavorBase:
         self._sort = sort
         self._title_lang = title_lang if title_lang else control.title_lang(control.getSetting("titlelanguage"))
 
+
     @classmethod
     def name(cls):
         return cls._NAME

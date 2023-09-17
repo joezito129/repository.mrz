@@ -175,6 +175,9 @@ class KitsuWLF(WatchlistFlavorBase):
             'mediatype': 'tvshow'
         }
 
+        if res["attributes"]["progress"] ==  eres['attributes']['episodeCount']:
+            info['playcount'] = 1
+
         try:
             info['duration'] = eres['attributes']['episodeLength'] * 60
         except TypeError:
@@ -441,4 +444,3 @@ class KitsuWLF(WatchlistFlavorBase):
 
         r = requests.delete(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers())
         return r.ok
-    

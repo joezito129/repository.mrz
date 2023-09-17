@@ -1,16 +1,20 @@
-import urllib,xbmcplugin,xbmcgui,xbmcaddon,xbmcvfs,traceback,os,time,_Edit,re,requests,base64,sys,xbmc,random,string,hashlib,resolveurl
-from bs4 import BeautifulSoup
-from xml.etree.ElementTree import ElementTree
+import xbmcplugin, xbmcgui, xbmcaddon, xbmcvfs, xbmc
+import traceback
+import os
+import re
+import time
+import requests
+import sys
+import resolveurl
+import urllib
 import urllib.parse
 import urllib.request
+import json
 
-try:
-    import json
-except:
-    import simplejson as json
-  
-resolve_url=[]
-g_ignoreSetResolved=[]
+from bs4 import BeautifulSoup
+
+resolve_url = []
+g_ignoreSetResolved = []
 
 class NoRedirection(urllib.request.HTTPErrorProcessor):
    def http_response(self, request, response):
@@ -18,31 +22,30 @@ class NoRedirection(urllib.request.HTTPErrorProcessor):
    https_response = http_response
 
 
-AddonID   = 'plugin.video.Rising.Tides'
-addon = _Edit.addon
-addon_version = addon.getAddonInfo('version')
-profile = xbmcvfs.translatePath(addon.getAddonInfo('profile'))
-fanart = xbmcvfs.translatePath(os.path.join('special://home/addons/' + AddonID , 'fanart.jpg'))        
-icon = xbmcvfs.translatePath(os.path.join('special://home/addons/' + AddonID, 'icon.png'))
-artpath = xbmcvfs.translatePath(os.path.join('special://home/addons/' + AddonID + '/resources/art/'))
-thumbpath = xbmcvfs.translatePath(os.path.join('special://home/addons/' + AddonID + '/resources/thumbs/'))
-dialog1 = xbmcgui.Dialog()      
-selfAddon = xbmcaddon.Addon(id=AddonID)
-home = xbmcvfs.translatePath(addon.getAddonInfo('path'))
+addonInfo = xbmcaddon.Addon().getAddonInfo
+ADDON_NAME = addonInfo('name')
+ADDON_ID = addonInfo('id')
+ADDON = xbmcaddon.Addon(ADDON_ID)
+
+addon_version = ADDON.getAddonInfo('version')
+profile = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
+
+fanart = xbmcvfs.translatePath(os.path.join('special://home/addons/' + ADDON_ID, 'fanart.jpg'))
+home = xbmcvfs.translatePath(ADDON.getAddonInfo('path'))
 favorites = os.path.join(profile, 'favorites')
 history = os.path.join(profile, 'history')
-REV = os.path.join(profile, 'list_revision')
 icon = os.path.join(home, 'icon.png')
 FANART = os.path.join(home, 'fanart.jpg')
 source_file = os.path.join(profile, 'source_file')
-functions_dir = profile
 debug = 'true' #addon.getSetting('debug')
-if os.path.exists(favorites)==True:
+if os.path.exists(favorites) == True:
     FAV = open(favorites).read()
-else: FAV = []
-if os.path.exists(source_file)==True:
+else:
+    FAV = []
+if os.path.exists(source_file) == True:
     SOURCES = open(source_file).read()
-else: SOURCES = []
+else:
+    SOURCES = []
 
 
 def addon_log(string):
@@ -56,72 +59,71 @@ class SafeString(str):
     def capitalize(self):
         return self
 
-def OPEN_URL(url):
+def OPEN_URL(url_):
     req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
-    response = requests.get(url)
-    link=response.text
+    response = requests.get(url_)
+    link = response.text
     return link
 
 def scrape():
     html = OPEN_URL('https://soccerhighlightshd.com/')
-    r='<a alt="(.+?)" .+? data-src="(.+?)" .+? href="(.+?)">'
+    r = '<a alt="(.+?)" .+? data-src="(.+?)" .+? href="(.+?)">'
     match = re.compile ( r , re.DOTALL).findall (html)
-    for name,image,url in match:
-        addDir1('[B][COLOR white]%s[/COLOR][/B]'%name,url,34,image,FANART,'')
+    for name, image, url_ in match:
+        addDir1('[B][COLOR white]%s[/COLOR][/B]'%name, url_, 34, image, FANART, '')
 
-def HIGHLIGHTS_LINKS(name,url):
-    xbmc.log('GETLINKS: %s'%url)
-    links=OPEN_URL(url)
+def HIGHLIGHTS_LINKS(name_, url_):
+    xbmc.log('GETLINKS: %s' % url_)
+    links = OPEN_URL(url_)
     links= links.split("<div style='width:100%;height:0px;position:relative;padding-bottom:56.250%;margin-bottom:30px'>")
-    xbmc.log('LINK LEN: %s'%len(links))
+    xbmc.log('LINK LEN: %s' % len(links))
     for link in links:
         r = '<iframe src="(.+?)"'
         match = re.compile(r,re.DOTALL).findall(link)
-        for url in match:
-            if'veuclips' in url:
-                url=url.replace('goal91','player')
-                addDir1(name,url,36,'','','' )
-            if'ok.ru' in url:
-                addDir1(name,url,65,'','','' )
+        for url_ in match:
+            if'veuclips' in url_:
+                url_ = url_.replace('goal91', 'player')
+                addDir1(name_, url_, 36, '', '', '')
+            if 'ok.ru' in url_:
+                addDir1(name_, url_, 65, '', '', '')
             else:
-                addDir1(name,url,36,'','','' )
+                addDir1(name_, url_, 36, '', '', '')
 
-def PLAYLINKS(name,url,iconimage):
-        ok=True
-        liz=xbmcgui.ListItem(name); liz.setInfo( type="Video", infoLabels={ "Title": name } )
-        liz.setArt({'icon':iconimage,'thumb':iconimage})
+def PLAYLINKS(name, url, iconimage):
+        liz = xbmcgui.ListItem(name); liz.setInfo(type="Video", infoLabels={"Title": name})
+        liz.setArt({'icon': iconimage, 'thumb': iconimage})
 
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
+        ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
         liz.setPath(url)
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, liz)
 
-def CHECKLINKS(name,url,iconimage):
+def CHECKLINKS(name, url, iconimage):
         if resolveurl.HostedMediaFile(url).valid_url():
             url = resolveurl.HostedMediaFile(url).resolve()     
-            PLAYLINKS(name,url,iconimage)
-        elif liveresolver.isValid(url)==True:
-            url=liveresolver.resolve(url)
-            PLAYLINKS(name,url,iconimage)
+            PLAYLINKS(name, url, iconimage)
+        elif liveresolver.isValid(url) == True:
+            url = liveresolver.resolve(url)
+            PLAYLINKS(name, url, iconimage)
         else:
-            PLAYLINKS(name,url,iconimage)
+            PLAYLINKS(name, url, iconimage)
        
-def PLAYSTREAM(name,url,iconimage):
+def PLAYSTREAM(name, url, iconimage):
         link=resolveurl.resolve(str(url))
         resolve(name,link)
-        if (xbmc.Player().isPlaying() == 0):
+        if xbmc.Player().isPlaying() == 0:
             quit()
-        else:
-            return
     
-def resolve(name,url):
+def resolve(name, url):
     if 'm3u8' in url or 'mp4' in url:
         xbmc.Player().play(url,xbmcgui.ListItem(name))
 
 def makeRequest(url, headers=None):
         try:
             if headers is None:
-                headers = {'User-agent' : 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0'}
-            req = requests.get(url,headers=headers)
+                headers = {
+                    'User-agent' : 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0'
+                }
+            req = requests.get(url, headers=headers)
             data = req.text
             data = data.replace("<link>.<link>","<link>http://Ignoreme</link>")
             data = data.replace("<link","<url").replace("</link","</url")
@@ -140,12 +142,11 @@ def makeRequest(url, headers=None):
 def SKindex():
     addon_log("SKindex")
     addDir('[COLOR pink][B]F[/B][/COLOR][COLOR white][B]ootball[/B][/COLOR] [COLOR red][B]H[/B][/COLOR][COLOR white][B]ighlights[/B][/COLOR]','Football Highlights',33,'https://i.imgur.com/koR9cKd.jpg' ,  FANART,'','','','')
-    getData(_Edit.MainBase,'')
+    getData('http://bit.ly/MICASA_1', '')
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-def play(url,name,pdialogue=None):
+def play(url, name, pdialogue=None):
         from resources.root import resolvers
-        import xbmcgui
         
         url = url.strip()
 
@@ -169,10 +170,9 @@ def play(url,name,pdialogue=None):
             elif url.endswith('.f4m'):
                 url = 'plugin://plugin.video.f4mTester/?url='+urllib.parse.quote_plus(url)
 
-            '''
-            elif '.mpegts' in i.string:                                         
-                f4m = 'plugin://plugin.video.f4mTester/?url='+urllib.parse.quote_plus(i.string)+'&amp;streamtype=TSDOWNLOADER'
-            '''
+            # elif '.mpegts' in i.string:
+            #     f4m = 'plugin://plugin.video.f4mTester/?url='+urllib.parse.quote_plus(i.string)+'&amp;streamtype=TSDOWNLOADER'
+
             if url.lower().startswith('plugin') and 'youtube' not in  url.lower():
                 from resources.modules import CustomPlayer
                 xbmc.executebuiltin('XBMC.PlayMedia('+url+')') 
@@ -180,24 +180,19 @@ def play(url,name,pdialogue=None):
                 if (xbmc.Player().isPlaying() == 0):
                     quit()
                 try:
-                   
-                        if player.urlplayed:
-                            print('yes played')
-                            return
-                        if time.time()-beforestart>4: return False
-                except: pass
-
-                print('returning now')
+                    if player.urlplayed:
+                        return
+                    if time.time()-beforestart>4:
+                        return False
+                except:
+                    pass
                 return False
 
-            from resources.modules import  CustomPlayer
-            import time
+            from resources.modules import CustomPlayer
 
             player = CustomPlayer.MyXBMCPlayer()
             player.pdialogue=pdialogue
-            start = time.time() 
-            print('going to play')
-            import time
+            start = time.time()
             beforestart=time.time()
             player.play( url, liz)
             if (xbmc.Player().isPlaying() == 0):
@@ -210,13 +205,12 @@ def play(url,name,pdialogue=None):
                         print('yes played')
                         return
                     if time.time()-beforestart>4: return False
-            except: pass
-            print('not played',url)
+            except:
+                pass
             xbmc.Player().stop()
             return
 
 def regex_from_to(text, from_string, to_string, excluding=True):
-    import re,string
     if excluding:
         try: r = re.search("(?i)" + from_string + "([\S\s]+?)" + to_string, text).group(1)
         except: r = ''
@@ -236,17 +230,17 @@ logfile    = xbmcvfs.translatePath(os.path.join('special://home/addons/plugin.vi
 def getSources():
         if os.path.exists(favorites) == True:
             addDir('Favorites','url',4,os.path.join(home, 'resources', 'favorite.png'),FANART,'','','','')
-        if addon.getSetting("browse_xml_database") == "true":
+        if ADDON.getSetting("browse_xml_database") == "true":
             addDir('XML Database','http://xbmcplus.xb.funpic.de/www-data/filesystem/',15,icon,FANART,'','','','')
-        if addon.getSetting("browse_community") == "true":
+        if ADDON.getSetting("browse_community") == "true":
             addDir('Community Files','community_files',16,icon,FANART,'','','','')
         if os.path.exists(history) == True:
             addDir('Search History','history',25,os.path.join(home, 'resources', 'favorite.png'),FANART,'','','','')
-        if addon.getSetting("searchyt") == "true":
+        if ADDON.getSetting("searchyt") == "true":
             addDir('Search:Youtube','youtube',25,icon,FANART,'','','','')
-        if addon.getSetting("searchDM") == "true":
+        if ADDON.getSetting("searchDM") == "true":
             addDir('Search:dailymotion','dmotion',25,icon,FANART,'','','','')
-        if addon.getSetting("PulsarM") == "true":
+        if ADDON.getSetting("PulsarM") == "true":
             addDir('Pulsar:IMDB','IMDBidplay',27,icon,FANART,'','','','')            
         if os.path.exists(source_file)==True:
             sources = json.loads(open(source_file,"r").read())
@@ -336,7 +330,7 @@ def getData(url,fanart):
 
                 try:
                     if not channel('fanart'):
-                        if addon.getSetting('use_thumb') == "true":
+                        if ADDON.getSetting('use_thumb') == "true":
                             fanArt = thumbnail
                         else:
                             fanArt = fanart
@@ -403,8 +397,8 @@ def parse_m3u(data):
                 if thumbnail.startswith('http'):
                     thumbnail = thumbnail
                 
-                elif not addon.getSetting('logo-folderPath') == "":
-                    logo_url = addon.getSetting('logo-folderPath')
+                elif not ADDON.getSetting('logo-folderPath') == "":
+                    logo_url = ADDON.getSetting('logo-folderPath')
                     thumbnail = logo_url + thumbnail
 
                 else:
@@ -445,7 +439,7 @@ def getChannelItems(name,url,fanart):
                 thumbnail = ''
             try:
                 if not channel('fanart'):
-                    if addon.getSetting('use_thumb') == "true":
+                    if ADDON.getSetting('use_thumb') == "true":
                         fanArt = thumbnail
                 else:
                     fanArt = channel('fanart')[0].string
@@ -538,8 +532,8 @@ def Search_m3u(data,Searchkey):
                 if thumbnail.startswith('http'):
                     thumbnail = thumbnail
                 
-                elif not addon.getSetting('logo-folderPath') == "":
-                    logo_url = addon.getSetting('logo-folderPath')
+                elif not ADDON.getSetting('logo-folderPath') == "":
+                    logo_url = ADDON.getSetting('logo-folderPath')
                     thumbnail = logo_url + thumbnail
 
                 else:
@@ -661,7 +655,7 @@ def getItems(items,fanart):
                 elif len(item('imdb')) >0:
                     for i in item('imdb'):
                         if not i.string == None:
-                            if addon.getSetting('genesisorpulsar') == '0':
+                            if ADDON.getSetting('genesisorpulsar') == '0':
                                 imdb = 'plugin://plugin.video.genesis/?action=play&imdb='+i.string
                             else:
                                 imdb = 'plugin://plugin.video.pulsar/movie/tt'+i.string+'/play'
@@ -715,7 +709,7 @@ def getItems(items,fanart):
                 thumbnail = ''
             try:
                 if not item('fanart'):
-                    if addon.getSetting('use_thumb') == "true":
+                    if ADDON.getSetting('use_thumb') == "true":
                         fanArt = thumbnail
                     else:
                         fanArt = fanart
@@ -760,14 +754,14 @@ def getItems(items,fanart):
                     alt = 0
                     playlist = []
                     for i in url:
-                        if addon.getSetting('ask_playlist_items') == 'true':
+                        if ADDON.getSetting('ask_playlist_items') == 'true':
                             if regexs:
                                 playlist.append(i+'&regexs='+regexs)
                             elif  any(x in i for x in resolve_url) and  i.startswith('http'):
                                 playlist.append(i+'&mode=19')                            
                         else:
                             playlist.append(i)
-                    if addon.getSetting('add_playlist') == "false":                    
+                    if ADDON.getSetting('add_playlist') == "false":
                             for i in url:
                                 alt += 1
                                 addLink(i,'%s) %s' %(alt, name.encode('utf-8', 'ignore')),thumbnail,fanArt,desc,genre,date,True,playlist,regexs,total)                            
@@ -783,103 +777,102 @@ def getItems(items,fanart):
                     else: 
                         addLink(url[0],name.encode('utf-8', 'ignore'),thumbnail,fanArt,desc,genre,date,True,None,regexs,total)
             except:
-                addon_log('There was a problem adding item - '+name.encode('utf-8', 'ignore'))
-        print('FINISH GET ITEMS *****')      
+                addon_log('There was a problem adding item - ' + name.encode('utf-8', 'ignore'))
 
 def parse_regex(reg_item):
-                try:
-                    regexs = {}
-                    for i in reg_item:
-                        regexs[i('name')[0].string] = {}
-                        try:
-                            regexs[i('name')[0].string]['expre'] = i('expres')[0].string
-                            if not regexs[i('name')[0].string]['expre']:
-                                regexs[i('name')[0].string]['expre']=''
-                        except:
-                            addon_log("Regex: -- No Referer --")
-                        regexs[i('name')[0].string]['page'] = i('page')[0].string
-                        try:
-                            regexs[i('name')[0].string]['refer'] = i('referer')[0].string
-                        except:
-                            addon_log("Regex: -- No Referer --")
-                        try:
-                            regexs[i('name')[0].string]['connection'] = i('connection')[0].string
-                        except:
-                            addon_log("Regex: -- No connection --")
+    try:
+        regexs = {}
+        for i in reg_item:
+            regexs[i('name')[0].string] = {}
+            try:
+                regexs[i('name')[0].string]['expre'] = i('expres')[0].string
+                if not regexs[i('name')[0].string]['expre']:
+                    regexs[i('name')[0].string]['expre']=''
+            except:
+                addon_log("Regex: -- No Referer --")
+            regexs[i('name')[0].string]['page'] = i('page')[0].string
+            try:
+                regexs[i('name')[0].string]['refer'] = i('referer')[0].string
+            except:
+                addon_log("Regex: -- No Referer --")
+            try:
+                regexs[i('name')[0].string]['connection'] = i('connection')[0].string
+            except:
+                addon_log("Regex: -- No connection --")
 
-                        try:
-                            regexs[i('name')[0].string]['notplayable'] = i('notplayable')[0].string
-                        except:
-                            addon_log("Regex: -- No notplayable --")
-                            
-                        try:
-                            regexs[i('name')[0].string]['noredirect'] = i('noredirect')[0].string
-                        except:
-                            addon_log("Regex: -- No noredirect --")
-                        try:
-                            regexs[i('name')[0].string]['origin'] = i('origin')[0].string
-                        except:
-                            addon_log("Regex: -- No origin --")
-                        try:
-                            regexs[i('name')[0].string]['includeheaders'] = i('includeheaders')[0].string
-                        except:
-                            addon_log("Regex: -- No includeheaders --")                            
-                            
-                        try:
-                            regexs[i('name')[0].string]['x-req'] = i('x-req')[0].string
-                        except:
-                            addon_log("Regex: -- No x-req --")
-                        try:
-                            regexs[i('name')[0].string]['x-forward'] = i('x-forward')[0].string
-                        except:
-                            addon_log("Regex: -- No x-forward --")
+            try:
+                regexs[i('name')[0].string]['notplayable'] = i('notplayable')[0].string
+            except:
+                addon_log("Regex: -- No notplayable --")
 
-                        try:
-                            regexs[i('name')[0].string]['agent'] = i('agent')[0].string
-                        except:
-                            addon_log("Regex: -- No User Agent --")
-                        try:
-                            regexs[i('name')[0].string]['post'] = i('post')[0].string
-                        except:
-                            addon_log("Regex: -- Not a post")
-                        try:
-                            regexs[i('name')[0].string]['rawpost'] = i('rawpost')[0].string
-                        except:
-                            addon_log("Regex: -- Not a rawpost")
-                        try:
-                            regexs[i('name')[0].string]['htmlunescape'] = i('htmlunescape')[0].string
-                        except:
-                            addon_log("Regex: -- Not a htmlunescape")
+            try:
+                regexs[i('name')[0].string]['noredirect'] = i('noredirect')[0].string
+            except:
+                addon_log("Regex: -- No noredirect --")
+            try:
+                regexs[i('name')[0].string]['origin'] = i('origin')[0].string
+            except:
+                addon_log("Regex: -- No origin --")
+            try:
+                regexs[i('name')[0].string]['includeheaders'] = i('includeheaders')[0].string
+            except:
+                addon_log("Regex: -- No includeheaders --")
+
+            try:
+                regexs[i('name')[0].string]['x-req'] = i('x-req')[0].string
+            except:
+                addon_log("Regex: -- No x-req --")
+            try:
+                regexs[i('name')[0].string]['x-forward'] = i('x-forward')[0].string
+            except:
+                addon_log("Regex: -- No x-forward --")
+
+            try:
+                regexs[i('name')[0].string]['agent'] = i('agent')[0].string
+            except:
+                addon_log("Regex: -- No User Agent --")
+            try:
+                regexs[i('name')[0].string]['post'] = i('post')[0].string
+            except:
+                addon_log("Regex: -- Not a post")
+            try:
+                regexs[i('name')[0].string]['rawpost'] = i('rawpost')[0].string
+            except:
+                addon_log("Regex: -- Not a rawpost")
+            try:
+                regexs[i('name')[0].string]['htmlunescape'] = i('htmlunescape')[0].string
+            except:
+                addon_log("Regex: -- Not a htmlunescape")
 
 
-                        try:
-                            regexs[i('name')[0].string]['readcookieonly'] = i('readcookieonly')[0].string
-                        except:
-                            addon_log("Regex: -- Not a readCookieOnly")
-                        try:
-                            regexs[i('name')[0].string]['cookiejar'] = i('cookiejar')[0].string
-                            if not regexs[i('name')[0].string]['cookiejar']:
-                                regexs[i('name')[0].string]['cookiejar']=''
-                        except:
-                            addon_log("Regex: -- Not a cookieJar")                          
-                        try:
-                            regexs[i('name')[0].string]['setcookie'] = i('setcookie')[0].string
-                        except:
-                            addon_log("Regex: -- Not a setcookie")
-                        try:
-                            regexs[i('name')[0].string]['appendcookie'] = i('appendcookie')[0].string
-                        except:
-                            addon_log("Regex: -- Not a appendcookie")
-                                                    
-                        try:
-                            regexs[i('name')[0].string]['ignorecache'] = i('ignorecache')[0].string
-                        except:
-                            addon_log("Regex: -- no ignorecache")
-                    regexs = urllib.parse.quote(repr(regexs))
-                    return regexs
-                except:
-                    regexs = None
-                    addon_log('regex Error: '+name.encode('utf-8', 'ignore'))
+            try:
+                regexs[i('name')[0].string]['readcookieonly'] = i('readcookieonly')[0].string
+            except:
+                addon_log("Regex: -- Not a readCookieOnly")
+            try:
+                regexs[i('name')[0].string]['cookiejar'] = i('cookiejar')[0].string
+                if not regexs[i('name')[0].string]['cookiejar']:
+                    regexs[i('name')[0].string]['cookiejar']=''
+            except:
+                addon_log("Regex: -- Not a cookieJar")
+            try:
+                regexs[i('name')[0].string]['setcookie'] = i('setcookie')[0].string
+            except:
+                addon_log("Regex: -- Not a setcookie")
+            try:
+                regexs[i('name')[0].string]['appendcookie'] = i('appendcookie')[0].string
+            except:
+                addon_log("Regex: -- Not a appendcookie")
+
+            try:
+                regexs[i('name')[0].string]['ignorecache'] = i('ignorecache')[0].string
+            except:
+                addon_log("Regex: -- no ignorecache")
+        regexs = urllib.parse.quote(repr(regexs))
+        return regexs
+    except:
+        regexs = None
+        addon_log('regex Error: '+name.encode('utf-8', 'ignore'))
 
 def getRegexParsed(regexs, url,cookieJar=None,forCookieJarOnly=False,recursiveCall=False,cachedPages={}, rawPost=False, cookie_jar_file=None):
         if not recursiveCall:
@@ -1072,15 +1065,15 @@ def getRegexParsed(regexs, url,cookieJar=None,forCookieJarOnly=False,recursiveCa
                 else:           
                     url = url.replace("$doregex[" + k + "]",'')
         if '$epoctime$' in url:
-            url=url.replace('$epoctime$',getEpocTime())
+            url=url.replace('$epoctime$', getEpocTime())
         if '$epoctime2$' in url:
-            url=url.replace('$epoctime2$',getEpocTime2())
+            url=url.replace('$epoctime2$', getEpocTime2())
 
         if '$GUID$' in url:
             import uuid
             url=url.replace('$GUID$',str(uuid.uuid1()).upper())
         if '$get_cookies$' in url:
-            url=url.replace('$get_cookies$',getCookiesString(cookieJar))   
+            url=url.replace('$get_cookies$', getCookiesString(cookieJar))
 
         if recursiveCall:
             return url
@@ -1092,7 +1085,7 @@ def getRegexParsed(regexs, url,cookieJar=None,forCookieJarOnly=False,recursiveCa
 
 def playmedia(media_url):
     try:
-        import  CustomPlayer
+        import CustomPlayer
         player = CustomPlayer.MyXBMCPlayer()
         listitem = xbmcgui.ListItem( label = str(name), path=media_url )
         listitem.setArt({'icon':"DefaultVideo.png",'thumb':xbmc.getInfoImage( "ListItem.Thumb") })
@@ -1162,14 +1155,14 @@ def get_params():
         return param
 
 def urlsolver(url):
-    if addon.getSetting('Updatecommonresolvers') == 'true':
+    if ADDON.getSetting('Updatecommonresolvers') == 'true':
         l = os.path.join(home,'resolverers.py')
         if xbmcvfs.exists(l):
             os.remove(l)
 
         genesis_url = 'https://raw.githubusercontent.com/lambda81/lambda-addons/master/plugin.video.genesis/commonresolvers.py'
         th= urllib.request.urlretrieve(genesis_url,l)
-        addon.setSetting('Updatecommonresolvers', 'false')
+        ADDON.setSetting('Updatecommonresolvers', 'false')
     try:
         import resolverers
     except Exception:
@@ -1186,13 +1179,13 @@ def urlsolver(url):
     if resolved :
         if isinstance(resolved,list):
             for k in resolved:
-                quality = addon.getSetting('quality')
+                quality = ADDON.getSetting('quality')
                 if k['quality'] == 'HD'  :
                     resolver = k['url']
                     break
                 elif k['quality'] == 'SD' :
                     resolver = k['url']
-                elif k['quality'] == '1080p' and addon.getSetting('1080pquality') == 'true' :
+                elif k['quality'] == '1080p' and ADDON.getSetting('1080pquality') == 'true' :
                     resolver = k['url']
                     break
         else:
@@ -1202,7 +1195,7 @@ def urlsolver(url):
 
 def play_playlist(name, mu_playlist):
         import urlparse
-        if addon.getSetting('ask_playlist_items') == 'true':
+        if ADDON.getSetting('ask_playlist_items') == 'true':
             names = []
             for i in mu_playlist:
                 d_name=urlparse.urlparse(i).netloc
@@ -1268,20 +1261,18 @@ def addDir(name,url,mode,iconimage,fanart,description,genre,date,credits,showcon
         return ok
 
 def addDir1(name,url,mode,iconimage,fanart,description):
-    u=sys.argv[0]+"?url="+url+"&mode="+str(mode)+"&name="+urllib.parse.quote_plus(name)+"&iconimage="+urllib.parse.quote_plus(iconimage)+"&description="+urllib.parse.quote_plus(description)
-    ok=True
-    liz=xbmcgui.ListItem(name)
+    u = sys.argv[0] + "?url="+url+"&mode="+str(mode)+"&name="+urllib.parse.quote_plus(name)+"&iconimage="+urllib.parse.quote_plus(iconimage)+"&description="+urllib.parse.quote_plus(description)
+    liz = xbmcgui.ListItem(name)
     liz.setArt({"icon":"DefaultFolder.png", "thumb":iconimage})
 
     liz.setInfo( type="Video", infoLabels={"Title": name,"Plot":description})
     liz.setProperty('fanart_image', fanart)
     if mode==102 or mode==9999:
         liz.setProperty("IsPlayable","true")
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
+        ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
     else:
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
+        ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
     return ok
-    xbmcplugin.endOfDirectory
 
 def addDir2(name,url,mode,iconimage,fanart,channelid=''):
         u=sys.argv[0]+"?url="+urllib.parse.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.parse.quote_plus(name)+"&channelid="+str(channelid)+"&iconimage="+urllib.parse.quote_plus(iconimage)
@@ -1294,8 +1285,7 @@ def addDir2(name,url,mode,iconimage,fanart,channelid=''):
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 
-def sendJSON( command):
-    data = ''
+def sendJSON(command):
     try:
         data = xbmc.executeJSONRPC(uni(command))
     except UnicodeEncodeError:
@@ -1353,8 +1343,8 @@ def addLink(url,name,iconimage,fanart,description,genre,date,showcontext,playlis
         contextMenu =[]
         try:
             name = name.encode('utf-8')
-        except: pass
-        ok = True
+        except:
+            pass
        
         if regexs: 
             mode = '17'
@@ -1372,7 +1362,7 @@ def addLink(url,name,iconimage,fanart,description,genre,date,showcontext,playlis
           
             contextMenu.append(('[COLOR white]!!Download!![/COLOR]','XBMC.RunPlugin(%s?url=%s&mode=23&name=%s)'
                                     %(sys.argv[0], urllib.parse.quote_plus(url), urllib.parse.quote_plus(name)))) 
-            if addon.getSetting('dlaudioonly') == 'true':
+            if ADDON.getSetting('dlaudioonly') == 'true':
                 contextMenu.append(('!!Download [COLOR seablue]Audio!![/COLOR]','XBMC.RunPlugin(%s?url=%s&mode=24&name=%s)'
                                         %(sys.argv[0], urllib.parse.quote_plus(url), urllib.parse.quote_plus(name))))                                     
         elif url.startswith('magnet:?xt=') or '.torrent' in url:
@@ -1391,7 +1381,7 @@ def addLink(url,name,iconimage,fanart,description,genre,date,showcontext,playlis
         play_list = False
       
         if playlist:
-            if addon.getSetting('add_playlist') == "false":
+            if ADDON.getSetting('add_playlist') == "false":
                 u += "url="+urllib.parse.quote_plus(url)+"&mode="+mode
             else:
                 u += "mode=13&name=%s&playlist=%s" %(urllib.parse.quote_plus(name), urllib.parse.quote_plus(str(playlist).replace(',','||')))
@@ -1443,7 +1433,7 @@ def addLink(url,name,iconimage,fanart,description,genre,date,showcontext,playlis
             liz.addContextMenuItems(contextMenu)
        
         if not playlist is None:
-            if addon.getSetting('add_playlist') == "false":
+            if ADDON.getSetting('add_playlist') == "false":
                 playlist_name = name.split(') ')[1]
                 contextMenu_ = [
                     ('Play '+playlist_name+' PlayList','XBMC.RunPlugin(%s?mode=13&name=%s&playlist=%s)'

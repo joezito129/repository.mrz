@@ -3,7 +3,6 @@ import pickle
 import random
 import requests
 
-from resources.lib.ui import control
 from resources.lib.ui import database, get_meta
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 
@@ -221,6 +220,9 @@ class AniListWLF(WatchlistFlavorBase):
             'studio': [x['node'].get('name') for x in res['studios'].get('edges')]
         }
 
+        if progress == res['episodes']:
+            info['playcount'] = 1
+
         try:
             info['duration'] = res.get('duration') * 60
         except TypeError:
@@ -280,7 +282,7 @@ class AniListWLF(WatchlistFlavorBase):
                 base['clearlogo'] = random.choice(art['clearlogo'])
 
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = f'watchlist/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
             return self._parse_view(base, False)
 

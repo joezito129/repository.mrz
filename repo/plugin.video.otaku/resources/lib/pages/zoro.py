@@ -1,10 +1,10 @@
 import itertools
 import pickle
-from functools import partial
 
+from functools import partial
 from resources.lib.ui import control, database
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.indexers import anify, enime
+from resources.lib.indexers import anify
 
 
 class sources(BrowserBase):
@@ -34,25 +34,4 @@ class sources(BrowserBase):
                 results = map(mapfunc, srcs)
                 results = list(itertools.chain(*results))
                 all_results += results
-
-        if not all_results:
-            r = database.get_(enime.ENIMEAPI().get_sources, 8,
-                              anilist_id, episode, 'zoro')
-
-            if r and r.get('url'):
-                slink = r['url'] + '|Referer={0}&User-Agent=iPad'.format(r.get('referer').split('?')[0])
-                source = {
-                    'release_title': title,
-                    'hash': slink,
-                    'type': 'direct',
-                    'quality': 'EQ',
-                    'debrid_provider': '',
-                    'provider': 'zoro',
-                    'size': 'NA',
-                    'info': ['HLS'],
-                    'lang': 0
-                }
-                if r.get('subtitle'):
-                    source['subs'] = [{'url': r['subtitle'], 'lang': 'English'}]
-                all_results.append(source)
         return all_results

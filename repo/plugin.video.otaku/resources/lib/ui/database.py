@@ -34,12 +34,12 @@ def get_(function, duration, *args, **kwargs):
     if not reload:
         if cache_result:
             if _is_cache_valid(cache_result['date'], duration):
-                try:
-                    return_data = ast.literal_eval(cache_result['value'])
-                    return return_data
-                except Exception as e:
-                    control.print(f'41: {e}')
-                    return ast.literal_eval(cache_result['value'])
+                # try:
+                return_data = ast.literal_eval(cache_result['value'])
+                return return_data
+                # except Exception as e:
+                #     control.print(f'41: {e}')
+                #     return ast.literal_eval(cache_result['value'])
 
     fresh_result = repr(function(*args, **kwargs))
 

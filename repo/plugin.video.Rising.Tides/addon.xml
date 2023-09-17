@@ -13,7 +13,9 @@
   <import addon="script.module.metahandler" version="2.5.1"/>
   <import addon="script.module.simple.downloader" optional="false"/>
   <import addon="script.module.beautifulsoup" version="3.2.1"/>
-  <import addon="script.module.liveresolver" version="0.1.50"/>-->
+  <import addon="script.module.liveresolver" version="0.1.50"/>
+  -->
+
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py">
     <provides>video</provides>

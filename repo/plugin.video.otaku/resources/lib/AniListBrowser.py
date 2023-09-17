@@ -14,8 +14,8 @@ from resources.lib.ui.divide_flavors import div_flavor
 class AniListBrowser:
     _URL = "https://graphql.anilist.co"
 
-    def __init__(self, title_key):
-        self._TITLE_LANG = control.title_lang(title_key)
+    def __init__(self, title_key=None):
+        self._TITLE_LANG = control.title_lang(title_key) if title_key else "userPreferred"
         if control.getSetting('contentformat.bool') == "true":
             formats = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
             self.format_in_type = formats[int(control.getSetting('contentformat.menu'))]
@@ -128,9 +128,8 @@ class AniListBrowser:
             'page': page,
             'id': anilist_id
         }
-
         recommendations = database.get_(self.get_recommendations_res, 24, variables, page)
-        return self.process_recommendations_view(recommendations, "recommendations_next/{}/%d".format(anilist_id), page)
+        return self.process_recommendations_view(recommendations, f'recommendations_next/{anilist_id}/%d', page)
 
     def get_relations(self, anilist_id):
         variables = {
@@ -157,7 +156,7 @@ class AniListBrowser:
         variables = anime['url'].split("/")[1:]
         idmal = int(variables[3])
         variables = {
-            'id': idmal
+            'idMal': idmal
         }
         anilist_item = database.get_(self.anilist_res_with_mal_id, 24, variables)
         if anilist_item:
@@ -165,12 +164,19 @@ class AniListBrowser:
 
     def get_mal_to_anilist(self, mal_id):
         variables = {
-            'id': mal_id,
+            'idMal': mal_id,
             'type': "ANIME"
         }
+        anilist_res = database.get_(self.anilist_res_with_mal_id, 24, variables)
+        return self.process_res(anilist_res)
 
-        mal_to_anilist = database.get_(self.anilist_res_with_mal_id, 24, variables)
-        return self._process_mal_to_anilist(mal_to_anilist)
+    def get_anilist(self, anilist_id):
+        variables = {
+            'id': anilist_id,
+            'type': "ANIME"
+        }
+        anilist_res = database.get_(self.get_anilist_res, 24, variables)
+        return self.process_res(anilist_res)
 
     def get_base_res(self, variables, page=1):
         query = '''
@@ -493,9 +499,85 @@ class AniListBrowser:
         json_res = results['data']['Media']['relations']
         return json_res
 
+
+    def get_anilist_res(self, variables):
+        query = '''
+        query($id: Int, $type: MediaType){
+            Media(id: $id, type: $type) {
+                id
+                idMal
+                title {
+                    userPreferred,
+                    romaji,
+                    english
+                }
+                coverImage {
+                    extraLarge
+                }
+                bannerImage
+                startDate {
+                    year,
+                    month,
+                    day
+                }
+                description
+                synonyms
+                format
+                episodes
+                status
+                genres
+                duration
+                countryOfOrigin
+                averageScore
+                characters (
+                    page: 1,
+                    sort: ROLE,
+                    perPage: 10,
+                ) {
+                    edges {
+                        node {
+                            name {
+                                userPreferred
+                            }
+                        }
+                        voiceActors (language: JAPANESE) {
+                            name {
+                                userPreferred
+                            }
+                            image {
+                                large
+                            }
+                        }
+                    }
+                }
+                studios {
+                    edges {
+                        node {
+                            name
+                        }
+                    }
+                }
+                trailer {
+                    id
+                    site
+                }
+            }
+        }
+        '''
+
+        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        results = r.json()
+
+        if "errors" in results.keys():
+            return
+
+        json_res = results['data']['Media']
+        return json_res
+
+
     def anilist_res_with_mal_id(self, variables):
         query = '''
-        query($id: Int, $type: MediaType){Media(idMal: $id, type: $type) {
+        query($idMal: Int, $type: MediaType){Media(idMal: $idMal, type: $type) {
             id
             idMal
             title {
@@ -596,7 +678,7 @@ class AniListBrowser:
         all_results = list(itertools.chain(*all_results))
         return all_results
 
-    def _process_mal_to_anilist(self, res):
+    def process_res(self, res):
         self._database_update_show(res)
         get_meta.collect_meta([res])
         return database.get_show(str(res['id']))
@@ -981,7 +1063,7 @@ class AniListBrowser:
             variables["includedGenres"] = genre_list
         if tag_list:
             variables["includedTags"] = tag_list
-        return self.process_genre_view(query, variables, "anilist_genres/%s/%s/%%d" % (genre_list, tag_list), page)
+        return self.process_genre_view(query, variables, f"anilist_genres/%s/%s/%%d" % (genre_list, tag_list), page)
 
 
     def process_genre_view(self, query, variables, base_plugin_url, page):

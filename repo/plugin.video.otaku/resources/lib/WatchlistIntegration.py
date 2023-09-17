@@ -4,11 +4,7 @@ from resources.lib.ui import control, database
 from resources.lib.ui.router import route
 from resources.lib.WatchlistFlavor import WatchlistFlavor
 from resources.lib import OtakuBrowser
-
-
-def get_anilist_res(mal_id):
-    from resources.lib.AniListBrowser import AniListBrowser
-    return AniListBrowser(control.getSetting("titlelanguage")).get_mal_to_anilist(mal_id)
+from resources.lib.AniListBrowser import AniListBrowser
 
 
 def get_auth_dialog(flavor):
@@ -58,7 +54,7 @@ def WATCHLIST_TO_EP(payload, params):
     if mal_id:
         show_meta = database.get_show_mal(mal_id)
         if not show_meta:
-            show_meta = get_anilist_res(mal_id)
+            show_meta = AniListBrowser().get_mal_to_anilist(mal_id)
     else:
         show_meta = database.get_show(anilist_id)
 
@@ -79,19 +75,14 @@ def CONTEXT_MENU(payload, params):
     else:
         path, anilist_id, mal_id, kitsu_id = payload_list
 
-    if not mal_id:
-        show = database.get_show(anilist_id)
-        if show:
-            mal_id = show['mal_id']
     if not anilist_id:
         show = database.get_show_mal(mal_id)
-        if show:
-            anilist_id = show['anilist_id']
+        if not show:
+            show = AniListBrowser().get_mal_to_anilist(mal_id)
+        anilist_id = show['anilist_id']
     else:
-        show = None
+        show = database.get_show(anilist_id)
 
-    if not show:
-        show = get_anilist_res(mal_id)
 
     flavor = WatchlistFlavor.get_update_flavor()
     actions = WatchlistFlavor.context_statuses()

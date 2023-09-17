@@ -266,11 +266,10 @@ def MARKED_AS_WATCHED(payload, params):
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(anilist_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
-    plugin = 'plugin://plugin.video.otaku'
-    show_meta  = database.get_show(anilist_id)
-    kitsu_id = show_meta['kitsu_id'] # todo kitsu_id is None right now needs to be fixed
-    mal_id = show_meta['mal_id']
-    control.execute(f'ActivateWindow(Videos,{plugin}/watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{episode})')
+    show  = database.get_show(anilist_id)
+    kitsu_id = show['kitsu_id'] # todo if kitsu_id is None needs to be fixed
+    mal_id = show['mal_id']
+    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{episode})')
 
 
 @route('delete_anime_database/*')
@@ -372,7 +371,8 @@ def LIST_MENU(payload, params):
         (control.lang(50011), "search_history", 'search.png'),
         (control.lang(50012), "tools", 'tools.png')
     ]
-    if control.getSetting('menu.lastwatched') == 'true': MENU_ITEMS = add_last_watched(MENU_ITEMS)
+    if control.getSetting('menu.lastwatched') == 'true':
+        MENU_ITEMS = add_last_watched(MENU_ITEMS)
     MENU_ITEMS = add_watchlist(MENU_ITEMS)
     MENU_ITEMS_ = MENU_ITEMS[:]
     for i in MENU_ITEMS:

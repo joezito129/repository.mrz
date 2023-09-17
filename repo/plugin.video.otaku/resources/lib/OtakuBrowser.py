@@ -30,10 +30,7 @@ def get_episodeList(anilist_id, pass_idx, filter_lang=None):
             'premiered': str(kodi_meta['start_date']),
             'year': int(str(kodi_meta['start_date'])[:4])
         }
-
-        items = [
-            utils.allocate_item(title, 'null', info=info, poster=kodi_meta['poster'])
-        ]
+        items = [utils.allocate_item(title, 'null', info=info, poster=kodi_meta['poster'])]
 
     else:
         episodes = database.get_episode_list(anilist_id)
@@ -69,19 +66,14 @@ def get_backup(anilist_id, source):
         "id": mal_id
     }
     r = requests.get("https://arm2.vercel.app/api/kaito-b", params=params)
-    if r.ok:
-        r = r.json()
-        result = r.get('Pages', {}).get(source, {})
-    else:
-        result = {}
-    return result
+    return r.json().get('Pages', {}).get(source, {}) if r.ok else {}
 
 
 def get_anime_init(anilist_id):
     show_meta = database.get_show_meta(anilist_id)
     if not show_meta:
-        from resources.lib.ui import get_meta
-        get_meta.get_meta(anilist_id)
+        from resources.lib.AniListBrowser import AniListBrowser
+        show = AniListBrowser().get_anilist(anilist_id)
         show_meta = database.get_show_meta(anilist_id)
         if not show_meta:
             return [], 'episodes'
@@ -97,6 +89,8 @@ def get_anime_init(anilist_id):
 
     else:
         data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
+        if not data[0]:
+            data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
     return data

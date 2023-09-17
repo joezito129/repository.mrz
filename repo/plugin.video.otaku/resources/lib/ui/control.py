@@ -308,7 +308,6 @@ def xbmc_add_dir(name, url, art={}, info=None, draw_cm=None):
     if not art.get('fanart'):
         art['fanart'] = OTAKU_FANART_PATH
     liz.setArt(art)
-    # liz.setProperty('IsPlayable', 'false')
     return xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=True)
 
 
@@ -369,9 +368,12 @@ def bulk_draw_items(video_data, draw_cm=None, bulk_add=True):
         item_list.append(item)
     return item_list
 
+
 def title_lang(title_key):
     title_lang_dict = {
+        "40370": "userPreferred",
         "Romaji (Shingeki no Kyojin)": "userPreferred",
+        "40371": "english",
         "English (Attack on Titan)": "english"
     }
     return title_lang_dict[title_key]

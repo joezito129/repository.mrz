@@ -35,7 +35,6 @@ class WatchlistFlavor:
             WatchlistFlavor.__SELECTED = WatchlistFlavor.__instance_flavor(selected)
         return WatchlistFlavor.__SELECTED
 
-
     @staticmethod
     def watchlist_request(name):
         return WatchlistFlavor.__instance_flavor(name).watchlist()

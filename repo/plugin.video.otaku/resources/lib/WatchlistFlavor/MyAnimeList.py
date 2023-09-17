@@ -187,7 +187,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'status': res['node']['status'],
             'mpaa': res['node']['rating'],
             'mediatype': 'tvshow',
-            'studio': [x.get('name') for x in res['node']['studios']]
+            'studio': [x.get('name') for x in res['node']['studios']],
         }
 
         try:
@@ -196,6 +196,9 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             info['year'] = int(start_date[:4])
         except KeyError:
             pass
+
+        if res['list_status']["num_episodes_watched"] == res['node']["num_episodes"]:
+            info['playcount'] = 1
 
         base = {
             "name": '%s - %d/%d' % (title, res['list_status']["num_episodes_watched"], res['node']["num_episodes"]),

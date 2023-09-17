@@ -122,6 +122,7 @@ class SimklWLF(WatchlistFlavorBase):
         results = self.get_all_items(status)
         if not results:
             return []
+
         if next_up:
             all_results = filter(lambda x: True if x else False, map(self._base_next_up_view, results['anime']))
         else:
@@ -164,6 +165,9 @@ class SimklWLF(WatchlistFlavorBase):
             'last_watched': res['last_watched_at'],
             'user_rating': res['user_rating']
         }
+
+        if res["watched_episodes_count"] == res["total_episodes_count"]:
+            info['playcount'] = 1
 
         base = {
             "name": '%s - %d/%d' % (title, res["watched_episodes_count"], res["total_episodes_count"]),
@@ -257,8 +261,7 @@ class SimklWLF(WatchlistFlavorBase):
             # 'next_watch_info': 'yes'
         }
         r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params)
-        r = r.json()
-        return r
+        return r.json() if r.ok else r.ok
 
     def update_list_status(self, anilist_id, status):
         data = {
