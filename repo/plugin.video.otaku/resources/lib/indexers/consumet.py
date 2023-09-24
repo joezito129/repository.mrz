@@ -3,7 +3,7 @@ import requests
 
 from functools import partial
 from resources.lib.ui import database, utils, control
-from resources.lib.indexers import enime
+from resources.lib import indexers
 from resources import jz
 
 
@@ -13,16 +13,15 @@ class CONSUMETAPI:
 
     def get_anilist_meta(self, anilist_id):
         r = requests.get(f'{self.baseUrl}meta/anilist/info/{anilist_id}')
-        return r.json()
+        return r.json() if r.ok else {}
 
     @staticmethod
-    def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
-                            episode_count, dub_data, filler_data, filler_enable, title_disable):
+    def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, filler_enable, title_disable):
 
         if res['number'] == 0:
             return utils.allocate_item('', '')
 
-        url = "%s/%s/" % (anilist_id, res['number'])
+        url = f'{anilist_id}/{res["number"]}/'
 
         title = res.get('title')
         if not title:
@@ -52,8 +51,7 @@ class CONSUMETAPI:
         info['code'] = code
 
         parsed = utils.allocate_item(title, "play/%s" % url, False, image, info, fanart, poster)
-        database.update_episode(anilist_id, season=season, number=res['number'], number_abs=episode_count,
-                                update_time=update_time, kodi_meta=parsed, filler=filler)
+        database.update_episode(anilist_id, season=season, number=res['number'], update_time=update_time, kodi_meta=parsed, filler=filler)
 
         if title_disable and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["number"]}'
@@ -61,8 +59,7 @@ class CONSUMETAPI:
         return parsed
 
 
-    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
-                             filler_enable, title_disable):
+    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable):
         from datetime import date
         update_time = date.today().isoformat()
 
@@ -76,10 +73,9 @@ class CONSUMETAPI:
             season = int(s_id[0])
         database.update_season(anilist_id, season)
 
-        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
-                          poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                          tvshowtitle=tvshowtitle, episode_count=len(result_ep), dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable,
-                          title_disable=title_disable)
+        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
+                          eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
+                          filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
 
         all_results = list(map(mapfunc, result_ep))
         try:
@@ -108,9 +104,8 @@ class CONSUMETAPI:
             season = database.get_season_list(anilist_id)['season']
             result = result.get('episodes')
             mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
-                               eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, episode_count=len(result),
-                               dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable,
-                               title_disable=title_disable)
+                               eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
+                               filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc2, result))
             try:
                 all_results = sorted(all_results, key=lambda x: x['info']['episode'])
@@ -119,9 +114,9 @@ class CONSUMETAPI:
                     if i['url'] == "":
                         all_results.pop(inx)
                 all_results = sorted(all_results, key=lambda x: x['info']['episode'])
+            control.notify("Consumet", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
-            mapfunc1 = partial(enime.ENIMEAPI().parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable,
-                           title_disable=title_disable)
+            mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc1, episodes))
 
         return all_results
@@ -154,12 +149,10 @@ class CONSUMETAPI:
                 return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data,
                                             dub_data, filler_enable, title_disable), 'episodes'
 
-            return enime.ENIMEAPI().process_episodes(episodes, eps_watched, dub_data=dub_data, filler_enable=filler_enable,
+            return indexers.process_episodes(episodes, eps_watched, dub_data=dub_data, filler_enable=filler_enable,
                                           title_disable=title_disable), 'episodes'
 
         from resources.jz import anime_filler
         filler_data = anime_filler.get_data(kodi_meta['ename'])
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched,
-                                          tvshowtitle=tvshowtitle, dub_data=dub_data,
-                                          filler_data=filler_data, filler_enable=filler_enable,
-                                          title_disable=title_disable), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle=tvshowtitle, dub_data=dub_data,
+                    filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable), 'episodes'

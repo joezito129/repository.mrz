@@ -74,7 +74,6 @@ def CONTEXT_MENU(payload, params):
         path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
     else:
         path, anilist_id, mal_id, kitsu_id = payload_list
-
     if not anilist_id:
         show = database.get_show_mal(mal_id)
         if not show:
@@ -82,7 +81,8 @@ def CONTEXT_MENU(payload, params):
         anilist_id = show['anilist_id']
     else:
         show = database.get_show(anilist_id)
-
+        if not show:
+            show = AniListBrowser().get_anilist(anilist_id)
 
     flavor = WatchlistFlavor.get_update_flavor()
     actions = WatchlistFlavor.context_statuses()

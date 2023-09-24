@@ -270,12 +270,11 @@ class KitsuWLF(WatchlistFlavorBase):
         return mal_id
 
     def get_library_entries(self, kitsu_id):
-        url = f'{self._URL}/edge/library-entries'
         params = {
             "filter[user_id]": self._user_id,
             "filter[anime_id]": kitsu_id
         }
-        r = requests.get(url, headers=self.__headers(), params=params)
+        r = requests.get(f'{self._URL}/edge/library-entries', headers=self.__headers(), params=params)
         r = r.json()
         return r
 
@@ -440,7 +439,11 @@ class KitsuWLF(WatchlistFlavorBase):
             return False
 
         r = self.get_library_entries(kitsu_id)
-        animeid = r['data'][0]['id']
+        data = r['data']
+        if data:
+            animeid = data[0]['id']
+        else:
+            return True
 
         r = requests.delete(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers())
         return r.ok

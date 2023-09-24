@@ -2,7 +2,8 @@ import pickle
 import requests
 
 from resources.lib import pages
-from resources.lib.indexers import enime, consumet, simkl
+from resources.lib import indexers
+from resources.lib.indexers import consumet, simkl
 from resources.lib.ui import control, database, utils
 
 
@@ -34,7 +35,7 @@ def get_episodeList(anilist_id, pass_idx, filter_lang=None):
 
     else:
         episodes = database.get_episode_list(anilist_id)
-        items = enime.ENIMEAPI().process_episodes(episodes, '') if episodes else []
+        items = indexers.process_episodes(episodes, '') if episodes else []
         playlist = control.bulk_draw_items(items)[pass_idx:]
 
         for i in playlist:
@@ -82,17 +83,12 @@ def get_anime_init(anilist_id):
         meta_api = control.getSetting('meta.api')
         if meta_api == 'consumet':
             data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
-        elif meta_api == 'simkl':
+        else: # elif meta_api == 'simkl':
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
-        else:
-            data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
-
     else:
-        data = enime.ENIMEAPI().get_episodes(anilist_id, show_meta)
+        data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
             data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
-        if not data[0]:
-            data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
     return data
 
 def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):

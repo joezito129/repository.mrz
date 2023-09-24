@@ -322,7 +322,9 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
         draw_cm = [
             ("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched')
         ]
-        # for x in cm:
+    # if contentType == 'tvshows':
+    #     draw_cm.append((format_string("Watchlist Manager", 'I'), 'watchlist_context'))
+    # for x in cm:
         #     draw_cm.append(x)
     for vid in video_data:
         if vid['is_dir']:
@@ -361,12 +363,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
 
 
 def bulk_draw_items(video_data, draw_cm=None, bulk_add=True):
-    item_list = []
-    for vid in video_data:
-        item = xbmc_add_player_item(vid['name'], vid['url'], vid['image'],
-                                    vid['info'], draw_cm, bulk_add)
-        item_list.append(item)
-    return item_list
+    return [xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add) for vid in video_data]
 
 
 def title_lang(title_key):
@@ -432,6 +429,7 @@ def toggle_reuselanguageinvoker(forced_state=None):
 def format_string(string, format_):
     # format_ = B, I
     return f'[{format_}]{string}[/{format_}]'
+
 
 def print(string, *args):
     for i in list(args):

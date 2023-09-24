@@ -1,7 +1,10 @@
+Changelog v5.0.14 (2023-09-24):
+- Removed enime
+- Fixed Simkl as main source
+
 Changelog v5.0.13 (2023-09-17):
 - Fixed Gogo error
 - Re-added Consumet
-- ### working on database 41 except ###
 
 Changelog v5.0.12 (2023-09-09):
 - Completed Watchlists

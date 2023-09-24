@@ -3,7 +3,7 @@ import pickle
 import random
 import requests
 
-from resources.lib.ui import database, get_meta
+from resources.lib.ui import database
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 
 
@@ -191,11 +191,10 @@ class AniListWLF(WatchlistFlavorBase):
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
         lists = results['data']['MediaListCollection']['lists']
-        try:
-            entries = [mlist['entries'] for mlist in lists][0]
-            get_meta.collect_meta(entries)
-        except IndexError:
-            entries = []
+        entries = []
+        for mlist in lists:
+            entries += mlist['entries']
+
         all_results = map(self._base_next_up_view, reversed(entries)) if next_up else map(self._base_watchlist_status_view, reversed(entries))
 
         all_results = [i for i in all_results if i is not None]
@@ -475,7 +474,11 @@ class AniListWLF(WatchlistFlavorBase):
         return r.ok
 
     def delete_anime(self, anilist_id):
-        list_id = self.get_watchlist_anime_info(anilist_id)['data']['Media']['mediaListEntry']['id']
+        media_entry = self.get_watchlist_anime_info(anilist_id)['data']['Media']['mediaListEntry']
+        if media_entry:
+            list_id = media_entry['id']
+        else:
+            return True
         query = '''
         mutation ($id: Int) {
             DeleteMediaListEntry (id: $id) {

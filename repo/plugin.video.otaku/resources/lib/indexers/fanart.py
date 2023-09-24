@@ -7,13 +7,11 @@ class FANARTAPI:
         self.baseUrl = "https://webservice.fanart.tv/v3"
         self.lang = ['en', 'ja', '']
 
-    def get_request(self, url):
+    def __headers(self):
         headers = {
             'Api-Key': self.apiKey
         }
-        r = requests.get(url, headers=headers)
-        if r.ok:
-            return r.json()
+        return headers
 
     def getArt(self, meta_ids, mtype='tv'):
         art = {}
@@ -23,8 +21,8 @@ class FANARTAPI:
             mid = meta_ids.get('thetvdb') or meta_ids.get('tvdb')
 
         if mid:
-            url = '{0}/{1}/{2}'.format(self.baseUrl, mtype, mid)
-            res = self.get_request(url)
+            r = requests.get(f'{self.baseUrl}/{mtype}/{mid}', headers=self.__headers())
+            res = r.json() if r.ok else {}
             if res:
                 if mtype == 'movies':
                     if res.get('moviebackground'):
@@ -90,5 +88,4 @@ class FANARTAPI:
                         if item.get('lang') in self.lang:
                             items.append(item.get('url'))
                     art['clearlogo'] = items
-
         return art

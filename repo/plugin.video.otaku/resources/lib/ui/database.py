@@ -262,17 +262,17 @@ def update_show_data(anilist_id, data={}, last_updated=''):
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
-def update_episode(show_id, season=0, number=0, number_abs=0, update_time='', kodi_meta={}, filler=''):
+def update_episode(show_id, season=0, number=0, update_time='', kodi_meta={}, filler=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     kodi_meta = pickle.dumps(kodi_meta)
     try:
         cursor.execute(
             "REPLACE INTO episodes ("
-            "anilist_id, season, kodi_meta, last_updated, number, number_abs, filler)"
+            "anilist_id, season, kodi_meta, last_updated, number, filler)"
             "VALUES "
-            "(?, ?, ?, ?, ?, ?, ?)",
-            (show_id, season, kodi_meta, update_time, number, number_abs, filler))
+            "(?, ?, ?, ?, ?, ?)",
+            (show_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:

@@ -207,8 +207,6 @@ class SimklWLF(WatchlistFlavorBase):
             if self._title_lang == 'english':
                 base_title = kodi_meta['ename'] or kodi_meta['title_userPreferred']
                 title = '%s - %s/%s' % (base_title, next_up, episode_count)
-
-            url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):
                 title = '%s - %s' % (title, next_up_meta['title'])
             if next_up_meta.get('image'):
@@ -222,12 +220,14 @@ class SimklWLF(WatchlistFlavorBase):
             'tvshowtitle': base_title,
             'plot': plot,
             'mediatype': 'episode',
-            'aired': aired
+            'aired': aired,
+            'last_watched': res['last_watched_at'],
+            'user_rating': res['user_rating']
         }
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{res["watched_episodes_count"]}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["watched_episodes_count"]}',
             "image": image,
             "info": info,
             "fanart": image,
@@ -240,12 +240,13 @@ class SimklWLF(WatchlistFlavorBase):
             return self._parse_view(base, False)
 
         if next_up_meta:
-            base['url'] = url
+            base['url'] = 'play/%d/%d/' % (anilist_id, next_up)
             return self._parse_view(base, False)
 
         return self._parse_view(base)
 
-    def get_watchlist_anime_entry(self, anilist_id):
+    @staticmethod
+    def get_watchlist_anime_entry(anilist_id):
         return {}
         # anime_entry = {
         #     'eps_watched': item_dict['progress'],
