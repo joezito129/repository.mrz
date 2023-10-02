@@ -219,7 +219,7 @@ class AniListWLF(WatchlistFlavorBase):
             'studio': [x['node'].get('name') for x in res['studios'].get('edges')]
         }
 
-        if progress == res['episodes']:
+        if res['episodes'] != 0 and progress == res['episodes']:
             info['playcount'] = 1
 
         try:

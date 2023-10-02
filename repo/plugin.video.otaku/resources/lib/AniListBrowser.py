@@ -642,19 +642,18 @@ class AniListBrowser:
 
     def process_anilist_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
-        get_meta.collect_meta(json_res['ANIME'])
+        get_meta.collect_meta_(json_res['ANIME'])
         mapfunc = partial(self._base_anilist_view)
         all_results = map(mapfunc, json_res['ANIME'])
         all_results = list(itertools.chain(*all_results))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
-
     def process_recommendations_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         res = [edge['node']['mediaRecommendation'] for edge in json_res['edges']]
         mapfunc = partial(self._base_anilist_view)
-        get_meta.collect_meta(res)
+        get_meta.collect_meta_(res)
         all_results = map(mapfunc, res)
         all_results = list(itertools.chain(*all_results))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
@@ -680,7 +679,7 @@ class AniListBrowser:
 
     def process_res(self, res):
         self._database_update_show(res)
-        get_meta.collect_meta([res])
+        get_meta.collect_meta_([res])
         return database.get_show(str(res['id']))
 
     @div_flavor
@@ -695,6 +694,7 @@ class AniListBrowser:
 
         show_meta = database.get_show_meta(anilist_id)
         kodi_meta = pickle.loads(show_meta.get('art')) if show_meta else {}
+
 
         title = res['title'][self._TITLE_LANG]
         if not title:
@@ -769,7 +769,7 @@ class AniListBrowser:
         }
 
         if kodi_meta.get('fanart'):
-            base['fanart'] = random.choice(kodi_meta['fanart'])
+            base['fanart'] = kodi_meta['fanart']
         if kodi_meta.get('thumb'):
             base['landscape'] = random.choice(kodi_meta['thumb'])
         if kodi_meta.get('clearart'):
@@ -1071,8 +1071,8 @@ class AniListBrowser:
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
         hasNextPage = results['data']['Page']['pageInfo']['hasNextPage']
-        get_meta.collect_meta(anime_res)
         mapfunc = partial(self._base_anilist_view)
+        get_meta.collect_meta_(anime_res)
         all_results = map(mapfunc, anime_res)
         all_results = list(itertools.chain(*all_results))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)

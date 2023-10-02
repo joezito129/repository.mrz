@@ -107,11 +107,12 @@ def ANIMES_PAGE(payload, params):
         from resources.lib.WatchlistFlavor import WatchlistFlavor
         anilist_id, mal_id, kitsu_id, null = payload_list
         flavor = WatchlistFlavor.get_update_flavor()
-        data = flavor.get_watchlist_anime_entry(anilist_id)
-        show_meta = database.get_show(anilist_id)
-        kodi_meta = pickle.loads(show_meta['kodi_meta'])
-        kodi_meta['eps_watched'] = data.get('eps_watched', 0)
-        database.update_kodi_meta(anilist_id, kodi_meta)
+        if flavor:
+            data = flavor.get_watchlist_anime_entry(anilist_id)
+            show_meta = database.get_show(anilist_id)
+            kodi_meta = pickle.loads(show_meta['kodi_meta'])
+            kodi_meta['eps_watched'] = data.get('eps_watched', 0)
+            database.update_kodi_meta(anilist_id, kodi_meta)
     anime_general, content = OtakuBrowser.get_anime_init(anilist_id)
     return control.draw_items(anime_general, content)
 

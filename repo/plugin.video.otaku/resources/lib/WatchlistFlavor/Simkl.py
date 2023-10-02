@@ -13,9 +13,10 @@ class SimklWLF(WatchlistFlavorBase):
     _NAME = 'simkl'
     _IMAGE = "simkl.png"
 
-    client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'
+    # client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b' # Swag
     # client_id = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0"
-    
+    client_id = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8" # Otaku
+
     def __headers(self):
         headers = {
             "Content-Type": "application/json",
@@ -87,7 +88,8 @@ class SimklWLF(WatchlistFlavorBase):
             ("Currently Watching", "watching"),
             ("Completed", "completed"),
             ("On Hold", "hold"),
-            ("Dropped", "notinteresting"),
+            # ("Dropped", "notinteresting"),
+            ("Dropped", "dropped"),
             ("Plan to Watch", "plantowatch"),
             ("All Anime", "ALL")
         ]
@@ -166,7 +168,7 @@ class SimklWLF(WatchlistFlavorBase):
             'user_rating': res['user_rating']
         }
 
-        if res["watched_episodes_count"] == res["total_episodes_count"]:
+        if res["total_episodes_count"] != 0 and res["watched_episodes_count"] == res["total_episodes_count"]:
             info['playcount'] = 1
 
         base = {

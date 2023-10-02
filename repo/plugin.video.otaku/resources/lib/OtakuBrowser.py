@@ -3,7 +3,7 @@ import requests
 
 from resources.lib import pages
 from resources.lib import indexers
-from resources.lib.indexers import consumet, simkl
+from resources.lib.indexers import consumet, simkl, jikanmoe
 from resources.lib.ui import control, database, utils
 
 
@@ -88,11 +88,16 @@ def get_anime_init(anilist_id):
     else:
         data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
-            data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
+            data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
+        if not data[0]:
+            return [], 'episodes'
     return data
 
 def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):
     show = database.get_show(anilist_id)
+    if not show:
+        from resources.lib.AniListBrowser import AniListBrowser
+        show = AniListBrowser().get_anilist(anilist_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
     actionArgs = {
         'query': kodi_meta['query'],

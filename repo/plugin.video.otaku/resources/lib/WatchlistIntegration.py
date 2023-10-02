@@ -69,6 +69,9 @@ def WATCHLIST_TO_EP(payload, params):
 
 @route('watchlist_context/*')
 def CONTEXT_MENU(payload, params):
+    if control.getSetting('watchlist.update.enabled') != 'true':
+        control.ok_dialog(control.ADDON_NAME, f'No Watchlist Enabled: \n\nPlease enable {control.format_string("Update Watchlist", "B")} before using the Watchlist Manager')
+        return False
     payload_list = payload.rsplit('/')[1:]
     if len(payload_list) == 5:
         path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list

@@ -175,7 +175,7 @@ class KitsuWLF(WatchlistFlavorBase):
             'mediatype': 'tvshow'
         }
 
-        if res["attributes"]["progress"] ==  eres['attributes']['episodeCount']:
+        if eres['attributes']['episodeCount'] != 0 and res["attributes"]["progress"] ==  eres['attributes']['episodeCount']:
             info['playcount'] = 1
 
         try:

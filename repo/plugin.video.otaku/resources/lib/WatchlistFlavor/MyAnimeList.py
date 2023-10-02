@@ -198,7 +198,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         except KeyError:
             pass
 
-        if res['list_status']["num_episodes_watched"] == res['node']["num_episodes"]:
+        if res['node']["num_episodes"] != 0 and res['list_status']["num_episodes_watched"] == res['node']["num_episodes"]:
             info['playcount'] = 1
 
         base = {

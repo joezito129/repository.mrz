@@ -185,7 +185,7 @@ def get_plugin_params():
 
 
 def keyboard(text):
-    keyboard_ = xbmc.Keyboard("", text, False)
+    keyboard_ = xbmc.Keyboard("Enter Text", text, False)
     keyboard_.doModal()
     if keyboard_.isConfirmed():
         return keyboard_.getText()
@@ -275,7 +275,7 @@ def set_videotags(li, info):
     #     vinfo.setTrailer(info['trailer'])
 
 
-def xbmc_add_player_item(name, url, art={}, info=None, draw_cm=None, bulk_add=False):
+def xbmc_add_player_item(name, url, art={}, info={}, draw_cm=None, bulk_add=False):
     u = addon_url(url)
     liz = xbmcgui.ListItem(name)
     if info:
@@ -287,14 +287,18 @@ def xbmc_add_player_item(name, url, art={}, info=None, draw_cm=None, bulk_add=Fa
 
     if art.get('fanart') is None:
         art['fanart'] = OTAKU_FANART_PATH
-    art['poster'] = art['thumb']
+
+    if art.get('thumb'):
+        art['poster'] = art['thumb']
+        art['landscape'] = art['thumb']
+
     liz.setArt(art)
 
     liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
     return u, liz, False if bulk_add else xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=False)
 
 
-def xbmc_add_dir(name, url, art={}, info=None, draw_cm=None):
+def xbmc_add_dir(name, url, art={}, info={}, draw_cm=None):
     u = addon_url(url)
     liz = xbmcgui.ListItem(name)
 
@@ -330,8 +334,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
         if vid['is_dir']:
             xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm)
         else:
-            xbmc_add_player_item(vid['name'], vid['url'], vid['image'],
-                                 vid['info'], draw_cm, bulk_add)
+            xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add)
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
