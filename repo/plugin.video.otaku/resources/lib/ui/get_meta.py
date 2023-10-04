@@ -34,6 +34,8 @@ def get_meta_(anilist_id, name, mtype='tv', year=''):
     if resp:
         meta_ids = resp['ids']
         update_meta(anilist_id, meta_ids, mtype)
+    else:
+        database.update_show_meta(anilist_id, {}, {})
 
 def update_meta(anilist_id, meta_ids, mtype):
     art = FANARTAPI().getArt(meta_ids, mtype)

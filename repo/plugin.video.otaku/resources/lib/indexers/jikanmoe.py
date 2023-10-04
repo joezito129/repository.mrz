@@ -111,7 +111,7 @@ class JikanAPI:
                           title_disable=title_disable)
 
         all_results = list(map(mapfunc, result_ep))
-        if len(all_results) == 0 or control.getSetting('interface.showunairedeps') == 'true':
+        if len(all_results) == 0 or control.getSetting('interface.showemptyeps') == 'true':
             total_ep = result.get('episodes', 0)
             empty_ep = []
             for ep in range(len(all_results) + 1, total_ep + 1):
@@ -145,13 +145,6 @@ class JikanAPI:
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
                                filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc2, result))
-            try:
-                all_results = sorted(all_results, key=lambda x: x['info']['episode'])
-            except TypeError:
-                for inx, i in enumerate(all_results):
-                    if i['url'] == "":
-                        all_results.pop(inx)
-                all_results = sorted(all_results, key=lambda x: x['info']['episode'])
             control.notify("Jikanmoa", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
             mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)

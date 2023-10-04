@@ -1,7 +1,7 @@
 import re
 # import requests
 
-from resources.lib.ui import database, utils
+from resources.lib.ui import database, utils, control
 from urllib import parse
 
 
@@ -31,7 +31,6 @@ class TRAKTAPI:
         if year:
             url += '&years=%s' % year
         result = database.get_(utils.database_request_get, 4, url, headers=self.headers)
-
         if not result:
             name = name.replace('?', '')
             name = re.sub(r'\s\d+$', '', name)

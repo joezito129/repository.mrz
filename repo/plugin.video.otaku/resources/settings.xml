@@ -21,20 +21,20 @@
 		<setting id="general.smart.scroll.enable" label="enable move to episode on" type="bool" default="true" />
 		<setting id="general.scroll.wait.time" label="Wait time in ms" type="slider" option="int" range="300,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
 		<setting type="lsep" label="Language Invoker"/>
-		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:    [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
+		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
 			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
 		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
 
 		<!-- Interface -->
 		<setting type="lsep" label="Meta Api" />
 		<setting id="overide.meta.api" type="bool" label="Enable Choose Meta Api" default="false" />
-		<setting id="meta.api" type="labelenum" label="Meta Api" values="enime|consumet|simkl" default="enime" visible="eq(-1,true)"/>
+		<setting id="meta.api" type="labelenum" label="Meta Api" values="simkl|jikanmoa|consumet" default="simkl" visible="eq(-1,true)"/>
 		<setting id="consumet.selfhost.enable" type="bool" label="Enable Consumet Self Hosting" default="false" />
 		<setting id="consumet.selfhost.ip" type="ipaddress" label="SelfHosting IP Address: " visible="eq(-1,true)" />
 		<setting type="lsep" label="40302"/>
 		<setting id="interface.viewtypes" type="labelenum" label="40303" values="Default|Poster|Icon Wall|Shift|Info Wall|Wide List|Wall|Banner|Fanart" default="Default" />
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
-		<setting id="interface.showunairedeps" label="Show Unaired Episodes" type="bool" default="false" />
+		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
 		<setting id="scraping.fanart" type="bool" label="40433" default="true" />
 		<setting id="scraping.clearlogo" type="bool" label="40434" default="false" />
 		<setting id="general.icons" type="labelenum" label="40388" values="Coloured|White" default="Coloured"/>

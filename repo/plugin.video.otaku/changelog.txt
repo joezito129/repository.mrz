@@ -1,6 +1,7 @@
-Changelog v5.0.14 (2023-10-02):
+Changelog v5.0.15 (2023-10-03):
 - Improved geting season number
 - Fixed Fanart with trakt
+- Added Jikanmoe for getting meta data
 
 Changelog v5.0.14 (2023-09-24):
 - Removed enime

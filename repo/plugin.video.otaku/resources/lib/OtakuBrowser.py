@@ -78,19 +78,22 @@ def get_anime_init(anilist_id):
         show_meta = database.get_show_meta(anilist_id)
         if not show_meta:
             return [], 'episodes'
-
     if control.getSetting('overide.meta.api') == 'true':
         meta_api = control.getSetting('meta.api')
         if meta_api == 'consumet':
             data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
-        else: # elif meta_api == 'simkl':
+        elif meta_api == 'simkl':
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+        elif meta_api == 'jikanmoa':
+            data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
+        else:
+            data = [], 'episodes'
     else:
         data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
             data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
-            return [], 'episodes'
+            data = [], 'episodes'
     return data
 
 def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):

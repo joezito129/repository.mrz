@@ -86,20 +86,17 @@ class SIMKLAPI:
         result_ep = self.get_episode_meta(anilist_id)
         episodes = [x for x in result_ep if x['type'] == 'episode']
 
-        # get_meta.collect_meta(anilist_id, result)
-
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
                           poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
                           tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable,
                           title_disable=title_disable)
 
         all_results = list(map(mapfunc, episodes))
-        if len(all_results) == 0 or control.getSetting('interface.showunairedeps') == 'true':
+        if control.getSetting('interface.showemptyeps') == 'true':
             total_ep = result.get('total_episodes', 0)
             empty_ep = []
             for ep in range(len(all_results) + 1, total_ep + 1):
                 empty_ep.append({
-                    'id': f'{tvshowtitle}-season-{season}-episode-{ep}',
                     # 'title': control.colorString(f'Episode {ep}', 'red'),
                     'title': f'Episode {ep}',
                     'episode': ep,
@@ -131,14 +128,7 @@ class SIMKLAPI:
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
                                filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc2, result))
-            try:
-                all_results = sorted(all_results, key=lambda x: x['info']['episode'])
-            except TypeError:
-                for inx, i in enumerate(all_results):
-                    if i['url'] == "":
-                        all_results.pop(inx)
-                all_results = sorted(all_results, key=lambda x: x['info']['episode'])
-            control.notify("SIMKL", f'{tvshowtitle} Appended to Database', icon=poster)
+            control.notify("SIMKL Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
             mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc1, episodes))
@@ -153,7 +143,6 @@ class SIMKLAPI:
         eps_watched = kodi_meta.get('eps_watched')
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
-
         dub_data = None
         if control.getSetting('jz.dub') == 'true':
             from resources.jz.TeamUp import teamup
