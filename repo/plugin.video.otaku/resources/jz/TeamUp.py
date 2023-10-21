@@ -15,10 +15,12 @@ class TeamUp:
     def get_dub_data(self, en_title):
         if en_title:
             # match first word or first two words (seperated by {space} )
+
             regex = r'([^ ]+)' if '-' in en_title else r'([^ ]+) ?([^ ]+)?'
             match = re.match(regex, en_title)
-
-
+            if match.group(0).lower() == 'the':
+                regex = r'([^ ]+) ?([^ ]+)?'
+                match = re.match(regex, en_title)
             query_search = match.group(1) if "2n" in match.group(0) else match.group(0)
             parms = {
                 'query': f'\"{query_search}\"',

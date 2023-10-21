@@ -379,6 +379,7 @@ class KitsuWLF(WatchlistFlavorBase):
                 'id': animeid,
                 'type': 'libraryEntries',
                 'attributes': {
+                    'status': 'current',
                     'progress': int(episode)}
             }
         }

@@ -289,7 +289,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             return {}
         anime_entry = {
             'eps_watched': results['num_episodes_watched'],
-            'status': results['status'].title(),
+            'status': results['status'],
             'score': results['score']
         }
         return anime_entry

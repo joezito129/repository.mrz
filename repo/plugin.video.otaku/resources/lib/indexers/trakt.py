@@ -1,7 +1,6 @@
 import re
-# import requests
 
-from resources.lib.ui import database, utils, control
+from resources.lib.ui import database, utils
 from urllib import parse
 
 
@@ -14,12 +13,6 @@ class TRAKTAPI:
             'trakt-api-key': self.ClientID,
             'content-type': 'application/json'
         }
-
-    # def _json_request(self, url):
-    #     response = requests.get(url, headers=self.headers)
-    #     if response.text:
-    #         response = response.json()
-    #     return response
 
     def get_trakt(self, name, mtype='tv', year=''):
         name = re.sub(r'(?i)(?:part|cour)\s\d+$', '', name)

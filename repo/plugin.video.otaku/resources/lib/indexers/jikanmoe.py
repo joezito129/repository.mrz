@@ -96,11 +96,12 @@ class JikanAPI:
         update_time = date.today().isoformat()
 
         result = self.get_anime_info(anilist_id)
+        if not result:
+            return []
 
         sync_data = SyncUrl().get_anime_data(anilist_id, 'Anilist')
         s_id = utils.get_season(sync_data[0])
-        season = s_id[0] if s_id else 1
-        season = int(season)
+        season = int(s_id[0]) if s_id else 1
         database.update_season(anilist_id, season)
 
         result_ep = self.get_episode_meta(anilist_id)
@@ -176,15 +177,11 @@ class JikanAPI:
             if kodi_meta['status'] != "FINISHED":
                 from resources.jz import anime_filler
                 filler_data = anime_filler.get_data(kodi_meta['ename'])
-                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle,
-                                            filler_data,
+                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data,
                                             dub_data, filler_enable, title_disable), 'episodes'
-            return indexers.process_episodes(episodes, eps_watched, dub_data=dub_data, filler_enable=filler_enable,
-                                             title_disable=title_disable), 'episodes'
+            return indexers.process_episodes(episodes, eps_watched, dub_data, filler_enable, title_disable), 'episodes'
 
         from resources.jz import anime_filler
         filler_data = anime_filler.get_data(kodi_meta['ename'])
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle=tvshowtitle,
-                                         dub_data=dub_data,
-                                         filler_data=filler_data, filler_enable=filler_enable,
-                                         title_disable=title_disable), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
+                                         filler_enable, title_disable), 'episodes'

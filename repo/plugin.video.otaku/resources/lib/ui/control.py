@@ -185,7 +185,7 @@ def get_plugin_params():
 
 
 def keyboard(text):
-    keyboard_ = xbmc.Keyboard("Enter Text", text, False)
+    keyboard_ = xbmc.Keyboard('', text, False)
     keyboard_.doModal()
     if keyboard_.isConfirmed():
         return keyboard_.getText()
@@ -288,10 +288,12 @@ def xbmc_add_player_item(name, url, art={}, info={}, draw_cm=None, bulk_add=Fals
     if art.get('fanart') is None:
         art['fanart'] = OTAKU_FANART_PATH
 
-    if art.get('thumb'):
-        art['poster'] = art['thumb']
-        art['landscape'] = art['thumb']
+    # if art.get('thumb'):
+    #     art['poster'] = art['thumb']
+    #     art['landscape'] = art['thumb']
 
+    if art.get('thumb'):
+        art['tvshow.poster'] = art.pop('poster')
     liz.setArt(art)
 
     liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})

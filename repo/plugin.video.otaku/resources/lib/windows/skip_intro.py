@@ -9,7 +9,7 @@ class SkipIntro(BaseWindow):
     def __init__(self, xml_file, xml_location, actionArgs=None):
         super(SkipIntro, self).__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = control.player()
-        self.total_time = self.player.getTotalTime()
+        self.total_time = int(self.player.getTotalTime())
         self.playing_file = self.player.getPlayingFile()
         self.skip_time = int(control.getSetting('skipintro.time'))
         self.close_durration = int(control.getSetting('skipintro.duration')) * 60
@@ -27,7 +27,7 @@ class SkipIntro(BaseWindow):
         self.skipintro_end_skip_time = int(control.getSetting('skipintro.end.skip.time'))
 
         self.current_time = int(self.player.getTime())
-        while int(self.total_time) - int(self.current_time) > 2 and not self.closed and self.playing_file == self.player.getPlayingFile():
+        while self.total_time - self.current_time > 2 and not self.closed and self.playing_file == self.player.getPlayingFile():
             self.current_time = int(self.player.getTime())
             if self.current_time > self.skipintro_end_skip_time:
                 self.close()
@@ -36,6 +36,7 @@ class SkipIntro(BaseWindow):
                 self.close()
                 break
             xbmc.sleep(500)
+        self.close()
 
     def doModal(self):
         super(SkipIntro, self).doModal()

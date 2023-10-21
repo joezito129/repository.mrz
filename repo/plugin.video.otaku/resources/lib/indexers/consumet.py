@@ -67,10 +67,9 @@ class CONSUMETAPI:
         result_ep = result.get('episodes')
         if not result or not result_ep:
             return []
-        season = 1
+
         s_id = utils.get_season(result)
-        if s_id:
-            season = int(s_id[0])
+        season = int(s_id[0]) if s_id else 1
         database.update_season(anilist_id, season)
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
@@ -78,13 +77,6 @@ class CONSUMETAPI:
                           filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
 
         all_results = list(map(mapfunc, result_ep))
-        try:
-            all_results = sorted(all_results, key=lambda x: x['info']['episode'])
-        except TypeError:
-            for inx, i in enumerate(all_results):
-                if i['url'] == "":
-                    all_results.pop(inx)
-            all_results = sorted(all_results, key=lambda x: x['info']['episode'])
         control.notify("Consumet", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
@@ -100,32 +92,26 @@ class CONSUMETAPI:
         diff = (datetime.datetime.today() - last_updated).days
         result = self.get_anilist_meta(anilist_id) if diff > 3 else []
 
-        if len(result) > episodes[0]['number_abs']:
+        if len(result) > len(episodes):
             season = database.get_season_list(anilist_id)['season']
             result = result.get('episodes')
             mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
                                filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc2, result))
-            try:
-                all_results = sorted(all_results, key=lambda x: x['info']['episode'])
-            except TypeError:
-                for inx, i in enumerate(all_results):
-                    if i['url'] == "":
-                        all_results.pop(inx)
-                all_results = sorted(all_results, key=lambda x: x['info']['episode'])
             control.notify("Consumet", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
             mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results = list(map(mapfunc1, episodes))
-
         return all_results
 
     def get_episodes(self, anilist_id, show_meta):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
+
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
+
         eps_watched = kodi_meta.get('eps_watched')
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
@@ -149,10 +135,9 @@ class CONSUMETAPI:
                 return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data,
                                             dub_data, filler_enable, title_disable), 'episodes'
 
-            return indexers.process_episodes(episodes, eps_watched, dub_data=dub_data, filler_enable=filler_enable,
-                                          title_disable=title_disable), 'episodes'
+            return indexers.process_episodes(episodes, eps_watched, dub_data, filler_enable, title_disable), 'episodes'
 
         from resources.jz import anime_filler
         filler_data = anime_filler.get_data(kodi_meta['ename'])
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                    filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
+                                         filler_enable, title_disable), 'episodes'

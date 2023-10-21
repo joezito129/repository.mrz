@@ -1,3 +1,12 @@
+Changelog v5.0.17 (2023-10-21):
+- needs to match season#
+- Improved season info
+
+Changelog v5.0.16 (2023-10-18):
+- Fixed context english naming
+- Improved skip intro
+- Improved dub dates; does not neeed to match season#
+
 Changelog v5.0.15 (2023-10-03):
 - Improved geting season number
 - Fixed Fanart with trakt

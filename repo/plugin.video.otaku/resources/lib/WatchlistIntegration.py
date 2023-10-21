@@ -86,12 +86,12 @@ def CONTEXT_MENU(payload, params):
         show = database.get_show(anilist_id)
         if not show:
             show = AniListBrowser().get_anilist(anilist_id)
-
     flavor = WatchlistFlavor.get_update_flavor()
     actions = WatchlistFlavor.context_statuses()
 
     kodi_meta = pickle.loads(show['kodi_meta'])
-    title = kodi_meta['title_userPreferred'] or kodi_meta['name']
+    _TITLE_LANG = control.title_lang(control.getSetting("titlelanguage"))
+    title = kodi_meta['ename'] if _TITLE_LANG == 'english' else kodi_meta['title_userPreferred']
 
     context = control.select_dialog(f'{title}  {control.colorString("(" + str(flavor.flavor_name).capitalize() + ")", "blue")}', list(map(lambda x: x[0], actions)))
     if context != -1:

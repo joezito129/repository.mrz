@@ -1,7 +1,7 @@
 import requests
 
-baseurl = 'https://chiaki.vercel.app'
 
+baseurl = 'https://chiaki.vercel.app'
 
 def get_watch_order_list(mal_id):
     params = {

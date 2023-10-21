@@ -147,10 +147,10 @@ class watchlistPlayer(player):
             if self.skipintro_aniskip_enable:
                 while self.isPlaying():
                     self.current_time = int(self.getTime())
-                    if self.current_time > 240:
-                        break
-                    elif self.skipintro_end_skip_time == 9999:
-                        if self.current_time >= self.delay_time:
+                    if self.skipintro_end_skip_time == 9999:
+                        if self.current_time > 240:
+                            break
+                        elif self.current_time >= self.delay_time:
                             PlayerDialogs().show_skip_intro()
                             break
                     elif self.current_time > self.skipintro_start_skip_time:
