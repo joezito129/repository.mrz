@@ -198,8 +198,7 @@ class PlayerDialogs(xbmc.Player):
         if control.getSetting('skipoutro.aniskip.enable') == 'true' and int(control.getSetting('skipoutro.end.skip.time')) != 0:
             PlayingNext(*('playing_next_aniskip.xml', control.ADDON_PATH), actionArgs=self._get_next_item_args()).doModal()
         else:
-            PlayingNext(*('playing_next.xml', control.ADDON_PATH),
-                        actionArgs=self._get_next_item_args()).doModal()
+            PlayingNext(*('playing_next.xml', control.ADDON_PATH), actionArgs=self._get_next_item_args()).doModal()
 
     @staticmethod
     def show_skip_intro():

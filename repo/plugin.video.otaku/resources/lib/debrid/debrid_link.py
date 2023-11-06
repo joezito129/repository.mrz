@@ -121,7 +121,6 @@ class DebridLink:
         return response.get('value')
 
     def resolve_single_magnet(self, hash_, magnet, episode=''):
-        selected_file = None
         files = self.addMagnet(magnet)['files']
         folder_details = [{'link': x['downloadUrl'], 'path': x['name']} for x in files]
         if episode:

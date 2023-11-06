@@ -358,6 +358,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
             total_items = int(xbmc.getInfoLabel('Container(id).NumAllItems'))
             if total_items == total_ep + 1:
                 num_watched += 1
+                total_ep += 1
         except ValueError:
             return False
         if total_ep > num_watched > 0:

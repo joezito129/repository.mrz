@@ -1,5 +1,5 @@
 from resources.lib.debrid import all_debrid, debrid_link, premiumize,real_debrid
-from resources.lib.ui import control
+from resources.lib.ui import control, source_utils
 from resources.lib.windows.base_window import BaseWindow
 
 control.__sys__.path.append(control.dataPath)
@@ -7,7 +7,7 @@ control.__sys__.path.append(control.dataPath)
 
 class Resolver(BaseWindow):
 
-    def __init__(self, xml_file, location=None, actionArgs=None):
+    def __init__(self, xml_file, location=None, actionArgs=None, source_select=False):
         super(Resolver, self).__init__(xml_file, location, actionArgs=actionArgs)
         self.return_data = None
         self.canceled = False
@@ -21,17 +21,26 @@ class Resolver(BaseWindow):
             'premiumize': premiumize.Premiumize,
             'real_debrid': real_debrid.RealDebrid
         }
+        self.source_select = source_select
 
     def onInit(self):
         self.resolve(self.sources)
 
     def resolve(self, sources):
+
+        # last played source move to top of list
+        if len(sources) > 1 and not self.source_select:
+            last_played = control.getSetting('last_played')
+            for index, source in enumerate(sources):
+                if str(source['release_title']) == last_played:
+                    sources.insert(0, sources.pop(index))
+                    break
+
         # Begin resolving links
         for i in sources:
-            debrid_provider = i.get('debrid_provider', 'None').replace('_', ' ')
             if self.is_canceled():
                 break
-
+            debrid_provider = i.get('debrid_provider', 'None').replace('_', ' ')
             self.setProperty('release_title', str(i['release_title']))
             self.setProperty('debrid_provider', debrid_provider)
             self.setProperty('source_provider', i['provider'])
@@ -75,14 +84,23 @@ class Resolver(BaseWindow):
 
     @staticmethod
     def resolve_source(api, source):
-        stream_link = None
         api = api()
         hash_ = source['hash']
         magnet = 'magnet:?xt=urn:btih:%s' % hash_
         if source['type'] == 'torrent':
             stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'])
         elif source['type'] == 'cloud' or source['type'] == 'hoster':
+            if source['torrent_files']:
+                best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'])
+                if not best_match['path']:
+                    return
+                for f_index, torrent_file in enumerate(source['torrent_files']):
+                    if torrent_file['path'] == best_match['path']:
+                        hash_ = source['torrent_info']['links'][f_index]
+                        break
             stream_link = api.resolve_hoster(hash_)
+        else:
+            stream_link = None
         return stream_link
 
     def doModal(self, sources, args, pack_select):
@@ -104,6 +122,7 @@ class Resolver(BaseWindow):
             super(Resolver, self).doModal()
         else:
             self.resolve(sources)
+        control.setSetting('last_played', self.sources[0]['release_title'])
         return None if self.canceled else self.return_data
 
     def is_canceled(self):

@@ -112,6 +112,8 @@ def getInfo(release_title):
     if any(i in release_title for i in [' 3d']):
         info.append('3D')
 
+    # if any(i in release_title for i in ['batch', 'complete', 's01+s02']):
+    #     info.append('BATCH')
     return info
 
 
@@ -125,37 +127,49 @@ def get_cache_check_reg(episode):
     #     season = ''
     season = ''
 
-    reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
-                 (?:                                    # non-grouping pattern
-                   s|season                             # s or season
-                   )?
-                 ({})?                                  # season num format
-                 (?:                                    # non-grouping pattern
-                   e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
-                   )?                                   # end non-grouping pattern
-                 \s*                                    # 0-or-more whitespaces
-                 (?<![\d])
-                 ({}|{})                                # episode num format: xx or xxx
-                 (?![\d])
-                 '''.format(season, episode.zfill(2), episode.zfill(3))
+    if control.getSetting('regex.question') == 'true':
+        reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
+                     (?:                                    # non-grouping pattern
+                       s|season                             # s or season
+                       )?
+                     ({})?                                  # season num format
+                     (?:                                    # non-grouping pattern
+                       e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
+                       )?                                   # end non-grouping pattern
+                     \s*                                    # 0-or-more whitespaces
+                     (?<![\d])
+                     ({}|{})                                # episode num format: xx or xxx
+                     (?![\d])
+                     '''.format(season, episode.zfill(2), episode.zfill(3))
+    else:
+        reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
+                     (?:                                    # non-grouping pattern
+                       s|season                             # s or season
+                       )?
+                     ({})?                                  # season num format
+                     (?:                                    # non-grouping pattern
+                       e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
+                       )                                    # end non-grouping pattern
+                     \s*                                    # 0-or-more whitespaces
+                     (?<![\d])
+                     ({}|{})                                # episode num format: xx or xxx
+                     (?![\d])
+                     '''.format(season, episode.zfill(2), episode.zfill(3))
 
     return re.compile(reg_string)
 
 
 def get_best_match(dict_key, dictionary_list, episode):
     regex = get_cache_check_reg(episode)
-
     files = []
     for i in dictionary_list:
         path = re.sub(r'\[.*?]', '', i[dict_key].split('/')[-1])
         i['regex_matches'] = regex.findall(path)
         files.append(i)
-
     if control.getSetting('general.manual.select') == 'true':
         files = user_select(files, dict_key)
     else:
         files = [i for i in files if len(i['regex_matches']) > 0]
-
         if len(files) == 0:
             return
         files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
@@ -189,8 +203,11 @@ def is_file_ext_valid(file_name):
 
 def user_select(files, dict_key):
     idx = control.select_dialog('Select File', [i[dict_key].rsplit('/')[-1] for i in files])
-    files = [files[idx]]
-    return files
+    if idx == -1:
+        file = [{'path': ''}]
+    else:
+        file = [files[idx]]
+    return file
 
 def get_embedhost(url):
     s = re.search(r'(?://|\.)([^.]+)\.', url)

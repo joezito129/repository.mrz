@@ -34,7 +34,6 @@ class Sources(DisplayWindow):
         self.gogoSources = []
         self.gogohdSources = []
         self.nineSources = []
-        self.animixplaySources = []
         self.animepaheSources = []
         self.zoroSources = []
         self.apahehdSources = []
@@ -57,9 +56,6 @@ class Sources(DisplayWindow):
         self.setProperty('process_started', 'true')
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
-            self.threads.append(
-                threading.Thread(target=self.user_cloud_inspection,
-                                 args=(query, anilist_id, episode, media_type)))
             if control.getSetting('provider.nyaa') == 'true' or control.getSetting('provider.nyaaalt') == 'true':
                 self.threads.append(
                     threading.Thread(target=self.nyaa_worker,
@@ -123,8 +119,11 @@ class Sources(DisplayWindow):
             for embeds in self.embedProviders:
                 self.remainingProviders.remove(embeds)
 
-        for i in self.threads:
-            i.start()
+        cloud_thread = threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode, media_type))
+        cloud_thread.start()
+
+        for thread in self.threads:
+            thread.start()
 
         timeout = 60 if rescrape else int(control.getSetting('general.timeout'))
         start_time = time.perf_counter()
@@ -157,6 +156,9 @@ class Sources(DisplayWindow):
             runtime = time.perf_counter() - start_time
             self.progress = runtime/timeout * 100
 
+        # make sure cloud threads are finished before moving on
+        cloud_thread.join()
+
         if len(self.torrentCacheSources) + len(self.embedSources) + len(self.cloud_files) == 0:
             self.return_data = []
             self.close()
@@ -164,6 +166,7 @@ class Sources(DisplayWindow):
 
         sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, filter_lang)
         self.return_data = sourcesList
+
         self.close()
 
     def nyaa_worker(self, query, anilist_id, episode, status, media_type, rescrape):
@@ -264,9 +267,6 @@ class Sources(DisplayWindow):
         resolutions = self.resolutionList()
         resolutions.reverse()
 
-        for i in self.cloud_files:
-            sortedList.append(i)
-
         if filter_lang:
             filter_lang = int(filter_lang)
             _torrent_list = torrent_list
@@ -308,11 +308,15 @@ class Sources(DisplayWindow):
 
         sort_option = control.getSetting('general.sourcesort')
         if sort_option == 'Sub':
-            sortedList = sorted(sortedList, key=lambda x: (x['provider'] == 'Cloud', x['lang'] == 0), reverse=True)
+            sortedList = sorted(sortedList, key=lambda x: x['lang'] == 0, reverse=True)
         elif sort_option == 'Dub':
-            sortedList = sorted(sortedList, key=lambda x: (x['provider'] == 'Cloud', x['lang'] > 0), reverse=True)
+            sortedList = sorted(sortedList, key=lambda x: x['lang'] > 0, reverse=True)
 
         preferences = control.getSetting("general.source")
+
+        for cloud_file in self.cloud_files:
+            sortedList.insert(0, cloud_file)
+
         lang_preferences = {'Dub': 0, 'Sub': 2}
         if preferences in lang_preferences:
             sortedList = [i for i in sortedList if i['lang'] != lang_preferences[preferences]]

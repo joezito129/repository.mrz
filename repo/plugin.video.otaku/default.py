@@ -108,11 +108,14 @@ def ANIMES_PAGE(payload, params):
         anilist_id, mal_id, kitsu_id, null = payload_list
         flavor = WatchlistFlavor.get_update_flavor()
         if flavor:
-            data = flavor.get_watchlist_anime_entry(anilist_id)
-            show_meta = database.get_show(anilist_id)
-            kodi_meta = pickle.loads(show_meta['kodi_meta'])
-            kodi_meta['eps_watched'] = data.get('eps_watched', 0)
-            database.update_kodi_meta(anilist_id, kodi_meta)
+            try:
+                data = flavor.get_watchlist_anime_entry(anilist_id)
+                show_meta = database.get_show(anilist_id)
+                kodi_meta = pickle.loads(show_meta['kodi_meta'])
+                kodi_meta['eps_watched'] = data.get('eps_watched', 0)
+                database.update_kodi_meta(anilist_id, kodi_meta)
+            except KeyError:
+                pass
     anime_general, content = OtakuBrowser.get_anime_init(anilist_id)
     return control.draw_items(anime_general, content)
 
@@ -207,7 +210,6 @@ def PLAY(payload, params):
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
-
 
     else:
         from resources.lib.windows.resolver import Resolver
@@ -391,8 +393,8 @@ if __name__ == "__main__":
 # control.print(totaltime, 'ms')
 
 # todo
+
 # get rid of bare excepts
 # get rid of client module
 
-# fix last_watching when not signed into watchlist
 # todo

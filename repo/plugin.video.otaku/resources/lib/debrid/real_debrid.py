@@ -168,15 +168,15 @@ class RealDebrid:
             torrent = self.addMagnet(magnet)
             self.torrentSelect(torrent['id'], key_list)
             files = self.torrentInfo(torrent['id'])
-            selected_files = [(idx, i) for idx, i in enumerate([i for i in files['files'] if i['selected'] == 1])]
 
+            selected_files = [(idx, i) for idx, i in enumerate([i for i in files['files'] if i['selected'] == 1])]
             if len(selected_files) == 1:
                 stream_link = self.resolve_hoster(files['links'][0])
 
             elif len(selected_files) >= 5:
                 best_match = source_utils.get_best_match('path', [i[1] for i in selected_files], episode)
-                file_index = [i[0] for i in selected_files if i[1]['path'] == best_match['path']][0]
                 try:
+                    file_index = [i[0] for i in selected_files if i[1]['path'] == best_match['path']][0]
                     link = files['links'][file_index]
                     stream_link = self.resolve_hoster(link)
                 except IndexError:
