@@ -34,12 +34,11 @@ def get_(function, duration, *args, **kwargs):
     if not reload:
         if cache_result:
             if _is_cache_valid(cache_result['date'], duration):
-                # try:
-                return_data = ast.literal_eval(cache_result['value'])
-                return return_data
-                # except Exception as e:
-                #     control.print(f'41: {e}')
-                #     return ast.literal_eval(cache_result['value'])
+                try:
+                    return_data = ast.literal_eval(cache_result['value'])
+                    return return_data
+                except:
+                    return ast.literal_eval(cache_result['value'])
 
     fresh_result = repr(function(*args, **kwargs))
 
@@ -242,6 +241,7 @@ def update_season(show_id, season):
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
 
+
 def update_show_data(anilist_id, data={}, last_updated=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
@@ -261,6 +261,7 @@ def update_show_data(anilist_id, data={}, last_updated=''):
         cursor.close()
     finally:
         control.try_release_lock(control.anilistSyncDB_lock)
+
 
 def update_episode(show_id, season=0, number=0, update_time='', kodi_meta={}, filler=''):
     control.anilistSyncDB_lock.acquire()
@@ -300,6 +301,7 @@ def get_season_list(show_id):
     control.try_release_lock(control.anilistSyncDB_lock)
     return seasons
 
+
 def get_show_data(anilist_id):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)
@@ -309,6 +311,7 @@ def get_show_data(anilist_id):
     cursor.close()
     control.try_release_lock(control.anilistSyncDB_lock)
     return show_data
+
 
 def get_episode_list(show_id):
     control.anilistSyncDB_lock.acquire()

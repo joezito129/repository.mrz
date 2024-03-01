@@ -122,9 +122,10 @@ class JikanAPI:
                     'mal_id': ep,
                     'image': poster
                 })
-            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
-                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                                filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster,
+                                  fanart=fanart, eps_watched=eps_watched, update_time=update_time,
+                                  tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data,
+                                  filler_enable=filler_enable, title_disable=title_disable)
             all_results += list(map(mapfunc_emp, empty_ep))
         control.notify("Jikanmoa", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
@@ -135,7 +136,7 @@ class JikanAPI:
         import time
         update_time = datetime.date.today().isoformat()
         last_updated = datetime.datetime(*(time.strptime(episodes[0]['last_updated'], "%Y-%m-%d")[0:6]))
-        # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d") #todo add when python 11 is added
+        # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")    # todo add when python 11 is added
 
         diff = (datetime.datetime.today() - last_updated).days
         result = self.get_episode_meta(anilist_id) if diff > 3 else []

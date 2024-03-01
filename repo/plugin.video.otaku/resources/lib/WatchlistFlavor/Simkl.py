@@ -13,9 +13,9 @@ class SimklWLF(WatchlistFlavorBase):
     _NAME = 'simkl'
     _IMAGE = "simkl.png"
 
-    # client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b' # Swag
+    # client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'    # Swag
     # client_id = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0"
-    client_id = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8" # Otaku
+    client_id = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8"      # Otaku
 
     def __headers(self):
         headers = {
@@ -78,6 +78,7 @@ class SimklWLF(WatchlistFlavorBase):
         sort_types = {
             "Anime Title": "anime_title",
             "Last Updated": "list_updated_at",
+            'Last Added': "last_added",
             "User Rating": "user_rating"
         }
         return sort_types[self._sort]
@@ -119,7 +120,6 @@ class SimklWLF(WatchlistFlavorBase):
         }
         return self._parse_view(base)
 
-
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         results = self.get_all_items(status)
         if not results:
@@ -139,7 +139,8 @@ class SimklWLF(WatchlistFlavorBase):
             all_results = sorted(all_results, key=lambda x: x['info']['last_watched'] or "0", reverse=True)
         elif sort_pref == 'user_rating':
             all_results = sorted(all_results, key=lambda x: x['info']['user_rating'] or 0, reverse=True)
-
+        elif sort_pref == 'last_added':
+            all_results.reverse()
         # all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 

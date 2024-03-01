@@ -9,6 +9,7 @@ class GetSources(BaseWindow):
     def __init__(self, xml_file, xml_location, actionArgs=None):
         super(GetSources, self).__init__(xml_file, xml_location, actionArgs=actionArgs)
 
+        control.closeBusyDialog()
         self.setProperty('process_started', 'false')
         self.canceled = False
         self.return_data = None
@@ -16,7 +17,6 @@ class GetSources(BaseWindow):
         self.progress = 0
         self.setProperty('progress', '0')
         self.silent = False
-        control.closeBusyDialog()
         self.torrents_qual_len = [0, 0, 0, 0]
         self.hosters_qual_len = [0, 0, 0, 0]
         self.torrentCacheSources = []

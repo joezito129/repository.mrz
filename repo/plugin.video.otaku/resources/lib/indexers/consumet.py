@@ -58,7 +58,6 @@ class CONSUMETAPI:
             parsed['info']['plot'] = None
         return parsed
 
-
     def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable):
         from datetime import date
         update_time = date.today().isoformat()
@@ -116,7 +115,7 @@ class CONSUMETAPI:
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
-        dub_data =  None
+        dub_data = None
         if control.getSetting('jz.dub') == 'true':
             from resources.jz.TeamUp import teamup
             dub_data = teamup.get_dub_data(kodi_meta['ename'])

@@ -3,6 +3,7 @@ import requests
 
 baseurl = 'https://chiaki.vercel.app'
 
+
 def get_watch_order_list(mal_id):
     params = {
         "group_id": mal_id

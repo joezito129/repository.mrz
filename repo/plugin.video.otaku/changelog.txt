@@ -1,3 +1,8 @@
+Changelog v5.0.19 (2024-02-29):
+- increase speeds only chekcing dub info once per day
+- only lookup filler info once when adding to database
+- added animeschedule to get dub data
+
 Changelog v5.0.18 (2023-11-05):
 - Fixed autoscroll on episode
 - Improved Cloud Scraping

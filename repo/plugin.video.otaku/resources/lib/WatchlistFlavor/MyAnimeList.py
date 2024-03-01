@@ -13,14 +13,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     _NAME = "mal"
     _IMAGE = "myanimelist.png"
 
-
     def __headers(self):
         headers = {
             'Authorization': f'Bearer {self._token}',
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         return headers
-
 
     def login(self):
         from urllib import parse
@@ -66,7 +64,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         control.setSetting('mal.token', res['access_token'])
         control.setSetting('mal.refresh', res['refresh_token'])
         control.setSetting('mal.expiry', str(int(time.time()) + int(res['expires_in'])))
-
 
     def _handle_paging(self, hasNextPage, base_url, page):
         if not hasNextPage:
@@ -120,7 +117,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             ("Delete", "DELETE")
         ]
         return actions
-
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         fields = [
@@ -313,7 +309,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         }
         r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
         return r.ok
-
 
     def update_score(self, anilist_id, score):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')

@@ -678,7 +678,7 @@ class AniListBrowser:
         return all_results
 
     def process_res(self, res):
-        self._database_update_show(res)
+        self.database_update_show(res)
         get_meta.collect_meta_([res])
         return database.get_show(str(res['id']))
 
@@ -690,11 +690,10 @@ class AniListBrowser:
 
         show = database.get_show(anilist_id)
         if not show:
-            self._database_update_show(res)
+            self.database_update_show(res)
 
         show_meta = database.get_show_meta(anilist_id)
         kodi_meta = pickle.loads(show_meta.get('art')) if show_meta else {}
-
 
         title = res['title'][self._TITLE_LANG]
         if not title:
@@ -718,6 +717,9 @@ class AniListBrowser:
             'mediatype': 'tvshow',
             'country': res.get('countryOfOrigin', ''),
         }
+
+        # if False:
+        #     info['playcount'] = 1
 
         try:
             start_date = res.get('startDate')
@@ -784,8 +786,7 @@ class AniListBrowser:
 
         return self._parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
 
-
-    def _database_update_show(self, res):
+    def database_update_show(self, res):
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
         # kitsu_id = ''
@@ -1064,7 +1065,6 @@ class AniListBrowser:
         if tag_list:
             variables["includedTags"] = tag_list
         return self.process_genre_view(query, variables, f"anilist_genres/%s/%s/%%d" % (genre_list, tag_list), page)
-
 
     def process_genre_view(self, query, variables, base_plugin_url, page):
         r = requests.post(self._URL, json={'query': query, 'variables': variables})

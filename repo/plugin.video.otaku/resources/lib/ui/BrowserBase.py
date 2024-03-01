@@ -27,4 +27,3 @@ class BrowserBase:
             size /= power
             n += 1
         return '{0:.2f} {1}'.format(size, power_labels[n])
-

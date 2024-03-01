@@ -103,7 +103,6 @@ class sources(BrowserBase):
             link = element.a.get('data-video')
             quality = 'EQ'
 
-
             if server == 'vidcdn':
                 type_ = 'embed'
                 if link.startswith('//'):

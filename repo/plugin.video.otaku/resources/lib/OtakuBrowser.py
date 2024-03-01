@@ -91,12 +91,11 @@ def get_anime_init(anilist_id):
     else:
         data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
-            data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
-        if not data[0]:
             data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
             data = [], 'episodes'
     return data
+
 
 def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):
     show = database.get_show(anilist_id)

@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 
 url = "https://www.animefillerlist.com/shows"
 
+
 def get_data(anime_eng_title):
     if not anime_eng_title:
         return []

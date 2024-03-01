@@ -2,8 +2,8 @@ import datetime
 import re
 import requests
 import time
-
 # from resources.lib.ui import control
+
 
 class TeamUp:
     def __init__(self):
@@ -62,5 +62,6 @@ class TeamUp:
                         end_time = f'{end_dt_formated - datetime.timedelta(hours=5)}'[:16]
                         dub_data.append({"season": season, "episode": ep_number, "release_time": end_time})
             return dub_data
+
 
 teamup = TeamUp()

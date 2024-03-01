@@ -47,13 +47,17 @@
 		<setting id="provider.nyaaalt" type="bool" label="Nyaa Alt (For Verizon Users)" default="false" enable="eq(-1,false)" />
 		<setting id="provider.animetosho" type="bool" label="Anime Tosho" default="true" />
 		<setting type="lsep" label="Embeds" />
-		<setting id="provider.animepahe" type="bool" label="Animepahe" default="true" />
+		<setting id="provider.aniwatch" type="bool" label="Aniwatch" default="true" />
+		<setting id="provider.animess" type="bool" label="Animess" default="true" />
+		<setting id="provider.animixplay" type="bool" label="Animixplay" default="true" />
+		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
+
 		<setting id="provider.gogohd" type="bool" label="Gogo HD" default="true" />
 		<setting id="provider.zoro" type="bool" label="Zoro" default="true" />
 		<setting id="provider.nineanime" type="bool" label="9Anime" default="true" />
 		<setting id="provider.apahehd" type="bool" label="ApaheHD" default="true" />
-		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
-		<setting id="provider.aniwatch" type="bool" label="Aniwatch" default="true" />
+
+
 
 		<!-- Broken providers -->
 		<setting id="provider.animix" type="bool" label="Animix" default="false" visible="false"/>
@@ -199,11 +203,12 @@
 		<setting id="kitsu.sort" type="labelenum" subsetting="true" label="40354" values="Date Updated|Progress|Title" default="Date Updated" visible="eq(-6,true)"/>
 		<setting id="kitsu.titles" type="labelenum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="Canonical" visible="eq(-7,true)"/>
 
+		<!--Simkl -->
 		<setting type="lsep" label="SIMKL"/>
 		<setting id="simkl.enabled" label="Enable Simkl" type="bool" default="false"/>
 		<setting id="simkl.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="simkl.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)" visible="eq(-2,true)"/>
-		<setting id="simkl.sort" type="labelenum" subsetting="true" label="40354" values="Last Updated|Anime Title|User Rating" default="Last Updated" />
+		<setting id="simkl.sort" type="labelenum" subsetting="true" label="40354" values="Last Updated|Last Added|Anime Title|User Rating" default="Last Updated" />
 	</category>
 
 	<!-- Menus -->

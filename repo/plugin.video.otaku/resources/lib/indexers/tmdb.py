@@ -8,7 +8,6 @@ class TMDBAPI:
         self.thumbPath = "https://image.tmdb.org/t/p/w500"
         self.backgroundPath = "https://image.tmdb.org/t/p/original"
 
-
     def getArt(self, meta_ids, mtype):
         art = {}
         mid = meta_ids.get('themoviedb') or meta_ids.get('tmdb')

@@ -1,5 +1,6 @@
 # from resources.lib.ui import control
 
+
 def get_second_label(info, dub_data, filler=None, filler_enable=None):
     if filler_enable and filler:
         return filler

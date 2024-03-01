@@ -30,6 +30,7 @@ from resources.lib.WatchlistIntegration import add_watchlist, watchlist_update_e
 
 _ANILIST_BROWSER = AniListBrowser(control.getSetting("titlelanguage"))
 
+
 def add_last_watched(items):
     anilist_id = control.getSetting("addon.last_watched")
     try:
@@ -61,6 +62,7 @@ def FIND_RECOMMENDATIONS(payload, params):
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
     return control.draw_items(_ANILIST_BROWSER.get_recommendations(anilist_id))
+
 
 # next page for find_recommendations
 @route('recommendations_next/*')
@@ -124,6 +126,7 @@ def ANIMES_PAGE(payload, params):
 def ANILIST_AIRING_ANIME(payload, params):
     return control.draw_items(_ANILIST_BROWSER.get_airing_anime())
 
+
 # next page for anilist_airing_anime
 @route('anilist_airing_anime/*')
 def ANILIST_AIRING_ANIME(payload, params):
@@ -134,6 +137,7 @@ def ANILIST_AIRING_ANIME(payload, params):
 def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
     return control.draw_items(_ANILIST_BROWSER.get_upcoming_next_season())
 
+
 # next page for anilist_upcoming_next_season
 @route('anilist_upcoming_next_season/*')
 def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
@@ -143,6 +147,7 @@ def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
 @route('anilist_top_100_anime')
 def ANILIST_TOP_100_ANIME(payload, params):
     return control.draw_items(_ANILIST_BROWSER.get_top_100_anime())
+
 
 # next page for anilist_top_100_anime
 @route('anilist_top_100_anime/*')
@@ -218,6 +223,7 @@ def PLAY(payload, params):
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode),
                        source_select=source_select, rescrape=rescrape)
 
+
 @route('play_movie/*')
 def PLAY_MOVIE(payload, params):
     payload_list = payload.rsplit("/")
@@ -260,7 +266,6 @@ def DOWNLOAD(payload, params):
     download_manager.DownloadTask().download(link)
 
 
-
 @route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload, params):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -269,8 +274,8 @@ def MARKED_AS_WATCHED(payload, params):
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(anilist_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
-    show  = database.get_show(anilist_id)
-    kitsu_id = show['kitsu_id'] # todo if kitsu_id is None needs to be fixed
+    show = database.get_show(anilist_id)
+    kitsu_id = show['kitsu_id']     # todo if kitsu_id is None needs to be fixed
     mal_id = show['mal_id']
     control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{episode})')
 
@@ -292,6 +297,7 @@ def DELETE_ANIME_DATABASE(payload, params):
 
     database.remove_episodes(anilist_id)
     database.remove_season(anilist_id)
+    database.update_show_data(anilist_id)
     control.notify(control.ADDON_NAME, 'Removed from database')
 
 
@@ -320,9 +326,11 @@ def authPremiumize(payload, params):
 def SETTINGS(payload, params):
     return control.settingsMenu()
 
+
 @route('toggleLanguageInvoker')
 def TOGGLE_LANGUAGE_INVOKER(payload, params):
     control.toggle_reuselanguageinvoker()
+
 
 @route('clear_cache')
 def CLEAR_CACHE(payload, params):

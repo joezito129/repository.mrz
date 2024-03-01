@@ -1,11 +1,10 @@
 import requests
 
+
 class ANIFYAPI:
     def __init__(self):
         self.baseUrl = 'https://api.anify.tv'
-        # self.apikey = '\x65\x65\x36\x65\x61\x38\x32\x32\x36\x30\x36\x64\x32\x61\x64\x30\x35\x39\x64\x38\x38\x35\x64\x38\x61\x38\x34\x37\x62\x33\x37\x36'
         self.apikey = 'ee6ea822606d2ad059d885d8a847b376'
-
 
     def get_sources_json(self, anilist_id, episode, provider, lang=''):
         sources = []

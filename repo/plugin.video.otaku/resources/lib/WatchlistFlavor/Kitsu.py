@@ -63,7 +63,6 @@ class KitsuWLF(WatchlistFlavorBase):
         control.setSetting('kitsu.refresh', data['refresh_token'])
         control.setSetting('kitsu.expiry', str(int(time.time()) + int(data['expires_in'])))
 
-
     def _handle_paging(self, hasNextPage, base_url, page):
         if not hasNextPage:
             return []
@@ -72,7 +71,6 @@ class KitsuWLF(WatchlistFlavorBase):
         parsed = parse.urlparse(hasNextPage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
         return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
-
 
     def __get_sort(self):
         sort_types = {
@@ -89,7 +87,6 @@ class KitsuWLF(WatchlistFlavorBase):
             "Romanized": "en_jp",
         }
         return title_langs[self._title_lang]
-
 
     def watchlist(self):
         statuses = [
@@ -125,7 +122,6 @@ class KitsuWLF(WatchlistFlavorBase):
             ("Delete", "DELETE")
         ]
         return actions
-
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         url = f'{self._URL}/edge/library-entries'
@@ -175,7 +171,7 @@ class KitsuWLF(WatchlistFlavorBase):
             'mediatype': 'tvshow'
         }
 
-        if eres['attributes']['episodeCount'] != 0 and res["attributes"]["progress"] ==  eres['attributes']['episodeCount']:
+        if eres['attributes']['episodeCount'] != 0 and res["attributes"]["progress"] == eres['attributes']['episodeCount']:
             info['playcount'] = 1
 
         try:

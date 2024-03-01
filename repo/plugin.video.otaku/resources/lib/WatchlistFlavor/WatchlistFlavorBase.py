@@ -21,7 +21,6 @@ class WatchlistFlavorBase:
         self._sort = sort
         self._title_lang = title_lang if title_lang else control.title_lang(control.getSetting("titlelanguage"))
 
-
     @classmethod
     def name(cls):
         return cls._NAME
@@ -76,7 +75,6 @@ class WatchlistFlavorBase:
                     next_up_meta['aired'] = episode_meta['info'].get('aired')
 
         return anilist_id, next_up_meta, show
-
 
     def _get_mapping_id(self, anilist_id, flavor):
         show = database.get_show(anilist_id)

@@ -138,6 +138,7 @@ def CONTEXT_MENU(payload, params):
             else:
                 control.ok_dialog(heading, 'Unable to Set Watchlist')
 
+
 def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
@@ -149,20 +150,24 @@ def add_watchlist(items):
             ))
     return items
 
+
 def watchlist_update_episode(anilist_id, episode):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
         return WatchlistFlavor.watchlist_update_episdoe(anilist_id, episode)
+
 
 def set_watchlist_status(anilist_id, status):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
         return WatchlistFlavor.watchlist_set_status(anilist_id, status)
 
+
 def set_watchlist_score(anilist_id, score):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
         return WatchlistFlavor.watchlist_set_score(anilist_id, score)
+
 
 def delete_watchlist_anime(anilist_id):
     flavor = WatchlistFlavor.get_update_flavor()

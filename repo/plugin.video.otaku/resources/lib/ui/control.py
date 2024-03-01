@@ -381,6 +381,7 @@ def title_lang(title_key):
     }
     return title_lang_dict[title_key]
 
+
 def exit_(code):
     sys.exit(code)
 
@@ -407,6 +408,7 @@ def getChangeLog():
 #     url_parts[4] = parse.urlencode(query)
 #     return parse.urlunparse(url_parts)
 
+
 def toggle_reuselanguageinvoker(forced_state=None):
     def _store_and_reload(output):
         with open(file_path, "w+") as addon_xml_:
@@ -431,6 +433,7 @@ def toggle_reuselanguageinvoker(forced_state=None):
                 setSetting("reuselanguageinvoker.status", "Disabled")
                 _store_and_reload(file_lines)
             break
+
 
 def format_string(string, format_):
     # format_ = B, I
