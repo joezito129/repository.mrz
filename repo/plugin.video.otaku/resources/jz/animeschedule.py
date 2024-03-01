@@ -23,7 +23,7 @@ def get_dub_time(anilist_id):
     route = show['anime_schedule_route']
     if not route:
         route = get_route(anilist_id)
-        database.update_show(anilist_id, show['mal_id'], show['simkl_id'], show['kitsu_id'], show['kodi_meta'], show['last_updated'], route)
+        database.update_show(anilist_id, show['mal_id'], show['kodi_meta'], show['last_updated'], route)
     r = requests.get(f'https://animeschedule.net/anime/{route}')
     soup = BeautifulSoup(r.text, 'html.parser')
     soup_all = soup.find_all('div', class_='release-time-wrapper')
