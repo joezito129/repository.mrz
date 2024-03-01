@@ -158,7 +158,7 @@ def _get_cursor():
     return cursor
 
 
-def update_show(anilist_id, mal_id, kodi_meta, last_updated=''):
+def update_show(anilist_id, mal_id, kodi_meta, last_updated='', anime_schedule_route=''):
     control.anilistSyncDB_lock.acquire()
     cursor = _get_cursor()
     if isinstance(kodi_meta, dict):
@@ -167,10 +167,10 @@ def update_show(anilist_id, mal_id, kodi_meta, last_updated=''):
         cursor.execute('PRAGMA foreign_keys=OFF')
         cursor.execute(
             "REPLACE INTO shows ("
-            "anilist_id, mal_id, kodi_meta, last_updated)"
+            "anilist_id, mal_id, kodi_meta, last_updated, anime_schedule_route)"
             "VALUES "
-            "(?, ?, ?, ?)",
-            (anilist_id, mal_id, kodi_meta, last_updated))
+            "(?, ?, ?, ?, ?)",
+            (anilist_id, mal_id, kodi_meta, last_updated, anime_schedule_route))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()

@@ -23,7 +23,7 @@ class AnilistSyncDatabase:
         # You will need to update the below version number to match the new addon version
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
-        self.last_meta_update = '1.0.4'
+        self.last_meta_update = '1.0.4.1'
 
         control.anilistSyncDB_lock.acquire()
 
@@ -101,6 +101,7 @@ class AnilistSyncDatabase:
                        'kitsu_id INTEGER,'
                        'kodi_meta BLOB NOT NULL, '
                        'last_updated TEXT NOT NULL, '
+                       'anime_schedule_route TEXT NOT NULL, '
                        'UNIQUE(anilist_id))')
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_shows ON "shows" (anilist_id ASC )')
         cursor.connection.commit()
