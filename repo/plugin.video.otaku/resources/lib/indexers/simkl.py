@@ -152,8 +152,6 @@ class SIMKLAPI:
                 data = {"dub_data": dub_data}
                 database.update_show_data(anilist_id, data, update_time)
 
-
-
                 # from resources.jz.TeamUp import teamup
                 # dub_data = teamup.get_dub_data(kodi_meta['ename'])
                 # data = {"dub_data": dub_data}
@@ -174,8 +172,8 @@ class SIMKLAPI:
                 return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data,
                                             filler_enable, title_disable), 'episodes'
             return indexers.process_episodes(episodes, eps_watched, dub_data, filler_enable, title_disable), 'episodes'
-
-        if kodi_meta['episodes'] > 99:
+        control.print(kodi_meta)
+        if kodi_meta['episodes'] is None or kodi_meta > 99:
             from resources.jz import anime_filler
             filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:

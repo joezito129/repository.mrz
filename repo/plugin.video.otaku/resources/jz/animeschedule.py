@@ -27,17 +27,18 @@ def get_dub_time(anilist_id):
     r = requests.get(f'https://animeschedule.net/anime/{route}')
     soup = BeautifulSoup(r.text, 'html.parser')
     soup_all = soup.find_all('div', class_='release-time-wrapper')
-    if len(soup_all) >= 3:
-        dub_soup = soup_all[2]
-        ep_number = int(dub_soup.span.text[7:])
+    for soup in soup_all:
+        if 'dub:' in soup.text.lower():
+            dub_soup = soup
+            ep_number = int(dub_soup.span.text[7:])
 
-        date_time = dub_soup.time.get('datetime')
-        try:
-            dub_time = str(datetime.datetime.strptime(date_time[:16], "%Y-%m-%dT%H:%M") - datetime.timedelta(hours=5))[:16]
-        except TypeError:
-            import time
-            date_time = re.sub('T', '', date_time)
-            date_time = re.sub(':', '', date_time)
-            dub_time = str(datetime.datetime(*(time.strptime(date_time[:14], "%Y-%m-%d%H%M")[0:7])) - datetime.timedelta(hours=5))[:16]
-        dub_data = {"season": 0, "episode": ep_number, "release_time": dub_time}
-        return [dub_data]
+            date_time = dub_soup.time.get('datetime')
+            try:
+                dub_time = str(datetime.datetime.strptime(date_time[:16], "%Y-%m-%dT%H:%M") - datetime.timedelta(hours=5))[:16]
+            except TypeError:
+                import time
+                date_time = re.sub('T', '', date_time)
+                date_time = re.sub(':', '', date_time)
+                dub_time = str(datetime.datetime(*(time.strptime(date_time[:14], "%Y-%m-%d%H%M")[0:7])) - datetime.timedelta(hours=5))[:16]
+            dub_data = {"season": 0, "episode": ep_number, "release_time": dub_time}
+            return [dub_data]

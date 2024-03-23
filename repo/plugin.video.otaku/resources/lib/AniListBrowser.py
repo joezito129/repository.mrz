@@ -499,7 +499,6 @@ class AniListBrowser:
         json_res = results['data']['Media']['relations']
         return json_res
 
-
     def get_anilist_res(self, variables):
         query = '''
         query($id: Int, $type: MediaType){
@@ -573,7 +572,6 @@ class AniListBrowser:
 
         json_res = results['data']['Media']
         return json_res
-
 
     def anilist_res_with_mal_id(self, variables):
         query = '''

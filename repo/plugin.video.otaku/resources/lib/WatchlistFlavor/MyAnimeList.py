@@ -182,7 +182,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'duration': res['node']['average_episode_duration'],
             'genre': [x.get('name') for x in res['node']['genres']],
             'status': res['node']['status'],
-            'mpaa': res['node']['rating'],
+            'mpaa': res['node'].get('rating'),
             'mediatype': 'tvshow',
             'studio': [x.get('name') for x in res['node']['studios']],
         }

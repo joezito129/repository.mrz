@@ -1,3 +1,10 @@
+Changelog v5.0.20 (2024-03-23):
+- Fixed if none is episode number error
+
+Changelog v5.0.19 (2024-02-29):
+- Improve animeschulde
+- Fixed mpaa rating error
+
 Changelog v5.0.19 (2024-02-29):
 - increase speeds only chekcing dub info once per day
 - only lookup filler info once when adding to database
