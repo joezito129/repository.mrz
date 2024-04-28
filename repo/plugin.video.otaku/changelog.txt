@@ -1,6 +1,6 @@
-Changelog v5.0.21.1 (2024-03-24):
-- Changed some defaults
-- fixed typo
+Changelog v5.0.22 (2024-04-27):
+- added refresh debrid token
+- some bug fixes
 
 Changelog v5.0.20 (2024-03-23):
 - Fixed if none is episode number error
