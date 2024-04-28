@@ -219,7 +219,7 @@ def select_dialog(title, dialog_list):
     return xbmcgui.Dialog().select(title, dialog_list)
 
 
-def get_view_type(viewType):
+def get_view_type(viewtype):
     viewTypes = {
         'Default': 50,
         'Poster': 51,
@@ -231,7 +231,7 @@ def get_view_type(viewType):
         'Banner': 501,
         'Fanart': 502,
     }
-    return viewTypes[viewType]
+    return viewTypes[viewtype]
 
 
 def set_videotags(li, info):
@@ -345,9 +345,13 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, succeeded=True, updateListing=False, cacheToDisc=True)
 
-    viewType = getSetting('interface.viewtypes')
-    if viewType != "Default":
-        xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(viewType))
+    if getSetting('interface.viewtypes.bool') == 'true':
+        if contentType == 'addons':
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.addon')))
+        elif contentType == 'tvshows':
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
+        elif contentType == 'episodes':
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
 
     # move to episode position currently watching
     if contentType == "episodes" and getSetting('general.smart.scroll.enable') == 'true':

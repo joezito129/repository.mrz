@@ -12,7 +12,7 @@ def refresh_apis():
 
     if rd_token != '':
         rd_expiry = int(float(control.getSetting('rd.expiry')))
-        if time.time() > (rd_expiry - 600):
+        if time.time() > (rd_expiry - 1200):
             from resources.lib.debrid import real_debrid
             real_debrid.RealDebrid().refreshToken()
 

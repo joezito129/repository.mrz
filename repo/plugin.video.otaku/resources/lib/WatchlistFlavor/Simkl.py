@@ -104,7 +104,8 @@ class SimklWLF(WatchlistFlavorBase):
             ("Add to On Currently Watching", "watching"),
             ("Add to Completed", "completed"),
             ("Add to On Hold", "hold"),
-            ("Add to Dropped", "notinteresting"),
+            ("Add to Dropped", "dropped"),
+            # ("Add to Dropped", "notinteresting"),
             ("Add to Plan to Watch", "plantowatch"),
             ("Set Score", "set_score"),
             ("Delete", "DELETE")

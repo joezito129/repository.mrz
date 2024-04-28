@@ -85,6 +85,7 @@ class RealDebrid:
 
         response = requests.post(f'{self.OauthUrl}/token', data=postData)
         response = response.json()
+
         control.setSetting('rd.auth', response['access_token'])
         control.setSetting('rd.refresh', response['refresh_token'])
         self.token = response['access_token']
@@ -112,7 +113,6 @@ class RealDebrid:
             control.setSetting('rd.refresh', self.refresh)
             control.setSetting('rd.expiry', str(int(time.time()) + int(response['expires_in'])))
 
-
     def checkHash(self, hashList):
         self.cache_check_results = {}
         hashList = [hashList[x: x + 100] for x in range(0, len(hashList), 100)]
@@ -121,7 +121,8 @@ class RealDebrid:
             t = threading.Thread(target=self._check_hash_thread, args=[arg])
             threads.append(t)
             t.start()
-        for i in threads: i.join()
+        for i in threads:
+            i.join()
         return self.cache_check_results
 
     def _check_hash_thread(self, hashes):

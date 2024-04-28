@@ -211,7 +211,6 @@ def PLAY(payload, params):
     sources = OtakuBrowser.get_sources(anilist_id, episode, filter_lang, 'show', rescrape, source_select)
     _mock_args = {"anilist_id": anilist_id, "episode": episode}
 
-
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
@@ -254,8 +253,12 @@ def PLAY_MOVIE(payload, params):
 @route('download/*')
 def DOWNLOAD(payload, params):
     none, type_, anilist_id, episode, filter_lang = payload.rsplit("/")
-    sources = OtakuBrowser.get_sources(anilist_id, episode, filter_lang, 'show', download=True)
-    _mock_args = {"anilist_id": anilist_id, "episode": episode}
+    if type_ == 'play_movie':
+        sources = OtakuBrowser.get_sources(anilist_id, 1, None, 'movie', download=True)
+        _mock_args = {'anilist_id': anilist_id}
+    else:
+        sources = OtakuBrowser.get_sources(anilist_id, episode, filter_lang, 'show', download=True)
+        _mock_args = {"anilist_id": anilist_id, "episode": episode}
 
     from resources.lib.windows.source_select import SourceSelect
     link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources).doModal()
@@ -306,15 +309,18 @@ def authRealDebrid(payload, params):
     from resources.lib.debrid.real_debrid import RealDebrid
     RealDebrid().auth()
 
+
 @route('authAllDebrid')
 def authAllDebrid(payload, params):
     from resources.lib.debrid.all_debrid import AllDebrid
     AllDebrid().auth()
 
+
 @route('authDebridLink')
 def authDebridLink(payload, params):
     from resources.lib.debrid.debrid_link import DebridLink
     DebridLink().auth()
+
 
 @route('authPremiumize')
 def authPremiumize(payload, params):
@@ -362,15 +368,23 @@ def TOOLS_MENU(payload, params):
         (control.lang(30022), "clear_torrent_cache", 'clear_local_torrent_cache.png'),
         (control.lang(30023), "clear_history", 'clear_search_history.png'),
         (control.lang(30026), "rebuild_database", 'rebuild_database.png'),
+        ("refresh debrid token", "refresh_debrid_token", '')
         # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
         # ("Check Python Version", "py_version", "")
     ]
     return control.draw_items([utils.allocate_item(name, url, True, image) for name, url, image in TOOLS_ITEMS], "addons")
 
+
+@route('refresh_debrid_token')
+def REFRESH_DEBRID_TOKEN(payload, params):
+    from resources.lib.debrid import real_debrid
+    real_debrid.RealDebrid().refreshToken()
+
 # @route('py_version')
 # def PY_VERSION(payload, params):
 #     import sys
 #     control.print(sys.version)
+
 
 @route('')
 def LIST_MENU(payload, params):
@@ -387,7 +401,8 @@ def LIST_MENU(payload, params):
     MENU_ITEMS = add_watchlist(MENU_ITEMS)
     MENU_ITEMS_ = MENU_ITEMS[:]
     for i in MENU_ITEMS:
-        if control.getSetting(i[1]) == 'false': MENU_ITEMS_.remove(i)
+        if control.getSetting(i[1]) == 'false':
+            MENU_ITEMS_.remove(i)
     return control.draw_items([utils.allocate_item(name, url, True, image) for name, url, image in MENU_ITEMS_], "addons")
 
 

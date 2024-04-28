@@ -20,6 +20,7 @@ class DownloadTask:
         "filesize": "0",
         "downloaded": "0",
     }
+
     def __init__(self, filename=None):
         self.storage_location = control.getSetting('download.location')
         if not xbmcvfs.exists(self.storage_location):

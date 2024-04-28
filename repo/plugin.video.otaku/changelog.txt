@@ -10,7 +10,7 @@ Changelog v5.0.19 (2024-02-29):
 - Fixed mpaa rating error
 
 Changelog v5.0.19 (2024-02-29):
-- increase speeds only chekcing dub info once per day
+- increase speeds only checking dub info once per day
 - only lookup filler info once when adding to database
 - added animeschedule to get dub data
 
