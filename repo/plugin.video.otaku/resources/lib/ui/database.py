@@ -11,8 +11,8 @@ from sqlite3 import OperationalError, dbapi2
 
 cache_table = 'cache'
 
+
 def get_(function, duration, *args, **kwargs):
-    ## type: (function, int, object) -> object or None
     """
     Gets cached value for provided function with optional arguments, or executes and stores the result
     :param function: Function to be executed
@@ -61,14 +61,14 @@ def get_(function, duration, *args, **kwargs):
 
 
 def _hash_function(function_instance, *args):
-    return _get_function_name(function_instance) + _generate_md5(args)
+    return _get_function_name(function_instance) + generate_md5(args)
 
 
 def _get_function_name(function_instance):
     return re.sub(r'.+\smethod\s|.+function\s|\sat\s.+|\sof\s.+', '', repr(function_instance))
 
 
-def _generate_md5(*args):
+def generate_md5(*args):
     md5_hash = hashlib.md5()
     [md5_hash.update(str(arg).encode('utf-8')) for arg in args]
     return str(md5_hash.hexdigest())
@@ -382,6 +382,37 @@ def remove_episodes(anilist_id):
         control.try_release_lock(control.anilistSyncDB_lock)
 
 
+# def get_download(url_hash):
+#     control.downloadsDB_lock.acquire()
+#     cursor = _get_connection_cursor(control.downloadsDB)
+#     cursor.execute('CREATE TABLE IF NOT EXISTS downloads (url_hash BLOB, data BLOB, UNIQUE(url_hash))')
+#     cursor.execute('SELECT* FROM downloads WHERE url_hash = ?', url_hash,)
+#     download = cursor.fetchall()
+#     cursor.close()
+#     control.try_release_lock(control.anilistSyncDB_lock)
+#     return download
+#
+#
+# def set_download(url_hash, data):
+#     control.downloadsDB_lock.acquire()
+#     cursor = _get_connection_cursor(control.downloadsDB)
+#     cursor.execute('CREATE TABLE IF NOT EXISTS downloads (url_hash BLOB, data BLOB, UNIQUE(url_hash))')
+#     cursor.execute("REPLACE INTO downloads (url_hash, data) VALUES (?, ?)", (url_hash, data))
+#     cursor.connection.commit()
+#     cursor.close()
+#     control.try_release_lock(control.downloadsDB_lock)
+#
+#
+# def remove_download(url_hash):
+#     control.downloadsDB_lock.acquire()
+#     cursor = _get_connection_cursor(control.downloadsDB)
+#     cursor.execute('CREATE TABLE IF NOT EXISTS downloads (url_hash BLOB, data BLOB, UNIQUE(url_hash))')
+#     cursor.execute("DELETE FROM downloads WHERE url_hash = ?", url_hash,)
+#     cursor.connection.commit()
+#     cursor.close()
+#     control.try_release_lock(control.downloadsDB_lock)
+
+
 def getSearchHistory(media_type='show'):
     control.searchHistoryDB_lock.acquire()
     cursor = _get_connection_cursor(control.searchHistoryDB)
@@ -494,10 +525,24 @@ def clearSearchHistory():
         cursor.connection.commit()
         cursor.close()
         control.refresh()
-        control.showDialog.notification(control.ADDON_NAME, "Search History has been cleared", time=5000)
+        control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
     except OperationalError:
         cursor.close()
         return []
+    finally:
+        control.try_release_lock(control.searchHistoryDB_lock)
+
+
+def remove_search(table, value):
+    control.searchHistoryDB_lock.acquire()
+    cursor = _get_connection_cursor(control.searchHistoryDB)
+    try:
+        cursor.execute(f'DELETE FROM {table} WHERE value = ?', (value,))
+        cursor.connection.commit()
+        cursor.close()
+        control.refresh()
+    except OperationalError:
+        cursor.close()
     finally:
         control.try_release_lock(control.searchHistoryDB_lock)
 

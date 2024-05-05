@@ -3,8 +3,9 @@ import requests
 import itertools
 import pickle
 
-from resources.lib.ui import control, database
+from resources.lib.ui import utils, database, control
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
+from resources.lib.ui.divide_flavors import div_flavor
 
 
 class SimklWLF(WatchlistFlavorBase):
@@ -66,13 +67,14 @@ class SimklWLF(WatchlistFlavorBase):
             )
             time.sleep(device_code['interval'])
 
-    def _handle_paging(self, hasNextPage, base_url, page):
+    @staticmethod
+    def _handle_paging(hasNextPage, base_url, page):
         if not hasNextPage:
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
         offset = ''
-        return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
 
     def __get_sort(self):
         sort_types = {
@@ -119,7 +121,7 @@ class SimklWLF(WatchlistFlavorBase):
             "image": '%s.png' % res[0].lower(),
             "info": {}
         }
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         results = self.get_all_items(status)
@@ -145,13 +147,15 @@ class SimklWLF(WatchlistFlavorBase):
         # all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
-    def _base_watchlist_status_view(self, res):
+    @div_flavor
+    def _base_watchlist_status_view(self, res, mal_dub=None, dubsub_filter=None):
         show_ids = res['show']['ids']
 
         mal_id = show_ids.get('mal', '')
         anilist_id = show_ids.get('anilist', '')
         kitsu_id = show_ids.get('kitsu', '')
 
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
         show = database.get_show(anilist_id)
         if show:
             kodi_meta = pickle.loads(show['kodi_meta'])
@@ -183,8 +187,8 @@ class SimklWLF(WatchlistFlavorBase):
         if res["total_episodes_count"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
-        return self._parse_view(base)
+            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
 
     def _base_next_up_view(self, res):
         show_ids = res['show']['ids']
@@ -241,13 +245,13 @@ class SimklWLF(WatchlistFlavorBase):
         if res["total_episodes_count"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
         if next_up_meta:
             base['url'] = 'play/%d/%d/' % (anilist_id, next_up)
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     @staticmethod
     def get_watchlist_anime_entry(anilist_id):
@@ -266,7 +270,7 @@ class SimklWLF(WatchlistFlavorBase):
             # 'next_watch_info': 'yes'
         }
         r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params)
-        return r.json() if r.ok else r.ok
+        return r.json()
 
     def update_list_status(self, anilist_id, status):
         data = {

@@ -4,9 +4,8 @@ from resources.lib.WatchlistFlavor import WatchlistFlavor
 
 
 class SourceSelect(BaseWindow):
-
     def __init__(self, xml_file, location, actionArgs=None, **kwargs):
-        super(SourceSelect, self).__init__(xml_file, location, actionArgs=actionArgs)
+        super().__init__(xml_file, location, actionArgs=actionArgs)
         self.canceled = False
         self.anime_list_entry = {}
         self.editor_list = None

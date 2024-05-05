@@ -7,7 +7,7 @@ from resources.lib.windows.base_window import BaseWindow
 class SkipIntro(BaseWindow):
 
     def __init__(self, xml_file, xml_location, actionArgs=None):
-        super(SkipIntro, self).__init__(xml_file, xml_location, actionArgs=actionArgs)
+        super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = control.player()
         self.total_time = int(self.player.getTotalTime())
         self.playing_file = self.player.getPlayingFile()

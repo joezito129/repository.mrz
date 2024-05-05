@@ -50,12 +50,12 @@ class sources(BrowserBase):
         soup = BeautifulSoup(html, "html.parser")
         soup_all = soup.find('div', id='content').find_all('div', class_='home_list_entry')
         list_ = [{
-                'name': soup.find('div', class_='link').a.text,
-                'magnet': soup.find('a', {'href': re.compile(rex)}).get('href'),
-                'size': soup.find('div', class_='size').text,
-                'downloads': 0,
-                'torrent': soup.find('a', class_='dllink').get('href')
-            } for soup in soup_all]
+            'name': soup.find('div', class_='link').a.text,
+            'magnet': soup.find('a', {'href': re.compile(rex)}).get('href'),
+            'size': soup.find('div', class_='size').text,
+            'downloads': 0,
+            'torrent': soup.find('a', class_='dllink').get('href')
+        } for soup in soup_all]
 
         regex = r'\ss(\d+)|season\s(\d+)|(\d+)+(?:st|[nr]d|th)\sseason'
         regex_ep = r'\de(\d+)\b|\se(\d+)\b|\s-\s(\d{1,3})\b'
@@ -65,7 +65,8 @@ class sources(BrowserBase):
         filtered_list = []
         for torrent in list_:
             try:
-                torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(1)
+                torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(
+                    1)
             except AttributeError:
                 continue
 
@@ -95,6 +96,7 @@ class sources(BrowserBase):
         mapfunc = partial(parse_animetosho_view, episode=episode)
         all_results = list(map(mapfunc, cache_list))
         return all_results
+
 
 def parse_animetosho_view(res, episode):
     source = {

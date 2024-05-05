@@ -6,7 +6,7 @@ from resources.lib.ui import control, database
 
 class BaseWindow(control.xmlWindow):
     def __init__(self, xml_file, location, actionArgs=None):
-        super(BaseWindow, self).__init__(xml_file, location)
+        super().__init__(xml_file, location)
 
         control.closeBusyDialog()
         self._title_lang = control.title_lang(control.getSetting("titlelanguage"))

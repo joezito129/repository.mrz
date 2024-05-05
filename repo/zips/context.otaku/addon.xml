@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="context.otaku" version="1.0.13" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
+<addon id="context.otaku" version="1.0.14" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
   <requires>
     <!-- <import addon="xbmc.python" version="3.0.0" /> -->
   </requires>
   <extension point="kodi.context.item">
     <menu id="kodi.core.main">
-      <item library="download.py">
-        <label>Download</label>
-        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,movie)]</visible>
-      </item>
       <item library="watchlistLogout.py">
         <label>Logout</label>
         <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.Contains(ListItem.folderpath,/watchlist/)]</visible>
@@ -19,10 +15,6 @@
       </item>
       <item library="findRelations.py">
         <label>Find Relations</label>
-        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
-      </item>
-      <item library="watchorder.py">
-        <label>Watch Order</label>
         <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
       </item>
       <item library="rescrape.py">
@@ -53,9 +45,5 @@
       <icon>icon.png</icon>
       <fanart>fanart.jpg</fanart>
     </assets>
-    <news>
-Changelog v1.0.13 (2023-08-01):
-- added download
-    </news>
   </extension>
 </addon>

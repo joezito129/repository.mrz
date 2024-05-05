@@ -3,11 +3,10 @@ import datetime
 import itertools
 import pickle
 import random
-import copy
 import requests
 
 from functools import partial
-from resources.lib.ui import control, database, get_meta, utils
+from resources.lib.ui import database, get_meta, utils, control
 from resources.lib.ui.divide_flavors import div_flavor
 
 
@@ -137,30 +136,6 @@ class AniListBrowser:
         }
         relations = database.get_(self.get_relations_res, 24, variables)
         return self.process_relations_view(relations)
-
-    def get_watch_order(self, mal_id):
-        import threading
-        from resources.lib.indexers import chiaki
-
-        chiaki_list = chiaki.get_watch_order_list(mal_id)
-        threads = []
-        for arg in chiaki_list:
-            t = threading.Thread(target=self.add_watch_order_list, args=[arg])
-            threads.append(t)
-            t.start()
-        for i in threads:
-            i.join()
-        return self.process_watch_order_view(self.watch_order_list)
-
-    def add_watch_order_list(self, anime):
-        variables = anime['url'].split("/")[1:]
-        idmal = int(variables[3])
-        variables = {
-            'idMal': idmal
-        }
-        anilist_item = database.get_(self.anilist_res_with_mal_id, 24, variables)
-        if anilist_item:
-            self.watch_order_list.append(anilist_item)
 
     def get_mal_to_anilist(self, mal_id):
         variables = {
@@ -780,9 +755,9 @@ class AniListBrowser:
         if res['format'] in ['MOVIE', 'ONA'] and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
+            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
 
-        return self._parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
 
     def database_update_show(self, res):
         anilist_id = res['id']
@@ -834,104 +809,6 @@ class AniListBrowser:
         ename = res['title']['english']
         query_titles = '({0})|({1})'.format(name, ename)
         return query_titles
-
-    @staticmethod
-    def _parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
-        if dubsub_filter == "Both (sep)":
-            base['info']['title'] = "%s (Sub)" % base['name']
-            if dub:
-                parsed_view = [utils.allocate_item(
-                    "%s (Sub)" % base["name"],
-                    base["url"] + '2',
-                    is_dir,
-                    image=base["image"],
-                    info=base["info"],
-                    fanart=base["fanart"],
-                    poster=base["image"],
-                    landscape=base.get("landscape"),
-                    banner=base.get("banner"),
-                    clearart=base.get("clearart"),
-                    clearlogo=base.get("clearlogo")
-                )]
-                base2 = copy.deepcopy(base)
-                base2['info']['title'] = "%s (Dub)" % base['name']
-                parsed_view.append(utils.allocate_item(
-                    "%s (Dub)" % base["name"],
-                    base["url"] + '0',
-                    is_dir,
-                    image=base["image"],
-                    info=base2["info"],
-                    fanart=base["fanart"],
-                    poster=base["image"],
-                    landscape=base.get("landscape"),
-                    banner=base.get("banner"),
-                    clearart=base.get("clearart"),
-                    clearlogo=base.get("clearlogo")
-                ))
-            else:
-                parsed_view = [utils.allocate_item(
-                    "%s (Sub)" % base["name"],
-                    base["url"],
-                    is_dir=is_dir,
-                    image=base["image"],
-                    info=base["info"],
-                    fanart=base["fanart"],
-                    poster=base["image"],
-                    landscape=base.get("landscape"),
-                    banner=base.get("banner"),
-                    clearart=base.get("clearart"),
-                    clearlogo=base.get("clearlogo")
-                )]
-
-        elif dubsub_filter == 'Dub':
-            if dub:
-                parsed_view = [utils.allocate_item(
-                    "%s" % base["name"],
-                    base["url"] + '0',
-                    is_dir,
-                    image=base["image"],
-                    info=base["info"],
-                    fanart=base["fanart"],
-                    poster=base["image"],
-                    landscape=base.get("landscape"),
-                    banner=base.get("banner"),
-                    clearart=base.get("clearart"),
-                    clearlogo=base.get("clearlogo")
-                )]
-            else:
-                parsed_view = []
-        elif dubsub_filter == 'Both':
-            if dub:
-                base['name'] += ' [COLOR blue](Dub)[/COLOR]'
-                base['info']['title'] = base['name']
-            parsed_view = [utils.allocate_item(
-                base["name"],
-                base["url"],
-                is_dir=is_dir,
-                image=base["image"],
-                info=base["info"],
-                fanart=base["fanart"],
-                poster=base["image"],
-                landscape=base.get("landscape"),
-                banner=base.get("banner"),
-                clearart=base.get("clearart"),
-                clearlogo=base.get("clearlogo")
-            )]
-        else:
-            parsed_view = [utils.allocate_item(
-                base["name"],
-                base["url"],
-                is_dir=is_dir,
-                image=base["image"],
-                info=base["info"],
-                fanart=base["fanart"],
-                poster=base["image"],
-                landscape=base.get("landscape"),
-                banner=base.get("banner"),
-                clearart=base.get("clearart"),
-                clearlogo=base.get("clearlogo")
-            )]
-        return parsed_view
 
     def get_genres(self, genre_dialog):
         query = '''

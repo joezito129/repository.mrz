@@ -88,18 +88,6 @@ def FIND_RELATIONS(payload, params):
     return control.draw_items(_ANILIST_BROWSER.get_relations(anilist_id))
 
 
-@route('watch_order/*')
-def WATCH_ORDER(payload, params):
-    payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 4:
-        path, anilist_id, mal_id, kitsu_id = payload_list
-    else:
-        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
-    if not mal_id:
-        mal_id = database.get_show(anilist_id)['mal_id']
-    return control.draw_items(_ANILIST_BROWSER.get_watch_order(mal_id))
-
-
 @route('animes/*')
 def ANIMES_PAGE(payload, params):
     payload_list = payload.rsplit("/")
@@ -171,12 +159,25 @@ def ANILIST_GENRES_PAGES(payload, params):
 @route('search_history')
 def SEARCH_HISTORY(payload, params):
     history = database.getSearchHistory('show')
-    return control.draw_items(OtakuBrowser.search_history(history), "addons") if "Yes" in control.getSetting('searchhistory') else SEARCH(payload, params)
+    if "Yes" in control.getSetting('searchhistory'):
+        return control.draw_items(OtakuBrowser.search_history(history), "addons", draw_cm=[('Remove from History', 'remove_search_item')])
+    else:
+        return SEARCH(payload, params)
 
 
 @route('clear_history')
 def CLEAR_HISTORY(payload, params):
     database.clearSearchHistory()
+
+
+@route('remove_search_item/*')
+def REMOVE_SEARCH_ITEM(payload, params):
+    payload_list = payload.split('/')
+    if len(payload_list) == 3:
+        search_item, search_type = payload_list[1:]
+        database.remove_search(table=search_type, value=search_item)
+    else:
+        control.notify(control.ADDON_NAME, "Invalid Search Item")
 
 
 @route('search')
@@ -250,25 +251,6 @@ def PLAY_MOVIE(payload, params):
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, source_select=source_select, rescrape=rescrape)
 
 
-@route('download/*')
-def DOWNLOAD(payload, params):
-    none, type_, anilist_id, episode, filter_lang = payload.rsplit("/")
-    if type_ == 'play_movie':
-        sources = OtakuBrowser.get_sources(anilist_id, 1, None, 'movie', download=True)
-        _mock_args = {'anilist_id': anilist_id}
-    else:
-        sources = OtakuBrowser.get_sources(anilist_id, episode, filter_lang, 'show', download=True)
-        _mock_args = {"anilist_id": anilist_id, "episode": episode}
-
-    from resources.lib.windows.source_select import SourceSelect
-    link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources).doModal()
-    from resources.lib.ui import download_manager
-
-    if not link:
-        return
-    download_manager.DownloadTask().download(link)
-
-
 @route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload, params):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -304,28 +286,36 @@ def DELETE_ANIME_DATABASE(payload, params):
     control.notify(control.ADDON_NAME, 'Removed from database')
 
 
-@route('authRealDebrid')
-def authRealDebrid(payload, params):
-    from resources.lib.debrid.real_debrid import RealDebrid
-    RealDebrid().auth()
+@route('auth/*')
+def AUTH(payload, params):
+    if payload == 'realdebrid':
+        from resources.lib.debrid.real_debrid import RealDebrid
+        RealDebrid().auth()
+    elif payload == 'alldebrid':
+        from resources.lib.debrid.all_debrid import AllDebrid
+        AllDebrid().auth()
+    elif payload == 'premiumize':
+        from resources.lib.debrid.premiumize import Premiumize
+        Premiumize().auth()
+    elif payload == 'debridlink':
+        from resources.lib.debrid.debrid_link import DebridLink
+        DebridLink().auth()
 
 
-@route('authAllDebrid')
-def authAllDebrid(payload, params):
-    from resources.lib.debrid.all_debrid import AllDebrid
-    AllDebrid().auth()
+@route('refresh/*')
+def REFRESH(payload, params):
+    if payload == 'realdebrid':
+        from resources.lib.debrid.real_debrid import RealDebrid
+        RealDebrid().refreshToken()
+    elif payload == 'debridlink':
+        from resources.lib.debrid.debrid_link import DebridLink
+        DebridLink().refreshToken()
 
 
-@route('authDebridLink')
-def authDebridLink(payload, params):
-    from resources.lib.debrid.debrid_link import DebridLink
-    DebridLink().auth()
-
-
-@route('authPremiumize')
-def authPremiumize(payload, params):
-    from resources.lib.debrid.premiumize import Premiumize
-    Premiumize().auth()
+@route('download_manager')
+def DOWNLOAD_MANAGER(payload, params):
+    from resources.lib.windows.download_manager import DownloadManager
+    DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
 
 
 @route('settings')
@@ -368,24 +358,12 @@ def TOOLS_MENU(payload, params):
         (control.lang(30022), "clear_torrent_cache", 'clear_local_torrent_cache.png'),
         (control.lang(30023), "clear_history", 'clear_search_history.png'),
         (control.lang(30026), "rebuild_database", 'rebuild_database.png'),
-        ("refresh debrid token", "refresh_debrid_token", '')
+        ("Download Manager", 'download_manager', '')
         # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
-        # ("Check Python Version", "py_version", "")
     ]
     return control.draw_items([utils.allocate_item(name, url, True, image) for name, url, image in TOOLS_ITEMS], "addons")
-
-
-@route('refresh_debrid_token')
-def REFRESH_DEBRID_TOKEN(payload, params):
-    from resources.lib.debrid import real_debrid
-    real_debrid.RealDebrid().refreshToken()
-
-# @route('py_version')
-# def PY_VERSION(payload, params):
-#     import sys
-#     control.print(sys.version)
-
-
+    
+    
 @route('')
 def LIST_MENU(payload, params):
     MENU_ITEMS = [

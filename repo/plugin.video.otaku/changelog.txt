@@ -1,3 +1,14 @@
+Changelog v5.0.23 (2024-05-04):
+- Moved refresh token to settings
+- Moved File selection to source select context menu
+- Added Download Manager
+- Fixed Embeds
+- Added remove from search history context menu
+- Removed consumet
+- Added anizip
+- Removed anify
+- Added dub wrapper to mal, simkl, and anilist watchlists
+
 Changelog v5.0.22 (2024-04-27):
 - added refresh debrid token
 - some bug fixes

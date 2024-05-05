@@ -3,8 +3,9 @@ import re
 import time
 import requests
 
-from resources.lib.ui import control
+from resources.lib.ui import utils, control
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
+from resources.lib.ui.divide_flavors import div_flavor
 
 
 class MyAnimeListWLF(WatchlistFlavorBase):
@@ -65,13 +66,14 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         control.setSetting('mal.refresh', res['refresh_token'])
         control.setSetting('mal.expiry', str(int(time.time()) + int(res['expires_in'])))
 
-    def _handle_paging(self, hasNextPage, base_url, page):
+    @staticmethod
+    def _handle_paging(hasNextPage, base_url, page):
         if not hasNextPage:
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
         offset = (re.compile("offset=(.+?)&").findall(hasNextPage))[0]
-        return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
 
     def __get_sort(self):
         sort_types = {
@@ -103,7 +105,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "image": '%s.png' % res[0].lower(),
             "info": {}
         }
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     @staticmethod
     def action_statuses():
@@ -161,11 +163,13 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
-    def _base_watchlist_status_view(self, res):
+    @div_flavor
+    def _base_watchlist_status_view(self, res, mal_dub=None, dubsub_filter=None):
         mal_id = res['node']['id']
         anilist_id = ''
         kitsu_id = ''
 
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
         # show = database.get_show_mal(mal_id)
         # if show:
         #     anilist_id = show['anilist_id']
@@ -207,8 +211,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
-        return self._parse_view(base)
+            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
 
     def _base_next_up_view(self, res):
         mal_id = res['node']['id']
@@ -260,13 +264,13 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
         if next_up_meta:
             base['url'] = url
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     def get_watchlist_anime_entry(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')

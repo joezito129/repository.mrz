@@ -14,11 +14,11 @@ class AllDebrid:
         self.cache_check_results = []
 
     def get(self, url, **params):
-        params['agent'] =  self.agent_identifier
+        params['agent'] = self.agent_identifier
         return requests.get(parse.urljoin(self.base_url, url), params=params).text
 
     def post(self, url, post_data=None, **params):
-        params['agent'] =  self.agent_identifier
+        params['agent'] = self.agent_identifier
         return requests.post(parse.urljoin(self.base_url, url), data=post_data, params=params).text
 
     @staticmethod
@@ -120,15 +120,14 @@ class AllDebrid:
     def magnet_status(self, magnet_id):
         return self.get_json('magnet/status', apikey=self.apikey, id=magnet_id)
 
-    def resolve_single_magnet(self, hash_, magnet, episode=''):
+    def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
         selected_file = None
-
         magnet_id = self.upload_magnet(magnet)['magnets'][0]['id']
         folder_details = self.magnet_status(magnet_id)['magnets']['links']
         folder_details = [{'link': x['link'], 'path': x['filename']} for x in folder_details]
 
         if episode:
-            selected_file = source_utils.get_best_match('path', folder_details, episode)
+            selected_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
             self.delete_magnet(magnet_id)
             if selected_file is not None:
                 return self.resolve_hoster(selected_file['link'])

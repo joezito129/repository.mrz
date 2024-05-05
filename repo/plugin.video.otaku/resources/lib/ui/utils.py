@@ -31,7 +31,60 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
                 'clearlogo': clearlogo
         }
     }
+
     return new_res
+
+
+def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
+    if dubsub_filter == 'Dub':
+        if dub:
+            parsed_view = [allocate_item(
+                "%s" % base["name"],
+                base["url"] + '0',
+                is_dir,
+                image=base["image"],
+                info=base["info"],
+                fanart=base.get("fanart"),
+                poster=base["image"],
+                landscape=base.get("landscape"),
+                banner=base.get("banner"),
+                clearart=base.get("clearart"),
+                clearlogo=base.get("clearlogo")
+            )]
+        else:
+            parsed_view = []
+    elif dubsub_filter == 'Both':
+        if dub:
+            base['name'] += ' [COLOR blue](Dub)[/COLOR]'
+            base['info']['title'] = base['name']
+        parsed_view = [allocate_item(
+            base["name"],
+            base["url"],
+            is_dir=is_dir,
+            image=base["image"],
+            info=base["info"],
+            fanart=base.get("fanart"),
+            poster=base["image"],
+            landscape=base.get("landscape"),
+            banner=base.get("banner"),
+            clearart=base.get("clearart"),
+            clearlogo=base.get("clearlogo")
+        )]
+    else:
+        parsed_view = [allocate_item(
+            base["name"],
+            base["url"],
+            is_dir=is_dir,
+            image=base["image"],
+            info=base["info"],
+            fanart=base.get("fanart"),
+            poster=base["image"],
+            landscape=base.get("landscape"),
+            banner=base.get("banner"),
+            clearart=base.get("clearart"),
+            clearlogo=base.get("clearlogo")
+        )]
+    return parsed_view
 
 
 def get_sub(sub_url, sub_lang):
@@ -53,6 +106,7 @@ def del_subs():
     for fname in files:
         if fname.startswith('TemporarySubs'):
             xbmcvfs.delete('special://temp/%s' % fname)
+
 
 def get_season(res):
     import re
@@ -96,7 +150,7 @@ def get_season(res):
                         break
                     except AttributeError:
                         pass
-            except  AttributeError:
+            except AttributeError:
                 pass
             s_ids = [seasonnum]
     return s_ids
@@ -106,6 +160,7 @@ def database_request_post(url, headers=None, data=None, timeout=None):
     r = requests.post(url, headers=headers, data=data, timeout=timeout)
     if r.ok:
         return r.json()
+
 
 def database_request_get(url, params=None, headers=None, timeout=None, text=False):
     r = requests.get(url, params=params, headers=headers, timeout=timeout)
@@ -128,6 +183,7 @@ def randomagent():
         'Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
     ]
     return random.choice(_agents)
+
 
 def randommobileagent():
     _mobagents = [

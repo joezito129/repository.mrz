@@ -1,7 +1,7 @@
 from xbmcgui import WindowXMLDialog
 
-class TextViewerXML(WindowXMLDialog):
 
+class TextViewerXML(WindowXMLDialog):
     def __init__(self, xmlFilename: str, scriptPath: str, *args, **kwargs):
         super().__init__(xmlFilename, scriptPath)
         self.window_id = 2060

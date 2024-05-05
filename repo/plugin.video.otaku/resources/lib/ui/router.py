@@ -26,6 +26,7 @@ class route:
     def func(self):
         return self._func
 
+
 def router_process(url, params={}):
     payload = "/".join(url.split("/")[1:])
     for route_obj in _REGISTERED_ROUTES:

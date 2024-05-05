@@ -155,25 +155,23 @@ def get_cache_check_reg(episode):
                      ({}|{})                                # episode num format: xx or xxx
                      (?![\d])
                      '''.format(season, episode.zfill(2), episode.zfill(3))
-
     return re.compile(reg_string)
 
 
-def get_best_match(dict_key, dictionary_list, episode):
+def get_best_match(dict_key, dictionary_list, episode, pack_select=False):
     regex = get_cache_check_reg(episode)
     files = []
     for i in dictionary_list:
         path = re.sub(r'\[.*?]', '', i[dict_key].split('/')[-1])
         i['regex_matches'] = regex.findall(path)
         files.append(i)
-    if control.getSetting('general.manual.select') == 'true':
+    if pack_select:
         files = user_select(files, dict_key)
     else:
         files = [i for i in files if len(i['regex_matches']) > 0]
         if len(files) == 0:
             return
         files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
-
         if len(files) != 1:
             files = user_select(files, dict_key)
 
@@ -208,6 +206,7 @@ def user_select(files, dict_key):
     else:
         file = [files[idx]]
     return file
+
 
 def get_embedhost(url):
     s = re.search(r'(?://|\.)([^.]+)\.', url)

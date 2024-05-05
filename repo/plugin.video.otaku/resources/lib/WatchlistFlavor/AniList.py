@@ -3,9 +3,9 @@ import pickle
 import random
 import requests
 
-from resources.lib.ui import database
+from resources.lib.ui import database, utils
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
-
+from resources.lib.ui.divide_flavors import div_flavor
 
 class AniListWLF(WatchlistFlavorBase):
     _URL = "https://graphql.anilist.co"
@@ -55,7 +55,6 @@ class AniListWLF(WatchlistFlavorBase):
         }
         return sort_types[self._sort]
 
-
     def watchlist(self):
         statuses = [
             ("Next Up", "CURRENT?next_up=true"),
@@ -77,7 +76,7 @@ class AniListWLF(WatchlistFlavorBase):
             "image": '%s.png' % res[0].lower(),
             "info": {}
         }
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     @staticmethod
     def action_statuses():
@@ -92,7 +91,6 @@ class AniListWLF(WatchlistFlavorBase):
             ("Delete", "DELETE")
         ]
         return actions
-
 
     def get_watchlist_status(self, status, next_up):
         query = '''
@@ -201,13 +199,17 @@ class AniListWLF(WatchlistFlavorBase):
         all_results = list(itertools.chain(*all_results))
         return all_results
 
-    def _base_watchlist_status_view(self, res):
+    @div_flavor
+    def _base_watchlist_status_view(self, res, mal_dub=None, dubsub_filter=None):
         progress = res['progress']
         res = res['media']
 
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
         kitsu_id = ''
+
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
+
         title = res['title'].get(self._title_lang) or res['title'].get('userPreferred')
 
         info = {
@@ -257,7 +259,6 @@ class AniListWLF(WatchlistFlavorBase):
         except IndexError:
             pass
 
-
         base = {
             "name": '%s - %d/%d' % (title, progress, res['episodes'] if res['episodes'] else 0),
             "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{progress}',
@@ -283,9 +284,8 @@ class AniListWLF(WatchlistFlavorBase):
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
-
-        return self._parse_view(base)
+            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
 
     def _base_next_up_view(self, res):
         progress = res['progress']
@@ -349,13 +349,13 @@ class AniListWLF(WatchlistFlavorBase):
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
         if next_up_meta:
             base['url'] = url
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     def get_watchlist_anime_entry(self, anilist_id):
         query = '''
@@ -391,7 +391,6 @@ class AniListWLF(WatchlistFlavorBase):
             'score': results['score']
         }
         return anime_entry
-
 
     def get_watchlist_anime_info(self, anilist_id):
         query = '''

@@ -3,12 +3,12 @@ import requests
 
 from resources.lib import pages
 from resources.lib import indexers
-from resources.lib.indexers import consumet, simkl, jikanmoe
+from resources.lib.indexers import simkl, anizip, jikanmoe
 from resources.lib.ui import control, database, utils
 
 
 def parse_history_view(res):
-    return utils.allocate_item(res, "search/%s/1" % res, True)
+    return utils.allocate_item(res, "search/%s/show" % res, True)
 
 
 def search_history(search_array):
@@ -80,10 +80,10 @@ def get_anime_init(anilist_id):
             return [], 'episodes'
     if control.getSetting('overide.meta.api') == 'true':
         meta_api = control.getSetting('meta.api')
-        if meta_api == 'consumet':
-            data = consumet.CONSUMETAPI().get_episodes(anilist_id, show_meta)
-        elif meta_api == 'simkl':
+        if meta_api == 'simkl':
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+        elif meta_api == 'anizip':
+            data = anizip.ANIZIPAPI().get_episodes(anilist_id, show_meta)
         elif meta_api == 'jikanmoa':
             data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
         else:
@@ -97,7 +97,7 @@ def get_anime_init(anilist_id):
     return data
 
 
-def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False, download=False):
+def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False):
     show = database.get_show(anilist_id)
     if not show:
         from resources.lib.AniListBrowser import AniListBrowser
@@ -112,8 +112,7 @@ def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, so
         'media_type': media_type,
         'rescrape': rescrape,
         'get_backup': get_backup,
-        'source_select': source_select,
-        'download': download
+        'source_select': source_select
     }
     sources = pages.getSourcesHelper(actionArgs)
     return sources

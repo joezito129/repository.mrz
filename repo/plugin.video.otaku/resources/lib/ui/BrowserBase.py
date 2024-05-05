@@ -1,3 +1,6 @@
+from resources.lib.ui import client, control
+
+
 class BrowserBase:
     _BASE_URL = None
 
@@ -27,3 +30,20 @@ class BrowserBase:
             size /= power
             n += 1
         return '{0:.2f} {1}'.format(size, power_labels[n])
+
+    @staticmethod
+    def _get_request(url, data=None, headers=None, XHR=False):
+        from six.moves import urllib_parse
+        if data:
+            url = "%s?%s" % (url, urllib_parse.urlencode(data))
+        return client.request(url, post=data, headers=headers, XHR=XHR)
+
+    @staticmethod
+    def _send_request(url, data=None, headers=None, XHR=False):
+        return client.request(url, post=data, headers=headers, XHR=XHR)
+
+    @staticmethod
+    def embeds():
+        return ['doodstream', 'filelions', 'filemoon', 'iga', 'kwik', 'hd-2',
+              'mp4upload', 'mycloud', 'streamtape', 'streamwish', 'vidcdn',
+              'vidplay', 'hd-1', 'yourupload', 'zto']

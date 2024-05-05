@@ -2,6 +2,7 @@ import pickle
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
+from resources.lib.windows.download_manager import Manager
 from resources.lib.windows.resolver import Resolver
 from resources.lib import OtakuBrowser
 
@@ -9,7 +10,7 @@ from resources.lib import OtakuBrowser
 class SourceSelect(BaseWindow):
 
     def __init__(self, xml_file, location, actionArgs=None, sources=None, anilist_id=None, rescrape=None, **kwargs):
-        super(SourceSelect, self).__init__(xml_file, location, actionArgs=actionArgs)
+        super().__init__(xml_file, location, actionArgs=actionArgs)
 
         self.actionArgs = actionArgs
         self.sources = sources
@@ -64,7 +65,6 @@ class SourceSelect(BaseWindow):
                 except AttributeError:
                     pass
 
-
     def onInit(self):
         self.display_list = self.getControl(1000)
         menu_items = []
@@ -95,16 +95,38 @@ class SourceSelect(BaseWindow):
     #     if controlId == 1000:
     #         self.handle_action(7)
 
-    def handle_action(self, actionID):
+    def onAction(self, action):
+        actionID = action.getId()
+
         if actionID in [7, 100, 401] and self.getFocusId() == 1000:
             self.position = self.display_list.getSelectedPosition()
             self.resolve_item()
 
-    def onAction(self, action):
-        actionID = action.getId()
+        if actionID == 117:
+            context = control.context_menu(
+                [
+                    "Play",
+                    "Download",
+                    "File Select"
+                ]
+            )
+            self.position = self.display_list.getSelectedPosition()
+            if context == 0:  # Play
+                self.resolve_item(False)
+            elif context == 1:  # Download
+                if not self.sources[self.position]['debrid_provider']:
+                    control.notify(control.ADDON_NAME, "Please Select A Debrid File")
+                else:
+                    self.close()
+                    source = [self.sources[self.display_list.getSelectedPosition()]]
+                    resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True)
+                    link = resolver.doModal(source, {}, False)
+                    Manager().download_file(link)
 
-        if actionID in [7, 100, 401]:
-            self.handle_action(actionID)
+            elif context == 2:  # File Selection
+                if not self.sources[self.position]['debrid_provider']:
+                    control.notify(control.ADDON_NAME, "Please Select A Debrid File")
+                self.resolve_item(True)
 
         if actionID in [92, 10]:
             self.stream_link = False
@@ -149,8 +171,11 @@ class SourceSelect(BaseWindow):
                     break
         return info
 
-    def resolve_item(self):
-        sources = self.sources[self.position:] if control.getSetting('general.autotrynext') == 'true' else [self.sources[self.position]]
+    def resolve_item(self, pack_select=False):
+        if control.getSetting('general.autotrynext') == 'true' and not pack_select:
+            sources = self.sources[self.position:]
+        else:
+            sources = [self.sources[self.position]]
 
         if self.rescrape:
             selected_source = self.sources[self.position]
@@ -159,7 +184,7 @@ class SourceSelect(BaseWindow):
 
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True)
 
-        self.stream_link = resolver.doModal(sources, {}, False)
+        self.stream_link = resolver.doModal(sources, {}, pack_select)
 
         if self.stream_link:
             self.close()

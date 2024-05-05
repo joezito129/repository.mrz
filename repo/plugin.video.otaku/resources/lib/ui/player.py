@@ -52,7 +52,6 @@ class watchlistPlayer(player):
         self.skipintro_aniskip_offset = int(control.getSetting('skipintro.aniskip.offset'))
         self.skipoutro_aniskip_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
-
     def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, filter_lang):
         self._anilist_id = anilist_id
         self._watchlist_update = watchlist_update
@@ -85,7 +84,6 @@ class watchlistPlayer(player):
         control.setSetting('skipoutro.end.skip.time', str(self.skipoutro_end_skip_time))
 
         self.keepAlive()
-
 
     def onPlayBackStarted(self):
         current_ = playList.getposition()
@@ -142,7 +140,6 @@ class watchlistPlayer(player):
         if self.media_type == 'movie':
             return self.onWatchedPercent()
 
-
         if control.getSetting('smartplay.skipintrodialog') == 'true':
             if self.skipintro_aniskip_enable:
                 while self.isPlaying():
@@ -178,6 +175,7 @@ class watchlistPlayer(player):
                     PlayerDialogs().display_dialog()
                     break
                 xbmc.sleep(5000)
+
 
 class PlayerDialogs(xbmc.Player):
 

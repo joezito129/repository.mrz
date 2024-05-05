@@ -1,6 +1,7 @@
 import pickle
 import random
 import requests
+import copy
 
 from resources.lib.ui import control, database, utils
 
@@ -11,7 +12,8 @@ class WatchlistFlavorBase:
     _NAME = None
     _IMAGE = None
 
-    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None, title_lang=None):
+    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None,
+                 title_lang=None):
         self._auth_var = auth_var
         self._username = username
         self._password = password
@@ -94,19 +96,99 @@ class WatchlistFlavorBase:
         return flavor_id
 
     @staticmethod
-    def _parse_view(base, is_dir=True):
-        return [
-            utils.allocate_item(
-                "%s" % base["name"],
+    def _parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
+        if dubsub_filter == "Both (sep)":
+            base['info']['title'] = "%s (Sub)" % base['name']
+            if dub:
+                parsed_view = [utils.allocate_item(
+                    "%s (Sub)" % base["name"],
+                    base["url"] + '2',
+                    is_dir,
+                    image=base["image"],
+                    info=base["info"],
+                    fanart=base.get("fanart"),
+                    poster=base["image"],
+                    landscape=base.get("landscape"),
+                    banner=base.get("banner"),
+                    clearart=base.get("clearart"),
+                    clearlogo=base.get("clearlogo")
+                )]
+                base2 = copy.deepcopy(base)
+                base2['info']['title'] = "%s (Dub)" % base['name']
+                parsed_view.append(utils.allocate_item(
+                    "%s (Dub)" % base["name"],
+                    base["url"] + '0',
+                    is_dir,
+                    image=base["image"],
+                    info=base2["info"],
+                    fanart=base.get("fanart"),
+                    poster=base["image"],
+                    landscape=base.get("landscape"),
+                    banner=base.get("banner"),
+                    clearart=base.get("clearart"),
+                    clearlogo=base.get("clearlogo")
+                ))
+            else:
+                parsed_view = [utils.allocate_item(
+                    "%s (Sub)" % base["name"],
+                    base["url"],
+                    is_dir=is_dir,
+                    image=base["image"],
+                    info=base["info"],
+                    fanart=base.get("fanart"),
+                    poster=base["image"],
+                    landscape=base.get("landscape"),
+                    banner=base.get("banner"),
+                    clearart=base.get("clearart"),
+                    clearlogo=base.get("clearlogo")
+                )]
+
+        elif dubsub_filter == 'Dub':
+            if dub:
+                parsed_view = [utils.allocate_item(
+                    "%s" % base["name"],
+                    base["url"] + '0',
+                    is_dir,
+                    image=base["image"],
+                    info=base["info"],
+                    fanart=base.get("fanart"),
+                    poster=base["image"],
+                    landscape=base.get("landscape"),
+                    banner=base.get("banner"),
+                    clearart=base.get("clearart"),
+                    clearlogo=base.get("clearlogo")
+                )]
+            else:
+                parsed_view = []
+        elif dubsub_filter == 'Both':
+            if dub:
+                base['name'] += ' [COLOR blue](Dub)[/COLOR]'
+                base['info']['title'] = base['name']
+            parsed_view = [utils.allocate_item(
+                base["name"],
                 base["url"],
-                is_dir,
-                base["image"],
-                base["info"],
-                base.get("fanart"),
-                base.get("poster"),
+                is_dir=is_dir,
+                image=base["image"],
+                info=base["info"],
+                fanart=base.get("fanart"),
+                poster=base["image"],
                 landscape=base.get("landscape"),
                 banner=base.get("banner"),
                 clearart=base.get("clearart"),
-                clearlogo=base.get("clearlogo"),
-            )
-        ]
+                clearlogo=base.get("clearlogo")
+            )]
+        else:
+            parsed_view = [utils.allocate_item(
+                base["name"],
+                base["url"],
+                is_dir=is_dir,
+                image=base["image"],
+                info=base["info"],
+                fanart=base.get("fanart"),
+                poster=base["image"],
+                landscape=base.get("landscape"),
+                banner=base.get("banner"),
+                clearart=base.get("clearart"),
+                clearlogo=base.get("clearlogo")
+            )]
+        return parsed_view

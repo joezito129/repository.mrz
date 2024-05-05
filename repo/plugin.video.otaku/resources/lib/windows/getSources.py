@@ -4,7 +4,7 @@ from resources.lib.windows.get_sources_window import GetSources as DisplayWindow
 
 class Sources(DisplayWindow):
     def __init__(self, xml_file, location, actionArgs=None):
-        super(Sources, self).__init__(xml_file, location, actionArgs)
+        super().__init__(xml_file, location, actionArgs)
         self.torrents_qual_len = [0, 0, 0, 0]
         self.hosters_qual_len = [0, 0, 0, 0]
         self.silent = False

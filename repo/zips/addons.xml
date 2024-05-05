@@ -1,14 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addons><addon id="context.otaku" version="1.0.13" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
+<addons><addon id="context.otaku" version="1.0.14" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
   <requires>
     
   </requires>
   <extension point="kodi.context.item">
     <menu id="kodi.core.main">
-      <item library="download.py">
-        <label>Download</label>
-        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,movie)]</visible>
-      </item>
       <item library="watchlistLogout.py">
         <label>Logout</label>
         <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.Contains(ListItem.folderpath,/watchlist/)]</visible>
@@ -19,10 +15,6 @@
       </item>
       <item library="findRelations.py">
         <label>Find Relations</label>
-        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
-      </item>
-      <item library="watchorder.py">
-        <label>Watch Order</label>
         <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
       </item>
       <item library="rescrape.py">
@@ -53,10 +45,6 @@
       <icon>icon.png</icon>
       <fanart>fanart.jpg</fanart>
     </assets>
-    <news>
-Changelog v1.0.13 (2023-08-01):
-- added download
-    </news>
   </extension>
 </addon><addon id="context.seren" version="3.0.1" name="Seren - Global Context Menu Items" provider-name="Nixgates">
 	<requires>
@@ -236,13 +224,14 @@ Changelog v1.0.13 (2023-08-01):
             
         </assets>
     </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.22">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.23">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.beautifulsoup4" />
     <import addon="script.module.inputstreamhelper" />
     <import addon="script.module.requests" />
-    <import addon="context.otaku" version="1.0.13" />
+    <import addon="context.otaku" version="1.0.14" />
+    <import addon="script.module.six" version="1.15.0" />
   </requires>
   <extension library="default.py" point="xbmc.python.pluginsource">
         <provides>video</provides>

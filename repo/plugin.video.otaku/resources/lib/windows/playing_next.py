@@ -7,7 +7,7 @@ from resources.lib.windows.base_window import BaseWindow
 class PlayingNext(BaseWindow):
 
     def __init__(self, xml_file, xml_location, actionArgs=None):
-        super(PlayingNext, self).__init__(xml_file, xml_location, actionArgs=actionArgs)
+        super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = control.player()
         self.playing_file = self.player.getPlayingFile()
         self.closed = False

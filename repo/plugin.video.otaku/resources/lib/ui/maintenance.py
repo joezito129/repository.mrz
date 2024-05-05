@@ -5,7 +5,7 @@ from resources.lib.ui import control
 
 def refresh_apis():
     rd_token = control.getSetting('rd.auth')
-    # dl_token = control.getSetting('dl.auth')
+    dl_token = control.getSetting('dl.auth')
 
     kitsu_token = control.getSetting('kitsu.token')
     mal_token = control.getSetting('mal.token')
@@ -16,11 +16,11 @@ def refresh_apis():
             from resources.lib.debrid import real_debrid
             real_debrid.RealDebrid().refreshToken()
 
-    # if dl_token != '':
-    #     dl_expiry = int(control.getSetting('dl.expiry'))
-    #     if time.time() > (dl_expiry - 600):
-    #         from resources.lib.debrid import debrid_link
-    #         debrid_link.DebridLink().refreshToken()
+    if dl_token != '':
+        dl_expiry = int(control.getSetting('dl.expiry'))
+        if time.time() > (dl_expiry - 600):
+            from resources.lib.debrid import debrid_link
+            debrid_link.DebridLink().refreshToken()
 
     if kitsu_token != '':
         kitsu_expiry = int(float(control.getSetting('kitsu.expiry')))

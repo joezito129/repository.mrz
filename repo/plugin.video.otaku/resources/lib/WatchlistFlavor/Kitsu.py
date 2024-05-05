@@ -2,7 +2,7 @@ import itertools
 import time
 import requests
 
-from resources.lib.ui import control, database
+from resources.lib.ui import control, database, utils
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 from resources.lib.indexers.simkl import SIMKLAPI
 from urllib import parse
@@ -63,14 +63,15 @@ class KitsuWLF(WatchlistFlavorBase):
         control.setSetting('kitsu.refresh', data['refresh_token'])
         control.setSetting('kitsu.expiry', str(int(time.time()) + int(data['expires_in'])))
 
-    def _handle_paging(self, hasNextPage, base_url, page):
+    @staticmethod
+    def _handle_paging(hasNextPage, base_url, page):
         if not hasNextPage:
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
         parsed = parse.urlparse(hasNextPage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
-        return self._parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
 
     def __get_sort(self):
         sort_types = {
@@ -108,7 +109,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "image": f'{res[0].lower()}.png',
             'info': {}
         }
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     @staticmethod
     def action_statuses():
@@ -197,9 +198,9 @@ class KitsuWLF(WatchlistFlavorBase):
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     def _base_next_up_view(self, res, eres):
         kitsu_id = eres['id']
@@ -243,14 +244,14 @@ class KitsuWLF(WatchlistFlavorBase):
 
         if next_up_meta:
             base['url'] = url
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
             base['url'] = f"play_movie/{anilist_id}/{mal_id}/{kitsu_id}"
             base['info']['mediatype'] = 'movie'
-            return self._parse_view(base, False)
+            return utils.parse_view(base, False)
 
-        return self._parse_view(base)
+        return utils.parse_view(base)
 
     def _mapping_mal(self, kitsu_id):
         mal_id = ''

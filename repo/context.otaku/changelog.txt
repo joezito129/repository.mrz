@@ -1,0 +1,3 @@
+Changelog v1.0.14 (2024-05-04)
+- Removed Download
+- Removed watch order

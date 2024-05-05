@@ -28,15 +28,12 @@
 		<!-- Interface -->
 		<setting type="lsep" label="Meta Api" />
 		<setting id="overide.meta.api" type="bool" label="Enable Choose Meta Api" default="false" />
-		<setting id="meta.api" type="labelenum" label="Meta Api" values="simkl|jikanmoa|consumet" default="simkl" visible="eq(-1,true)"/>
-		<setting id="consumet.selfhost.enable" type="bool" label="Enable Consumet Self Hosting" default="false" />
-		<setting id="consumet.selfhost.ip" type="ipaddress" label="SelfHosting IP Address: " visible="eq(-1,true)" />
+		<setting id="meta.api" type="labelenum" label="Meta Api" values="simkl|jikanmoa|anizip" default="simkl" visible="eq(-1,true)"/>
 		<setting type="lsep" label="40302"/>
 		<setting id="interface.viewtypes.bool" label="Force view types on menus" type="bool" default="false"/>
-		<setting id="interface.viewtypes.addon" type="labelenum" label="General Menu View" values="-" default="Wide List" visible="eq(-1,true)"/>
+		<setting id="interface.viewtypes.addon" type="labelenum" label="General Menu View" values="Wide List|List" default="Wide List" visible="eq(-1,true)"/>
 		<setting id="interface.viewtypes.tvshows" type="labelenum" label="TV Show View" values="Wide List|Wall|Banner|Fanart|List|Poster|Shift|Info Wall" default="Wide List" visible="eq(-2,true)"/>
 		<setting id="interface.viewtypes.episodes" type="labelenum" label="Episode View" values="Wide List|Wall|Info Wall" default="Wide List" visible="eq(-3,true)"/>
-		 <setting id="general.episode.view" type="labelenum" subsetting="true" label="here" lvalues="40310|40311" default="40310" visible="eq(-4,true)" />
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
 		<setting id="scraping.fanart" type="bool" label="40433" default="true" />
@@ -50,21 +47,16 @@
 		<setting id="provider.nyaa" type="bool" label="Nyaa" default="true" enable="eq(1,false)" />
 		<setting id="provider.nyaaalt" type="bool" label="Nyaa Alt (For Verizon Users)" default="false" enable="eq(-1,false)" />
 		<setting id="provider.animetosho" type="bool" label="Anime Tosho" default="true" />
+
 		<setting type="lsep" label="Embeds" />
-		<setting id="provider.aniwatch" type="bool" label="Aniwatch" default="false" />
+		<setting id="provider.animepahe" type="bool" label="Animepahe" default="false" />
 		<setting id="provider.animess" type="bool" label="Animess" default="false" />
 		<setting id="provider.animixplay" type="bool" label="Animixplay" default="false" />
-		<setting id="provider.gogo" type="bool" label="Gogo" default="false" />
-
-		<setting id="provider.gogohd" type="bool" label="Gogo HD" default="false" />
-		<setting id="provider.zoro" type="bool" label="Zoro" default="false" />
-		<setting id="provider.nineanime" type="bool" label="9Anime" default="false" />
-		<setting id="provider.apahehd" type="bool" label="ApaheHD" default="false" />
+		<setting id="provider.aniplay" type="bool" label="Aniplay" default="false" />
+		<setting id="provider.aniwave" type="bool" label="Aniwave" default="false" />
+		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
 
 
-
-		<!-- Broken providers -->
-		<setting id="provider.animix" type="bool" label="Animix" default="false" visible="false"/>
 	</category>
 
 	<!-- Playback -->
@@ -75,7 +67,6 @@
 		<setting id="general.playstyle.episode" type="enum" label="40309" lvalues="40310|40311" default="0" />
 		<setting id="general.autotrynext" type="bool" label="40312" default="true" />
 		<setting id="general.timeout" type="slider" label="40425" option="int" range="2, 60" default="9" />
-		<setting id="general.manual.select" type="bool" label="Manual select Source in batch files" default="false" />
 		<setting id="general.terminate.oncloud" type="bool" subsetting="true" label="Terminate on cloud sources" default="true" />
 
 		<!-- Skip Intro Dialog -->
@@ -122,7 +113,7 @@
 		<!-- Search Filtering -->
 		<setting type="lsep" label="40409"/>
 		<setting id="divflavors.bool" label="40428" type="bool" default="false"/>
-		<setting id="divflavors.menu" type="labelenum" subsetting="true" label="40429" values="Dub|Both (sep)|Both" default="Both" visible="eq(-1,true)"/>
+		<setting id="divflavors.menu" type="labelenum" subsetting="true" label="40429" values="Dub|Both" default="Both" visible="eq(-1,true)"/>
 		<setting id="contentformat.bool" label="40391" type="bool" default="false"/>
 		<setting id="contentformat.menu" type="enum" subsetting="true" label="40392" lvalues="40393|40394|40395|40396|40397|40398|40399" default="40393" visible="eq(-1,true)"/>
 		<setting id="contentorigin.bool" label="40418" type="bool" default="false"/>
@@ -138,30 +129,35 @@
 		<setting id="realdebrid.enabled" type="bool" default="false" label="40336" />
 		<setting id="rd.username" type="text" label="40337" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="rd.auth.status" type="text" label="Real-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
-		<setting id="rd.auth_start" type="action" label="40338" option="close" action="RunPlugin(plugin://plugin.video.otaku/authRealDebrid)" visible="eq(-3,true)" />
-		<setting id="rd.priority" type="slider" subsetting="true" label="40339" option="int" range="1,10" default="10" visible="eq(-4,true)" />
-		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-5,true)" />
+		<setting id="rd.auth_start" type="action" label="40338" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)" visible="eq(-3,true)" />
+		<setting id="rd.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)" visible="eq(-4,true)" />
+		<setting id="rd.priority" type="slider" subsetting="true" label="40339" option="int" range="1,10" default="10" visible="eq(-5,true)" />
+		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-6,true)" />
 
 		<!-- All Debrid -->
 		<setting type="lsep" label="40340" />
 		<setting id="alldebrid.enabled" type="bool" default="false" label="40341" />
 		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
-		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/authAllDebrid)" visible="eq(-2,true)" />
+		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-2,true)" />
+<!--		<setting id="alldebrid.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/alldebrid)" visible="eq(-3,true)" />-->
 		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-3,true)" />
-
+		<!-- <setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" /> -->
+		
 		<!-- Debrid-Link -->
 		<setting type="lsep" label="40411" />
 		<setting id="dl.enabled" type="bool" default="false" label="40412" />
 		<setting id="dl.username" type="text" default="" label="40413" enable="false" visible="eq(-1,true)"/>
-		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/authDebridLink)" visible="eq(-2,true)" />
-		<setting id="dl.priority" type="slider" subsetting="true" label="40415" option="int" range="1,10" default="10" visible="eq(-3,true)" />
-		<!-- <setting id="dl.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" /> -->
+		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/debridlink)" visible="eq(-2,true)" />
+		<setting id="dl.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)" visible="eq(-3,true)" />
+		<setting id="dl.priority" type="slider" subsetting="true" label="40415" option="int" range="1,10" default="10" visible="eq(-4,true)" />
+		<!-- <setting id="dl.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-5,true)" /> -->
 
 		<!-- Premiumize -->
 		<setting type="lsep" label="40363" />
 		<setting id="premiumize.enabled" type="bool" default="false" label="40364" />
 		<setting id="premiumize.username" type="text" label="40365" default="" enable="false" visible="eq(-1,true)" />
-		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/authPremiumize)" visible="eq(-2,true)" />
+		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/premiumize)" visible="eq(-2,true)" />
+<!--		<setting id="premiumize.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/premiumize)" visible="eq(-3,true)" />-->
 		<setting id="premiumize.priority" type="slider" subsetting="true" label="40367" option="int" range="1,10" default="10" visible="eq(-3,true)" />
 		<setting id="premiumize.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
 	</category>
@@ -178,7 +174,7 @@
 		<!-- MyAnimeList -->
 		<setting type="lsep" label="40361"/>
 		<setting id="mal.enabled" label="40362" type="bool" default="false"/>
-    	<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
+    		<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="mal.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)" visible="eq(-2,true)"/>
 		<setting id="mal.listsettings" type="action" label="40353" option="close" visible="eq(-3,true)"/>
 		<setting id="mal.sort" type="labelenum" subsetting="true" label="40354" values="List Score|Last Updated|Anime Start Date|Anime Title" default="Last Updated" visible="eq(-4,true)"/>

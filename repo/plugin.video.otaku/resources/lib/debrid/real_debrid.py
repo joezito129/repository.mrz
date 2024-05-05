@@ -162,7 +162,7 @@ class RealDebrid:
     def deleteTorrent(self, torrent_id):
         requests.delete(f'{self.BaseUrl}/torrents/delete/{torrent_id}', headers=self.__headers(), timeout=10)
 
-    def resolve_single_magnet(self, hash_, magnet, episode=''):
+    def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
         hashCheck = requests.get(f'{self.BaseUrl}/torrents/instantAvailability/{hash_}', headers=self.__headers()).json()
         for _ in hashCheck[hash_]['rd']:
             key_list = 'all'
@@ -171,10 +171,20 @@ class RealDebrid:
             files = self.torrentInfo(torrent['id'])
 
             selected_files = [(idx, i) for idx, i in enumerate([i for i in files['files'] if i['selected'] == 1])]
-            if len(selected_files) == 1:
+            if pack_select:
+                best_match = source_utils.get_best_match('path', [i[1] for i in selected_files], episode, pack_select)
+                if best_match:
+                    try:
+                        file_index = [i[0] for i in selected_files if i[1]['path'] == best_match['path']][0]
+                        link = files['links'][file_index]
+                        stream_link = self.resolve_hoster(link)
+                    except IndexError:
+                        stream_link = None
+                else:
+                    stream_link = None
+            elif len(selected_files) == 1:
                 stream_link = self.resolve_hoster(files['links'][0])
-
-            elif len(selected_files) >= 5:
+            elif len(selected_files) > 1:
                 best_match = source_utils.get_best_match('path', [i[1] for i in selected_files], episode)
                 if best_match:
                     try:
@@ -185,9 +195,7 @@ class RealDebrid:
                         stream_link = None
                 else:
                     stream_link = None
-
             else:
-                selected_files = sorted(selected_files, key=lambda x: x[1]['bytes'], reverse=True)
-                stream_link = self.resolve_hoster(files['links'][selected_files[0][0]])
+                stream_link = None
             self.deleteTorrent(torrent['id'])
             return stream_link

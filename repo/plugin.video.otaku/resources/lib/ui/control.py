@@ -24,35 +24,27 @@ INPUT_ALPHANUM = xbmcgui.INPUT_ALPHANUM
 dataPath = TRANSLATEPATH(addonInfo('profile'))
 ADDON_PATH = __settings__.getAddonInfo('path')
 
-# cacheFile = f'{dataPath}cache.db'
 cacheFile = os.path.join(dataPath, 'cache.db')
 cacheFile_lock = threading.Lock()
 
-# searchHistoryDB = f'{dataPath}search.db'
 searchHistoryDB = os.path.join(dataPath, 'search.db')
 searchHistoryDB_lock = threading.Lock()
 
-# anilistSyncDB = f'{dataPath}anilistSync.db'
 anilistSyncDB = os.path.join(dataPath, 'anilistSync.db')
 anilistSyncDB_lock = threading.Lock()
 
-# torrentScrapeCacheFile = f'{dataPath}torrentScrape.db'
 torrentScrapeCacheFile = os.path.join(dataPath, 'torrentScrape.db')
 torrentScrapeCacheFile_lock = threading.Lock()
 
-# maldubFile = f'{dataPath}mal_dub.json'
+# downloadsDB = os.path.join(dataPath, 'downloads.db')
+# downloadsDB_lock = threading.Lock()
+
 maldubFile = os.path.join(dataPath, 'mal_dub.json')
+downloads_json = os.path.join(dataPath, 'downloads.json')
 
-# IMAGES_PATH = f'{ADDON_PATH}resources\images'
 IMAGES_PATH = os.path.join(ADDON_PATH, 'resources', 'images')
-
-# OTAKU_FANART_PATH = f'{ADDON_PATH}fanart.jpg'
 OTAKU_FANART_PATH = os.path.join(ADDON_PATH, 'fanart.jpg')
-
-# OTAKU_LOGO2_PATH = f'{Addon_PATH}\\resources\skins\Default\media\common\trans-goku-small.png'
 OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
-
-# OTAKU_ICONS_PATH = f'{IMAGES_PATH}\\icons\\{__settings__.getSetting("general.icons")}'
 OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', __settings__.getSetting("general.icons"))
 
 
@@ -140,6 +132,7 @@ def watchlist_to_update():
 
 def copy2clip(txt):
     platform = sys.platform
+    print(platform)
     if platform == 'win32':
         command = 'echo %s|clip' % txt
         os.system(command)
@@ -219,6 +212,10 @@ def select_dialog(title, dialog_list):
     return xbmcgui.Dialog().select(title, dialog_list)
 
 
+def context_menu(context_list):
+    return xbmcgui.Dialog().contextmenu(context_list)
+
+
 def get_view_type(viewtype):
     viewTypes = {
         'Default': 50,
@@ -265,12 +262,12 @@ def set_videotags(li, info):
         vinfo.setPlaycount(info['playcount'])
     if info.get('code'):
         vinfo.setProductionCode(info['code'])
-    if info.get('cast'):
-        vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
-    if info.get('IMDBNumber'):
-        vinfo.setIMDBNumber(info['IMDBNumber'])
-    if info.get('OriginalTitle'):
-        vinfo.setOriginalTitle(info['OriginalTitle'])
+    # if info.get('cast'):
+    #     vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
+    # if info.get('OriginalTitle'):
+    #     vinfo.setOriginalTitle(info['OriginalTitle'])
+    # if info.get('IMDBNumber'):
+    #     vinfo.setIMDBNumber(info['IMDBNumber'])
     # if info.get('trailer'):
     #     vinfo.setTrailer(info['trailer'])
 
@@ -287,10 +284,6 @@ def xbmc_add_player_item(name, url, art={}, info={}, draw_cm=None, bulk_add=Fals
 
     if art.get('fanart') is None:
         art['fanart'] = OTAKU_FANART_PATH
-
-    # if art.get('thumb'):
-    #     art['poster'] = art['thumb']
-    #     art['landscape'] = art['thumb']
 
     if art.get('thumb'):
         art['tvshow.poster'] = art.pop('poster')
@@ -319,17 +312,9 @@ def xbmc_add_dir(name, url, art={}, info={}, draw_cm=None):
 
 def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
     if getSetting('context.deletefromdatabase') == 'true' and contentType == 'tvshows':
-        draw_cm = [
-            ("Delete from database", 'delete_anime_database')
-        ]
-        # for x in cm:
-        #     draw_cm.append(x)
+        draw_cm.append(("Delete from database", 'delete_anime_database'))
     elif getSetting('context.marked.watched') == 'true' and contentType == 'episodes':
-        draw_cm = [
-            ("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched')
-        ]
-    # if contentType == 'tvshows':
-    #     draw_cm.append((format_string("Watchlist Manager", 'I'), 'watchlist_context'))
+        draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
     # for x in cm:
         #     draw_cm.append(x)
     for vid in video_data:
@@ -340,7 +325,8 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
-        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%P")
+        # xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%P")
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
     elif contentType == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, succeeded=True, updateListing=False, cacheToDisc=True)
@@ -437,6 +423,13 @@ def toggle_reuselanguageinvoker(forced_state=None):
                 setSetting("reuselanguageinvoker.status", "Disabled")
                 _store_and_reload(file_lines)
             break
+
+
+def abort_requested():
+    monitor = xbmc.Monitor()
+    abort_requested_ = monitor.abortRequested()
+    del monitor
+    return abort_requested_
 
 
 def format_string(string, format_):

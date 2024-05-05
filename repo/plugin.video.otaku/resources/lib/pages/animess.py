@@ -1,35 +1,40 @@
 import itertools
 import pickle
 import re
-import requests
 
 from bs4 import BeautifulSoup, SoupStrainer
 from functools import partial
-from resources.lib.ui import database, utils
+from resources.lib.ui import database
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
 class sources(BrowserBase):
-    _BASE_URL = 'https://otakuanimess.com/'
+    _BASE_URL = 'https://otakuanimess.cc/'
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
-        kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta['name']
+        kodi_meta = pickle.loads(show.get('kodi_meta'))
+        title = kodi_meta.get('name')
         title = self._clean_title(title)
-        headers = {
-            'Referer': self._BASE_URL
-        }
-        params = {
-            's': title
-        }
-        res = database.get_(utils.database_request_get, 8,
-            self._BASE_URL, params=params, headers=headers, text=True)
+        headers = {'Referer': self._BASE_URL}
+        params = {'s': title}
+        res = database.get_(
+            self._get_request,
+            8,
+            self._BASE_URL,
+            data=params,
+            headers=headers
+        )
         if not res and ':' in title:
             title = title.split(':')[0]
             params.update({'s': title})
-            res = database.get_(utils.database_request_get, 8,
-                self._BASE_URL, params=params, headers=headers)
+            res = database.get_(
+                self._get_request,
+                8,
+                self._BASE_URL,
+                data=params,
+                headers=headers
+            )
 
         mlink = SoupStrainer('div', {'class': re.compile('^SectionBusca')})
         mdiv = BeautifulSoup(res, "html.parser", parse_only=mlink)
@@ -44,6 +49,7 @@ class sources(BrowserBase):
                 sitems.append({'title': stitle, 'slug': slug, 'lang': lang})
             except AttributeError:
                 pass
+
         if sitems:
             if title[-1].isdigit():
                 slugs = [(x.get('slug'), x.get('lang')) for x in sitems if title.lower() in x.get('title').lower()]
@@ -64,22 +70,24 @@ class sources(BrowserBase):
     def _process_am(self, slug, title, episode):
         url, lang = slug
         sources = []
-        headers = {
-            'Referer': self._BASE_URL
-        }
-        res = database.get_(utils.database_request_get, 8,
-            url, headers=headers)
+        headers = {'Referer': self._BASE_URL}
+        res = database.get_(
+            self._get_request,
+            8,
+            url,
+            headers=headers
+        )
         elink = SoupStrainer('div', {'class': 'sectionEpiInAnime'})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
         items = ediv.find_all('a')
         e_id = [x.get('href') for x in items if x.text.split()[-1] == episode]
         if e_id:
-            html = requests.get(e_id[0], headers=headers).text
+            html = self._get_request(e_id[0], headers=headers)
             slink = re.search(r'<source\s*src="([^"]+)', html)
             if not slink:
                 elink = re.search(r'<div\s*id="Link".+?href="([^"]+)', html, re.DOTALL)
                 if elink:
-                    html = requests.get(elink.group(1), headers=headers).text
+                    html = self._get_request(elink.group(1), headers=headers)
                     slink = re.search(r'''file:\s*['"]([^'"]+)''', html)
             if slink:
                 source = {
@@ -88,10 +96,11 @@ class sources(BrowserBase):
                     'type': 'direct',
                     'quality': 'EQ',
                     'debrid_provider': '',
-                    'provider': 'otakuanimes',
+                    'provider': 'animess',
                     'size': 'NA',
                     'info': [lang],
                     'lang': 2 if lang == 'DUB' else 0
                 }
                 sources.append(source)
+
         return sources

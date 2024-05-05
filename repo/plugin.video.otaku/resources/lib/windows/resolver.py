@@ -1,4 +1,4 @@
-from resources.lib.debrid import all_debrid, debrid_link, premiumize,real_debrid
+from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid
 from resources.lib.ui import control, source_utils
 from resources.lib.windows.base_window import BaseWindow
 
@@ -8,11 +8,10 @@ control.__sys__.path.append(control.dataPath)
 class Resolver(BaseWindow):
 
     def __init__(self, xml_file, location=None, actionArgs=None, source_select=False):
-        super(Resolver, self).__init__(xml_file, location, actionArgs=actionArgs)
+        super().__init__(xml_file, location, actionArgs=actionArgs)
         self.return_data = None
         self.canceled = False
         self.silent = False
-        self.pack_select = None
         self.sources = None
         self.args = None
         self.resolvers = {
@@ -22,6 +21,7 @@ class Resolver(BaseWindow):
             'real_debrid': real_debrid.RealDebrid
         }
         self.source_select = source_select
+        self.pack_select = False
 
     def onInit(self):
         self.resolve(self.sources)
@@ -35,7 +35,6 @@ class Resolver(BaseWindow):
                 if str(source['release_title']) == last_played:
                     sources.insert(0, sources.pop(index))
                     break
-
         # Begin resolving links
         for i in sources:
             if self.is_canceled():
@@ -82,16 +81,15 @@ class Resolver(BaseWindow):
         control.sleep(1000)
         self.close()
 
-    @staticmethod
-    def resolve_source(api, source):
+    def resolve_source(self, api, source):
         api = api()
         hash_ = source['hash']
         magnet = 'magnet:?xt=urn:btih:%s' % hash_
         if source['type'] == 'torrent':
-            stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'])
+            stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select)
         elif source['type'] == 'cloud' or source['type'] == 'hoster':
             if source['torrent_files']:
-                best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'])
+                best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'], self.pack_select)
                 if not best_match['path']:
                     return
                 for f_index, torrent_file in enumerate(source['torrent_files']):
@@ -104,7 +102,6 @@ class Resolver(BaseWindow):
         return stream_link
 
     def doModal(self, sources, args, pack_select):
-
         if not sources:
             return None
 

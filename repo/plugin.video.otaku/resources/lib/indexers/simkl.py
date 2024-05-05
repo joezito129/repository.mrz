@@ -58,7 +58,7 @@ class SIMKLAPI:
         database.update_episode(anilist_id, season=season, number=res['episode'], update_time=update_time, kodi_meta=parsed, filler=filler)
 
         if title_disable and info.get('playcount') != 1:
-            parsed['info']['title'] = f'Episode {res["number"]}'
+            parsed['info']['title'] = f'Episode {res["episode"]}'
             parsed['info']['plot'] = None
         return parsed
 
