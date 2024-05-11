@@ -172,12 +172,14 @@ def CLEAR_HISTORY(payload, params):
 
 @route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload, params):
-    payload_list = payload.split('/')
-    if len(payload_list) == 3:
-        search_item, search_type = payload_list[1:]
-        database.remove_search(table=search_type, value=search_item)
+    payload_list = payload.rsplit('search/')
+    if len(payload_list) >= 2:
+        payload_list = payload_list[1].rsplit('/', 1)
+        if len(payload_list) == 2:
+            search_item, page = payload_list
+            database.remove_search(table='show', value=search_item)
     else:
-        control.notify(control.ADDON_NAME, "Invalid Search Item")
+        control.notify("Invalid Search Item")
 
 
 @route('search')
@@ -190,7 +192,7 @@ def SEARCH(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_search(query))
 
 
-# next page for anilist_genres
+# next page for anilist_search
 @route('search/*')
 def SEARCH_PAGES(payload, params):
     query, page = payload.rsplit("/", 1)

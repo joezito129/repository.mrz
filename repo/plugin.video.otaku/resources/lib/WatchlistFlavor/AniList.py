@@ -7,6 +7,7 @@ from resources.lib.ui import database, utils
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 from resources.lib.ui.divide_flavors import div_flavor
 
+
 class AniListWLF(WatchlistFlavorBase):
     _URL = "https://graphql.anilist.co"
     _TITLE = "AniList"

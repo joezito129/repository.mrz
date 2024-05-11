@@ -78,7 +78,14 @@ class Resolver(BaseWindow):
                 if stream_link:
                     self.return_data = stream_link
                     break
-        control.sleep(1000)
+            elif i['type'] == 'offline_search':
+                stream_link = i['hash']
+                self.return_data = {
+                    'url': stream_link,
+                    'headers': {}
+                }
+                break
+        control.sleep(500)
         self.close()
 
     def resolve_source(self, api, source):

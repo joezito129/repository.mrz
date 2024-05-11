@@ -15,11 +15,11 @@ class sources(BrowserBase):
 
     def get_sources(self, anilist_id, episode, get_backup):
         show = database.get_show(anilist_id)
-        kodi_meta = pickle.loads(show.get('kodi_meta'))
+        kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta.get('name')
         title = self._clean_title(title)
 
-        slugs = database.get_(MALSYNC().get_slugs, 72, anilist_id=anilist_id, site='Gogoanime')
+        slugs = database.get_(MALSYNC().get_slugs, 168, anilist_id=anilist_id, site='Gogoanime')
         if not slugs:
             headers = {'Referer': self._BASE_URL}
             params = {

@@ -10,6 +10,16 @@
             <texture background="true">white.png</texture>
             <colordiffuse>FF000000</colordiffuse>
         </control>
+
+        <!-- Background -->
+        <control type="image">
+            <top>0</top>
+            <left>0</left>
+            <width>1920</width>
+            <height>1080</height>
+            <texture>background.jpg</texture>
+        </control>
+
         <control type="image">
             <top>0</top>
             <left>0</left>
@@ -19,10 +29,11 @@
             <colordiffuse>CC000000</colordiffuse>
         </control>
 
-        <control type="grouplist">
+        <control type="grouplist" id="2000">
                 <top>150</top>
                 <left>1300</left>
                 <width>500</width>
+                <onleft>17</onleft>
                 <itemgap>0</itemgap>
             <control type="button" id="3100">
                 <label>Clear Completed</label>
@@ -39,6 +50,7 @@
                 <align>center</align>
             </control>
         </control>
+
         <!-- Scrollbar  -->
         <control type="scrollbar" id="17">
       	    <left>1250</left>
@@ -47,19 +59,10 @@
       	    <height>838</height>
       	    <visible>true</visible>
       	    <pulseonselect>no</pulseonselect>
-      	    <orientation>vertical</orientation>
+            <orientation>vertical</orientation>
       	    <showonepage>false</showonepage>
+            <onright>2000</onright>
             <onleft>1000</onleft>
-        </control>
-
-        <!-- Header -->
-        <control type="textbox">
-            <left>80</left>
-            <top>30</top>
-            <width>1170</width>
-            <height>auto</height>
-            <font>font16</font>
-            <label>[B]Otaku - Download Manager[/B]</label>
         </control>
 
         <!-- Download List -->
@@ -72,7 +75,7 @@
             <orientation>vertical</orientation>
             <focusposition>1</focusposition>
 	        <pagecontrol>17</pagecontrol>
-	        <onright>17</onright>
+            <onright>17</onright>
 
             <itemlayout height="120">
                 <control type="image">
@@ -90,7 +93,7 @@
                         <shadowcolor>dimgrey</shadowcolor>
                         <align>left</align>
                         <aligny>center</aligny>
-                        <label>$INFO[ListItem.Label] - $INFO[ListItem.Property(item.info.progress)]</label>
+                        <label>$INFO[ListItem.Label]</label>
                     </control>
                     <control type="label">
                         <top>60</top>
@@ -101,7 +104,7 @@
                         <textcolor>66FFFFFF</textcolor>
                         <shadowcolor>dimgrey</shadowcolor>
                         <font>font10</font>
-                        <label>$INFO[ListItem.Property(item.info.status)]</label>
+                        <label>$INFO[ListItem.Property(item.info.status)] - $INFO[ListItem.Property(item.info.progress)]</label>
                     </control>
                 </itemlayout>
             <focusedlayout height="120">
@@ -122,19 +125,19 @@
                     <align>left</align>
                     <aligny>center</aligny>
                     <label>[B]$INFO[ListItem.Label][/B]</label>
-<!--                    <scroll>true</scroll>-->
+                    <scroll>true</scroll>
                 </control>
-<!--                <control type="label">-->
-<!--                        <top>60</top>-->
-<!--                        <left>10</left>-->
-<!--                        <width>350</width>-->
-<!--                        <height>0</height>-->
-<!--                        <aligny>center</aligny>-->
-<!--                        <textcolor>66FFFFFF</textcolor>-->
-<!--                        <shadowcolor>dimgrey</shadowcolor>-->
-<!--                        <font>font10</font>-->
-<!--                        <label>$INFO[ListItem.Property(item.info.status)]</label>-->
-<!--                    </control>-->
+<!--             <control type="label">-->
+<!--                     <top>60</top>-->
+<!--                     <left>10</left>-->
+<!--                     <width>350</width>-->
+<!--                     <height>0</height>-->
+<!--                     <aligny>center</aligny>-->
+<!--                     <textcolor>66FFFFFF</textcolor>-->
+<!--                     <shadowcolor>dimgrey</shadowcolor>-->
+<!--                     <font>font10</font>-->
+<!--                     <label>$INFO[ListItem.Property(item.info.status)]</label>-->
+<!--                 </control>-->
                 <control type="label">
                     <top>60</top>
                     <left>400</left>

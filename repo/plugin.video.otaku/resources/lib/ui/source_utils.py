@@ -119,42 +119,41 @@ def getInfo(release_title):
 
 def get_cache_check_reg(episode):
     # playList = control.playList
-    # playList_posistion = playList.getposition()
-    # if playList_posistion != -1:
-    #     info = playList[playList_posistion].getVideoInfoTag()
+    # playList_position = playList.getposition()
+    # if playList_position != -1:
+    #     info = playList[playList_position].getVideoInfoTag()
     #     season = str(info.getSeason()).zfill(2)
     # else:
     #     season = ''
     season = ''
-
-    if control.getSetting('regex.question') == 'true':
-        reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
-                     (?:                                    # non-grouping pattern
-                       s|season                             # s or season
-                       )?
-                     ({})?                                  # season num format
-                     (?:                                    # non-grouping pattern
-                       e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
-                       )?                                   # end non-grouping pattern
-                     \s*                                    # 0-or-more whitespaces
-                     (?<![\d])
-                     ({}|{})                                # episode num format: xx or xxx
-                     (?![\d])
-                     '''.format(season, episode.zfill(2), episode.zfill(3))
-    else:
-        reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
-                     (?:                                    # non-grouping pattern
-                       s|season                             # s or season
-                       )?
-                     ({})?                                  # season num format
-                     (?:                                    # non-grouping pattern
-                       e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
-                       )                                    # end non-grouping pattern
-                     \s*                                    # 0-or-more whitespaces
-                     (?<![\d])
-                     ({}|{})                                # episode num format: xx or xxx
-                     (?![\d])
-                     '''.format(season, episode.zfill(2), episode.zfill(3))
+    # if control.getSetting('regex.question') == 'true':
+    #     reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
+    #                  (?:                                    # non-grouping pattern
+    #                    s|season                             # s or season
+    #                    )?
+    #                  ({})?                                  # season num format
+    #                  (?:                                    # non-grouping pattern
+    #                    e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
+    #                    )?                                   # end non-grouping pattern
+    #                  \s*                                    # 0-or-more whitespaces
+    #                  (?<![\d])
+    #                  ({}|{})                                # episode num format: xx or xxx
+    #                  (?![\d])
+    #                  '''.format(season, episode.zfill(2), episode.zfill(3))
+    # else:
+    reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
+                 (?:                                    # non-grouping pattern
+                   s|season                             # s or season
+                   )?
+                 ({})?                                  # season num format
+                 (?:                                    # non-grouping pattern
+                   e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
+                   )                                    # end non-grouping pattern
+                 \s*                                    # 0-or-more whitespaces
+                 (?<![\d])
+                 ({}|{})                                # episode num format: xx or xxx
+                 (?![\d])
+                 '''.format(season, episode.zfill(2), episode.zfill(3))
     return re.compile(reg_string)
 
 

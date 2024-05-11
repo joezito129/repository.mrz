@@ -8,7 +8,7 @@ from resources.lib.ui import control, database, utils
 
 
 def parse_history_view(res):
-    return utils.allocate_item(res, "search/%s/show" % res, True)
+    return utils.allocate_item(res, "search/%s/1" % res, True)
 
 
 def search_history(search_array):

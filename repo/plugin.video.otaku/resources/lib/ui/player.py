@@ -228,7 +228,6 @@ def _prefetch_play_link(link):
     if not link:
         return
     url = link
-
     if '|' in url:
         url, hdrs = link.split('|')
         headers = dict([item.split('=') for item in hdrs.split('&')])
@@ -259,7 +258,10 @@ def _prefetch_play_link(link):
 def play_source(link, anilist_id=None, watchlist_update=None, build_playlist=None, episode=None, filter_lang=None, rescrape=False, source_select=False, subs=None):
     if isinstance(link, tuple):
         link, subs = link
-    linkInfo = _prefetch_play_link(link)
+    if isinstance(link, dict):
+        linkInfo = link
+    else:
+        linkInfo = _prefetch_play_link(link)
     if not linkInfo:
         cancelPlayback()
         return

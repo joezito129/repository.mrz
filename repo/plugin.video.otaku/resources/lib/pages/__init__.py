@@ -2,7 +2,7 @@ import threading
 import time
 
 from resources.lib.pages import (nyaa, animetosho, debrid_cloudfiles, animepahe, animess, animixplay, aniplay, aniwave,
-                                 gogoanime)
+                                 gogoanime, offline_search)
 from resources.lib.ui import control
 from resources.lib.windows.get_sources_window import GetSources as DisplayWindow
 
@@ -20,7 +20,8 @@ class Sources(DisplayWindow):
 
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
         self.embedProviders = ['animepahe', 'animess', 'animixplay', 'aniplay', 'aniwave', 'gogo']
-        self.remainingProviders = self.embedProviders + self.torrentProviders
+        self.otherProviders = ['Offline Search']
+        self.remainingProviders = self.embedProviders + self.torrentProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
         self.hosters_qual_len = [0, 0, 0, 0]
@@ -36,6 +37,7 @@ class Sources(DisplayWindow):
         self.torrentCacheSources = []
         self.embedSources = []
         self.usercloudSources = []
+        self.otherSources = []
 
     def getSources(self, args):
         query = args['query']
@@ -50,11 +52,10 @@ class Sources(DisplayWindow):
         self.setProperty('process_started', 'true')
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
-            self.threads.append(
-                threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode, media_type)))
+            self.threads.append(threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode, media_type)))
+
             if control.getSetting('provider.nyaa') == 'true' or control.getSetting('provider.nyaaalt') == 'true':
-                self.threads.append(threading.Thread(target=self.nyaa_worker,
-                                                     args=(query, anilist_id, episode, status, media_type, rescrape)))
+                self.threads.append(threading.Thread(target=self.nyaa_worker, args=(query, anilist_id, episode, status, media_type, rescrape)))
             else:
                 self.remainingProviders.remove('nyaa')
 
@@ -94,10 +95,14 @@ class Sources(DisplayWindow):
             self.remainingProviders.remove('aniwave')
 
         if control.getSetting('provider.gogo') == 'true':
-            self.threads.append(
-                threading.Thread(target=self.gogo_worker, args=(anilist_id, episode, rescrape, get_backup)))
+            self.threads.append(threading.Thread(target=self.gogo_worker, args=(anilist_id, episode, rescrape, get_backup)))
         else:
             self.remainingProviders.remove('gogo')
+
+        if control.getSetting('provider.offline_search') == 'true':
+            self.threads.append(threading.Thread(target=self.offline_search_worker, args=(query, anilist_id, episode, rescrape)))
+        else:
+            self.remainingProviders.remove('Offline Search')
 
         for thread in self.threads:
             thread.start()
@@ -133,12 +138,12 @@ class Sources(DisplayWindow):
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100
 
-        if len(self.torrentCacheSources) + len(self.embedSources) + len(self.cloud_files) == 0:
+        if len(self.torrentCacheSources) + len(self.embedSources) + len(self.cloud_files) + len(self.otherSources) == 0:
             self.return_data = []
             self.close()
             return
 
-        sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, filter_lang)
+        sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, self.otherSources, filter_lang)
         self.return_data = sourcesList
         self.close()
 
@@ -147,8 +152,7 @@ class Sources(DisplayWindow):
         self.remainingProviders.remove('nyaa')
 
     def animetosho_worker(self, query, anilist_id, episode, status, media_type, rescrape):
-        self.torrentCacheSources += animetosho.sources().get_sources(query, anilist_id, episode, status, media_type,
-                                                                     rescrape)
+        self.torrentCacheSources += animetosho.sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
         self.remainingProviders.remove('animetosho')
 
 #   ### embeds ###
@@ -175,6 +179,11 @@ class Sources(DisplayWindow):
     def gogo_worker(self, anilist_id, episode, rescrape, get_backup):
         self.embedSources += gogoanime.sources().get_sources(anilist_id, episode, get_backup)
         self.remainingProviders.remove('gogo')
+
+    def offline_search_worker(self, query, anilist_id, episode, rescrape):
+        if not rescrape:
+            self.otherSources += offline_search.sources().get_sources(query, anilist_id, episode)
+        self.remainingProviders.remove('Offline Search')
 
     def user_cloud_inspection(self, query, anilist_id, episode, media_type):
         debrid = {}
@@ -216,19 +225,16 @@ class Sources(DisplayWindow):
         p = sorted(p, key=lambda i: i['priority'])
         return p
 
-    def sortSources(self, torrent_list, embed_list, filter_lang):
+    def sortSources(self, torrent_list, embed_list, other_list, filter_lang):
         sort_method = int(control.getSetting('general.sortsources'))
         sortedList = []
         resolutions = self.resolutionList()
         resolutions.reverse()
-
         if filter_lang:
             filter_lang = int(filter_lang)
-            _torrent_list = torrent_list
 
-            torrent_list = [i for i in _torrent_list if i['lang'] != filter_lang]
+            torrent_list = [i for i in torrent_list if i['lang'] != filter_lang]
             embed_list = [i for i in embed_list if i['lang'] != filter_lang]
-
         debrid_priorities = self.debrid_priority()
 
         for resolution in resolutions:
@@ -272,10 +278,12 @@ class Sources(DisplayWindow):
         for cloud_file in self.cloud_files:
             sortedList.insert(0, cloud_file)
 
+        for other in other_list:
+            sortedList.insert(0, other)
+
         lang_preferences = {'Dub': 0, 'Sub': 2}
         if preferences in lang_preferences:
             sortedList = [i for i in sortedList if i['lang'] != lang_preferences[preferences]]
-
         return sortedList
 
     def updateProgress(self):
