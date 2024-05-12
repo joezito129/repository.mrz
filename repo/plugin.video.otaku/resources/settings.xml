@@ -11,7 +11,7 @@
 
 		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
 		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
-		<setting id="download.location" label="Download Location" type="folder" default="" />
+		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
 	</category>
 	<!-- General -->
 	<category label="40300">
@@ -38,7 +38,7 @@
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
 		<setting id="scraping.fanart" type="bool" label="40433" default="true" />
 		<setting id="scraping.clearlogo" type="bool" label="40434" default="false" />
-		<setting id="general.icons" type="labelenum" label="40388" values="Coloured|White" default="Coloured"/>
+		<setting id="general.icons" type="labelenum" label="40388" values="coloured|white" default="coloured"/>
 	</category>
 
 	<!-- Provider -->

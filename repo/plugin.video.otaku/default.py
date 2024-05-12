@@ -360,7 +360,7 @@ def TOOLS_MENU(payload, params):
         (control.lang(30022), "clear_torrent_cache", 'clear_local_torrent_cache.png'),
         (control.lang(30023), "clear_history", 'clear_search_history.png'),
         (control.lang(30026), "rebuild_database", 'rebuild_database.png'),
-        ("Download Manager", 'download_manager', '')
+        ("Download Manager", 'download_manager', 'download_manager.png')
         # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
     ]
     return control.draw_items([utils.allocate_item(name, url, True, image) for name, url, image in TOOLS_ITEMS], "addons")
@@ -375,6 +375,7 @@ def LIST_MENU(payload, params):
         (control.lang(50010), "anilist_genres", 'genres_&_tags.png'),
         (control.lang(50011), "search_history", 'search.png'),
         (control.lang(50012), "tools", 'tools.png')
+
     ]
     if control.getSetting('menu.lastwatched') == 'true':
         MENU_ITEMS = add_last_watched(MENU_ITEMS)

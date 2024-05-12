@@ -14,6 +14,8 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
         fanart = random.choice(fanart)
         if '/' not in fanart:
             fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
+    # if poster and '/' not in poster:
+    #     poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
     new_res = {
         'is_dir': is_dir,
         'name': name,
@@ -21,7 +23,7 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
         'info': info,
         'cast': cast,
         'image': {
-                'poster': poster or image,
+                'poster': image,
                 'icon': image,
                 'thumb': image,
                 'fanart': fanart,
@@ -31,7 +33,6 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
                 'clearlogo': clearlogo
         }
     }
-
     return new_res
 
 

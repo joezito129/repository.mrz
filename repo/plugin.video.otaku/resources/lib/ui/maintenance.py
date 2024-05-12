@@ -35,21 +35,21 @@ def refresh_apis():
             MyAnimeList.MyAnimeListWLF().refresh_token()
 
 
-def sync_watchlist():
-    from resources.lib.WatchlistFlavor import WatchlistFlavor
-    if control.getSetting('sync.watchlist.notify') == 'true':
-        control.notify('Syncing Watchlist')
-
-    # WatchlistFlavor.get_info
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor.flavor_name in ['mal', 'simkl', 'kitsu']:
-        status = 'completed'
-    elif flavor.flavor_name == 'anilist':
-        status = 'COMPLETED'
-    else:
-        return
-    data = flavor.get_watchlist_status(status, {})
-    control.print(data)
+# def sync_watchlist():
+#     from resources.lib.WatchlistFlavor import WatchlistFlavor
+#     if control.getSetting('sync.watchlist.notify') == 'true':
+#         control.notify('Syncing Watchlist')
+#
+#     # WatchlistFlavor.get_info
+#     flavor = WatchlistFlavor.get_update_flavor()
+#     if flavor.flavor_name in ['mal', 'simkl', 'kitsu']:
+#         status = 'completed'
+#     elif flavor.flavor_name == 'anilist':
+#         status = 'COMPLETED'
+#     else:
+#         return
+#     data = flavor.get_watchlist_status(status, {})
+#     control.print(data)
 
 
 def run_maintenance():

@@ -23,9 +23,9 @@ class ANIZIPAPI:
     @staticmethod
     def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
                            dub_data, filler_data, filler_enable, title_disable):
-        # todo remove
-        if not res.get("episodeNumber", res.get('episode')):
-            control.print(res)
+        # # todo remove
+        # if not res.get("episodeNumber", res.get('episode')):
+        #     control.print(res)
 
         episode = int(res.get("episodeNumber", res['episode']))
 

@@ -132,7 +132,6 @@ def watchlist_to_update():
 
 def copy2clip(txt):
     platform = sys.platform
-    print(platform)
     if platform == 'win32':
         command = 'echo %s|clip' % txt
         os.system(command)
