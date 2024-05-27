@@ -48,15 +48,17 @@
 		<setting id="provider.nyaaalt" type="bool" label="Nyaa Alt (For Verizon Users)" default="false" enable="eq(-1,false)" />
 		<setting id="provider.animetosho" type="bool" label="Anime Tosho" default="true" />
 
+		<setting type="lsep" label="Other" />
+		<setting id="provider.localfiles" type="bool" label="Local Files" default="true" />
 
 		<setting type="lsep" label="Embeds" />
-		<setting id="provider.animepahe" type="bool" label="Animepahe" default="false" />
+		<setting id="provider.hianime" type="bool" label="Hianime" default="true" />
 		<setting id="provider.animess" type="bool" label="Animess" default="false" />
 		<setting id="provider.animixplay" type="bool" label="Animixplay" default="false" />
 		<setting id="provider.aniplay" type="bool" label="Aniplay" default="false" />
-		<setting id="provider.aniwave" type="bool" label="Aniwave" default="false" />
+		<setting id="provider.aniwave" type="bool" label="Aniwave" default="true" />
 		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
-		<setting id="provider.offline_search" type="bool" label="Offline Search" default="true" />
+
 
 
 

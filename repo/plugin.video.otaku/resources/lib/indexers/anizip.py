@@ -5,7 +5,6 @@ from functools import partial
 from resources.lib.ui import utils, database, control
 from resources.lib import indexers
 from resources import jz
-from resources.lib.indexers.syncurl import SyncUrl
 
 
 class ANIZIPAPI:
@@ -23,11 +22,7 @@ class ANIZIPAPI:
     @staticmethod
     def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
                            dub_data, filler_data, filler_enable, title_disable):
-        # # todo remove
-        # if not res.get("episodeNumber", res.get('episode')):
-        #     control.print(res)
-
-        episode = int(res.get("episodeNumber", res['episode']))
+        episode = int(res['episode'])
 
         url = "%s/%s/" % (anilist_id, episode)
 
@@ -80,17 +75,11 @@ class ANIZIPAPI:
         result = self.get_anime_info(anilist_id)
         if not result:
             return []
-        # season = result.get('season')     # does not return correct season
-
-        sync_data = SyncUrl().get_anime_data(anilist_id, 'Anilist')
-        try:
-            s_id = utils.get_season(sync_data[0])
-            season = int(s_id[0]) if s_id else 1
-        except TypeError:
-            season = -1
-        database.update_season(anilist_id, season)
 
         result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
+
+        season = result_ep[0]['seasonNumber']
+        database.update_season(anilist_id, season)
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
                           eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,

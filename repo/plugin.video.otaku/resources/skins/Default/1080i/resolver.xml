@@ -86,11 +86,6 @@
             <aspectratio>keep</aspectratio>
             <texture>$INFO[Window().Property(item.art.logo)]</texture>
         </control>
-        <control>
-            <top>600</top>
-            <label>$INFO[Window().Property(iisvis)]</label>
-        </control>
-
         <control type="label">
             <left>0</left>
             <top>300</top>

@@ -74,22 +74,24 @@ def get_anime_init(anilist_id):
     show_meta = database.get_show_meta(anilist_id)
     if not show_meta:
         from resources.lib.AniListBrowser import AniListBrowser
-        show = AniListBrowser().get_anilist(anilist_id)
+        AniListBrowser().get_anilist(anilist_id)
         show_meta = database.get_show_meta(anilist_id)
         if not show_meta:
             return [], 'episodes'
+
     if control.getSetting('overide.meta.api') == 'true':
         meta_api = control.getSetting('meta.api')
         if meta_api == 'simkl':
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
         elif meta_api == 'anizip':
             data = anizip.ANIZIPAPI().get_episodes(anilist_id, show_meta)
-        elif meta_api == 'jikanmoa':
+        else:    # elif meta_api == 'jikanmoa':
             data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
-        else:
-            data = [], 'episodes'
+
     else:
         data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+        if not data[0]:
+            data = anizip.ANIZIPAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:
             data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
         if not data[0]:

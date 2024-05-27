@@ -1,4 +1,5 @@
-from resources.lib.ui import client, control
+from resources.lib.ui import client
+from urllib import parse
 
 
 class BrowserBase:
@@ -33,10 +34,9 @@ class BrowserBase:
 
     @staticmethod
     def _get_request(url, data=None, headers=None, XHR=False):
-        from six.moves import urllib_parse
         if data:
-            url = "%s?%s" % (url, urllib_parse.urlencode(data))
-        return client.request(url, post=data, headers=headers, XHR=XHR)
+            url = "%s?%s" % (url, parse.urlencode(data))
+        return client.request(url, post=None, headers=headers, XHR=XHR)
 
     @staticmethod
     def _send_request(url, data=None, headers=None, XHR=False):
@@ -44,6 +44,8 @@ class BrowserBase:
 
     @staticmethod
     def embeds():
-        return ['doodstream', 'filelions', 'filemoon', 'iga', 'kwik', 'hd-2',
-              'mp4upload', 'mycloud', 'streamtape', 'streamwish', 'vidcdn',
-              'vidplay', 'hd-1', 'yourupload', 'zto']
+        return [
+            'doodstream', 'filelions', 'filemoon', 'iga', 'kwik', 'hd-2',
+            'mp4upload', 'mycloud', 'streamtape', 'streamwish', 'vidcdn',
+            'vidplay', 'yourupload', 'zto'
+        ]

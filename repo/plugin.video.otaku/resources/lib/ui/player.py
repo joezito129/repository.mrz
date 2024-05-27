@@ -153,7 +153,7 @@ class watchlistPlayer(player):
                     elif self.current_time > self.skipintro_start_skip_time:
                         PlayerDialogs().show_skip_intro()
                         break
-                    xbmc.sleep(500)
+                    xbmc.sleep(1000)
             else:
                 while self.isPlaying():
                     self.current_time = int(self.getTime())
@@ -162,7 +162,7 @@ class watchlistPlayer(player):
                     elif self.current_time >= self.delay_time:
                         PlayerDialogs().show_skip_intro()
                         break
-                    xbmc.sleep(500)
+                    xbmc.sleep(1000)
 
         self.onWatchedPercent()
 

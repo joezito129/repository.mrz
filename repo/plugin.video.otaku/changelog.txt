@@ -1,5 +1,10 @@
+Changelog v5.0.26 (2024-05-27):
+- Fixed embeds
+- Fixed season
+- Removed Syncurl
+
 Changelog v5.0.25 (2024-05-12):
-- Fixed imgage issue
+- Fixed image issue
 
 Changelog v5.0.24 (2024-05-10):
 - Fixed search error

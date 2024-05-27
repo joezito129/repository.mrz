@@ -109,6 +109,7 @@ class WatchlistFlavor:
     @staticmethod
     def context_statuses():
         return WatchlistFlavor.get_update_flavor().action_statuses()
+
     @staticmethod
     def watchlist_update_episdoe(anilist_id, episode):
         return WatchlistFlavor.get_update_flavor().update_num_episodes(anilist_id, episode)

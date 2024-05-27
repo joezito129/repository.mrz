@@ -17,7 +17,6 @@ def collect_meta_(anime_list):
             name = anime['title'].get('english')
             if name is None:
                 name = anime['title'].get('romaji')
-            # name = anime.get['title'].get('english') or anime['title'].get('romaji')
             mtype = 'movies' if anime.get('format') == 'MOVIE' else 'tv'
             if anime.get('format') == 'ONA' and anime.get('episodes') == 1:
                 mtype = 'movies'

@@ -1,8 +1,8 @@
 import threading
 import time
 
-from resources.lib.pages import (nyaa, animetosho, debrid_cloudfiles, animepahe, animess, animixplay, aniplay, aniwave,
-                                 gogoanime, offline_search)
+from resources.lib.pages import (nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniplay, aniwave,
+                                 gogoanime, localfiles)
 from resources.lib.ui import control
 from resources.lib.windows.get_sources_window import GetSources as DisplayWindow
 
@@ -19,8 +19,8 @@ class Sources(DisplayWindow):
         super(Sources, self).__init__(xml_file, location, actionArgs)
 
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['animepahe', 'animess', 'animixplay', 'aniplay', 'aniwave', 'gogo']
-        self.otherProviders = ['Offline Search']
+        self.embedProviders = ['animess', 'animixplay', 'aniplay', 'aniwave', 'gogo', 'hianime']
+        self.otherProviders = ['Local Files']
         self.remainingProviders = self.embedProviders + self.torrentProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
@@ -37,7 +37,7 @@ class Sources(DisplayWindow):
         self.torrentCacheSources = []
         self.embedSources = []
         self.usercloudSources = []
-        self.otherSources = []
+        self.local_files = []
 
     def getSources(self, args):
         query = args['query']
@@ -68,11 +68,17 @@ class Sources(DisplayWindow):
             for provider in self.torrentProviders:
                 self.remainingProviders.remove(provider)
 
-#       ### embeds ###
-        if control.getSetting('provider.animepahe') == 'true':
-            self.threads.append(threading.Thread(target=self.animepahe_worker, args=(anilist_id, episode, rescrape)))
+#       ###  Other ###
+        if control.getSetting('provider.localfiles') == 'true':
+            self.threads.append(threading.Thread(target=self.localfiles_worker, args=(query, anilist_id, episode, rescrape)))
         else:
-            self.remainingProviders.remove('animepahe')
+            self.remainingProviders.remove('Local Files')
+
+#       ### embeds ###
+        if control.getSetting('provider.hianime') == 'true':
+            self.threads.append(threading.Thread(target=self.hianime_worker, args=(anilist_id, episode, rescrape)))
+        else:
+            self.remainingProviders.remove('hianime')
 
         if control.getSetting('provider.animess') == 'true':
             self.threads.append(threading.Thread(target=self.animess_worker, args=(anilist_id, episode, rescrape)))
@@ -98,11 +104,6 @@ class Sources(DisplayWindow):
             self.threads.append(threading.Thread(target=self.gogo_worker, args=(anilist_id, episode, rescrape, get_backup)))
         else:
             self.remainingProviders.remove('gogo')
-
-        if control.getSetting('provider.offline_search') == 'true':
-            self.threads.append(threading.Thread(target=self.offline_search_worker, args=(query, anilist_id, episode, rescrape)))
-        else:
-            self.remainingProviders.remove('Offline Search')
 
         for thread in self.threads:
             thread.start()
@@ -138,12 +139,12 @@ class Sources(DisplayWindow):
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100
 
-        if len(self.torrentCacheSources) + len(self.embedSources) + len(self.cloud_files) + len(self.otherSources) == 0:
+        if len(self.torrentCacheSources) + len(self.embedSources) + len(self.cloud_files) + len(self.local_files) == 0:
             self.return_data = []
             self.close()
             return
 
-        sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, self.otherSources, filter_lang)
+        sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, self.local_files, filter_lang)
         self.return_data = sourcesList
         self.close()
 
@@ -156,9 +157,9 @@ class Sources(DisplayWindow):
         self.remainingProviders.remove('animetosho')
 
 #   ### embeds ###
-    def animepahe_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += animepahe.sources().get_sources(anilist_id, episode)
-        self.remainingProviders.remove('animepahe')
+    def hianime_worker(self, anilist_id, episode, rescrape):
+        self.embedSources += hianime.sources().get_sources(anilist_id, episode)
+        self.remainingProviders.remove('hianime')
 
     def animess_worker(self, anilist_id, episode, rescrape):
         self.embedSources += animess.sources().get_sources(anilist_id, episode)
@@ -180,10 +181,10 @@ class Sources(DisplayWindow):
         self.embedSources += gogoanime.sources().get_sources(anilist_id, episode, get_backup)
         self.remainingProviders.remove('gogo')
 
-    def offline_search_worker(self, query, anilist_id, episode, rescrape):
+    def localfiles_worker(self, query, anilist_id, episode, rescrape):
         if not rescrape:
-            self.otherSources += offline_search.sources().get_sources(query, anilist_id, episode)
-        self.remainingProviders.remove('Offline Search')
+            self.local_files += localfiles.sources().get_sources(query, anilist_id, episode)
+        self.remainingProviders.remove('Local Files')
 
     def user_cloud_inspection(self, query, anilist_id, episode, media_type):
         debrid = {}

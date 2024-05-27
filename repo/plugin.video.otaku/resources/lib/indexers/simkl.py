@@ -5,7 +5,6 @@ from functools import partial
 from resources.lib.ui import database, utils, control
 from resources.lib import indexers
 from resources import jz
-from resources.lib.indexers.syncurl import SyncUrl
 
 
 class SIMKLAPI:
@@ -19,12 +18,13 @@ class SIMKLAPI:
 
     def parse_episode_view(self, res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
                            dub_data, filler_data, filler_enable, title_disable):
+        episode = int(res['episode'])
 
-        url = "%s/%s/" % (anilist_id, res['episode'])
+        url = f"{anilist_id}/{episode}/"
 
         title = res.get('title')
         if not title:
-            title = f'Episode {res["episode"]}'
+            title = f'Episode {episode}'
 
         image = self.imagePath % res['img'] if res.get('img') else poster
 
@@ -32,12 +32,12 @@ class SIMKLAPI:
             'plot': res.get('description', ''),
             'title': title,
             'season': season,
-            'episode': int(res["episode"]),
+            'episode': episode,
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode'
         }
         if eps_watched:
-            if int(eps_watched) >= res['episode']:
+            if int(eps_watched) >= episode:
                 info['playcount'] = 1
 
         try:
@@ -46,7 +46,7 @@ class SIMKLAPI:
             pass
 
         try:
-            filler = filler_data[res['episode'] - 1]
+            filler = filler_data[episode - 1]
         except (IndexError, TypeError):
             filler = ''
         code = jz.get_second_label(info, dub_data)
@@ -69,14 +69,13 @@ class SIMKLAPI:
         result = self.get_anime_info(anilist_id)
         if not result:
             return []
-        # season = result.get('season')     # does not return correct season
+        season = result.get('season')
+        if season:
+            season = int(season)
+        else:
+            title_list = [name['name'] for name in result['alt_titles']]
+            season = utils.get_season(title_list)
 
-        sync_data = SyncUrl().get_anime_data(anilist_id, 'Anilist')
-        try:
-            s_id = utils.get_season(sync_data[0])
-            season = int(s_id[0]) if s_id else 1
-        except TypeError:
-            season = -1
         database.update_season(anilist_id, season)
 
         result_meta = self.get_episode_meta(anilist_id)

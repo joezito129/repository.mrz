@@ -66,7 +66,6 @@ class JikanAPI:
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode'
         }
-
         if eps_watched:
             if int(eps_watched) >= episode:
                 info['playcount'] = 1
@@ -91,7 +90,6 @@ class JikanAPI:
         return parsed
 
     def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable):
-        from resources.lib.indexers.syncurl import SyncUrl
         from datetime import date
         update_time = date.today().isoformat()
 
@@ -99,9 +97,9 @@ class JikanAPI:
         if not result:
             return []
 
-        sync_data = SyncUrl().get_anime_data(anilist_id, 'Anilist')
-        s_id = utils.get_season(sync_data[0])
-        season = int(s_id[0]) if s_id else 1
+        title_list = [name['title'] for name in result['titles']]
+
+        season = utils.get_season(title_list)
         database.update_season(anilist_id, season)
 
         result_ep = self.get_episode_meta(anilist_id)
@@ -111,7 +109,7 @@ class JikanAPI:
                           tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable,
                           title_disable=title_disable)
 
-        all_results = list(map(mapfunc, result_ep))
+        all_results = sorted(list(map(mapfunc, result_ep)), key=lambda x: x['info']['episode'])
         if len(all_results) == 0 or control.getSetting('interface.showemptyeps') == 'true':
             total_ep = result.get('episodes', 0)
             empty_ep = []

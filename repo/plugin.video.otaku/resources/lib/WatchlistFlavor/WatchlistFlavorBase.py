@@ -1,9 +1,8 @@
 import pickle
 import random
 import requests
-import copy
 
-from resources.lib.ui import control, database, utils
+from resources.lib.ui import control, database
 
 
 class WatchlistFlavorBase:

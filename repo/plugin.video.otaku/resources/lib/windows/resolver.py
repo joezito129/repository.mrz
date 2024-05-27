@@ -85,7 +85,6 @@ class Resolver(BaseWindow):
                     'headers': {}
                 }
                 break
-        control.sleep(500)
         self.close()
 
     def resolve_source(self, api, source):
