@@ -10,19 +10,16 @@ class TMDBAPI:
 
     def getArt(self, meta_ids, mtype):
         art = {}
-        mid = meta_ids.get('themoviedb') or meta_ids.get('tmdb')
+        mid = meta_ids.get('themoviedb_id')
         if mid is None:
-            tvdb = meta_ids.get('thetvdb') or meta_ids.get('tvdb')
+            tvdb = meta_ids.get('thetvdb_id')
             if tvdb:
                 params = {
                     'external_source': 'tvdb_id',
                     "api_key": self.apiKey
                 }
                 r = requests.get(f'{self.baseUrl}find/{tvdb}', params=params)
-                if r.ok:
-                    res = r.json()
-                else:
-                    res = {}
+                res = r.json() if r.ok else {}
                 res = res.get('tv_results')
                 if res:
                     mid = res[0].get('id')
@@ -42,15 +39,10 @@ class TMDBAPI:
                         if item.get('file_path'):
                             items.append(self.backgroundPath + item['file_path'])
                             items.append(self.thumbPath + item['file_path'])
-                    art.update({'fanart': items, 'thumb': items2})
+                    art['fanart'] = items
+                    art['thumb'] = items2
 
                 if res.get('logos'):
-
                     items = [self.backgroundPath + item["url"] for item in res['logos'] if item.get('url')]
-                    # items = []
-                    # for item in res['logos']:
-                    #     if item.get('url'):
-                    #         items.append(self.backgroundPath + item["url"])
                     art['clearart'] = items
-
         return art

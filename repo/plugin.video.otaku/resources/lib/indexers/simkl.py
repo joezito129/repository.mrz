@@ -69,12 +69,10 @@ class SIMKLAPI:
         result = self.get_anime_info(anilist_id)
         if not result:
             return []
-        season = result.get('season')
-        if season:
-            season = int(season)
-        else:
-            title_list = [name['name'] for name in result['alt_titles']]
-            season = utils.get_season(title_list)
+        # season = result.get('season')
+
+        title_list = [name['name'] for name in result['alt_titles']]
+        season = utils.get_season(title_list)
 
         database.update_season(anilist_id, season)
 
@@ -184,8 +182,12 @@ class SIMKLAPI:
         simkl_id = show_ids['simkl_id']
         if not simkl_id:
             simkl_id = self.get_simkl_id('anilist', anilist_id)
+            if not simkl_id:
+                mal_id = show_ids['mal_id']
+                simkl_id = self.get_simkl_id('mal', mal_id)
             database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
-
+        if not simkl_id:
+            return
         params = {
             'extended': 'full',
             'client_id': self.ClientID
@@ -216,8 +218,9 @@ class SIMKLAPI:
         }
         r = requests.get(f'{self.baseUrl}/search/id', params=params)
         r = r.json()
-        anime_id = r[0]['ids']['simkl']
-        return anime_id
+        if r:
+            anime_id = r[0]['ids']['simkl']
+            return anime_id
 
     def get_mapping_ids(self, send_id, anime_id):
         # return_id = anidb, ann, mal, offjp, wikien, wikijp, instagram, imdb, tmdb, tw, tvdbslug, anilist, animeplanet, anisearch, kitsu, livechart, traktslug

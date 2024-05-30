@@ -36,8 +36,8 @@ anilistSyncDB_lock = threading.Lock()
 torrentScrapeCacheFile = os.path.join(dataPath, 'torrentScrape.db')
 torrentScrapeCacheFile_lock = threading.Lock()
 
-# downloadsDB = os.path.join(dataPath, 'downloads.db')
-# downloadsDB_lock = threading.Lock()
+mappingDB = os.path.join(dataPath, 'mappings.db')
+mappingDB_lock = threading.Lock()
 
 maldubFile = os.path.join(dataPath, 'mal_dub.json')
 downloads_json = os.path.join(dataPath, 'downloads.json')
@@ -324,7 +324,6 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
-        # xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%P")
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
     elif contentType == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")

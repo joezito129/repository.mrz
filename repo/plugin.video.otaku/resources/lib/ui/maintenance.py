@@ -35,6 +35,18 @@ def refresh_apis():
             MyAnimeList.MyAnimeListWLF().refresh_token()
 
 
+def update_mappings_db():
+    import time
+    import requests
+    import os
+
+    control.setSetting('mappingsdb.time', str(int(time.time())))
+    url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
+    r = requests.get(url)
+    with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
+        file.write(r.content)
+
+
 # def sync_watchlist():
 #     from resources.lib.WatchlistFlavor import WatchlistFlavor
 #     if control.getSetting('sync.watchlist.notify') == 'true':
@@ -57,5 +69,9 @@ def run_maintenance():
 
     # Refresh API tokens
     refresh_apis()
+    if control.getSetting('mappingsdb.time') == '' or time.time() > int(control.getSetting('mappingsdb.time')) + 2_592_000:
+        control.notify('updated mappings.db')
+        update_mappings_db()
+
     # if control.getSetting('sync.watchlist.enable') == 'true':
     #     sync_watchlist()

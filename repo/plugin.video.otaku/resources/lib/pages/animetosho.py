@@ -38,11 +38,11 @@ class sources(BrowserBase):
         }
         if show_meta:
             meta_ids = pickle.loads(show_meta['meta_ids'])
-            params['aids'] = meta_ids.get('anidb')
+            params['aids'] = meta_ids.get('anidb_id')
             if not params['aids']:
                 ids = SIMKLAPI().get_mapping_ids('anilist', anilist_id)
-                meta_ids.update(ids)
-                params['aids'] = meta_ids['anidb']
+                meta_ids['anidb_id'] = ids['anidb']
+                params['aids'] = meta_ids['anidb_id']
                 database.update_show_meta(anilist_id, meta_ids, pickle.loads(show_meta['art']))
 
         r = requests.get(f'{self._BASE_URL}/search', params=params)

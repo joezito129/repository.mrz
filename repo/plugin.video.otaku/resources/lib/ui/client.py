@@ -358,12 +358,14 @@ def _add_request_header(_request, headers):
     except BaseException:
         pass
 
+
 def strip_cookie_url(url):
     url, headers = _strip_url(url)
     if _COOKIE_HEADER in headers.keys():
         del headers[_COOKIE_HEADER]
 
     return _url_with_headers(url, headers)
+
 
 def _strip_url(url):
     if url.find('|') == -1:

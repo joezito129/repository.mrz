@@ -382,6 +382,15 @@ def remove_episodes(anilist_id):
         control.try_release_lock(control.anilistSyncDB_lock)
 
 
+def get_mappings(anilist_id):
+    control.mappingDB_lock.acquire()
+    cursor = _get_connection_cursor(control.mappingDB)
+    cursor.execute('SELECT * FROM anime WHERE anilist_id = ?', (anilist_id, ))
+    mappings = cursor.fetchall()
+    cursor.close()
+    control.try_release_lock(control.mappingDB_lock)
+    return mappings[0] if mappings else {}
+
 # def get_download(url_hash):
 #     control.downloadsDB_lock.acquire()
 #     cursor = _get_connection_cursor(control.downloadsDB)

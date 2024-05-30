@@ -13,12 +13,12 @@ class FANARTAPI:
         }
         return headers
 
-    def getArt(self, meta_ids, mtype='tv'):
+    def getArt(self, meta_ids, mtype):
         art = {}
         if mtype == 'movies':
-            mid = meta_ids.get('themoviedb') or meta_ids.get('tmdb')
+            mid = meta_ids.get('themoviedb_id')
         else:
-            mid = meta_ids.get('thetvdb') or meta_ids.get('tvdb')
+            mid = meta_ids.get('thetvdb_id')
 
         if mid:
             r = requests.get(f'{self.baseUrl}/{mtype}/{mid}', headers=self.__headers())

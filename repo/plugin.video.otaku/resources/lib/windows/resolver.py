@@ -78,7 +78,8 @@ class Resolver(BaseWindow):
                 if stream_link:
                     self.return_data = stream_link
                     break
-            elif i['type'] == 'offline_search':
+
+            elif i['type'] == 'local_files':
                 stream_link = i['hash']
                 self.return_data = {
                     'url': stream_link,
