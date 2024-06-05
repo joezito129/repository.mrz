@@ -4,12 +4,14 @@ import pickle
 import re
 import time
 import xbmcvfs
+import threading
 
 from resources.lib.ui import control
 from sqlite3 import OperationalError, dbapi2
 
 
 cache_table = 'cache'
+lock = threading.Lock()
 
 
 def get_(function, duration, *args, **kwargs):
@@ -75,7 +77,7 @@ def generate_md5(*args):
 
 
 def cache_get(key):
-    control.cacheFile_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.cacheFile)
     try:
         cursor.execute("SELECT * FROM %s WHERE key = ?" % cache_table, [key])
@@ -85,18 +87,17 @@ def cache_get(key):
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.cacheFile_lock)
+        control.try_release_lock(lock)
 
 
 def cache_insert(key, value):
-    control.cacheFile_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.cacheFile)
     now = int(time.time())
     try:
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS %s (key TEXT, value TEXT, date INTEGER, UNIQUE(key))"
-            % cache_table
-        )
+            % cache_table)
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s ON %s (key)" % (cache_table, cache_table))
         cursor.execute("REPLACE INTO %s (key, value, date) VALUES (?, ?, ?)" % cache_table, (key, value, now))
         cursor.connection.commit()
@@ -104,22 +105,22 @@ def cache_insert(key, value):
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.cacheFile_lock)
+        control.try_release_lock(lock)
 
 
 def cache_clear():
-    control.cacheFile_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.cacheFile)
     try:
         for t in [cache_table, 'rel_list', 'rel_lib']:
             cursor.execute("DROP TABLE IF EXISTS %s" % t)
             cursor.execute("VACUUM")
             cursor.connection.commit()
-        control.showDialog.notification('{}: {}'.format(control.ADDON_NAME, control.lang(30200)), control.lang(30201), time=5000, sound=False)
+        control.notify(f'{control.ADDON_NAME}: {control.lang(30200)}', control.lang(30201), time=5000, sound=False)
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.cacheFile_lock)
+        control.try_release_lock(lock)
 
 
 def _is_cache_valid(cached_time, cache_timeout):
@@ -159,7 +160,7 @@ def _get_cursor():
 
 
 def update_show(anilist_id, mal_id, kodi_meta, last_updated='', anime_schedule_route=''):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     if isinstance(kodi_meta, dict):
         kodi_meta = pickle.dumps(kodi_meta)
@@ -177,11 +178,11 @@ def update_show(anilist_id, mal_id, kodi_meta, last_updated='', anime_schedule_r
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
 
 
 def update_show_meta(anilist_id, meta_ids, art):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     if isinstance(meta_ids, dict):
         meta_ids = pickle.dumps(meta_ids)
@@ -201,30 +202,43 @@ def update_show_meta(anilist_id, meta_ids, art):
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
+
+
+def add_mapping_id_meta(anilist_id, anime_id, id_type):
+    show_meta = get_show_meta(anilist_id)
+    meta_ids = pickle.loads(show_meta.get('meta_ids'))
+    meta_ids[id_type] = anime_id
+    meta_ids = pickle.dumps(meta_ids)
+    lock.acquire()
+    cursor = _get_cursor()
+    cursor.execute('UPDATE shows_meta SET meta_ids=? WHERE anilist_id=?', (meta_ids, anilist_id))
+    cursor.connection.commit()
+    cursor.close()
+    control.try_release_lock(lock)
 
 
 def add_mapping_id(anilist_id, column, value):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     cursor.execute('UPDATE shows SET %s=? WHERE anilist_id=?' % column, (value, anilist_id))
     cursor.connection.commit()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
 
 
 def update_kodi_meta(anilist_id, kodi_meta):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     kodi_meta = pickle.dumps(kodi_meta)
     cursor.execute('UPDATE shows SET kodi_meta=? WHERE anilist_id=?', (kodi_meta, anilist_id))
     cursor.connection.commit()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
 
 
 def update_season(show_id, season):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     try:
         cursor.execute(
@@ -239,11 +253,11 @@ def update_season(show_id, season):
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
 
 
 def update_show_data(anilist_id, data={}, last_updated=''):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     data = pickle.dumps(data)
     try:
@@ -260,11 +274,11 @@ def update_show_data(anilist_id, data={}, last_updated=''):
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
 
 
 def update_episode(show_id, season=0, number=0, update_time='', kodi_meta={}, filler=''):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     kodi_meta = pickle.dumps(kodi_meta)
     try:
@@ -279,116 +293,116 @@ def update_episode(show_id, season=0, number=0, update_time='', kodi_meta={}, fi
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
 
 
 def _get_show_list():
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)
     cursor.execute('SELECT * FROM shows')
     shows = cursor.fetchall()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return shows
 
 
 def get_season_list(show_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
-    cursor.execute('SELECT* FROM seasons WHERE anilist_id = ?', (show_id,))
+    cursor.execute('SELECT* FROM seasons WHERE anilist_id=?', (show_id,))
     seasons = cursor.fetchone()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return seasons
 
 
 def get_show_data(anilist_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)
     db_query = 'SELECT * FROM show_data WHERE anilist_id IN (%s)' % anilist_id
     cursor.execute(db_query)
     show_data = cursor.fetchone()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return show_data
 
 
 def get_episode_list(show_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
-    cursor.execute('SELECT* FROM episodes WHERE anilist_id = ?', (show_id,))
+    cursor.execute('SELECT* FROM episodes WHERE anilist_id=?', (show_id,))
     episodes = cursor.fetchall()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return episodes
 
 
 def get_show(anilist_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)
     db_query = 'SELECT * FROM shows WHERE anilist_id IN (%s)' % anilist_id
     cursor.execute(db_query)
     shows = cursor.fetchone()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return shows
 
 
 def get_show_meta(anilist_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)
     db_query = 'SELECT * FROM shows_meta WHERE anilist_id IN (%s)' % anilist_id
     cursor.execute(db_query)
     shows = cursor.fetchone()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return shows
 
 
 def get_show_mal(mal_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)
     db_query = 'SELECT * FROM shows WHERE mal_id IN (%s)' % mal_id
     cursor.execute(db_query)
     shows = cursor.fetchone()
     cursor.close()
-    control.try_release_lock(control.anilistSyncDB_lock)
+    control.try_release_lock(lock)
     return shows
 
 
 def remove_season(anilist_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     try:
-        cursor.execute("DELETE FROM seasons WHERE anilist_id = ?", (anilist_id,))
+        cursor.execute("DELETE FROM seasons WHERE anilist_id=?", (anilist_id,))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
 
 
 def remove_episodes(anilist_id):
-    control.anilistSyncDB_lock.acquire()
+    lock.acquire()
     cursor = _get_cursor()
     try:
-        cursor.execute("DELETE FROM episodes WHERE anilist_id = ?", (anilist_id,))
+        cursor.execute("DELETE FROM episodes WHERE anilist_id=?", (anilist_id,))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(lock)
 
 
-def get_mappings(anilist_id):
-    control.mappingDB_lock.acquire()
+def get_mappings(anime_id, send_id):
+    lock.acquire()
     cursor = _get_connection_cursor(control.mappingDB)
-    cursor.execute('SELECT * FROM anime WHERE anilist_id = ?', (anilist_id, ))
+    cursor.execute(f'SELECT * FROM anime WHERE {send_id}=?', (anime_id, ))
     mappings = cursor.fetchall()
     cursor.close()
-    control.try_release_lock(control.mappingDB_lock)
+    control.try_release_lock(lock)
     return mappings[0] if mappings else {}
 
 # def get_download(url_hash):
@@ -423,7 +437,7 @@ def get_mappings(anilist_id):
 
 
 def getSearchHistory(media_type='show'):
-    control.searchHistoryDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.searchHistoryDB)
     try:
         cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
@@ -446,11 +460,11 @@ def getSearchHistory(media_type='show'):
         cursor.close()
         return []
     finally:
-        control.try_release_lock(control.searchHistoryDB_lock)
+        control.try_release_lock(lock)
 
 
 def addSearchHistory(search_string, media_type):
-    control.searchHistoryDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.searchHistoryDB)
     try:
         cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
@@ -469,7 +483,7 @@ def addSearchHistory(search_string, media_type):
         cursor.close()
         return []
     finally:
-        control.try_release_lock(control.searchHistoryDB_lock)
+        control.try_release_lock(lock)
 
 
 def create_torrent_cache(cursor):
@@ -485,7 +499,7 @@ def create_torrent_cache(cursor):
 
 
 def addTorrentList(anilist_id, torrent_list, zfill_int):
-    control.torrentScrapeCacheFile_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
     try:
         create_torrent_cache(cursor)
@@ -502,11 +516,11 @@ def addTorrentList(anilist_id, torrent_list, zfill_int):
         cursor.close()
         return []
     finally:
-        control.try_release_lock(control.torrentScrapeCacheFile_lock)
+        control.try_release_lock(lock)
 
 
 def torrent_cache_clear():
-    control.torrentScrapeCacheFile_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
     try:
         for t in [cache_table, 'rel_list', 'rel_lib']:
@@ -516,13 +530,13 @@ def torrent_cache_clear():
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.torrentScrapeCacheFile_lock)
+        control.try_release_lock(lock)
 
-    control.showDialog.notification('{}: {}'.format(control.ADDON_NAME, control.lang(30200)), control.lang(30202), time=5000, sound=False)
+    control.notify(f'{control.ADDON_NAME}: {control.lang(30200)}', control.lang(30202), time=5000, sound=False)
 
 
 def clearSearchHistory():
-    control.searchHistoryDB_lock.acquire()
+    lock.acquire()
     confirmation = control.yesno_dialog(control.ADDON_NAME, "Clear search history?")
     if not confirmation:
         return
@@ -539,21 +553,21 @@ def clearSearchHistory():
         cursor.close()
         return []
     finally:
-        control.try_release_lock(control.searchHistoryDB_lock)
+        control.try_release_lock(lock)
 
 
 def remove_search(table, value):
-    control.searchHistoryDB_lock.acquire()
+    lock.acquire()
     cursor = _get_connection_cursor(control.searchHistoryDB)
     try:
-        cursor.execute(f'DELETE FROM {table} WHERE value = ?', (value,))
+        cursor.execute(f'DELETE FROM {table} WHERE value=?', (value,))
         cursor.connection.commit()
         cursor.close()
         control.refresh()
     except OperationalError:
         cursor.close()
     finally:
-        control.try_release_lock(control.searchHistoryDB_lock)
+        control.try_release_lock(lock)
 
 
 def _dict_factory(cursor, row):

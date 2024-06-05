@@ -2,7 +2,7 @@ from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debri
 from resources.lib.ui import control, source_utils
 from resources.lib.windows.base_window import BaseWindow
 
-control.__sys__.path.append(control.dataPath)
+control.sys.path.append(control.dataPath)
 
 
 class Resolver(BaseWindow):

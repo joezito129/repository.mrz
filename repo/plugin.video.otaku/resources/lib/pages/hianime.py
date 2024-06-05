@@ -3,7 +3,7 @@ import pickle
 import re
 
 from bs4 import BeautifulSoup, SoupStrainer
-from six.moves import urllib_parse
+from urllib import parse
 from resources.lib.ui import control, database
 from resources.lib.ui.jscrypto import jscrypto
 from resources.lib.ui.BrowserBase import BrowserBase
@@ -128,7 +128,7 @@ class sources(BrowserBase):
                             sources.append(source)
                         else:
                             headers = {'Referer': slink}
-                            sl = urllib_parse.urlparse(slink)
+                            sl = parse.urlparse(slink)
                             spath = sl.path.split('/')
                             spath.insert(2, 'ajax')
                             sid = spath.pop(-1)
@@ -171,7 +171,7 @@ class sources(BrowserBase):
 
                                 source = {
                                     'release_title': '{0} - Ep {1}'.format(title, episode),
-                                    'hash': urllib_parse.urljoin(slink, qlink) + '|User-Agent=iPad',
+                                    'hash': parse.urljoin(slink, qlink) + '|User-Agent=iPad',
                                     'type': 'direct',
                                     'quality': quality,
                                     'debrid_provider': '',
@@ -207,7 +207,7 @@ class sources(BrowserBase):
         return chunked(indexes, 2)
 
     def _process_link(self, sources):
-        keyhints = database.get_(self.get_keyhints, 0.2)
+        keyhints = database.get_(self.get_keyhints, 1)
         try:
             key = ''
             orig_src = sources
@@ -221,6 +221,4 @@ class sources(BrowserBase):
             sources = json.loads(jscrypto.decode(sources, key))
             return sources[0].get('file')
         except:
-            database.remove(self.get_keyhints)
-            control.log('decryption key not working')
             return ''

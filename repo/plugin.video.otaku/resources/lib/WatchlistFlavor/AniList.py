@@ -3,7 +3,7 @@ import pickle
 import random
 import requests
 
-from resources.lib.ui import database, utils
+from resources.lib.ui import database, utils, control
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 from resources.lib.ui.divide_flavors import div_flavor
 
@@ -74,7 +74,7 @@ class AniListWLF(WatchlistFlavorBase):
         base = {
             "name": res[0],
             "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
-            "image": '%s.png' % res[0].lower(),
+            "image": f'{res[0].lower()}.png',
             "info": {}
         }
         return utils.parse_view(base)
@@ -184,9 +184,9 @@ class AniListWLF(WatchlistFlavorBase):
             'type': 'ANIME',
             'sort': self.__get_sort()
         }
-        return self._process_status_view(query, variables, next_up, "watchlist/%d", page=1)
+        return self._process_status_view(query, variables, next_up)
 
-    def _process_status_view(self, query, variables, next_up, base_plugin_url, page):
+    def _process_status_view(self, query, variables, next_up):
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
         lists = results['data']['MediaListCollection']['lists']
@@ -392,6 +392,48 @@ class AniListWLF(WatchlistFlavorBase):
             'score': results['score']
         }
         return anime_entry
+
+    def save_completed(self):
+        import json
+
+        data = self.get_user_anime_list('COMPLETED')
+        completed = {}
+        for dat in data:
+            for entrie in dat['entries']:
+                completed[str(entrie['media']['id'])] = int(entrie['media']['episodes'])
+        with open(control.completed_json, 'w') as file:
+            json.dump(completed, file)
+
+    def get_user_anime_list(self, status):
+        query = '''
+        query ($userId: Int, $userName: String, $status: MediaListStatus, $type: MediaType, $sort: [MediaListSort]) {
+            MediaListCollection(userId: $userId, userName: $userName, status: $status, type: $type, sort: $sort) {
+                lists {
+                    entries {
+                        id
+                        mediaId
+                        progress
+                        media {
+                            id
+                            idMal
+                            episodes
+                        }
+                    }
+                }
+            }
+        }
+        '''
+
+        variables = {
+            'userId': int(self._user_id),
+            'username': self._username,
+            'status': status,
+            'type': 'ANIME',
+            'sort': self.__get_sort()
+        }
+        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
+        results = r.json()
+        return results['data']['MediaListCollection']['lists']
 
     def get_watchlist_anime_info(self, anilist_id):
         query = '''

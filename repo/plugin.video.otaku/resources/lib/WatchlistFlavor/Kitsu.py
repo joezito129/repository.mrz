@@ -292,6 +292,38 @@ class KitsuWLF(WatchlistFlavorBase):
         }
         return anime_entry
 
+    def save_completed(self):
+        import json
+        from resources.lib.ui import database
+        data = self.get_user_anime_list('completed')
+        completed = {}
+        for dat in data:
+            anilist_id = database.get_mappings(dat['relationships']['anime']['data']['id'], 'kitsu_id')['anilist_id']
+            completed[str(anilist_id)] = dat['attributes']['progress']
+
+        with open(control.completed_json, 'w') as file:
+            json.dump(completed, file)
+
+    def get_user_anime_list(self, status):
+        url = f'{self._URL}/edge/library-entries'
+        params = {
+            "filter[user_id]": self._user_id,
+            "filter[kind]": "anime",
+            "filter[status]": status,
+            "page[limit]": "500",
+            "include": "anime,anime.mappings,anime.mappings.item",
+        }
+        r = requests.get(url, headers=self.__headers(), params=params)
+        res = r.json()
+        paging = res['links']
+        data = res['data']
+        while paging.get('next'):
+            r = requests.get(paging['next'], headers=self.__headers())
+            res = r.json()
+            paging = res['links']
+            data += res['data']
+        return data
+
     def update_list_status(self, anilist_id, status):
         kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
         if not kitsu_id:

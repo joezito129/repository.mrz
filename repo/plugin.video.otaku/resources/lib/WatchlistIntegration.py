@@ -9,7 +9,7 @@ from resources.lib.AniListBrowser import AniListBrowser
 
 def get_auth_dialog(flavor):
     from resources.lib.windows import wlf_auth
-    platform = control.__sys__.platform
+    platform = control.sys.platform
     if 'linux' in platform:
         auth = wlf_auth.AltWatchlistFlavorAuth(flavor).set_settings()
     else:
@@ -54,10 +54,11 @@ def WATCHLIST_TO_EP(payload, params):
     if mal_id:
         show_meta = database.get_show_mal(mal_id)
         if not show_meta:
-            show_meta = AniListBrowser().get_mal_to_anilist(mal_id)
+            anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
+            show_meta = AniListBrowser().get_anilist(anilist_id)
+
     else:
         show_meta = database.get_show(anilist_id)
-
     anilist_id = show_meta['anilist_id']
     kodi_meta = pickle.loads(show_meta['kodi_meta'])
     kodi_meta['eps_watched'] = eps_watched
@@ -70,8 +71,8 @@ def WATCHLIST_TO_EP(payload, params):
 @route('watchlist_context/*')
 def CONTEXT_MENU(payload, params):
     if control.getSetting('watchlist.update.enabled') != 'true':
-        control.ok_dialog(control.ADDON_NAME, f'No Watchlist Enabled: \n\nPlease enable {control.format_string("Update Watchlist", "B")} before using the Watchlist Manager')
-        return False
+        control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
+        return
     payload_list = payload.rsplit('/')[1:]
     if len(payload_list) == 5:
         path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
@@ -93,17 +94,16 @@ def CONTEXT_MENU(payload, params):
     _TITLE_LANG = control.title_lang(control.getSetting("titlelanguage"))
     title = kodi_meta['ename'] if _TITLE_LANG == 'english' else kodi_meta['title_userPreferred']
 
-    context = control.select_dialog(f'{title}  {control.colorString("(" + str(flavor.flavor_name).capitalize() + ")", "blue")}', list(map(lambda x: x[0], actions)))
+    context = control.select_dialog(f"{title}  {control.colorString(f'({str(flavor.flavor_name).capitalize()} + )', 'blue')}", list(map(lambda x: x[0], actions)))
     if context != -1:
         heading = f'{control.ADDON_NAME} - ({str(flavor.flavor_name).capitalize()})'
         status = actions[context][1]
         if status == 'DELETE':
-            yesno = control.yesno_dialog(heading,
-                f'Are you sure you want to delete {control.format_string(title, "I")}  from {control.format_string(flavor.flavor_name, "B")}\n\nPress YES to Continue:')
+            yesno = control.yesno_dialog(heading, f'Are you sure you want to delete [I]{title}[/I] from [B]{flavor.flavor_name}[/B]\n\nPress YES to Continue:')
             if yesno:
                 delete = delete_watchlist_anime(anilist_id)
                 if delete:
-                    control.ok_dialog(heading, f'{control.format_string(title, "I")}  was deleted from {control.format_string(flavor.flavor_name, "B")}')
+                    control.ok_dialog(heading, f'[I]{title}[/I] was deleted from [B]{flavor.flavor_name}[/B]')
                 else:
                     control.ok_dialog(heading, 'Unable to delete from Watchlist')
         elif status == 'set_score':
@@ -120,21 +120,20 @@ def CONTEXT_MENU(payload, params):
                 "(1) Appalling",
                 "(0) No Score"
             ]
-            score = control.select_dialog(f'{title} ({str(flavor.flavor_name).capitalize()})', score_list)
+            score = control.select_dialog(f'{title}: ({str(flavor.flavor_name).capitalize()})', score_list)
             if score != -1:
                 score = 10 - score
                 set_score = set_watchlist_score(anilist_id, score)
                 if set_score:
-                    control.ok_dialog(heading, f'{control.format_string(title, "I")}  was set to {control.format_string(score, "B")}')
+                    control.ok_dialog(heading, f'[I]{title}[/I]   was set to [B]{score}[/B]')
                 else:
                     control.ok_dialog(heading, 'Unable to Set Score')
         else:
             set_status = set_watchlist_status(anilist_id, status)
             if set_status == 'watching':
-                control.ok_dialog(heading,
-                    'This show is still airing, so we\'re keeping it in your "Watching" list and marked all aired episodes as watched.')
+                control.ok_dialog(heading, 'This show is still airing, so we\'re keeping it in your "Watching" list and marked all aired episodes as watched.')
             elif set_status:
-                control.ok_dialog(heading, f'{control.format_string(title, "I")}  was added to {control.format_string(status, "B")}')
+                control.ok_dialog(heading, f'[I]{title}[/I]  was added to [B]{status}[/B]')
             else:
                 control.ok_dialog(heading, 'Unable to Set Watchlist')
 
@@ -143,11 +142,7 @@ def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:
-            items.insert(0, (
-                "%s's %s" % (flavor.username, flavor.title),
-                "watchlist/%s" % flavor.flavor_name,
-                flavor.image,
-            ))
+            items.insert(0, (f'{flavor.username}\'s {flavor.title}', f'watchlist/{flavor.flavor_name}', flavor.image))
     return items
 
 

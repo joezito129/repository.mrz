@@ -5,8 +5,8 @@ from resources.lib.ui import control, utils, database, client
 from urllib import parse
 from resources.lib.indexers import aniskip
 
-playList = control.playList
-player = control.player
+playList = xbmc.PlayList(1)
+player = xbmc.Player
 
 
 class hook_mimetype:

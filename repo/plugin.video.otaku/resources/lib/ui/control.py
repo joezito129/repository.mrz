@@ -1,4 +1,3 @@
-import threading
 import xbmc, xbmcgui, xbmcaddon, xbmcplugin, xbmcvfs
 import os
 import sys
@@ -10,53 +9,38 @@ try:
 except IndexError:
     HANDLE = -1
 
-__sys__ = sys
-
 addonInfo = xbmcaddon.Addon().getAddonInfo
-ADDON_NAME = addonInfo('name')
 ADDON_ID = addonInfo('id')
-ADDON_ICON = addonInfo('icon')
 __settings__ = xbmcaddon.Addon(ADDON_ID)
 __language__ = __settings__.getLocalizedString
 addonInfo = __settings__.getAddonInfo
-TRANSLATEPATH = xbmcvfs.translatePath
-INPUT_ALPHANUM = xbmcgui.INPUT_ALPHANUM
-dataPath = TRANSLATEPATH(addonInfo('profile'))
+ADDON_NAME = addonInfo('name')
+ADDON_ICON = addonInfo('icon')
 ADDON_PATH = __settings__.getAddonInfo('path')
+dataPath = xbmcvfs.translatePath(addonInfo('profile'))
+
 
 cacheFile = os.path.join(dataPath, 'cache.db')
-cacheFile_lock = threading.Lock()
-
 searchHistoryDB = os.path.join(dataPath, 'search.db')
-searchHistoryDB_lock = threading.Lock()
-
 anilistSyncDB = os.path.join(dataPath, 'anilistSync.db')
-anilistSyncDB_lock = threading.Lock()
-
 torrentScrapeCacheFile = os.path.join(dataPath, 'torrentScrape.db')
-torrentScrapeCacheFile_lock = threading.Lock()
-
 mappingDB = os.path.join(dataPath, 'mappings.db')
-mappingDB_lock = threading.Lock()
 
 maldubFile = os.path.join(dataPath, 'mal_dub.json')
 downloads_json = os.path.join(dataPath, 'downloads.json')
+completed_json = os.path.join(dataPath, 'completed.json')
 
 IMAGES_PATH = os.path.join(ADDON_PATH, 'resources', 'images')
 OTAKU_FANART_PATH = os.path.join(ADDON_PATH, 'fanart.jpg')
 OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
 OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', __settings__.getSetting("general.icons"))
 
-
-showDialog = xbmcgui.Dialog()
 dialogWindow = xbmcgui.WindowDialog
 xmlWindow = xbmcgui.WindowXMLDialog
-sleep = xbmc.sleep
 menuItem = xbmcgui.ListItem
 execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
-playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-player = xbmc.Player
+playList = xbmc.PlayList(1)
 
 
 def closeBusyDialog():
@@ -140,15 +124,11 @@ def copy2clip(txt):
 def colorString(text, color=None):
     if color == 'default' or color == '' or color is None:
         color = 'deepskyblue'
-    return '[COLOR %s]%s[/COLOR]' % (color, text)
+    return f'[COLOR {color}]{text}[/COLOR]'
 
 
 def refresh():
-    return xbmc.executebuiltin('Container.Refresh')
-
-
-def settingsMenu():
-    return xbmcaddon.Addon().openSettings()
+    return execute('Container.Refresh')
 
 
 def getSetting(key):
@@ -163,12 +143,12 @@ def lang(x):
     return __language__(x)
 
 
-def addon_url(url=''):
-    return "plugin://%s/%s" % (ADDON_ID, url)
+def addon_url(url):
+    return f'plugin://{ADDON_ID}/{url}'
 
 
 def get_plugin_url():
-    addon_base = addon_url()
+    addon_base = addon_url('')
     return sys.argv[0][len(addon_base):]
 
 
@@ -199,7 +179,7 @@ def yesno_dialog(title, text, nolabel=None, yeslabel=None):
     return xbmcgui.Dialog().yesno(title, text, nolabel, yeslabel)
 
 
-def notify(text, title=ADDON_NAME, icon=OTAKU_LOGO2_PATH, time=5000, sound=True):
+def notify(title, text, icon=OTAKU_LOGO2_PATH, time=5000, sound=True):
     return xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -271,9 +251,13 @@ def set_videotags(li, info):
     #     vinfo.setTrailer(info['trailer'])
 
 
-def xbmc_add_player_item(name, url, art={}, info={}, draw_cm=None, bulk_add=False):
+def xbmc_add_player_item(name, url, art=None, info=None, draw_cm=None, bulk_add=False):
+    if not art:
+        art = {}
+    if not info:
+        info = {}
     u = addon_url(url)
-    liz = xbmcgui.ListItem(name)
+    liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
         set_videotags(liz, info)
 
@@ -292,9 +276,13 @@ def xbmc_add_player_item(name, url, art={}, info={}, draw_cm=None, bulk_add=Fals
     return u, liz, False if bulk_add else xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=False)
 
 
-def xbmc_add_dir(name, url, art={}, info={}, draw_cm=None):
+def xbmc_add_dir(name, url, art=None, info=None, draw_cm=None, bulk_add=False, isfolder=True):
+    if not art:
+        art = {}
+    if not info:
+        info = {}
     u = addon_url(url)
-    liz = xbmcgui.ListItem(name)
+    liz = xbmcgui.ListItem(name, offscreen=True)
 
     if info:
         set_videotags(liz, info)
@@ -306,21 +294,31 @@ def xbmc_add_dir(name, url, art={}, info={}, draw_cm=None):
     if not art.get('fanart'):
         art['fanart'] = OTAKU_FANART_PATH
     liz.setArt(art)
-    return xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=True)
+    return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
-def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
+def bulk_draw_items(video_data, draw_cm):
+    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True) for vid in video_data]
+    xbmcplugin.addDirectoryItems(HANDLE, list_items)
+
+
+def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
+    if not draw_cm:
+        draw_cm = []
     if getSetting('context.deletefromdatabase') == 'true' and contentType == 'tvshows':
         draw_cm.append(("Delete from database", 'delete_anime_database'))
     elif getSetting('context.marked.watched') == 'true' and contentType == 'episodes':
         draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
     # for x in cm:
-        #     draw_cm.append(x)
-    for vid in video_data:
-        if vid['is_dir']:
-            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm)
-        else:
-            xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add)
+        #     draw_cm.append(x)0
+    if len(video_data) > 99:
+        bulk_draw_items(video_data, draw_cm)
+    else:
+        for vid in video_data:
+            if vid['is_dir']:
+                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, isfolder=vid['isfolder'])
+            else:
+                xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add)
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
@@ -339,7 +337,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
 
     # move to episode position currently watching
     if contentType == "episodes" and getSetting('general.smart.scroll.enable') == 'true':
-        sleep(int(getSetting('general.scroll.wait.time')))
+        xbmc.sleep(int(getSetting('general.scroll.wait.time')))
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
             total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
@@ -348,15 +346,14 @@ def draw_items(video_data, contentType="tvshows", draw_cm=[], bulk_add=False):
                 num_watched += 1
                 total_ep += 1
         except ValueError:
-            return False
+            return
         if total_ep > num_watched > 0:
             xbmc.executebuiltin('Action(firstpage)')
             for _ in range(num_watched):
                 xbmc.executebuiltin('Action(Down)')
-    return True
 
 
-def bulk_draw_items(video_data, draw_cm=None, bulk_add=True):
+def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
     return [xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add) for vid in video_data]
 
 
@@ -430,9 +427,9 @@ def abort_requested():
     return abort_requested_
 
 
-def format_string(string, format_):
-    # format_ = B, I
-    return f'[{format_}]{string}[/{format_}]'
+# def format_string(string, format_):
+#     # format_ = B, I
+#     return f'[{format_}]{string}[/{format_}]'
 
 
 def print(string, *args):

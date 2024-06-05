@@ -8,7 +8,7 @@ class SkipIntro(BaseWindow):
 
     def __init__(self, xml_file, xml_location, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
-        self.player = control.player()
+        self.player = xbmc.Player()
         self.total_time = int(self.player.getTotalTime())
         self.playing_file = self.player.getPlayingFile()
         self.skip_time = int(control.getSetting('skipintro.time'))

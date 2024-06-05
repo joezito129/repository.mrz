@@ -263,6 +263,16 @@ class SimklWLF(WatchlistFlavorBase):
         # }
         # return anime_entry
 
+    def save_completed(self):
+        import json
+
+        data = self.get_all_items('completed')
+        completed = {}
+        for dat in data['anime']:
+            completed[str(dat['show']['ids']['anilist'])] = dat['total_episodes_count']
+        with open(control.completed_json, 'w') as file:
+            json.dump(completed, file)
+
     def get_all_items(self, status):
         # status values: watching, plantowatch, hold ,completed ,dropped (notinteresting for old api's).
         params = {

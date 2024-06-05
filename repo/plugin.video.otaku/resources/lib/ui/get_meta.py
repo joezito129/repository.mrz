@@ -24,7 +24,7 @@ def collect_meta_(anime_list):
 
 
 def update_meta(anilist_id, mtype='tv'):
-    meta_ids = database.get_mappings(anilist_id)
+    meta_ids = database.get_mappings(anilist_id, 'anilist_id')
     art = FANARTAPI().getArt(meta_ids, mtype)
     if not art:
         art = TMDBAPI().getArt(meta_ids, mtype)

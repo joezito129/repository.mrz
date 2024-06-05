@@ -180,10 +180,11 @@ class SIMKLAPI:
     def get_anime_info(self, anilist_id):
         show_ids = database.get_show(anilist_id)
         simkl_id = show_ids['simkl_id']
+
         if not simkl_id:
             simkl_id = self.get_simkl_id('anilist', anilist_id)
             if not simkl_id:
-                mal_id = show_ids['mal_id']
+                mal_id = database.get_mappings(anilist_id, 'anilist_id')['mal_id']
                 simkl_id = self.get_simkl_id('mal', mal_id)
             database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
         if not simkl_id:

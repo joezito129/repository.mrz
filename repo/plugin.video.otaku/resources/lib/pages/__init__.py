@@ -1,8 +1,7 @@
 import threading
 import time
 
-from resources.lib.pages import (nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniplay, aniwave,
-                                 gogoanime, localfiles)
+from resources.lib.pages import (nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniplay, aniwave, gogoanime, localfiles)
 from resources.lib.ui import control
 from resources.lib.windows.get_sources_window import GetSources as DisplayWindow
 

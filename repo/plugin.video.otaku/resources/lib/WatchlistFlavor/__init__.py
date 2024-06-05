@@ -51,7 +51,6 @@ class WatchlistFlavor:
     def watchlist_anime_entry_request(anilist_id):
         return WatchlistFlavor.get_update_flavor().get_watchlist_anime_entry(anilist_id)
 
-
     @staticmethod
     def login_request(flavor):
         if not WatchlistFlavor.__is_flavor_valid(flavor):

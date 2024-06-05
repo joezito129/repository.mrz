@@ -6,8 +6,9 @@ import xbmcvfs
 from resources.lib.ui import control
 
 
-def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poster=None, cast=[], landscape=None,
-                  banner=None, clearart=None, clearlogo=None):
+def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poster=None, cast=None, landscape=None, banner=None, clearart=None, clearlogo=None, isfolder=True):
+    if not cast:
+        cast = []
     if image and '/' not in image:
         image = os.path.join(control.OTAKU_ICONS_PATH, image)
     if fanart:
@@ -16,8 +17,9 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
             fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
     # if poster and '/' not in poster:
     #     poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
-    new_res = {
+    return {
         'is_dir': is_dir,
+        'isfolder': isfolder,
         'name': name,
         'url': url,
         'info': info,
@@ -33,7 +35,6 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
                 'clearlogo': clearlogo
         }
     }
-    return new_res
 
 
 def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
@@ -90,7 +91,7 @@ def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
 
 def get_sub(sub_url, sub_lang):
     content = requests.get(sub_url).text
-    subtitle = control.TRANSLATEPATH('special://temp/')
+    subtitle = xbmcvfs.translatePath('special://temp/')
     fname = 'TemporarySubs.{0}.srt'.format(sub_lang)
     fpath = os.path.join(subtitle, fname)
     if sub_url.endswith('.vtt'):

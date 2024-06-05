@@ -8,13 +8,13 @@ from resources.lib.ui import control, database, utils
 
 
 def parse_history_view(res):
-    return utils.allocate_item(res, "search/%s/1" % res, True)
+    return utils.allocate_item(res, f'search/{res}/1', True)
 
 
 def search_history(search_array):
     result = list(map(parse_history_view, search_array))
     result.insert(0, utils.allocate_item("New Search", "search", True, 'new_search.png'))
-    result.append(utils.allocate_item("Clear Search History...", "clear_history", True, 'clear_search_history.png'))
+    result.append(utils.allocate_item("Clear Search History...", "clear_history", True, 'clear_search_history.png', isfolder=False))
     return result
 
 
@@ -36,7 +36,7 @@ def get_episodeList(anilist_id, pass_idx, filter_lang=None):
     else:
         episodes = database.get_episode_list(anilist_id)
         items = indexers.process_episodes(episodes, '') if episodes else []
-        playlist = control.bulk_draw_items(items)[pass_idx:]
+        playlist = control.bulk_player_list(items)[pass_idx:]
 
         for i in playlist:
             url = i[0]
@@ -56,12 +56,13 @@ def get_meta_ids(anilist_id):
 
 
 def get_backup(anilist_id, source):
-    show = database.get_show(anilist_id)
-    mal_id = show['mal_id']
+    show_meta = database.get_show_meta(anilist_id)
+    meta_ids = pickle.loads(show_meta['meta_ids'])
+    mal_id = meta_ids['mal_id']
 
     if not mal_id:
         mal_id = get_meta_ids(anilist_id)['mal']
-        database.add_mapping_id(anilist_id, 'mal_id', str(mal_id))
+        database.add_mapping_id_meta(anilist_id, mal_id, 'mal_id')
     params = {
         "type": "myanimelist",
         "id": mal_id

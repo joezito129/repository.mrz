@@ -8,7 +8,7 @@ class PlayingNext(BaseWindow):
 
     def __init__(self, xml_file, xml_location, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
-        self.player = control.player()
+        self.player = xbmc.Player()
         self.playing_file = self.player.getPlayingFile()
         self.closed = False
         self.actioned = False

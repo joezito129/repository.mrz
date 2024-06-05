@@ -11,7 +11,7 @@ def refresh_apis():
     mal_token = control.getSetting('mal.token')
 
     if rd_token != '':
-        rd_expiry = int(float(control.getSetting('rd.expiry')))
+        rd_expiry = int(control.getSetting('rd.expiry'))
         if time.time() > (rd_expiry - 1200):
             from resources.lib.debrid import real_debrid
             real_debrid.RealDebrid().refreshToken()
@@ -23,45 +23,48 @@ def refresh_apis():
             debrid_link.DebridLink().refreshToken()
 
     if kitsu_token != '':
-        kitsu_expiry = int(float(control.getSetting('kitsu.expiry')))
+        kitsu_expiry = int(control.getSetting('kitsu.expiry'))
         if time.time() > (kitsu_expiry - 600):
             from resources.lib.WatchlistFlavor import Kitsu
             Kitsu.KitsuWLF().refresh_token()
 
     if mal_token != '':
-        mal_expiry = int(float(control.getSetting('mal.expiry')))
+        mal_expiry = int(control.getSetting('mal.expiry'))
         if time.time() > (mal_expiry - 600):
             from resources.lib.WatchlistFlavor import MyAnimeList
             MyAnimeList.MyAnimeListWLF().refresh_token()
 
 
 def update_mappings_db():
-    import time
     import requests
     import os
 
-    control.setSetting('mappingsdb.time', str(int(time.time())))
+    control.setSetting('update.time', str(int(time.time())))
     url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
     r = requests.get(url)
     with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
         file.write(r.content)
 
 
-# def sync_watchlist():
-#     from resources.lib.WatchlistFlavor import WatchlistFlavor
-#     if control.getSetting('sync.watchlist.notify') == 'true':
-#         control.notify('Syncing Watchlist')
-#
-#     # WatchlistFlavor.get_info
-#     flavor = WatchlistFlavor.get_update_flavor()
-#     if flavor.flavor_name in ['mal', 'simkl', 'kitsu']:
-#         status = 'completed'
-#     elif flavor.flavor_name == 'anilist':
-#         status = 'COMPLETED'
-#     else:
-#         return
-#     data = flavor.get_watchlist_status(status, {})
-#     control.print(data)
+def sync_watchlist():
+    from resources.lib.WatchlistFlavor import WatchlistFlavor
+
+    flavor = WatchlistFlavor.get_update_flavor()
+    if flavor:
+        flavor.save_completed()
+        control.notify(control.ADDON_NAME, f'Completed Sync [B]{flavor.flavor_name}[/B]')
+    else:
+        control.ok_dialog(control.ADDON_NAME, "No Watchlist Enabled")
+
+
+def update_dub_json():
+    import requests
+    import json
+    with open(control.maldubFile, 'w') as file:
+        mal_dub_raw = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
+        mal_dub_list = mal_dub_raw.json()["dubbed"]
+        mal_dub = {str(item): {'dub': True} for item in mal_dub_list}
+        json.dump(mal_dub, file)
 
 
 def run_maintenance():
@@ -69,9 +72,7 @@ def run_maintenance():
 
     # Refresh API tokens
     refresh_apis()
-    if control.getSetting('mappingsdb.time') == '' or time.time() > int(control.getSetting('mappingsdb.time')) + 2_592_000:
-        control.notify('updated mappings.db')
+    if control.getSetting('update.time') == '' or time.time() > int(control.getSetting('update.time')) + 2_592_000:
         update_mappings_db()
-
-    # if control.getSetting('sync.watchlist.enable') == 'true':
-    #     sync_watchlist()
+        update_dub_json()
+        sync_watchlist()

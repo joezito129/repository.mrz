@@ -37,7 +37,7 @@ class JikanAPI:
                     time.sleep(2)
                 r = requests.get(url, params=params)
                 if not r.ok:
-                    control.print(r.json())
+                    control.ok_dialog(control.ADDON_NAME, r.json())
                     return res_data
                 res = r.json()
                 if not res['pagination']['has_next_page']:

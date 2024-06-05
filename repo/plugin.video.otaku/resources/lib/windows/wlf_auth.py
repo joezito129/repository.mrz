@@ -1,3 +1,5 @@
+import xbmcgui
+
 from resources.lib.ui import control
 from resources.lib.windows.base_window import BaseWindow
 
@@ -59,22 +61,22 @@ class AltWatchlistFlavorAuth:
 
     def set_settings(self):
         res = {}
-        dialog = control.showDialog
+        dialog = xbmcgui.Dialog()
         if self.flavor == 'anilist':
             control.textviewer_dialog(f'{control.ADDON_NAME} : AniList',
                               '{}\n{}\n{}'.format(control.lang(40105),
                                                   control.lang(40106).replace('below', 'in the input dialog that will popup once you close this'),
                                                   control.lang(40110)))
 
-            res['username'] = dialog.input('Enter AniList username', type=control.INPUT_ALPHANUM)
-            res['token'] = dialog.input('Enter AniList token', type=control.INPUT_ALPHANUM)
+            res['username'] = dialog.input('Enter AniList username', type=0)
+            res['token'] = dialog.input('Enter AniList token', type=0)
         else:
             control.textviewer_dialog(f'{control.ADDON_NAME} : MyAnimeList',
                               '{}\n{}\n{}'.format(control.lang(40100),
                                                   control.lang(40101).replace('below', 'in the input dialog that will popup once you close this'),
                                                   control.lang(40110)))
 
-            res['authvar'] = dialog.input('Enter MAL auth url', type=control.INPUT_ALPHANUM)
+            res['authvar'] = dialog.input('Enter MAL auth url', type=0)
         for _id, value in list(res.items()):
             control.setSetting('%s.%s' % (self.flavor, _id), value)
             self.authorized = True

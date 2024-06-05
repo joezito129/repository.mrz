@@ -38,7 +38,7 @@
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
 		<setting id="scraping.fanart" type="bool" label="40433" default="true" />
 		<setting id="scraping.clearlogo" type="bool" label="40434" default="false" />
-		<setting id="general.icons" type="labelenum" label="40388" values="coloured|white" default="coloured"/>
+		<setting id="general.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
 	</category>
 
 	<!-- Provider -->
@@ -175,6 +175,7 @@
 		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList|Simkl" default="MAL" visible="eq(-1,true)"/>
 		<setting id="watchlist.update.percent" type="slider" subsetting="true" label="Set Percent to Mark as Watched" default="80" range="70,90" option="int"/>
 		<setting type="text" label="NOTE:   Next up Dialog will not begin until this percentage is met" />
+		<setting id="watchlist.sync.enabled" type="bool" label="Enable sync" default="false" />
 
 		<!-- MyAnimeList -->
 		<setting type="lsep" label="40361"/>
@@ -239,6 +240,7 @@
 		<setting id="clear_torrent_cache" type="action" label="30022" action="RunPlugin(plugin://plugin.video.otaku/clear_torrent_cache)"/>
 		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_history)"/>
 		<setting id="rebuild_database" type="action" label="30026" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database)"/>
+		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync)"/>
 		<setting id="wipe_addon_data" type="action" label="30024" action="RunPlugin(plugin://plugin.video.otaku/wipe_addon_data)"/>
 	</category>
 </settings>

@@ -1,3 +1,10 @@
+Changelog v5.0.28 (2024-06-05):
+- Changed source select aesthetics
+- Added bulk_draw_items
+- Added completed_sync
+- offscreen=true
+- added isfolder in utils
+
 Changelog v5.0.27 (2024-05-29):
 - Added database.db
 - got rid of trakt

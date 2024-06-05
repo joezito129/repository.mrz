@@ -5,13 +5,13 @@ import re
 from functools import partial
 
 from bs4 import BeautifulSoup
-from resources.lib.ui import control, database, source_utils
+from resources.lib.ui import database, source_utils
 from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.indexers.malsync import MALSYNC
 
 
 class sources(BrowserBase):
-    _BASE_URL = 'https://anitaku.to/' if control.getSetting('provider.gogoalt') == 'true' else 'https://gogoanime3.co/'
+    _BASE_URL = 'https://gogoanime3.co/'
 
     def get_sources(self, anilist_id, episode, get_backup):
         show = database.get_show(anilist_id)

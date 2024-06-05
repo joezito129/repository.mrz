@@ -1,5 +1,6 @@
 import os
 import xbmcvfs
+import threading
 
 from resources.lib.ui import control
 from sqlite3 import dbapi2
@@ -25,7 +26,7 @@ class AnilistSyncDatabase:
         # You may also update this version number to force a rebuild of the database after updating Otaku
         self.last_meta_update = '1.0.4'
 
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
 
         self._refresh_activites()
 
@@ -42,7 +43,7 @@ class AnilistSyncDatabase:
             self.activites = cursor.fetchone()
             cursor.close()
 
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
         if self.activites is not None:
             self._check_database_version()
@@ -67,13 +68,13 @@ class AnilistSyncDatabase:
         # Migrate from an old version before database migrations
         if 'otaku_version' not in self.activites:
             self.clear_all_meta()
-            control.anilistSyncDB_lock.acquire()
+            threading.Lock().acquire()
             cursor = self._get_cursor()
             cursor.execute('ALTER TABLE activities ADD COLUMN otaku_version TEXT')
             cursor.execute('UPDATE activities SET otaku_version = ?', (self.last_meta_update,))
             cursor.connection.commit()
             cursor.close()
-            control.try_release_lock(control.anilistSyncDB_lock)
+            control.try_release_lock(threading.Lock())
 
         if self.activites['otaku_version'] != self.last_meta_update:
             self.re_build_database(True)
@@ -92,7 +93,7 @@ class AnilistSyncDatabase:
         self._build_show_data_table()
 
     def _build_show_table(self):
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS shows '
                        '(anilist_id INTEGER PRIMARY KEY, '
@@ -106,10 +107,10 @@ class AnilistSyncDatabase:
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_shows ON "shows" (anilist_id ASC )')
         cursor.connection.commit()
         cursor.close()
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
     def _build_showmeta_table(self):
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS shows_meta '
                        '(anilist_id INTEGER PRIMARY KEY, '
@@ -119,10 +120,10 @@ class AnilistSyncDatabase:
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_shows_meta ON "shows_meta" (anilist_id ASC )')
         cursor.connection.commit()
         cursor.close()
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
     def _build_season_table(self):
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS seasons ('
                        'anilist_id INTEGER NOT NULL, '
@@ -132,10 +133,10 @@ class AnilistSyncDatabase:
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_season ON seasons (anilist_id ASC, season ASC)')
         cursor.connection.commit()
         cursor.close()
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
     def _build_show_data_table(self):
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS show_data '
                        '(anilist_id INTEGER PRIMARY KEY, '
@@ -145,10 +146,10 @@ class AnilistSyncDatabase:
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_show_data ON "show_data" (anilist_id ASC )')
         cursor.connection.commit()
         cursor.close()
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
     def _build_episode_table(self):
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS episodes ('
                        'anilist_id INTEGER NOT NULL, '
@@ -161,10 +162,10 @@ class AnilistSyncDatabase:
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_episodes ON episodes (anilist_id ASC, season ASC, number ASC)')
         cursor.connection.commit()
         cursor.close()
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
     def _build_sync_activities(self):
-        control.anilistSyncDB_lock.acquire()
+        threading.Lock().acquire()
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS activities ('
                        'sync_id INTEGER PRIMARY KEY, '
@@ -172,7 +173,7 @@ class AnilistSyncDatabase:
                        )
         cursor.connection.commit()
         cursor.close()
-        control.try_release_lock(control.anilistSyncDB_lock)
+        control.try_release_lock(threading.Lock())
 
     @staticmethod
     def _get_cursor():
@@ -182,20 +183,17 @@ class AnilistSyncDatabase:
         return cursor
 
     def re_build_database(self, silent=False):
+        from resources.lib.ui import maintenance
+
         if not silent:
             confirm = control.yesno_dialog(control.ADDON_NAME, control.lang(30203))
             if confirm == 0:
                 return
 
-        # Delete mal_dub.json from app data
-        try:
-            os.remove(os.path.join(control.dataPath, 'mal_dub.json'))
-        except FileNotFoundError:
-            pass
+        maintenance.update_mappings_db()
+        maintenance.update_dub_json()
 
-        path = control.anilistSyncDB
-        xbmcvfs.delete(path)
-        with open(path, 'a+'):
+        with open(control.anilistSyncDB, 'w'):
             pass
 
         self._build_show_table()
@@ -207,6 +205,8 @@ class AnilistSyncDatabase:
 
         self._set_base_activites()
         self._refresh_activites()
+        
+        control.notify(f'{control.ADDON_NAME}: Database', 'Metadata Database Successfully Cleared', sound=False)
 
 
 def _dict_factory(cursor, row):

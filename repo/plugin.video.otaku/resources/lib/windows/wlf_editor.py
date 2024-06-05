@@ -1,3 +1,5 @@
+import xbmcgui
+
 from resources.lib.ui import control
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -45,7 +47,6 @@ class SourceSelect(BaseWindow):
             self.flavors_list.addItem(menu_item)
 
             self.anime_list_entry['simkl'] = WatchlistFlavor.watchlist_anime_entry_request('simkl', '235')
-
 
         selected_flavor_item = self.flavors_list.getSelectedItem()
         self.selected_flavor = (selected_flavor_item.getLabel()).lower()
@@ -106,7 +107,7 @@ class SourceSelect(BaseWindow):
         self.anime_item.setProperty('status', new_status)
 
     def edit_eps_watched(self):
-        episodes_watched = control.showDialog.numeric(0, 'Enter episodes watched')
+        episodes_watched = xbmcgui.Dialog().numeric(0, 'Enter episodes watched')
         if not episodes_watched:
             episodes_watched = '0'
         self.anime_item.setProperty('eps_watched', str(episodes_watched))

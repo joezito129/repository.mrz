@@ -1,6 +1,7 @@
 import ast
 import datetime
 import itertools
+import json
 import pickle
 import random
 import requests
@@ -146,11 +147,16 @@ class AniListBrowser:
         return self.process_res(anilist_res)
 
     def get_anilist(self, anilist_id):
+        while anilist_id > 1_000_000_000:
+            anilist_id = anilist_id - 1_000_000_000
+        else:
+            anilist_id_ = anilist_id
         variables = {
             'id': anilist_id,
             'type': "ANIME"
         }
         anilist_res = database.get_(self.get_anilist_res, 24, variables)
+        anilist_res['id'] = anilist_id_
         return self.process_res(anilist_res)
 
     def get_base_res(self, variables, page=1):
@@ -616,7 +622,8 @@ class AniListBrowser:
     def process_anilist_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         get_meta.collect_meta_(json_res['ANIME'])
-        mapfunc = partial(self._base_anilist_view)
+        completed = self.open_completed()
+        mapfunc = partial(self._base_anilist_view, completed=completed)
         all_results = map(mapfunc, json_res['ANIME'])
         all_results = list(itertools.chain(*all_results))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
@@ -625,7 +632,8 @@ class AniListBrowser:
     def process_recommendations_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         res = [edge['node']['mediaRecommendation'] for edge in json_res['edges']]
-        mapfunc = partial(self._base_anilist_view)
+        completed = self.open_completed()
+        mapfunc = partial(self._base_anilist_view, completed=completed)
         get_meta.collect_meta_(res)
         all_results = map(mapfunc, res)
         all_results = list(itertools.chain(*all_results))
@@ -639,14 +647,9 @@ class AniListBrowser:
                 tnode = edge['node']
                 tnode['relationType'] = edge['relationType']
                 res.append(tnode)
-        mapfunc = partial(self._base_anilist_view)
+        completed = self.open_completed()
+        mapfunc = partial(self._base_anilist_view, completed=completed)
         all_results = map(mapfunc, res)
-        all_results = list(itertools.chain(*all_results))
-        return all_results
-
-    def process_watch_order_view(self, json_res):
-        mapfunc = self._base_anilist_view
-        all_results = map(mapfunc, json_res)
         all_results = list(itertools.chain(*all_results))
         return all_results
 
@@ -656,7 +659,7 @@ class AniListBrowser:
         return database.get_show(str(res['id']))
 
     @div_flavor
-    def _base_anilist_view(self, res, mal_dub=None, dubsub_filter=None):
+    def _base_anilist_view(self, res, completed={}, mal_dub=None, dubsub_filter=None):
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
         kitsu_id = ''
@@ -691,8 +694,8 @@ class AniListBrowser:
             'country': res.get('countryOfOrigin', ''),
         }
 
-        # if False:
-        #     info['playcount'] = 1
+        if completed.get(str(anilist_id)):
+            info['playcount'] = 1
 
         try:
             start_date = res.get('startDate')
@@ -939,14 +942,15 @@ class AniListBrowser:
             variables["includedGenres"] = genre_list
         if tag_list:
             variables["includedTags"] = tag_list
-        return self.process_genre_view(query, variables, f"anilist_genres/%s/%s/%%d" % (genre_list, tag_list), page)
+        return self.process_genre_view(query, variables, f'anilist_genres/{genre_list}/{tag_list}/%d', page)
 
     def process_genre_view(self, query, variables, base_plugin_url, page):
         r = requests.post(self._URL, json={'query': query, 'variables': variables})
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
         hasNextPage = results['data']['Page']['pageInfo']['hasNextPage']
-        mapfunc = partial(self._base_anilist_view)
+        completed = self.open_completed()
+        mapfunc = partial(self._base_anilist_view, completed=completed)
         get_meta.collect_meta_(anime_res)
         all_results = map(mapfunc, anime_res)
         all_results = list(itertools.chain(*all_results))
@@ -955,3 +959,13 @@ class AniListBrowser:
 
     def get_genres_page(self, genre_string, tag_string, page):
         return self.genres_payload(ast.literal_eval(genre_string), ast.literal_eval(tag_string), page)
+
+    @staticmethod
+    def open_completed():
+        try:
+            with open(control.completed_json) as file:
+                completed = json.load(file)
+        except FileNotFoundError:
+            completed = {}
+        return completed
+    
