@@ -20,7 +20,6 @@
 # t0 = time.perf_counter_ns()
 
 import pickle
-import xbmcplugin
 
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
@@ -29,7 +28,7 @@ from resources.lib.ui.router import route, router_process
 from resources.lib.WatchlistIntegration import add_watchlist, watchlist_update_episode
 
 
-_ANILIST_BROWSER = AniListBrowser(control.getSetting("titlelanguage"))
+_ANILIST_BROWSER = AniListBrowser(int(control.getSetting("titlelanguage")))
 
 
 def add_last_watched(items):
@@ -155,7 +154,7 @@ def ANILIST_GENRES_PAGES(payload, params):
 @route('search_history')
 def SEARCH_HISTORY(payload, params):
     history = database.getSearchHistory('show')
-    if "Yes" in control.getSetting('searchhistory'):
+    if int(control.getSetting('searchhistory')) == 0:
         control.draw_items(OtakuBrowser.search_history(history), "addons", [('Remove from History', 'remove_search_item')])
     else:
         SEARCH(payload, params)
@@ -182,8 +181,8 @@ def REMOVE_SEARCH_ITEM(payload, params):
 def SEARCH(payload, params):
     query = control.keyboard(control.lang(50011))
     if not query:
-        xbmcplugin.endOfDirectory(control.HANDLE)
-        return
+        import xbmcplugin
+        return xbmcplugin.endOfDirectory(control.HANDLE)
     if "Yes" in control.getSetting('searchhistory'):
         database.addSearchHistory(query, 'show')
     control.draw_items(_ANILIST_BROWSER.get_search(query))
@@ -390,7 +389,6 @@ if __name__ == "__main__":
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(player.playList) != 0 and not player.player().isPlaying():
         player.playList.clear()
-
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')

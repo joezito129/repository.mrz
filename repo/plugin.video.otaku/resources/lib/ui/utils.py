@@ -15,6 +15,7 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
         fanart = random.choice(fanart)
         if '/' not in fanart:
             fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
+
     # if poster and '/' not in poster:
     #     poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
     return {

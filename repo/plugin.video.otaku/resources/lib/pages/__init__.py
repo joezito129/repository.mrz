@@ -199,9 +199,11 @@ class Sources(DisplayWindow):
     def resolutionList():
         resolutions = []
         max_res = int(control.getSetting('general.maxResolution'))
-        if max_res <= 3:
+        if max_res <= 4:
             resolutions.append('NA')
             resolutions.append('EQ')
+        if max_res <= 3:
+            resolutions.append('480p')
         if max_res <= 2:
             resolutions.append('720p')
         if max_res <= 1:
@@ -232,25 +234,29 @@ class Sources(DisplayWindow):
         resolutions.reverse()
         if filter_lang:
             filter_lang = int(filter_lang)
-
             torrent_list = [i for i in torrent_list if i['lang'] != filter_lang]
             embed_list = [i for i in embed_list if i['lang'] != filter_lang]
         debrid_priorities = self.debrid_priority()
 
         for resolution in resolutions:
-            if sort_method == 0 or sort_method == 2:
+            if sort_method == 0:
                 for debrid in debrid_priorities:
                     for torrent in torrent_list:
                         if debrid['slug'] == torrent['debrid_provider']:
                             if torrent['quality'] == resolution:
                                 sortedList.append(torrent)
 
-            if sort_method == 1 or sort_method == 2:
+            elif sort_method == 1:
+                for file in embed_list:
+                    if file['quality'] == resolution:
+                        sortedList.append(file)
+        if sort_method == 0:
+            for resolution in resolutions:
                 for file in embed_list:
                     if file['quality'] == resolution:
                         sortedList.append(file)
 
-        if sort_method == 1:
+        elif sort_method == 1:
             for resolution in resolutions:
                 for debrid in debrid_priorities:
                     for torrent in torrent_list:
@@ -258,22 +264,16 @@ class Sources(DisplayWindow):
                             if torrent['quality'] == resolution:
                                 sortedList.append(torrent)
 
-        if sort_method == 0:
-            for resolution in resolutions:
-                for file in embed_list:
-                    if file['quality'] == resolution:
-                        sortedList.append(file)
-
         if control.getSetting('general.disable265') == 'true':
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
 
-        sort_option = control.getSetting('general.sourcesort')
-        if sort_option == 'Sub':
+        sort_option = int(control.getSetting('general.sourcesort'))
+        if sort_option == 2:
             sortedList = sorted(sortedList, key=lambda x: x['lang'] == 0, reverse=True)
-        elif sort_option == 'Dub':
+        elif sort_option == 0:
             sortedList = sorted(sortedList, key=lambda x: x['lang'] > 0, reverse=True)
 
-        preferences = control.getSetting("general.source")
+        lang = int(control.getSetting("general.source"))
 
         for cloud_file in self.cloud_files:
             sortedList.insert(0, cloud_file)
@@ -281,9 +281,9 @@ class Sources(DisplayWindow):
         for other in other_list:
             sortedList.insert(0, other)
 
-        lang_preferences = {'Dub': 0, 'Sub': 2}
-        if preferences in lang_preferences:
-            sortedList = [i for i in sortedList if i['lang'] != lang_preferences[preferences]]
+        if lang != 1:
+            langs = [0, 1, 2]
+            sortedList = [i for i in sortedList if i['lang'] != langs[lang]]
         return sortedList
 
     def updateProgress(self):

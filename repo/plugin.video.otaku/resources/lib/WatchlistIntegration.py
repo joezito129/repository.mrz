@@ -91,10 +91,10 @@ def CONTEXT_MENU(payload, params):
     actions = WatchlistFlavor.context_statuses()
 
     kodi_meta = pickle.loads(show['kodi_meta'])
-    _TITLE_LANG = control.title_lang(control.getSetting("titlelanguage"))
+    _TITLE_LANG = control.title_lang(int(control.getSetting("titlelanguage")))
     title = kodi_meta['ename'] if _TITLE_LANG == 'english' else kodi_meta['title_userPreferred']
 
-    context = control.select_dialog(f"{title}  {control.colorString(f'({str(flavor.flavor_name).capitalize()} + )', 'blue')}", list(map(lambda x: x[0], actions)))
+    context = control.select_dialog(f"{title}  {control.colorString(f'({str(flavor.flavor_name).capitalize()})', 'blue')}", list(map(lambda x: x[0], actions)))
     if context != -1:
         heading = f'{control.ADDON_NAME} - ({str(flavor.flavor_name).capitalize()})'
         status = actions[context][1]
@@ -149,7 +149,7 @@ def add_watchlist(items):
 def watchlist_update_episode(anilist_id, episode):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
-        return WatchlistFlavor.watchlist_update_episdoe(anilist_id, episode)
+        return WatchlistFlavor.watchlist_update_episode(anilist_id, episode)
 
 
 def set_watchlist_status(anilist_id, status):

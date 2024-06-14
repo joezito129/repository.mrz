@@ -20,7 +20,7 @@ class WatchlistFlavorBase:
         self._token = token
         self._refresh = refresh
         self._sort = sort
-        self._title_lang = title_lang if title_lang else control.title_lang(control.getSetting("titlelanguage"))
+        self._title_lang = title_lang if title_lang else control.title_lang(int(control.getSetting("titlelanguage")))
 
     @classmethod
     def name(cls):

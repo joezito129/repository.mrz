@@ -195,21 +195,6 @@ def context_menu(context_list):
     return xbmcgui.Dialog().contextmenu(context_list)
 
 
-def get_view_type(viewtype):
-    viewTypes = {
-        'Default': 50,
-        'Poster': 51,
-        'Icon Wall': 52,
-        'Shift': 53,
-        'Info Wall': 54,
-        'Wide List': 55,
-        'Wall': 500,
-        'Banner': 501,
-        'Fanart': 502,
-    }
-    return viewTypes[viewtype]
-
-
 def set_videotags(li, info):
     vinfo = li.getVideoInfoTag()
     vinfo.setTitle(info['title'])
@@ -251,7 +236,7 @@ def set_videotags(li, info):
     #     vinfo.setTrailer(info['trailer'])
 
 
-def xbmc_add_player_item(name, url, art=None, info=None, draw_cm=None, bulk_add=False):
+def xbmc_add_player_item(name, url, art=None, info=None, draw_cm=None, bulk_add=False, fanart_disable=False, clearlogo_disable=False):
     if not art:
         art = {}
     if not info:
@@ -267,16 +252,22 @@ def xbmc_add_player_item(name, url, art=None, info=None, draw_cm=None, bulk_add=
 
     if art.get('fanart') is None:
         art['fanart'] = OTAKU_FANART_PATH
+    else:
+        if fanart_disable:
+            art['fanart'] = OTAKU_FANART_PATH
+    if clearlogo_disable:
+        art['clearlogo'] = OTAKU_ICONS_PATH
 
     if art.get('thumb'):
         art['tvshow.poster'] = art.pop('poster')
+
     liz.setArt(art)
 
     liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
     return u, liz, False if bulk_add else xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=False)
 
 
-def xbmc_add_dir(name, url, art=None, info=None, draw_cm=None, bulk_add=False, isfolder=True):
+def xbmc_add_dir(name, url, art=None, info=None, draw_cm=None, bulk_add=False, isfolder=True, fanart_disable=False, clearlogo_disable=False):
     if not art:
         art = {}
     if not info:
@@ -291,8 +282,14 @@ def xbmc_add_dir(name, url, art=None, info=None, draw_cm=None, bulk_add=False, i
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
 
-    if not art.get('fanart'):
+    if art.get('fanart') is None:
         art['fanart'] = OTAKU_FANART_PATH
+    else:
+        if fanart_disable:
+            art['fanart'] = OTAKU_FANART_PATH
+    if clearlogo_disable:
+        art['clearlogo'] = OTAKU_ICONS_PATH
+
     liz.setArt(art)
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
@@ -310,15 +307,17 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
     elif getSetting('context.marked.watched') == 'true' and contentType == 'episodes':
         draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
     # for x in cm:
-        #     draw_cm.append(x)0
+        #     draw_cm.append(x)
+    fanart_disable = getSetting('fanart.disable') == 'true'
+    clearlogo_disable = getSetting('clearlogo.disable') == 'true'
     if len(video_data) > 99:
         bulk_draw_items(video_data, draw_cm)
     else:
         for vid in video_data:
             if vid['is_dir']:
-                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, isfolder=vid['isfolder'])
+                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], fanart_disable, clearlogo_disable)
             else:
-                xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add)
+                xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, fanart_disable, clearlogo_disable)
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
@@ -357,13 +356,24 @@ def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
     return [xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add) for vid in video_data]
 
 
-def title_lang(title_key):
-    title_lang_dict = {
-        "40370": "userPreferred",
-        "Romaji (Shingeki no Kyojin)": "userPreferred",
-        "40371": "english",
-        "English (Attack on Titan)": "english"
+def get_view_type(viewtype):
+    # viewtypes = [50, 51, 53, 54, 55, 500, 501, 502]
+    viewTypes = {
+        'Default': 50,
+        'Poster': 51,
+        'Icon Wall': 52,
+        'Shift': 53,
+        'Info Wall': 54,
+        'Wide List': 55,
+        'Wall': 500,
+        'Banner': 501,
+        'Fanart': 502,
     }
+    return viewTypes[viewtype]
+
+
+def title_lang(title_key):
+    title_lang_dict = ["userPreferred", 'english']
     return title_lang_dict[title_key]
 
 
@@ -403,7 +413,7 @@ def toggle_reuselanguageinvoker(forced_state=None):
 
     file_path = os.path.join(ADDON_PATH, "addon.xml")
 
-    with open(file_path, "r") as addon_xml:
+    with open(file_path) as addon_xml:
         file_lines = addon_xml.readlines()
 
     for i in range(len(file_lines)):
@@ -418,6 +428,10 @@ def toggle_reuselanguageinvoker(forced_state=None):
                 setSetting("reuselanguageinvoker.status", "Disabled")
                 _store_and_reload(file_lines)
             break
+
+
+def is_addon_visible():
+    return xbmc.getInfoLabel('Container.PluginName') == 'plugin.video.otaku'
 
 
 def abort_requested():

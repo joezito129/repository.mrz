@@ -112,6 +112,9 @@ class RealDebrid:
             control.setSetting('rd.auth', self.token)
             control.setSetting('rd.refresh', self.refresh)
             control.setSetting('rd.expiry', str(int(time.time()) + int(response['expires_in'])))
+            user_info = requests.get(f'{self.BaseUrl}/user', headers=self.__headers()).json()
+            control.setSetting('rd.username', user_info['username'])
+            control.setSetting('rd.auth.status', user_info['type'])
 
     def checkHash(self, hashList):
         self.cache_check_results = {}

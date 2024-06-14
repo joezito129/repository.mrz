@@ -23,14 +23,26 @@ class WatchlistFlavor:
             enabled_watchlists.append(WatchlistFlavor.__instance_flavor('anilist'))
         if control.simkl_enabled():
             enabled_watchlists.append(WatchlistFlavor.__instance_flavor('simkl'))
+        return enabled_watchlists
 
+    @staticmethod
+    def get_enabled_watchlist_list():
+        enabled_watchlists = []
+        if control.myanimelist_enabled():
+            enabled_watchlists.append('mal')
+        if control.kitsu_enabled():
+            enabled_watchlists.append('kitsu')
+        if control.anilist_enabled():
+            enabled_watchlists.append('anilist')
+        if control.simkl_enabled():
+            enabled_watchlists.append('simkl')
         return enabled_watchlists
 
     @staticmethod
     def get_update_flavor():
         selected = control.watchlist_to_update()
         if not selected:
-            return None
+            return
         if not WatchlistFlavor.__SELECTED:
             WatchlistFlavor.__SELECTED = WatchlistFlavor.__instance_flavor(selected)
         return WatchlistFlavor.__SELECTED
@@ -110,7 +122,7 @@ class WatchlistFlavor:
         return WatchlistFlavor.get_update_flavor().action_statuses()
 
     @staticmethod
-    def watchlist_update_episdoe(anilist_id, episode):
+    def watchlist_update_episode(anilist_id, episode):
         return WatchlistFlavor.get_update_flavor().update_num_episodes(anilist_id, episode)
 
     @staticmethod

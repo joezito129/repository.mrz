@@ -95,8 +95,8 @@ class AniListWLF(WatchlistFlavorBase):
 
     def get_watchlist_status(self, status, next_up):
         query = '''
-        query ($userId: Int, $userName: String, $status: MediaListStatus, $type: MediaType, $sort: [MediaListSort]) {
-            MediaListCollection(userId: $userId, userName: $userName, status: $status, type: $type, sort: $sort) {
+        query ($userId: Int, $userName: String, $status: MediaListStatus, $type: MediaType, $sort: [MediaListSort], $forceSingleCompletedList: Boolean) {
+            MediaListCollection(userId: $userId, userName: $userName, status: $status, type: $type, sort: $sort, forceSingleCompletedList: $forceSingleCompletedList) {
                 lists {
                     entries {
                         ...mediaListEntry
@@ -110,7 +110,6 @@ class AniListWLF(WatchlistFlavorBase):
             mediaId
             status
             progress
-            customLists
             media {
                 id
                 idMal
@@ -182,17 +181,21 @@ class AniListWLF(WatchlistFlavorBase):
             'username': self._username,
             'status': status,
             'type': 'ANIME',
-            'sort': self.__get_sort()
+            'sort': self.__get_sort(),
+            'forceSingleCompletedList': False
         }
         return self._process_status_view(query, variables, next_up)
 
     def _process_status_view(self, query, variables, next_up):
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
+
         lists = results['data']['MediaListCollection']['lists']
         entries = []
         for mlist in lists:
-            entries += mlist['entries']
+            for entrie in mlist['entries']:
+                if entrie not in entries:
+                    entries.append(entrie)
 
         all_results = map(self._base_next_up_view, reversed(entries)) if next_up else map(self._base_watchlist_status_view, reversed(entries))
 

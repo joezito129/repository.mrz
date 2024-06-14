@@ -15,7 +15,7 @@ class AniListBrowser:
     _URL = "https://graphql.anilist.co"
 
     def __init__(self, title_key=None):
-        self._TITLE_LANG = control.title_lang(title_key) if title_key else "userPreferred"
+        self._TITLE_LANG = control.title_lang(title_key) if title_key else 'userPreferred'
         if control.getSetting('contentformat.bool') == "true":
             formats = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
             self.format_in_type = formats[int(control.getSetting('contentformat.menu'))]
@@ -26,11 +26,10 @@ class AniListBrowser:
             self.countryOfOrigin_type = countries[int(control.getSetting('contentorigin.menu'))]
         else:
             self.countryOfOrigin_type = ''
-        self.watch_order_list = []
 
     @staticmethod
     def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage:
+        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.next') == 'true'):
             return []
 
         next_page = page + 1
@@ -147,6 +146,7 @@ class AniListBrowser:
         return self.process_res(anilist_res)
 
     def get_anilist(self, anilist_id):
+        anilist_id = int(anilist_id)
         while anilist_id > 1_000_000_000:
             anilist_id = anilist_id - 1_000_000_000
         else:
@@ -626,6 +626,7 @@ class AniListBrowser:
         mapfunc = partial(self._base_anilist_view, completed=completed)
         all_results = map(mapfunc, json_res['ANIME'])
         all_results = list(itertools.chain(*all_results))
+
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 

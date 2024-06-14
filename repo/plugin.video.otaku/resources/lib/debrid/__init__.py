@@ -26,8 +26,7 @@ class TorrentCacheCheck:
             self.threads.append(threading.Thread(target=self.premiumize_worker, args=[copy.deepcopy(torrent_list)]))
 
         if control.all_debrid_enabled():
-            self.threads.append(
-                threading.Thread(target=self.all_debrid_worker, args=[copy.deepcopy(torrent_list)]))
+            self.threads.append(threading.Thread(target=self.all_debrid_worker, args=[copy.deepcopy(torrent_list)]))
 
         for i in self.threads:
             i.start()
@@ -43,7 +42,6 @@ class TorrentCacheCheck:
 
         if len(torrent_list) == 0:
             return
-
         cache_check = api.check_hash([i['hash'] for i in torrent_list])
         if not cache_check:
             return

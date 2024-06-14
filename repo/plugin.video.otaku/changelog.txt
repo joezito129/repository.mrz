@@ -1,3 +1,11 @@
+Changelog v5.0.29 (2024-06-13):
+- Added Fanart/clearlogo disable
+- Silent sync in background
+- Update debrid status on every refresh token
+- Added 480p filter
+- Hide Next Widget
+- Updated All_debrid
+
 Changelog v5.0.28 (2024-06-05):
 - Changed source select aesthetics
 - Added bulk_draw_items

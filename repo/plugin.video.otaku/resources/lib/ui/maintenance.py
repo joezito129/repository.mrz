@@ -46,20 +46,31 @@ def update_mappings_db():
         file.write(r.content)
 
 
-def sync_watchlist():
-    from resources.lib.WatchlistFlavor import WatchlistFlavor
+def sync_watchlist(silent=False):
+    if control.getSetting('watchlist.sync.enabled') == 'true':
+        from resources.lib.WatchlistFlavor import WatchlistFlavor
 
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor:
-        flavor.save_completed()
-        control.notify(control.ADDON_NAME, f'Completed Sync [B]{flavor.flavor_name}[/B]')
+        flavor = WatchlistFlavor.get_update_flavor()
+        if flavor:
+            if flavor.flavor_name in WatchlistFlavor.get_enabled_watchlist_list():
+                flavor.save_completed()
+                if not silent:
+                    return control.notify(control.ADDON_NAME, f'Completed Sync [B]{flavor.flavor_name.capitalize()}[/B]')
+            else:
+                if not silent:
+                    control.ok_dialog(control.ADDON_NAME, "No Watchlist Enabled or Not Logged In")
+        else:
+            if not silent:
+                control.ok_dialog(control.ADDON_NAME, "No Watchlist Enabled or Not Logged In")
     else:
-        control.ok_dialog(control.ADDON_NAME, "No Watchlist Enabled")
+        if not silent:
+            control.ok_dialog(control.ADDON_NAME, "Watchilst Sync is Disabled")
 
 
 def update_dub_json():
     import requests
     import json
+
     with open(control.maldubFile, 'w') as file:
         mal_dub_raw = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
         mal_dub_list = mal_dub_raw.json()["dubbed"]
@@ -75,4 +86,4 @@ def run_maintenance():
     if control.getSetting('update.time') == '' or time.time() > int(control.getSetting('update.time')) + 2_592_000:
         update_mappings_db()
         update_dub_json()
-        sync_watchlist()
+        sync_watchlist(True)

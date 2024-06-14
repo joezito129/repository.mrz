@@ -13,22 +13,25 @@
 		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
 		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
 	</category>
+
 	<!-- General -->
 	<category label="40300">
 		<!-- General -->
-		<setting id="titlelanguage" type="labelenum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="English (Attack on Titan)"/>
-		<setting id="searchhistory" type="labelenum" label="40301" values="Yes|No" default="Yes"/>
-		<setting id="general.smart.scroll.enable" label="enable move to episode on" type="bool" default="true" />
-		<setting id="general.scroll.wait.time" label="Wait time in ms" type="slider" option="int" range="300,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
+		<setting id="titlelanguage" type="enum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="English (Attack on Titan)"/>
+		<setting id="searchhistory" type="enum" label="40301" values="Yes|No" default="Yes"/>
+		<setting id="general.smart.scroll.enable" label="enable Smart Scroll" type="bool" default="true" />
+		<setting id="general.scroll.wait.time" label="Wait time in ms" type="slider" option="int" range="100,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
 		<setting type="lsep" label="Language Invoker"/>
 		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
 			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
 		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
 
-		<!-- Interface -->
+		<!-- Meta Api -->
 		<setting type="lsep" label="Meta Api" />
 		<setting id="overide.meta.api" type="bool" label="Enable Choose Meta Api" default="false" />
 		<setting id="meta.api" type="labelenum" label="Meta Api" values="simkl|jikanmoa|anizip" default="simkl" visible="eq(-1,true)"/>
+
+		<!-- Interface -->
 		<setting type="lsep" label="40302"/>
 		<setting id="interface.viewtypes.bool" label="Force view types on menus" type="bool" default="false"/>
 		<setting id="interface.viewtypes.addon" type="labelenum" label="General Menu View" values="Wide List|List" default="Wide List" visible="eq(-1,true)"/>
@@ -36,9 +39,14 @@
 		<setting id="interface.viewtypes.episodes" type="labelenum" label="Episode View" values="Wide List|Wall|Info Wall" default="Wide List" visible="eq(-3,true)"/>
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
-		<setting id="scraping.fanart" type="bool" label="40433" default="true" />
-		<setting id="scraping.clearlogo" type="bool" label="40434" default="false" />
+		<setting id="fanart.disable" type="bool" label="Disable Fanart" default="true" />
+		<setting id="clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
 		<setting id="general.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
+
+		<!-- Widgets -->
+		<setting type="lsep" label="Widgets" />
+		<setting id="widget.hide.next" label="Hide Next up Widget" type="bool" default="true" />
+
 	</category>
 
 	<!-- Provider -->
@@ -58,10 +66,6 @@
 		<setting id="provider.aniplay" type="bool" label="Aniplay" default="false" />
 		<setting id="provider.aniwave" type="bool" label="Aniwave" default="true" />
 		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
-
-
-
-
 	</category>
 
 	<!-- Playback -->
@@ -90,23 +94,20 @@
 		<setting id="skipoutro.aniskip.enable" type="bool" subsetting="true" label="40431" default="true" visible="eq(-1,true)" />
 		<setting id="skipoutro.aniskip.offset" type="slider" subsetting="true" label="40432" visible="eq(-1,true) + eq(-2,true)" range="-10,10" default="-3"/>
 		<setting id="playingnext.time" type="slider" subsetting="true" label="40319" option="int" range="10,180" default="120" visible="eq(-3,true)" />
-
-
 	</category>
 
 	<!-- Sort & Filter -->
 	<category label="40326">
 		<!-- Source Filters -->
 		<setting type="lsep" label="40327"/>
-		<setting id="general.maxResolution" type="enum" label="40328" values="4k|1080p|720p|NA" default="4k" />
+		<setting id="general.maxResolution" type="enum" label="40328" values="4k|1080p|720p|480p|NA" default="4k" />
 		<setting id="general.disable265" type="bool" label="40329" default="false" />
-		<setting id="general.source" type="labelenum" label="40330" default="Both" values="Sub|Dub|Both" />
+		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="Both" />
 
 		<!-- Source Sorting -->
 		<setting type="lsep" label="40331"/>
 		<setting id="general.sortsources" type="enum" label="40332" values="Torrents|Embeds" default="Torrents" />
-		<setting id="general.sourcesort" type="labelenum" label="40333" values="None|Sub|Dub" default="Dub" />
-
+		<setting id="general.sourcesort" type="enum" label="40333" values="Dub|None|Sub" default="Dub" />
 
 
 <!--		&lt;!&ndash; Preferences &ndash;&gt;-->
@@ -144,7 +145,6 @@
 		<setting id="alldebrid.enabled" type="bool" default="false" label="40341" />
 		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
 		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-2,true)" />
-<!--		<setting id="alldebrid.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/alldebrid)" visible="eq(-3,true)" />-->
 		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-3,true)" />
 		<!-- <setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" /> -->
 		
@@ -162,7 +162,6 @@
 		<setting id="premiumize.enabled" type="bool" default="false" label="40364" />
 		<setting id="premiumize.username" type="text" label="40365" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/premiumize)" visible="eq(-2,true)" />
-<!--		<setting id="premiumize.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/premiumize)" visible="eq(-3,true)" />-->
 		<setting id="premiumize.priority" type="slider" subsetting="true" label="40367" option="int" range="1,10" default="10" visible="eq(-3,true)" />
 		<setting id="premiumize.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
 	</category>
@@ -180,7 +179,7 @@
 		<!-- MyAnimeList -->
 		<setting type="lsep" label="40361"/>
 		<setting id="mal.enabled" label="40362" type="bool" default="false"/>
-    		<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
+		<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="mal.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)" visible="eq(-2,true)"/>
 		<setting id="mal.listsettings" type="action" label="40353" option="close" visible="eq(-3,true)"/>
 		<setting id="mal.sort" type="labelenum" subsetting="true" label="40354" values="List Score|Last Updated|Anime Start Date|Anime Title" default="Last Updated" visible="eq(-4,true)"/>
@@ -228,7 +227,6 @@
 		<setting id="menu.lastwatched" label="Last Watched" type="bool" default="true" />
 		<setting id="search_history" label="50011" type="bool" default="true" visible="true"/>
 		<setting id="tools" label="50012" type="bool" default="true"/>
-
 	</category>
 
 	<!-- Shortcuts -->

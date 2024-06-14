@@ -69,7 +69,7 @@ class SimklWLF(WatchlistFlavorBase):
 
     @staticmethod
     def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage:
+        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.next') == 'true'):
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
