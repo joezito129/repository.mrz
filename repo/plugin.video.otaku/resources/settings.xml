@@ -144,9 +144,10 @@
 		<setting type="lsep" label="40340" />
 		<setting id="alldebrid.enabled" type="bool" default="false" label="40341" />
 		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
-		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-2,true)" />
-		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-3,true)" />
-		<!-- <setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" /> -->
+		<setting id="alldebrid.auth.status" type="text" label="All-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
+		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-3,true)" />
+		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-4,true)" />
+		<setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-5,true)" />
 		
 		<!-- Debrid-Link -->
 		<setting type="lsep" label="40411" />

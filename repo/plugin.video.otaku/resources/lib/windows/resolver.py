@@ -55,7 +55,7 @@ class Resolver(BaseWindow):
                     break
 
             elif i['type'] == 'cloud' or i['type'] == 'hoster':
-                if i['type'] == 'cloud' and i['debrid_provider'] == 'premiumize':
+                if i['type'] == 'cloud' and i['debrid_provider'] in ['premiumize', 'all_debrid']:
                     stream_link = i['hash']
                 else:
                     stream_link = self.resolve_source(self.resolvers[i['debrid_provider']], i)

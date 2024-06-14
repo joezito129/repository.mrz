@@ -183,7 +183,7 @@ def SEARCH(payload, params):
     if not query:
         import xbmcplugin
         return xbmcplugin.endOfDirectory(control.HANDLE)
-    if "Yes" in control.getSetting('searchhistory'):
+    if int(control.getSetting('searchhistory')) == 0:
         database.addSearchHistory(query, 'show')
     control.draw_items(_ANILIST_BROWSER.get_search(query))
 

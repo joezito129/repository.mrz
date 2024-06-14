@@ -125,7 +125,6 @@
                     <align>left</align>
                     <aligny>center</aligny>
                     <label>[B]$INFO[ListItem.Label][/B]</label>
-                    <scroll>true</scroll>
                 </control>
 <!--             <control type="label">-->
 <!--                     <top>60</top>-->

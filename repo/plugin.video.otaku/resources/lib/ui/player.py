@@ -241,6 +241,7 @@ def _prefetch_play_link(link):
         headers = None
 
     try:
+        control.print(url)
         r = requests.get(url, headers=headers, stream=True)
     except requests.exceptions.SSLError:
         limit = None if '.m3u8' in url else '0'

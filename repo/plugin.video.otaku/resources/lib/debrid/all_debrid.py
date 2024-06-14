@@ -8,7 +8,7 @@ from resources.lib.ui import control, source_utils
 class AllDebrid:
     def __init__(self):
         self.apikey = control.getSetting('alldebrid.apikey')
-        self.agent_identifier = 'Otaku_Kodi_Addon'
+        self.agent_identifier = 'Otaku'
         self.base_url = 'https://api.alldebrid.com/v4'
         self.cache_check_results = []
 
@@ -42,12 +42,15 @@ class AllDebrid:
             'apikey': self.apikey
         }
         r = requests.get(f'{self.base_url}/user', params=params)
-        user_information = r.json()['data']
+        res = r.json().get('data', {})
+        user_information = res.get('user')
         if user_information:
-            control.setSetting('alldebrid.username', user_information['user']['username'])
-
-        if auth_complete:
-            control.ok_dialog(control.ADDON_NAME, f'AllDebrid {control.lang(30103)}')
+            control.setSetting('alldebrid.username', user_information['username'])
+            control.setSetting('alldebrid.auth.status', 'Premium' if user_information['isPremium'] else 'expired')
+            if auth_complete:
+                control.ok_dialog(control.ADDON_NAME, f'AllDebrid {control.lang(30103)}')
+        else:
+            control.ok_dialog(control.ADDON_NAME, 'AllDebrid Failed to login')
 
     def poll_auth(self, **params):
         params['agent'] = self.agent_identifier
@@ -61,7 +64,7 @@ class AllDebrid:
 
     def check_hash(self, hashList):
         self.cache_check_results = []
-        # hashList = [hashList[x: x + 10] for x in range(0, len(hashList), 10)]
+        hashList = [hashList[x: x + 10] for x in range(0, len(hashList), 10)]
         threads = []
         for hash_ in hashList:
             thread = threading.Thread(target=self._check_hash_thread, args=[hash_])
@@ -78,6 +81,7 @@ class AllDebrid:
             'magnets[]': hashes
         }
         r = requests.post(f'{self.base_url}/magnet/instant', params=params)
+
         response = r.json()['data']
         self.cache_check_results += response.get('magnets')
 
@@ -107,6 +111,23 @@ class AllDebrid:
             'id': magnet_id
         }
         r = requests.get(f'{self.base_url}/magnet/status', params=params)
+        return r.json()['data']
+
+    def list_torrents(self):
+        params = {
+            'agent': self.agent_identifier,
+            'apikey': self.apikey
+        }
+        r = requests.get(f'{self.base_url}/user/links', params=params)
+        return r.json()['data']
+
+    def link_info(self, link):
+        params = {
+            'agent': self.agent_identifier,
+            'apikey': self.apikey,
+            'link[]': link
+        }
+        r = requests.get(f'{self.base_url}/link/infos', params=params)
         return r.json()['data']
 
     def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):

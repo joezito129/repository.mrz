@@ -1,3 +1,7 @@
+Changelog v5.0.30 (2024-06-14):
+- Added Fuzzypacks to localfiles
+- Added all_debrid cloud scraping
+
 Changelog v5.0.29 (2024-06-13):
 - Added Fanart/clearlogo disable
 - Silent sync in background

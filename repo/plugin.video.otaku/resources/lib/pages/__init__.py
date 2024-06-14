@@ -191,7 +191,8 @@ class Sources(DisplayWindow):
             debrid['real_debrid'] = True
         if control.premiumize_enabled() and control.getSetting('premiumize.cloudInspection') == 'true':
             debrid['premiumize'] = True
-
+        if control.all_debrid_enabled() and control.getSetting('alldebrid.cloudInspection') == 'true':
+            debrid['alldebrid'] = True
         self.cloud_files += debrid_cloudfiles.sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
