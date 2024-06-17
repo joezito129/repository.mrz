@@ -33,7 +33,7 @@ completed_json = os.path.join(dataPath, 'completed.json')
 IMAGES_PATH = os.path.join(ADDON_PATH, 'resources', 'images')
 OTAKU_FANART_PATH = os.path.join(ADDON_PATH, 'fanart.jpg')
 OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
-OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', __settings__.getSetting("general.icons"))
+OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', __settings__.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
 xmlWindow = xbmcgui.WindowXMLDialog
@@ -226,21 +226,17 @@ def set_videotags(li, info):
         vinfo.setPlaycount(info['playcount'])
     if info.get('code'):
         vinfo.setProductionCode(info['code'])
-    # if info.get('cast'):
-    #     vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
-    # if info.get('OriginalTitle'):
-    #     vinfo.setOriginalTitle(info['OriginalTitle'])
-    # if info.get('IMDBNumber'):
-    #     vinfo.setIMDBNumber(info['IMDBNumber'])
-    # if info.get('trailer'):
-    #     vinfo.setTrailer(info['trailer'])
+    if info.get('cast'):
+        vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
+    if info.get('OriginalTitle'):
+        vinfo.setOriginalTitle(info['OriginalTitle'])
+    if info.get('IMDBNumber'):
+        vinfo.setIMDBNumber(info['IMDBNumber'])
+    if info.get('trailer'):
+        vinfo.setTrailer(info['trailer'])
 
 
-def xbmc_add_player_item(name, url, art=None, info=None, draw_cm=None, bulk_add=False, fanart_disable=False, clearlogo_disable=False):
-    if not art:
-        art = {}
-    if not info:
-        info = {}
+def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable, fanart_disable=False, clearlogo_disable=False):
     u = addon_url(url)
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
@@ -249,53 +245,19 @@ def xbmc_add_player_item(name, url, art=None, info=None, draw_cm=None, bulk_add=
     if draw_cm:
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
-
-    if art.get('fanart') is None:
-        art['fanart'] = OTAKU_FANART_PATH
-    else:
-        if fanart_disable:
+    if art:
+        if art.get('fanart') is None or fanart_disable:
             art['fanart'] = OTAKU_FANART_PATH
-    if clearlogo_disable:
-        art['clearlogo'] = OTAKU_ICONS_PATH
-
-    if art.get('thumb'):
-        art['tvshow.poster'] = art.pop('poster')
-
-    liz.setArt(art)
-
-    liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
-    return u, liz, False if bulk_add else xbmcplugin.addDirectoryItem(handle=HANDLE, url=u, listitem=liz, isFolder=False)
-
-
-def xbmc_add_dir(name, url, art=None, info=None, draw_cm=None, bulk_add=False, isfolder=True, fanart_disable=False, clearlogo_disable=False):
-    if not art:
-        art = {}
-    if not info:
-        info = {}
-    u = addon_url(url)
-    liz = xbmcgui.ListItem(name, offscreen=True)
-
-    if info:
-        set_videotags(liz, info)
-
-    if draw_cm:
-        cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
-        liz.addContextMenuItems(cm)
-
-    if art.get('fanart') is None:
-        art['fanart'] = OTAKU_FANART_PATH
-    else:
-        if fanart_disable:
-            art['fanart'] = OTAKU_FANART_PATH
-    if clearlogo_disable:
-        art['clearlogo'] = OTAKU_ICONS_PATH
-
-    liz.setArt(art)
+        if clearlogo_disable:
+            art['clearlogo'] = OTAKU_ICONS_PATH
+        liz.setArt(art)
+    if isplayable:
+        liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
-def bulk_draw_items(video_data, draw_cm):
-    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True) for vid in video_data]
+def bulk_draw_items(video_data, draw_cm, fanart_disable, clearlogo_disable):
+    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable'], fanart_disable, clearlogo_disable) for vid in video_data]
     xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
@@ -308,16 +270,13 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
         draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
     # for x in cm:
         #     draw_cm.append(x)
-    fanart_disable = getSetting('fanart.disable') == 'true'
-    clearlogo_disable = getSetting('clearlogo.disable') == 'true'
+    fanart_disable = getSetting('interface.fanart.disable') == 'true'
+    clearlogo_disable = getSetting('interface.clearlogo.disable') == 'true'
     if len(video_data) > 99:
-        bulk_draw_items(video_data, draw_cm)
+        bulk_draw_items(video_data, draw_cm, fanart_disable, clearlogo_disable)
     else:
         for vid in video_data:
-            if vid['is_dir']:
-                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], fanart_disable, clearlogo_disable)
-            else:
-                xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, fanart_disable, clearlogo_disable)
+            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable'], fanart_disable, clearlogo_disable)
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
@@ -336,7 +295,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
 
     # move to episode position currently watching
     if contentType == "episodes" and getSetting('general.smart.scroll.enable') == 'true':
-        xbmc.sleep(int(getSetting('general.scroll.wait.time')))
+        xbmc.sleep(int(getSetting('general.smart.scroll.time')))
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
             total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
@@ -353,7 +312,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
 
 
 def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
-    return [xbmc_add_player_item(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add) for vid in video_data]
+    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['is_folder'], vid['isplayable']) for vid in video_data]
 
 
 def get_view_type(viewtype):
@@ -373,7 +332,7 @@ def get_view_type(viewtype):
 
 
 def title_lang(title_key):
-    title_lang_dict = ["userPreferred", 'english']
+    title_lang_dict = ["romaji", 'english']
     return title_lang_dict[title_key]
 
 

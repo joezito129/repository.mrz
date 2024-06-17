@@ -55,7 +55,8 @@ def sync_watchlist(silent=False):
             if flavor.flavor_name in WatchlistFlavor.get_enabled_watchlist_list():
                 flavor.save_completed()
                 if not silent:
-                    return control.notify(control.ADDON_NAME, f'Completed Sync [B]{flavor.flavor_name.capitalize()}[/B]')
+                    notify_string = f'Completed Sync [B]{flavor.flavor_name.capitalize()}[/B]'
+                    return control.notify(control.ADDON_NAME, notify_string)
             else:
                 if not silent:
                     control.ok_dialog(control.ADDON_NAME, "No Watchlist Enabled or Not Logged In")

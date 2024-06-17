@@ -14,8 +14,8 @@ from resources.lib.ui.divide_flavors import div_flavor
 class AniListBrowser:
     _URL = "https://graphql.anilist.co"
 
-    def __init__(self, title_key=None):
-        self._TITLE_LANG = control.title_lang(title_key) if title_key else 'userPreferred'
+    def __init__(self):
+        self._TITLE_LANG = control.title_lang(int(control.getSetting("titlelanguage")))
         if control.getSetting('contentformat.bool') == "true":
             formats = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
             self.format_in_type = formats[int(control.getSetting('contentformat.menu'))]
@@ -29,7 +29,7 @@ class AniListBrowser:
 
     @staticmethod
     def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.next') == 'true'):
+        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true'):
             return []
 
         next_page = page + 1
@@ -189,7 +189,6 @@ class AniListBrowser:
                     id
                     idMal
                     title {
-                        userPreferred,
                         romaji,
                         english
                     }
@@ -271,7 +270,6 @@ class AniListBrowser:
                     id
                     idMal
                     title {
-                        userPreferred,
                         romaji,
                         english
                     }
@@ -347,7 +345,6 @@ class AniListBrowser:
                   mediaRecommendation {
                     id
                     title {
-                      userPreferred
                       romaji
                       english
                     }
@@ -419,7 +416,6 @@ class AniListBrowser:
                 node {
                   id
                   title {
-                    userPreferred
                     romaji
                     english
                   }
@@ -487,7 +483,6 @@ class AniListBrowser:
                 id
                 idMal
                 title {
-                    userPreferred,
                     romaji,
                     english
                 }
@@ -560,7 +555,6 @@ class AniListBrowser:
             id
             idMal
             title {
-                userPreferred,
                 romaji,
                 english
             }
@@ -674,7 +668,7 @@ class AniListBrowser:
 
         title = res['title'][self._TITLE_LANG]
         if not title:
-            title = res['title']['userPreferred']
+            title = res['title']['romaji']
 
         if res.get('relationType'):
             title += ' [COLOR limegreen][I]{0}[/I][/COLOR]'.format(res['relationType'])
@@ -746,7 +740,6 @@ class AniListBrowser:
             "banner": res.get('bannerImage'),
             "info": info
         }
-
         if kodi_meta.get('fanart'):
             base['fanart'] = kodi_meta['fanart']
         if kodi_meta.get('thumb'):
@@ -778,7 +771,7 @@ class AniListBrowser:
 
         title_userPreferred = res['title'][self._TITLE_LANG]
         if not title_userPreferred:
-            title_userPreferred = res['title']['userPreferred']
+            title_userPreferred = res['title']['romaji']
         name = res['title']['romaji']
         ename = res['title']['english']
 
@@ -879,7 +872,6 @@ class AniListBrowser:
                     id
                     idMal
                     title {
-                        userPreferred,
                         romaji,
                         english
                     }

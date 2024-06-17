@@ -4,7 +4,7 @@ import random
 import re
 import string
 import time
-import six
+# import six
 
 from resources.lib.ui import client, control, database, jsunpack
 from resources.lib.ui.pyaes import AESModeOfOperationCBC, Decrypter, Encrypter
@@ -44,8 +44,6 @@ def load_video_from_url(in_url):
                                          reqObj[2].get('Referer'))
     except error.URLError:
         return None  # Dead link, Skip result
-    except:
-        raise
 
 
 def __get_packed_data(html):
@@ -75,7 +73,6 @@ def __extract_yourupload(url, page_content, referer=None):
                'Referer': url}
     if r:
         return r.group(1) + __append_headers(headers)
-    return
 
 
 def __extract_mp4upload(url, page_content, referer=None):
@@ -86,7 +83,6 @@ def __extract_mp4upload(url, page_content, referer=None):
                'verifypeer': 'false'}
     if r:
         return r.group(1) + __append_headers(headers)
-    return
 
 
 def __extract_vidplay(url, page_content, referer=None):
@@ -182,7 +178,6 @@ def __extract_mixdrop(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return surl + __append_headers(headers)
-    return
 
 
 def __extract_filemoon(url, page_content, referer=None):
@@ -194,7 +189,6 @@ def __extract_filemoon(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return surl + __append_headers(headers)
-    return
 
 
 def __extract_embedrise(url, page_content, referer=None):
@@ -206,7 +200,6 @@ def __extract_embedrise(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return surl + __append_headers(headers)
-    return
 
 
 def __extract_fusevideo(url, page_content, referer=None):
@@ -221,7 +214,6 @@ def __extract_fusevideo(url, page_content, referer=None):
             if surl:
                 headers = {'User-Agent': _EDGE_UA, 'Referer': url, 'Accept-Language': 'en'}
                 return surl.group(1).replace('\\/', '/') + __append_headers(headers)
-    return
 
 
 def __extract_dood(url, page_content, referer=None):
@@ -239,7 +231,6 @@ def __extract_dood(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return dood_decode(html) + token + str(int(time.time() * 1000)) + __append_headers(headers)
-    return
 
 
 def __extract_streamtape(url, page_content, referer=None):
@@ -260,7 +251,6 @@ def __extract_streamtape(url, page_content, referer=None):
                    'Referer': url}
         src_url = 'https:' + src_url if src_url.startswith('//') else src_url
         return src_url + __append_headers(headers)
-    return
 
 
 def __extract_streamwish(url, page_content, referer=None):
@@ -268,7 +258,6 @@ def __extract_streamwish(url, page_content, referer=None):
     r = re.search(r'''sources:\s*\[{file:\s*["']([^"']+)''', page_content)
     if r:
         return r.group(1)
-    return
 
 
 def __extract_voe(url, page_content, referer=None):
@@ -282,8 +271,6 @@ def __extract_voe(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA}
         stream_url = r.group(1) + __append_headers(headers)
         return stream_url
-    return
-
 
 def __extract_goload(url, page_content, referer=None):
     def _encrypt(msg, key, iv):
@@ -330,7 +317,6 @@ def __extract_goload(url, page_content, referer=None):
                            'Referer': 'https://{0}/'.format(host),
                            'Origin': 'https://{0}'.format(host)}
                 return str_url + __append_headers(headers)
-    return
 
 
 def __register_extractor(urls, function, url_preloader=None, datas=[]):

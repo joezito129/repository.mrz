@@ -300,7 +300,7 @@ class AniListWLF(WatchlistFlavorBase):
         kitsu_id = ''
 
         next_up = progress + 1
-        episode_count = res['episodes'] if res['episodes'] is not None else 0
+        episode_count = res['episodes'] if res['episodes'] else 0
         base_title = res['title'].get(self._title_lang) or res['title'].get('userPreferred')
         title = '%s - %s/%s' % (base_title, next_up, episode_count)
         poster = image = res['coverImage']['extraLarge']

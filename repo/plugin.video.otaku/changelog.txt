@@ -1,3 +1,7 @@
+Changelog v5.0.31 (2024-06-17):
+- reformated utils
+- only update database of new episodes
+
 Changelog v5.0.30 (2024-06-14):
 - Added Fuzzypacks to localfiles
 - Added all_debrid cloud scraping

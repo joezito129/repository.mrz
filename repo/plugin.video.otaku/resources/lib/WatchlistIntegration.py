@@ -91,8 +91,7 @@ def CONTEXT_MENU(payload, params):
     actions = WatchlistFlavor.context_statuses()
 
     kodi_meta = pickle.loads(show['kodi_meta'])
-    _TITLE_LANG = control.title_lang(int(control.getSetting("titlelanguage")))
-    title = kodi_meta['ename'] if _TITLE_LANG == 'english' else kodi_meta['title_userPreferred']
+    title = kodi_meta['title_userPreferred']
 
     context = control.select_dialog(f"{title}  {control.colorString(f'({str(flavor.flavor_name).capitalize()})', 'blue')}", list(map(lambda x: x[0], actions)))
     if context != -1:

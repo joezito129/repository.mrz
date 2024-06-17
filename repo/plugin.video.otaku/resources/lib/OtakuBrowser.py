@@ -14,11 +14,11 @@ def parse_history_view(res):
 def search_history(search_array):
     result = list(map(parse_history_view, search_array))
     result.insert(0, utils.allocate_item("New Search", "search", True, 'new_search.png'))
-    result.append(utils.allocate_item("Clear Search History...", "clear_history", True, 'clear_search_history.png', isfolder=False))
+    result.append(utils.allocate_item("Clear Search History...", "clear_history", False, 'clear_search_history.png'))
     return result
 
 
-def get_episodeList(anilist_id, pass_idx, filter_lang=None):
+def get_episodeList(anilist_id, pass_idx):
     show = database.get_show(anilist_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
     if kodi_meta['format'] == 'MOVIE' and kodi_meta['episodes'] == 1:
@@ -31,7 +31,7 @@ def get_episodeList(anilist_id, pass_idx, filter_lang=None):
             'premiered': str(kodi_meta['start_date']),
             'year': int(str(kodi_meta['start_date'])[:4])
         }
-        items = [utils.allocate_item(title, 'null', info=info, poster=kodi_meta['poster'])]
+        items = [utils.allocate_item(title, 'null', False, info=info, poster=kodi_meta['poster'], isplayable=True)]
 
     else:
         episodes = database.get_episode_list(anilist_id)
@@ -40,8 +40,6 @@ def get_episodeList(anilist_id, pass_idx, filter_lang=None):
 
         for i in playlist:
             url = i[0]
-            if filter_lang:
-                url += filter_lang
             control.playList.add(url=url, listitem=i[1])
     return items
 

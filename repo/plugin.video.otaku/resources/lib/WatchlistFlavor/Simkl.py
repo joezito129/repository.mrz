@@ -69,7 +69,7 @@ class SimklWLF(WatchlistFlavorBase):
 
     @staticmethod
     def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.next') == 'true'):
+        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true'):
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
@@ -162,9 +162,10 @@ class SimklWLF(WatchlistFlavorBase):
         else:
             kodi_meta = {}
 
-        title = res['show']['title']
         if self._title_lang == 'english':
-            title = kodi_meta.get('ename') or kodi_meta.get('title_userPreferred') or title
+            title = kodi_meta.get('ename') or res['show']['title']
+        else:
+            title = res['show']['title']
 
         info = {
             'title': title,
@@ -213,7 +214,7 @@ class SimklWLF(WatchlistFlavorBase):
         if next_up_meta:
             kodi_meta = pickle.loads(show['kodi_meta'])
             if self._title_lang == 'english':
-                base_title = kodi_meta['ename'] or kodi_meta['title_userPreferred']
+                base_title = kodi_meta['english']
                 title = '%s - %s/%s' % (base_title, next_up, episode_count)
             if next_up_meta.get('title'):
                 title = '%s - %s' % (title, next_up_meta['title'])

@@ -21,7 +21,6 @@ class sources(BrowserBase):
         if rescrape:
             # todo add rescrape stuff here
             pass
-            # return self._get_episode_sources_pack(quary, anilist_id, episode)
         if media_type != "movie":
             query = '%s "\- %s"' % (query, episode.zfill(2))
             season = database.get_season_list(anilist_id)['season']
@@ -41,8 +40,7 @@ class sources(BrowserBase):
             params['aids'] = meta_ids.get('anidb_id')
             if not params['aids']:
                 ids = SIMKLAPI().get_mapping_ids('anilist', anilist_id)
-                meta_ids['anidb_id'] = ids['anidb']
-                params['aids'] = meta_ids['anidb_id']
+                params['aids'] = meta_ids['anidb_id'] = ids['anidb']
                 database.update_show_meta(anilist_id, meta_ids, pickle.loads(show_meta['art']))
 
         r = requests.get(f'{self._BASE_URL}/search', params=params)
@@ -65,8 +63,7 @@ class sources(BrowserBase):
         filtered_list = []
         for torrent in list_:
             try:
-                torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(
-                    1)
+                torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(1)
             except AttributeError:
                 continue
 

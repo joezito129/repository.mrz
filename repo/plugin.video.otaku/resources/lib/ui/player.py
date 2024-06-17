@@ -31,7 +31,6 @@ class watchlistPlayer(player):
 
     def __init__(self):
         super(watchlistPlayer, self).__init__()
-        self._filter_lang = None
         self._episode = None
         self._build_playlist = None
         self._anilist_id = None
@@ -52,12 +51,11 @@ class watchlistPlayer(player):
         self.skipintro_aniskip_offset = int(control.getSetting('skipintro.aniskip.offset'))
         self.skipoutro_aniskip_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
-    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, filter_lang):
+    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode):
         self._anilist_id = anilist_id
         self._watchlist_update = watchlist_update
         self._build_playlist = build_playlist
         self._episode = episode
-        self._filter_lang = filter_lang
 
         if self.skipintro_aniskip_enable:
             mal_id = database.get_show(anilist_id)['mal_id']
@@ -241,7 +239,6 @@ def _prefetch_play_link(link):
         headers = None
 
     try:
-        control.print(url)
         r = requests.get(url, headers=headers, stream=True)
     except requests.exceptions.SSLError:
         limit = None if '.m3u8' in url else '0'
@@ -260,9 +257,11 @@ def _prefetch_play_link(link):
     }
 
 
-def play_source(link, anilist_id=None, watchlist_update=None, build_playlist=None, episode=None, filter_lang=None, rescrape=False, source_select=False, subs=None):
+def play_source(link, anilist_id, watchlist_update, build_playlist, episode, rescrape=False, source_select=False):
     if isinstance(link, tuple):
         link, subs = link
+    else:
+        subs = None
     if isinstance(link, dict):
         linkInfo = link
     else:
@@ -289,16 +288,16 @@ def play_source(link, anilist_id=None, watchlist_update=None, build_playlist=Non
 
     if rescrape or source_select:
         control.playList.add(linkInfo['url'], item)
-        playlist_info = build_playlist(anilist_id, episode, filter_lang)
+        playlist_info = build_playlist(anilist_id, episode)
         episode_info = playlist_info[episode - 1]
         control.set_videotags(item, episode_info['info'])
         item.setArt(episode_info['image'])
         xbmc.Player().play(control.playList, item)
-        watchlistPlayer().handle_player(anilist_id, watchlist_update, None, episode, filter_lang)
+        watchlistPlayer().handle_player(anilist_id, watchlist_update, None, episode)
         return
 
     xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
-    watchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode, filter_lang)
+    watchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode)
 
 
 @hook_mimetype('application/dash+xml')

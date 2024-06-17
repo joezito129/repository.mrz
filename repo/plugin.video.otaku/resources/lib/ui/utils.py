@@ -6,7 +6,7 @@ import xbmcvfs
 from resources.lib.ui import control
 
 
-def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poster=None, cast=None, landscape=None, banner=None, clearart=None, clearlogo=None, isfolder=True):
+def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=None, cast=None, landscape=None, banner=None, isplayable=False, clearart=None, clearlogo=None):
     if not cast:
         cast = []
     if image and '/' not in image:
@@ -15,18 +15,18 @@ def allocate_item(name, url, is_dir=False, image='', info='', fanart=None, poste
         fanart = random.choice(fanart)
         if '/' not in fanart:
             fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
+    if poster and '/' not in poster:
+        poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
 
-    # if poster and '/' not in poster:
-    #     poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
     return {
-        'is_dir': is_dir,
         'isfolder': isfolder,
+        'isplayable': isplayable,
         'name': name,
         'url': url,
         'info': info,
         'cast': cast,
         'image': {
-                'poster': image,
+                'poster_': poster,
                 'icon': image,
                 'thumb': image,
                 'fanart': fanart,
@@ -63,7 +63,7 @@ def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
         parsed_view = [allocate_item(
             base["name"],
             base["url"],
-            is_dir=is_dir,
+            isfolder=is_dir,
             image=base["image"],
             info=base["info"],
             fanart=base.get("fanart"),
@@ -77,7 +77,7 @@ def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
         parsed_view = [allocate_item(
             base["name"],
             base["url"],
-            is_dir=is_dir,
+            isfolder=is_dir,
             image=base["image"],
             info=base["info"],
             fanart=base.get("fanart"),

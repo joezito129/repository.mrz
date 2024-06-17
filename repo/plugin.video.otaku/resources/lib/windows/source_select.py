@@ -32,9 +32,9 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.title', anime_init[0][episode - 1]['info'].get('title'))
                 self.setProperty('item.info.plot', anime_init[0][episode - 1]['info'].get('plot'))
                 self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
-                self.setProperty('item.art.poster', anime_init[0][episode - 1]['image'].get('poster'))
+                self.setProperty('item.art.poster', anime_init[0][episode - 1]['image'].get('poster_'))
                 self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image'].get('thumb'))
-                if control.getSetting('fanart.disable') == 'false':
+                if control.getSetting('interface.fanart.disable') == 'false':
                     self.setProperty('item.art.fanart', anime_init[0][episode - 1]['image'].get('fanart', control.OTAKU_FANART_PATH))
             except IndexError:
                 self.setProperty('item.info.season', '-1')
@@ -54,9 +54,9 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.title', kodi_meta.get('name'))
                 self.setProperty('item.info.plot', kodi_meta.get('plot'))
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
-                self.setProperty('item.art.poster', kodi_meta.get('poster'))
+                self.setProperty('item.art.poster', kodi_meta.get('poster_'))
                 self.setProperty('item.art.thumb', kodi_meta.get('thumb'))
-                if control.getSetting('fanart.disable') == 'false':
+                if control.getSetting('interface.fanart.disable') == 'false':
                     self.setProperty('item.art.fanart', kodi_meta.get('fanart', control.OTAKU_FANART_PATH))
                 self.setProperty('item.info.aired', kodi_meta.get('start_date'))
 

@@ -20,7 +20,7 @@
 		<setting id="titlelanguage" type="enum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="English (Attack on Titan)"/>
 		<setting id="searchhistory" type="enum" label="40301" values="Yes|No" default="Yes"/>
 		<setting id="general.smart.scroll.enable" label="enable Smart Scroll" type="bool" default="true" />
-		<setting id="general.scroll.wait.time" label="Wait time in ms" type="slider" option="int" range="100,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
+		<setting id="general.smart.scroll.time" label="Wait time in ms" type="slider" option="int" range="100,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
 		<setting type="lsep" label="Language Invoker"/>
 		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
 			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
@@ -39,13 +39,13 @@
 		<setting id="interface.viewtypes.episodes" type="labelenum" label="Episode View" values="Wide List|Wall|Info Wall" default="Wide List" visible="eq(-3,true)"/>
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
-		<setting id="fanart.disable" type="bool" label="Disable Fanart" default="true" />
-		<setting id="clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
-		<setting id="general.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
+		<setting id="interface.fanart.disable" type="bool" label="Disable Fanart" default="true" />
+		<setting id="interface.clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
+		<setting id="interface.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
 
 		<!-- Widgets -->
 		<setting type="lsep" label="Widgets" />
-		<setting id="widget.hide.next" label="Hide Next up Widget" type="bool" default="true" />
+		<setting id="widget.hide.nextpage" label="Hide Next up Widget" type="bool" default="true" />
 
 	</category>
 
@@ -100,7 +100,7 @@
 	<category label="40326">
 		<!-- Source Filters -->
 		<setting type="lsep" label="40327"/>
-		<setting id="general.maxResolution" type="enum" label="40328" values="4k|1080p|720p|480p|NA" default="4k" />
+		<setting id="general.maxResolution" type="enum" label="40328" values="NA|480p|720p|1080p|4k" default="4k" />
 		<setting id="general.disable265" type="bool" label="40329" default="false" />
 		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="Both" />
 
@@ -156,7 +156,6 @@
 		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/debridlink)" visible="eq(-2,true)" />
 		<setting id="dl.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)" visible="eq(-3,true)" />
 		<setting id="dl.priority" type="slider" subsetting="true" label="40415" option="int" range="1,10" default="10" visible="eq(-4,true)" />
-		<!-- <setting id="dl.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-5,true)" /> -->
 
 		<!-- Premiumize -->
 		<setting type="lsep" label="40363" />
@@ -175,7 +174,7 @@
 		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList|Simkl" default="MAL" visible="eq(-1,true)"/>
 		<setting id="watchlist.update.percent" type="slider" subsetting="true" label="Set Percent to Mark as Watched" default="80" range="70,90" option="int"/>
 		<setting type="text" label="NOTE:   Next up Dialog will not begin until this percentage is met" />
-		<setting id="watchlist.sync.enabled" type="bool" label="Enable sync" default="false" />
+		<setting id="watchlist.sync.enabled" type="bool" label="Enable Sync Completed" default="false" />
 
 		<!-- MyAnimeList -->
 		<setting type="lsep" label="40361"/>
@@ -184,10 +183,6 @@
 		<setting id="mal.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)" visible="eq(-2,true)"/>
 		<setting id="mal.listsettings" type="action" label="40353" option="close" visible="eq(-3,true)"/>
 		<setting id="mal.sort" type="labelenum" subsetting="true" label="40354" values="List Score|Last Updated|Anime Start Date|Anime Title" default="Last Updated" visible="eq(-4,true)"/>
-		<setting id="mal.userid" type="text"  default="" visible="false"/>
-		<setting id="mal.authvar" type="text"  default="" visible="false"/>
-		<setting id="mal.token" type="text"  default="" visible="false"/>
-		<setting id="mal.refresh" type="text"  default="" visible="false"/>
 
 		<!-- Anilist -->
 		<setting type="lsep" label="40348"/>
@@ -240,6 +235,5 @@
 		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_history)"/>
 		<setting id="rebuild_database" type="action" label="30026" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database)"/>
 		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync)"/>
-		<setting id="wipe_addon_data" type="action" label="30024" action="RunPlugin(plugin://plugin.video.otaku/wipe_addon_data)"/>
 	</category>
 </settings>

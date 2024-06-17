@@ -11,8 +11,7 @@ class WatchlistFlavorBase:
     _NAME = None
     _IMAGE = None
 
-    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None,
-                 title_lang=None):
+    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None, title_lang=None):
         self._auth_var = auth_var
         self._username = username
         self._password = password

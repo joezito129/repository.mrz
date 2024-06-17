@@ -24,10 +24,8 @@ def getQuality(release_title):
         quality = '1080p'
     elif '720' in release_title:
         quality = '720p'
-    elif '480' in release_title:
-        quality = '480p'
     else:
-        quality = 'NA'
+        quality = '480p'
     return quality
 
 

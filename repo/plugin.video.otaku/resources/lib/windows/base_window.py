@@ -9,7 +9,6 @@ class BaseWindow(control.xmlWindow):
         super().__init__(xml_file, location)
 
         control.closeBusyDialog()
-        self._title_lang = control.title_lang(int(control.getSetting("titlelanguage")))
         self.setProperty('settings.color', 'deepskyblue')
 
         if actionArgs is None or actionArgs.get('item_type') == 'skip_intro':
@@ -37,9 +36,9 @@ class BaseWindow(control.xmlWindow):
             fanart = control.OTAKU_FANART_PATH
 
         if isinstance(fanart, list):
-            fanart = control.OTAKU_FANART_PATH if control.getSetting('fanart.disable') == 'true' else random.choice(fanart)
+            fanart = control.OTAKU_FANART_PATH if control.getSetting('interface.fanart.disable') == 'true' else random.choice(fanart)
         if isinstance(clearlogo, list):
-            clearlogo = control.OTAKU_LOGO2_PATH if control.getSetting('clearlogo.disable') == 'true' else random.choice(clearlogo)
+            clearlogo = control.OTAKU_LOGO2_PATH if control.getSetting('interface.clearlogo.disable') == 'true' else random.choice(clearlogo)
 
         self.setProperty('item.art.poster', self.item_information.get('poster'))
         self.setProperty('item.art.fanart', fanart)
@@ -50,8 +49,4 @@ class BaseWindow(control.xmlWindow):
         if self.item_information.get('format') == 'MOVIE':
             self.setProperty('item.info.plot', self.item_information.get('plot'))
             self.setProperty('item.info.rating', str(self.item_information.get('rating')))
-            if self._title_lang == 'english':
-                title = self.item_information.get('ename') or self.item_information.get('title_userPreferred')
-            else:
-                title = self.item_information.get('name')
-            self.setProperty('item.info.title', title)
+            self.setProperty('item.info.title', self.item_information.get('title_userPreferred'))

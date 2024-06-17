@@ -18,7 +18,6 @@ def parse_episodes(res, eps_watched, dub_data=None, filler_enable=False, title_d
 
 
 def process_episodes(episodes, eps_watched, dub_data=None, filler_enable=False, title_disable=False):
-    mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable,
-                      title_disable=title_disable)
+    mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)
     all_results = list(map(mapfunc, episodes))
     return all_results

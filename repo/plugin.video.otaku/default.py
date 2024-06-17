@@ -28,7 +28,7 @@ from resources.lib.ui.router import route, router_process
 from resources.lib.WatchlistIntegration import add_watchlist, watchlist_update_episode
 
 
-_ANILIST_BROWSER = AniListBrowser(int(control.getSetting("titlelanguage")))
+_ANILIST_BROWSER = AniListBrowser()
 
 
 def add_last_watched(items):
@@ -163,6 +163,7 @@ def SEARCH_HISTORY(payload, params):
 @route('clear_history')
 def CLEAR_HISTORY(payload, params):
     database.clearSearchHistory()
+    control.refresh()
 
 
 @route('remove_search_item/*')
@@ -218,7 +219,7 @@ def PLAY(payload, params):
         from resources.lib.windows.resolver import Resolver
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
         link = resolver.doModal(sources, {}, False)
-    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), source_select=source_select, rescrape=rescrape)
+    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape, source_select)
 
 
 @route('play_movie/*')
@@ -245,7 +246,7 @@ def PLAY_MOVIE(payload, params):
         from resources.lib.windows.resolver import Resolver
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
         link = resolver.doModal(sources, {}, False)
-    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, source_select=source_select, rescrape=rescrape)
+    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape, source_select)
 
 
 @route('marked_as_watched/*')
@@ -361,7 +362,7 @@ def TOOLS_MENU(payload, params):
         ("Download Manager", 'download_manager', 'download_manager.png')
         # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
     ]
-    control.draw_items([utils.allocate_item(name, url, True, image, isfolder=False) for name, url, image in TOOLS_ITEMS], "addons")
+    control.draw_items([utils.allocate_item(name, url, False, image) for name, url, image in TOOLS_ITEMS], "addons")
 
 
 @route('')

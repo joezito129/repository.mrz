@@ -92,7 +92,7 @@
                 <height>500</height>
                 <top>50</top>
                 <left>-50</left>
-                <texture background="true">$INFO[Window().Property(item.art.poster)]</texture>
+                <texture background="true">$INFO[Window().Property(item.art.thumb)]</texture>
             </control>
 
             <control type="group">

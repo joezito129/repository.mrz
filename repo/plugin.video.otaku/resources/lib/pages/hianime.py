@@ -160,14 +160,14 @@ class sources(BrowserBase):
 
                             for qual, qlink in quals:
                                 qual = int(qual)
-                                if qual < 577:
-                                    quality = 'NA'
-                                elif qual < 721:
-                                    quality = '720p'
-                                elif qual < 1081:
+                                if qual > 1080:
+                                    quality = '4k'
+                                elif qual > 720:
                                     quality = '1080p'
+                                elif qual > 480:
+                                    quality = '720p'
                                 else:
-                                    quality = '4K'
+                                    quality = 'EQ'
 
                                 source = {
                                     'release_title': '{0} - Ep {1}'.format(title, episode),
