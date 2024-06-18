@@ -11,15 +11,15 @@ class BrowserBase:
 
     @staticmethod
     def _sphinx_clean(text):
-        text = text.replace('+', '\+')  # noQA
-        text = text.replace('-', '\-')  # noQA
-        text = text.replace('!', '\!')  # noQA
-        text = text.replace('^', '\^')  # noQA
-        text = text.replace('"', r'\"') # noQA
-        text = text.replace('~', '\~')  # noQA
-        text = text.replace('*', '\*')  # noQA
-        text = text.replace('?', '\?')  # noQA
-        text = text.replace(':', '\:')  # noQA
+        text = text.replace('+', r'\+')
+        text = text.replace('-', r'\-')
+        text = text.replace('!', r'\!')
+        text = text.replace('^', r'\^')
+        text = text.replace('"', r'\"')
+        text = text.replace('~', r'\~')
+        text = text.replace('*', r'\*')
+        text = text.replace('?', r'\?')
+        text = text.replace(':', r'\:')
         return text
 
     @staticmethod

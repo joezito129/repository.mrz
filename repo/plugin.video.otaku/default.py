@@ -274,7 +274,6 @@ def DELETE_ANIME_DATABASE(payload, params):
         anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
 
     database.remove_episodes(anilist_id)
-    database.remove_season(anilist_id)
     database.update_show_data(anilist_id)
     control.notify(control.ADDON_NAME, 'Removed from database')
 

@@ -230,8 +230,6 @@ def set_videotags(li, info):
         vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
     if info.get('OriginalTitle'):
         vinfo.setOriginalTitle(info['OriginalTitle'])
-    if info.get('IMDBNumber'):
-        vinfo.setIMDBNumber(info['IMDBNumber'])
     if info.get('trailer'):
         vinfo.setTrailer(info['trailer'])
 
@@ -241,18 +239,20 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable, 
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
         set_videotags(liz, info)
-
     if draw_cm:
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
-    if art:
-        if art.get('fanart') is None or fanart_disable:
-            art['fanart'] = OTAKU_FANART_PATH
-        if clearlogo_disable:
-            art['clearlogo'] = OTAKU_ICONS_PATH
-        liz.setArt(art)
+
+    if art.get('fanart') is None or fanart_disable:
+        art['fanart'] = OTAKU_FANART_PATH
+    if clearlogo_disable:
+        art['clearlogo'] = OTAKU_ICONS_PATH
+
     if isplayable:
+        art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
+    liz.setArt(art)
+
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
@@ -312,7 +312,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
 
 
 def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
-    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['is_folder'], vid['isplayable']) for vid in video_data]
+    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data]
 
 
 def get_view_type(viewtype):
@@ -417,6 +417,6 @@ def print_(string, *args):
         string = f'{string} {i}'
 
     from resources.lib.windows.textviewer import TextViewerXML
-    windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=ADDON_NAME, text=string)
+    windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=ADDON_NAME, text=f'{string}')
     windows.run()
     del windows

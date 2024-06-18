@@ -79,7 +79,6 @@ class ANIZIPAPI:
         result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
 
         season = result_ep[0]['seasonNumber']
-        database.update_season(anilist_id, season)
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
                           eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
@@ -123,7 +122,7 @@ class ANIZIPAPI:
         else:
             result_ep = []
         if len(result_ep) > len(episodes):
-            season = database.get_season_list(anilist_id)['season']
+            season = episodes[0]['season']
             mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
                                filler_data=None, filler_enable=filler_enable, title_disable=title_disable, episodes=episodes)
@@ -143,29 +142,7 @@ class ANIZIPAPI:
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
-        if control.getSetting('jz.dub') == 'true':
-            from datetime import date
-            update_time = date.today().isoformat()
-
-            show_data = database.get_show_data(anilist_id)
-            if not show_data or show_data['last_updated'] != update_time:
-                from resources.jz import animeschedule
-                dub_data = animeschedule.get_dub_time(anilist_id)
-                data = {"dub_data": dub_data}
-                database.update_show_data(anilist_id, data, update_time)
-
-                # from resources.jz.TeamUp import teamup
-                # dub_data = teamup.get_dub_data(kodi_meta['ename'])
-                # data = {"dub_data": dub_data}
-                # database.update_show_data(anilist_id, data, update_time)
-            else:
-                dub_data = pickle.loads(show_data['data'])['dub_data']
-        else:
-            dub_data = None
-
-        # if control.getSetting('jz.sub') == 'true':
-        #     from resources.jz import AniList
-        #     ani_data = AniList.get_anime_info_anilist_id(anilist_id)
+        dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
         filler_enable = control.getSetting('jz.filler') == 'true'
         title_disable = control.getSetting('interface.cleantitles') == 'true'

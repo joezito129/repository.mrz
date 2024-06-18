@@ -15,12 +15,10 @@ class TorrentCacheCheck:
 
     def torrentCacheCheck(self, torrent_list):
         if control.real_debrid_enabled():
-            self.threads.append(
-                threading.Thread(target=self.real_debrid_worker, args=[copy.deepcopy(torrent_list)]))
+            self.threads.append(threading.Thread(target=self.real_debrid_worker, args=[copy.deepcopy(torrent_list)]))
 
         if control.debrid_link_enabled():
-            self.threads.append(
-                threading.Thread(target=self.debrid_link_worker, args=[copy.deepcopy(torrent_list)]))
+            self.threads.append(threading.Thread(target=self.debrid_link_worker, args=[copy.deepcopy(torrent_list)]))
 
         if control.premiumize_enabled():
             self.threads.append(threading.Thread(target=self.premiumize_worker, args=[copy.deepcopy(torrent_list)]))
@@ -37,12 +35,12 @@ class TorrentCacheCheck:
         return cachedList
 
     def all_debrid_worker(self, torrent_list):
-
         api = all_debrid.AllDebrid()
 
         if len(torrent_list) == 0:
             return
         cache_check = api.check_hash([i['hash'] for i in torrent_list])
+
         if not cache_check:
             return
 

@@ -21,3 +21,26 @@ def process_episodes(episodes, eps_watched, dub_data=None, filler_enable=False, 
     mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)
     all_results = list(map(mapfunc, episodes))
     return all_results
+
+
+def process_dub(anilist_id, ename):
+    from resources.lib.ui import database, control
+    from datetime import date
+
+    update_time = date.today().isoformat()
+
+    show_data = database.get_show_data(anilist_id)
+    if not show_data or show_data['last_updated'] != update_time:
+        if control.getSetting('dub.api') == 'teamup':
+            from resources.jz.TeamUp import teamup
+            dub_data = teamup.get_dub_data(ename)
+            data = {"dub_data": dub_data}
+            database.update_show_data(anilist_id, data, update_time)
+        else:
+            from resources.jz import animeschedule
+            dub_data = animeschedule.get_dub_time(anilist_id)
+            data = {"dub_data": dub_data}
+            database.update_show_data(anilist_id, data, update_time)
+    else:
+        dub_data = pickle.loads(show_data['data'])['dub_data']
+    return dub_data

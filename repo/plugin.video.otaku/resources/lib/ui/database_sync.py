@@ -1,4 +1,3 @@
-import os
 import xbmcvfs
 import threading
 
@@ -17,14 +16,13 @@ class AnilistSyncDatabase:
         self._build_showmeta_table()
         self._build_episode_table()
         self._build_sync_activities()
-        self._build_season_table()
         self._build_show_data_table()
 
         # If you make changes to the required meta in any indexer that is cached in this database
         # You will need to update the below version number to match the new addon version
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
-        self.last_meta_update = '1.0.4'
+        self.last_meta_update = '1.0.5'
 
         threading.Lock().acquire()
 
@@ -33,10 +31,8 @@ class AnilistSyncDatabase:
         if self.activites is None:
             cursor = self._get_cursor()
             cursor.execute("DELETE FROM shows")
-            cursor.execute("DELETE FROM seasons")
             cursor.execute("DELETE FROM episodes")
             cursor.connection.commit()
-
             self._set_base_activites()
 
             cursor.execute('SELECT * FROM activities WHERE sync_id=1')
@@ -89,7 +85,6 @@ class AnilistSyncDatabase:
         self._build_showmeta_table()
         self._build_episode_table()
         self._build_sync_activities()
-        self._build_season_table()
         self._build_show_data_table()
 
     def _build_show_table(self):
@@ -118,19 +113,6 @@ class AnilistSyncDatabase:
                        'art BLOB, '
                        'UNIQUE(anilist_id))')
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_shows_meta ON "shows_meta" (anilist_id ASC )')
-        cursor.connection.commit()
-        cursor.close()
-        control.try_release_lock(threading.Lock())
-
-    def _build_season_table(self):
-        threading.Lock().acquire()
-        cursor = self._get_cursor()
-        cursor.execute('CREATE TABLE IF NOT EXISTS seasons ('
-                       'anilist_id INTEGER NOT NULL, '
-                       'season INTEGER NOT NULL, '
-                       'kodi_meta BLOB NOT NULL, '
-                       'FOREIGN KEY(anilist_id) REFERENCES shows(anilist_id) ON DELETE CASCADE)')
-        cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_season ON seasons (anilist_id ASC, season ASC)')
         cursor.connection.commit()
         cursor.close()
         control.try_release_lock(threading.Lock())
@@ -200,7 +182,6 @@ class AnilistSyncDatabase:
         self._build_showmeta_table()
         self._build_episode_table()
         self._build_sync_activities()
-        self._build_season_table()
         self._build_show_data_table()
 
         self._set_base_activites()

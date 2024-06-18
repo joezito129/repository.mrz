@@ -18,7 +18,7 @@ def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=No
     if poster and '/' not in poster:
         poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
 
-    return {
+    new_res = {
         'isfolder': isfolder,
         'isplayable': isplayable,
         'name': name,
@@ -26,7 +26,7 @@ def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=No
         'info': info,
         'cast': cast,
         'image': {
-                'poster_': poster,
+                'poster': poster,
                 'icon': image,
                 'thumb': image,
                 'fanart': fanart,
@@ -36,6 +36,7 @@ def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=No
                 'clearlogo': clearlogo
         }
     }
+    return new_res
 
 
 def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):

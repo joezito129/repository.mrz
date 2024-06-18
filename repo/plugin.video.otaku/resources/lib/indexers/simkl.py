@@ -74,8 +74,6 @@ class SIMKLAPI:
         title_list = [name['name'] for name in result['alt_titles']]
         season = utils.get_season(title_list)
 
-        database.update_season(anilist_id, season)
-
         result_meta = self.get_episode_meta(anilist_id)
         result_ep = [x for x in result_meta if x['type'] == 'episode']
 
@@ -95,9 +93,7 @@ class SIMKLAPI:
                     'episode': ep,
                     'image': poster
                 })
-            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
-                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                                filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
             all_results += list(map(mapfunc_emp, empty_ep))
 
         control.notify("SIMKL", f'{tvshowtitle} Added to Database', icon=poster)
@@ -138,44 +134,20 @@ class SIMKLAPI:
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
-        if control.getSetting('jz.dub') == 'true':
-            from datetime import date
-            update_time = date.today().isoformat()
-
-            show_data = database.get_show_data(anilist_id)
-            if not show_data or show_data['last_updated'] != update_time:
-                from resources.jz import animeschedule
-                dub_data = animeschedule.get_dub_time(anilist_id)
-                data = {"dub_data": dub_data}
-                database.update_show_data(anilist_id, data, update_time)
-
-                # from resources.jz.TeamUp import teamup
-                # dub_data = teamup.get_dub_data(kodi_meta['ename'])
-                # data = {"dub_data": dub_data}
-                # database.update_show_data(anilist_id, data, update_time)
-            else:
-                dub_data = pickle.loads(show_data['data'])['dub_data']
-        else:
-            dub_data = None
-
-        # if control.getSetting('jz.sub') == 'true':
-        #     from resources.jz import AniList
-        #     ani_data = AniList.get_anime_info_anilist_id(anilist_id)
+        dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
         filler_enable = control.getSetting('jz.filler') == 'true'
         title_disable = control.getSetting('interface.cleantitles') == 'true'
         if episodes:
             if kodi_meta['status'] != "FINISHED":
-                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data,
-                                            filler_enable, title_disable), 'episodes'
+                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data, filler_enable, title_disable), 'episodes'
             return indexers.process_episodes(episodes, eps_watched, dub_data, filler_enable, title_disable), 'episodes'
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
             from resources.jz import anime_filler
             filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:
             filler_data = None
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
-                                         filler_enable, title_disable), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable), 'episodes'
 
     def get_anime_info(self, anilist_id):
         show_ids = database.get_show(anilist_id)

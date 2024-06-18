@@ -6,7 +6,7 @@ import pickle
 from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.ui import database, source_utils
+from resources.lib.ui import database, source_utils, control
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
 
@@ -14,22 +14,26 @@ from resources.lib.indexers.simkl import SIMKLAPI
 class sources(BrowserBase):
     _BASE_URL = 'https://animetosho.org'
 
-    def get_sources(self, query, anilist_id, episode, status, media_type, rescrape):
-        query = self._clean_title(query)
-        query = self._sphinx_clean(query)
+    def __init__(self):
+        self.all_sources = []
+        self.sources = []
+
+    def get_sources(self, show, anilist_id, episode, status, media_type, rescrape):
+        show = self._clean_title(show)
+        query = self._sphinx_clean(show)
 
         if rescrape:
-            # todo add rescrape stuff here
+            # todo add re-scape stuff here
             pass
         if media_type != "movie":
-            query = '%s "\- %s"' % (query, episode.zfill(2))
-            season = database.get_season_list(anilist_id)['season']
+            season = database.get_episode_list(anilist_id)[0]['season']
             season = str(season).zfill(2)
-            query += '|"S%sE%s "' % (season, episode.zfill(2))
+            episode = episode.zfill(2)
+            query = f'{query} "\\- {episode}"'
+            query += f'|"S{season}E{episode}"'
         else:
             season = None
 
-        rex = r'(magnet:)+[^"]*'
         show_meta = database.get_show_meta(anilist_id)
         params = {
             'q': query,
@@ -43,10 +47,44 @@ class sources(BrowserBase):
                 params['aids'] = meta_ids['anidb_id'] = ids['anidb']
                 database.update_show_meta(anilist_id, meta_ids, pickle.loads(show_meta['art']))
 
-        r = requests.get(f'{self._BASE_URL}/search', params=params)
+        self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
+
+        if status == 'FINISHED':
+            query = f'{show} "Batch"|"Complete Series"'
+            episodes = pickle.loads(database.get_show(anilist_id)['kodi_meta'])['episodes']
+            if episodes:
+                query += f'|"01-{episode}"|"01~{episode}"|"01 - {episode}"|"01 ~ {episode}"'
+
+            if season:
+                query += f'|"S{season}"|"Season {season}"'
+                query += f'|"S{season}E{episode}"'
+
+            query = self._sphinx_clean(show)
+            params['q'] = query
+            self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
+
+        show = show.lower()
+        if 'season' in show:
+            query1, query2 = show.rsplit('|', 2)
+            match_1 = re.match(r'.+?(?=season)', query1).group(0).strip() + ')'
+            match_2 = re.match(r'.+?(?=season)', query2).group(0).strip() + ')'
+            params['q'] = self._sphinx_clean(f'{match_1}|{match_2}')
+
+            self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
+
+        # remove any duplicate sources
+        for source in self.sources:
+            if source not in self.all_sources:
+                self.all_sources.append(source)
+        return self.all_sources
+
+    @staticmethod
+    def process_animetosho_episodes(url, params, episode, season):
+        r = requests.get(url, params=params)
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
         soup_all = soup.find('div', id='content').find_all('div', class_='home_list_entry')
+        rex = r'(magnet:)+[^"]*'
         list_ = [{
             'name': soup.find('div', class_='link').a.text,
             'magnet': soup.find('a', {'href': re.compile(rex)}).get('href'),

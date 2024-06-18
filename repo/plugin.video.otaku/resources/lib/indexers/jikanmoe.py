@@ -99,8 +99,6 @@ class JikanAPI:
         title_list = [name['title'] for name in result['titles']]
 
         season = utils.get_season(title_list)
-        database.update_season(anilist_id, season)
-
         result_ep = self.get_episode_meta(anilist_id)
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
@@ -138,7 +136,7 @@ class JikanAPI:
         diff = (datetime.datetime.today() - last_updated).days
         result = self.get_episode_meta(anilist_id) if diff > 3 else []
         if len(result) > len(episodes):
-            season = database.get_season_list(anilist_id)['season']
+            season = episodes[0]['season']
             mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
                                filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable, episodes=episodes)
@@ -159,14 +157,7 @@ class JikanAPI:
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
-        dub_data = None
-        if control.getSetting('jz.dub') == 'true':
-            from resources.jz.TeamUp import teamup
-            dub_data = teamup.get_dub_data(kodi_meta['ename'])
-
-        # if control.getSetting('jz.sub') == 'true':
-        #     from resources.jz import AniList
-        #     ani_data = AniList.get_anime_info_anilist_id(anilist_id)
+        dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
         filler_enable = control.getSetting('jz.filler') == 'true'
         title_disable = control.getSetting('interface.cleantitles') == 'true'

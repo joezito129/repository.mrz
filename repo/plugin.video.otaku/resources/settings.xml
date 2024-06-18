@@ -53,7 +53,6 @@
 	<category label="40226">
 		<setting type="lsep" label="Torrents" />
 		<setting id="provider.nyaa" type="bool" label="Nyaa" default="true" enable="eq(1,false)" />
-		<setting id="provider.nyaaalt" type="bool" label="Nyaa Alt (For Verizon Users)" default="false" enable="eq(-1,false)" />
 		<setting id="provider.animetosho" type="bool" label="Anime Tosho" default="true" />
 
 		<setting type="lsep" label="Other" />
@@ -100,7 +99,7 @@
 	<category label="40326">
 		<!-- Source Filters -->
 		<setting type="lsep" label="40327"/>
-		<setting id="general.maxResolution" type="enum" label="40328" values="NA|480p|720p|1080p|4k" default="4k" />
+		<setting id="general.maxResolution" type="enum" label="40328" values="EQ|480p|720p|1080p|4k" default="4k" />
 		<setting id="general.disable265" type="bool" label="40329" default="false" />
 		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="Both" />
 

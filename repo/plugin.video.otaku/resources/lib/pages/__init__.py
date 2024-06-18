@@ -43,7 +43,6 @@ class Sources(DisplayWindow):
         anilist_id = args['anilist_id']
         episode = args['episode']
         status = args['status']
-        filter_lang = args['filter_lang']
         media_type = args['media_type']
         rescrape = args['rescrape']
         # source_select = args['source_select']
@@ -142,7 +141,7 @@ class Sources(DisplayWindow):
             self.close()
             return
 
-        sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, self.local_files, filter_lang)
+        sourcesList = self.sortSources(self.torrentCacheSources, self.embedSources, self.local_files)
         self.return_data = sourcesList
         self.close()
 
@@ -199,13 +198,13 @@ class Sources(DisplayWindow):
     def resolutionList():
         max_res = int(control.getSetting('general.maxResolution'))
         if max_res == 4:
-            resolutions = ['EQ', '480p', '720p', '1080p', '4k']
+            resolutions = ['4k', '1080p', '720p', '480p', 'EQ']
         elif max_res == 3:
-            resolutions = ['EQ', '480p', '720p', '1080p']
+            resolutions = ['1080p', '720p', '480p', 'EQ']
         elif max_res == 2:
-            resolutions = ['EQ', '480p', '720p']
+            resolutions = ['720p', '480p', 'EQ']
         elif max_res == 1:
-            resolutions = ['EQ', '480p']
+            resolutions = ['480p', 'EQ']
         else:
             resolutions = ['EQ']
         return resolutions
@@ -225,48 +224,33 @@ class Sources(DisplayWindow):
         p = sorted(p, key=lambda i: i['priority'])
         return p
 
-    def sortSources(self, torrent_list, embed_list, other_list, filter_lang):
-        sort_method = int(control.getSetting('general.sortsources'))
+    def sortSources(self, torrent_list, embed_list, other_list):
         sortedList = []
         resolutions = self.resolutionList()
         debrid_priorities = self.debrid_priority()
 
         for resolution in resolutions:
-            if sort_method == 0:
-                for debrid in debrid_priorities:
-                    for torrent in torrent_list:
-                        if debrid['slug'] == torrent['debrid_provider']:
-                            if torrent['quality'] == resolution:
-                                sortedList.append(torrent)
-
-            elif sort_method == 1:
-                for file in embed_list:
-                    if file['quality'] == resolution:
-                        sortedList.append(file)
-        if sort_method == 0:
-            for resolution in resolutions:
-                for file in embed_list:
-                    if file['quality'] == resolution:
-                        sortedList.append(file)
-
-        elif sort_method == 1:
-            for resolution in resolutions:
-                for debrid in debrid_priorities:
-                    for torrent in torrent_list:
-                        if torrent['debrid_provider'] == debrid['slug']:
-                            if torrent['quality'] == resolution:
-                                sortedList.append(torrent)
+            for debrid in debrid_priorities:
+                for torrent in torrent_list:
+                    if debrid['slug'] == torrent['debrid_provider']:
+                        if torrent['quality'] == resolution:
+                            sortedList.append(torrent)
+            for file in embed_list:
+                if file['quality'] == resolution:
+                    sortedList.append(file)
 
         if control.getSetting('general.disable265') == 'true':
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
 
-        sort_option = int(control.getSetting('general.sourcesort'))
-        if sort_option == 2:
-            sortedList = sorted(sortedList, key=lambda x: x['lang'] == 0, reverse=True)
-        elif sort_option == 0:
-            sortedList = sorted(sortedList, key=lambda x: x['lang'] > 0, reverse=True)
+        sort_type = int(control.getSetting('general.sortsources'))  # torrents=0; embeds=1\
+        if sort_type == 1:
+            sortedList = sorted(sortedList, key=lambda x: x['type'] == 'embed', reverse=True)
 
-        lang = int(control.getSetting("general.source"))
+        sort_lang = int(control.getSetting('general.sourcesort'))   # dub=0; None=1; sub=1
+        if sort_lang == 2:
+            sortedList = sorted(sortedList, key=lambda x: x['lang'] == 0, reverse=True)
+        elif sort_lang == 0:
+            sortedList = sorted(sortedList, key=lambda x: x['lang'] > 0, reverse=True)
 
         for cloud_file in self.cloud_files:
             sortedList.insert(0, cloud_file)
@@ -274,6 +258,7 @@ class Sources(DisplayWindow):
         for other in other_list:
             sortedList.insert(0, other)
 
+        lang = int(control.getSetting("general.source"))
         if lang != 1:
             langs = [0, 1, 2]
             sortedList = [i for i in sortedList if i['lang'] != langs[lang]]

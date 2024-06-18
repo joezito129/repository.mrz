@@ -237,25 +237,6 @@ def update_kodi_meta(anilist_id, kodi_meta):
     control.try_release_lock(lock)
 
 
-def update_season(show_id, season):
-    lock.acquire()
-    cursor = _get_cursor()
-    try:
-        cursor.execute(
-            "REPLACE INTO seasons ("
-            "anilist_id, season, kodi_meta)"
-            "VALUES "
-            "(?, ?, ?)",
-            (int(show_id), str(season), ''))
-        cursor.connection.commit()
-        cursor.close()
-
-    except OperationalError:
-        cursor.close()
-    finally:
-        control.try_release_lock(lock)
-
-
 def update_show_data(anilist_id, data={}, last_updated=''):
     lock.acquire()
     cursor = _get_cursor()
@@ -304,16 +285,6 @@ def _get_show_list():
     cursor.close()
     control.try_release_lock(lock)
     return shows
-
-
-def get_season_list(show_id):
-    lock.acquire()
-    cursor = _get_cursor()
-    cursor.execute('SELECT* FROM seasons WHERE anilist_id=?', (show_id,))
-    seasons = cursor.fetchone()
-    cursor.close()
-    control.try_release_lock(lock)
-    return seasons
 
 
 def get_show_data(anilist_id):
@@ -370,19 +341,6 @@ def get_show_mal(mal_id):
     return shows
 
 
-def remove_season(anilist_id):
-    lock.acquire()
-    cursor = _get_cursor()
-    try:
-        cursor.execute("DELETE FROM seasons WHERE anilist_id=?", (anilist_id,))
-        cursor.connection.commit()
-        cursor.close()
-    except OperationalError:
-        cursor.close()
-    finally:
-        control.try_release_lock(lock)
-
-
 def remove_episodes(anilist_id):
     lock.acquire()
     cursor = _get_cursor()
@@ -404,36 +362,6 @@ def get_mappings(anime_id, send_id):
     cursor.close()
     control.try_release_lock(lock)
     return mappings[0] if mappings else {}
-
-# def get_download(url_hash):
-#     control.downloadsDB_lock.acquire()
-#     cursor = _get_connection_cursor(control.downloadsDB)
-#     cursor.execute('CREATE TABLE IF NOT EXISTS downloads (url_hash BLOB, data BLOB, UNIQUE(url_hash))')
-#     cursor.execute('SELECT* FROM downloads WHERE url_hash = ?', url_hash,)
-#     download = cursor.fetchall()
-#     cursor.close()
-#     control.try_release_lock(control.anilistSyncDB_lock)
-#     return download
-#
-#
-# def set_download(url_hash, data):
-#     control.downloadsDB_lock.acquire()
-#     cursor = _get_connection_cursor(control.downloadsDB)
-#     cursor.execute('CREATE TABLE IF NOT EXISTS downloads (url_hash BLOB, data BLOB, UNIQUE(url_hash))')
-#     cursor.execute("REPLACE INTO downloads (url_hash, data) VALUES (?, ?)", (url_hash, data))
-#     cursor.connection.commit()
-#     cursor.close()
-#     control.try_release_lock(control.downloadsDB_lock)
-#
-#
-# def remove_download(url_hash):
-#     control.downloadsDB_lock.acquire()
-#     cursor = _get_connection_cursor(control.downloadsDB)
-#     cursor.execute('CREATE TABLE IF NOT EXISTS downloads (url_hash BLOB, data BLOB, UNIQUE(url_hash))')
-#     cursor.execute("DELETE FROM downloads WHERE url_hash = ?", url_hash,)
-#     cursor.connection.commit()
-#     cursor.close()
-#     control.try_release_lock(control.downloadsDB_lock)
 
 
 def getSearchHistory(media_type='show'):
@@ -507,8 +435,7 @@ def addTorrentList(anilist_id, torrent_list, zfill_int):
         if isinstance(torrent_list, list):
             torrent_list = pickle.dumps(torrent_list)
         cursor.execute("REPLACE INTO %s (anilist_id, sources, zfill) "
-                       "VALUES (?, ?, ?)" % cache_table,
-                       (anilist_id, torrent_list, int(zfill_int)))
+                       "VALUES (?, ?, ?)" % cache_table, (anilist_id, torrent_list, int(zfill_int)))
 
         cursor.connection.commit()
         cursor.close()
