@@ -39,16 +39,14 @@ def get_(function, duration, *args, **kwargs):
                 try:
                     return_data = ast.literal_eval(cache_result['value'])
                     return return_data
-                except:
+                except Exception:
                     return ast.literal_eval(cache_result['value'])
 
     fresh_result = repr(function(*args, **kwargs))
 
     if fresh_result is None or fresh_result == 'None':
         # If the cache is old, but we didn't get fresh result, return the old cache
-        if cache_result:
-            return cache_result
-        return None
+        return cache_result if cache_result else None
 
     data = ast.literal_eval(fresh_result)
 
@@ -80,7 +78,7 @@ def cache_get(key):
     lock.acquire()
     cursor = _get_connection_cursor(control.cacheFile)
     try:
-        cursor.execute("SELECT * FROM %s WHERE key = ?" % cache_table, [key])
+        cursor.execute(f'SELECT * FROM {cache_table} WHERE key=?', (key,))
         results = cursor.fetchone()
         cursor.close()
         return results
@@ -95,11 +93,9 @@ def cache_insert(key, value):
     cursor = _get_connection_cursor(control.cacheFile)
     now = int(time.time())
     try:
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS %s (key TEXT, value TEXT, date INTEGER, UNIQUE(key))"
-            % cache_table)
-        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s ON %s (key)" % (cache_table, cache_table))
-        cursor.execute("REPLACE INTO %s (key, value, date) VALUES (?, ?, ?)" % cache_table, (key, value, now))
+        cursor.execute(f'CREATE TABLE IF NOT EXISTS {cache_table} (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
+        cursor.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS ix_{cache_table} ON {cache_table} (key)')
+        cursor.execute(f'REPLACE INTO {cache_table} (key, value, date) VALUES (?, ?, ?)', (key, value, now))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
@@ -129,24 +125,20 @@ def _is_cache_valid(cached_time, cache_timeout):
     return (cache_timeout * 3600) > diff
 
 
-def makeFile(path):
-    xbmcvfs.mkdir(path)
-
-
 def _get_connection_cursor(filepath):
     conn = _get_connection(filepath)
     return conn.cursor()
 
 
 def _get_connection(filepath):
-    makeFile(control.dataPath)
+    xbmcvfs.mkdir(control.dataPath)
     conn = dbapi2.connect(filepath)
     conn.row_factory = _dict_factory
     return conn
 
 
 def _get_db_connection():
-    makeFile(control.dataPath)
+    xbmcvfs.mkdir(control.dataPath)
     conn = dbapi2.connect(control.anilistSyncDB, timeout=60.0)
     conn.row_factory = _dict_factory
     return conn
@@ -154,24 +146,19 @@ def _get_db_connection():
 
 def _get_cursor():
     conn = _get_db_connection()
-    conn.execute("PRAGMA FOREIGN_KEYS = 1")
+    conn.execute("PRAGMA FOREIGN_KEYS=1")
     cursor = conn.cursor()
     return cursor
 
 
-def update_show(anilist_id, mal_id, kodi_meta, last_updated='', anime_schedule_route=''):
+def update_show(anilist_id, mal_id, kodi_meta, anime_schedule_route=''):
     lock.acquire()
     cursor = _get_cursor()
     if isinstance(kodi_meta, dict):
         kodi_meta = pickle.dumps(kodi_meta)
     try:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute(
-            "REPLACE INTO shows ("
-            "anilist_id, mal_id, kodi_meta, last_updated, anime_schedule_route)"
-            "VALUES "
-            "(?, ?, ?, ?, ?)",
-            (anilist_id, mal_id, kodi_meta, last_updated, anime_schedule_route))
+        cursor.execute('REPLACE INTO shows (anilist_id, mal_id, kodi_meta, anime_schedule_route) VALUES (?, ?, ?, ?)', (anilist_id, mal_id, kodi_meta, anime_schedule_route))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
@@ -190,12 +177,7 @@ def update_show_meta(anilist_id, meta_ids, art):
         art = pickle.dumps(art)
     try:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute(
-            "REPLACE INTO shows_meta ("
-            "anilist_id, meta_ids, art)"
-            "VALUES "
-            "(?, ?, ?)",
-            (anilist_id, meta_ids, art))
+        cursor.execute("REPLACE INTO shows_meta (anilist_id, meta_ids, art) VALUES (?, ?, ?)", (anilist_id, meta_ids, art))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
@@ -237,18 +219,13 @@ def update_kodi_meta(anilist_id, kodi_meta):
     control.try_release_lock(lock)
 
 
-def update_show_data(anilist_id, data={}, last_updated=''):
+def update_show_data(anilist_id, data, last_updated=''):
     lock.acquire()
     cursor = _get_cursor()
     data = pickle.dumps(data)
     try:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute(
-            "REPLACE INTO show_data ("
-            "anilist_id, data, last_updated)"
-            "VALUES "
-            "(?, ?, ?)",
-            (anilist_id, data, last_updated))
+        cursor.execute("REPLACE INTO show_data (anilist_id, data, last_updated) VALUES (?, ?, ?)", (anilist_id, data, last_updated))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
@@ -258,33 +235,18 @@ def update_show_data(anilist_id, data={}, last_updated=''):
         control.try_release_lock(lock)
 
 
-def update_episode(show_id, season=0, number=0, update_time='', kodi_meta={}, filler=''):
+def update_episode(show_id, season, number, update_time, kodi_meta, filler=''):
     lock.acquire()
     cursor = _get_cursor()
     kodi_meta = pickle.dumps(kodi_meta)
     try:
-        cursor.execute(
-            "REPLACE INTO episodes ("
-            "anilist_id, season, kodi_meta, last_updated, number, filler)"
-            "VALUES "
-            "(?, ?, ?, ?, ?, ?)",
-            (show_id, season, kodi_meta, update_time, number, filler))
+        cursor.execute('REPLACE INTO episodes (anilist_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (show_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
         cursor.close()
     finally:
         control.try_release_lock(lock)
-
-
-def _get_show_list():
-    lock.acquire()
-    cursor = _get_connection_cursor(control.anilistSyncDB)
-    cursor.execute('SELECT * FROM shows')
-    shows = cursor.fetchall()
-    cursor.close()
-    control.try_release_lock(lock)
-    return shows
 
 
 def get_show_data(anilist_id):
@@ -354,10 +316,23 @@ def remove_episodes(anilist_id):
         control.try_release_lock(lock)
 
 
+def remove_show_data(anilist_id):
+    lock.acquire()
+    cursor = _get_cursor()
+    try:
+        cursor.execute("DELETE FROM show_data WHERE anilist_id=?", (anilist_id,))
+        cursor.connection.commit()
+        cursor.close()
+    except OperationalError:
+        cursor.close()
+    finally:
+        control.try_release_lock(lock)
+
+
 def get_mappings(anime_id, send_id):
     lock.acquire()
     cursor = _get_connection_cursor(control.mappingDB)
-    cursor.execute(f'SELECT * FROM anime WHERE {send_id}=?', (anime_id, ))
+    cursor.execute(f'SELECT * FROM anime WHERE {send_id}=?', (anime_id,))
     mappings = cursor.fetchall()
     cursor.close()
     control.try_release_lock(lock)
@@ -382,7 +357,6 @@ def getSearchHistory(media_type='show'):
         for i in history:
             if i['value'] not in filter_:
                 filter_.append(i['value'])
-
         return filter_
     except OperationalError:
         cursor.close()
@@ -399,12 +373,7 @@ def addSearchHistory(search_string, media_type):
         cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON show (value)")
-
-        cursor.execute(
-            "REPLACE INTO %s Values (?)"
-            % media_type, (search_string,)
-        )
-
+        cursor.execute("REPLACE INTO %s Values (?)" % media_type, (search_string,))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
@@ -412,54 +381,6 @@ def addSearchHistory(search_string, media_type):
         return []
     finally:
         control.try_release_lock(lock)
-
-
-def create_torrent_cache(cursor):
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS %s ("
-        "anilist_id INTEGER NOT NULL, "
-        "sources BLOB, "
-        "zfill INTEGER,"
-        "UNIQUE(anilist_id))"
-        % cache_table
-    )
-    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_%s ON %s (anilist_id)" % (cache_table, cache_table))
-
-
-def addTorrentList(anilist_id, torrent_list, zfill_int):
-    lock.acquire()
-    cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
-    try:
-        create_torrent_cache(cursor)
-
-        if isinstance(torrent_list, list):
-            torrent_list = pickle.dumps(torrent_list)
-        cursor.execute("REPLACE INTO %s (anilist_id, sources, zfill) "
-                       "VALUES (?, ?, ?)" % cache_table, (anilist_id, torrent_list, int(zfill_int)))
-
-        cursor.connection.commit()
-        cursor.close()
-    except OperationalError:
-        cursor.close()
-        return []
-    finally:
-        control.try_release_lock(lock)
-
-
-def torrent_cache_clear():
-    lock.acquire()
-    cursor = _get_connection_cursor(control.torrentScrapeCacheFile)
-    try:
-        for t in [cache_table, 'rel_list', 'rel_lib']:
-            cursor.execute("DROP TABLE IF EXISTS %s" % t)
-            cursor.execute("VACUUM")
-            cursor.connection.commit()
-    except OperationalError:
-        cursor.close()
-    finally:
-        control.try_release_lock(lock)
-
-    control.notify(f'{control.ADDON_NAME}: {control.lang(30200)}', control.lang(30202), time=5000, sound=False)
 
 
 def clearSearchHistory():

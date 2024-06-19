@@ -181,7 +181,6 @@ class SourceSelect(BaseWindow):
         if self.rescrape:
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
-            database.addTorrentList(self.anilist_id, [selected_source], 2)
 
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True)
 

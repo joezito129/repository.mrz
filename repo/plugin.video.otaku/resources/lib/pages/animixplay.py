@@ -1,15 +1,15 @@
 import itertools
 import pickle
 import re
-from functools import partial
 
+from functools import partial
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
 from resources.lib.ui import database, client
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
     _BASE_URL = 'https://animixplay.best/'
 
     def get_sources(self, anilist_id, episode):

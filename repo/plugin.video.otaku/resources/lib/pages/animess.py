@@ -8,7 +8,7 @@ from resources.lib.ui import database
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
     _BASE_URL = 'https://otakuanimess.cc/'
 
     def get_sources(self, anilist_id, episode):
@@ -69,7 +69,7 @@ class sources(BrowserBase):
 
     def _process_am(self, slug, title, episode):
         url, lang = slug
-        sources = []
+        sources_ = []
         headers = {'Referer': self._BASE_URL}
         res = database.get_(
             self._get_request,
@@ -101,6 +101,6 @@ class sources(BrowserBase):
                     'info': [lang],
                     'lang': 2 if lang == 'DUB' else 0
                 }
-                sources.append(source)
+                sources_.append(source)
 
-        return sources
+        return sources_

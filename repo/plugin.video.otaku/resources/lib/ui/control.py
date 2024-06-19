@@ -23,7 +23,6 @@ dataPath = xbmcvfs.translatePath(addonInfo('profile'))
 cacheFile = os.path.join(dataPath, 'cache.db')
 searchHistoryDB = os.path.join(dataPath, 'search.db')
 anilistSyncDB = os.path.join(dataPath, 'anilistSync.db')
-torrentScrapeCacheFile = os.path.join(dataPath, 'torrentScrape.db')
 mappingDB = os.path.join(dataPath, 'mappings.db')
 
 maldubFile = os.path.join(dataPath, 'mal_dub.json')

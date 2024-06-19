@@ -9,7 +9,7 @@ from resources.lib.ui import source_utils, control
 PATH = control.getSetting('download.location')
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
 
     def get_sources(self, query, anilist_id, episode):
         filenames = os.listdir(PATH)

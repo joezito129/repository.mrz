@@ -22,7 +22,7 @@ class AnilistSyncDatabase:
         # You will need to update the below version number to match the new addon version
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
-        self.last_meta_update = '1.0.5'
+        self.last_meta_update = '1.0.6'
 
         threading.Lock().acquire()
 
@@ -53,8 +53,7 @@ class AnilistSyncDatabase:
     def _set_base_activites(self):
         cursor = self._get_cursor()
         cursor.execute('INSERT INTO activities(sync_id, otaku_version)'
-                       'VALUES(1, ?)',
-                       (self.last_meta_update,))
+                       'VALUES(1, ?)', (self.last_meta_update,))
 
         cursor.connection.commit()
         self.activites = cursor.fetchone()
@@ -96,7 +95,6 @@ class AnilistSyncDatabase:
                        'simkl_id INTEGER,'
                        'kitsu_id INTEGER,'
                        'kodi_meta BLOB NOT NULL, '
-                       'last_updated TEXT NOT NULL, '
                        'anime_schedule_route TEXT NOT NULL, '
                        'UNIQUE(anilist_id))')
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_shows ON "shows" (anilist_id ASC )')
@@ -151,8 +149,7 @@ class AnilistSyncDatabase:
         cursor = self._get_cursor()
         cursor.execute('CREATE TABLE IF NOT EXISTS activities ('
                        'sync_id INTEGER PRIMARY KEY, '
-                       'otaku_version TEXT NOT NULL) '
-                       )
+                       'otaku_version TEXT NOT NULL) ')
         cursor.connection.commit()
         cursor.close()
         control.try_release_lock(threading.Lock())
@@ -186,8 +183,8 @@ class AnilistSyncDatabase:
 
         self._set_base_activites()
         self._refresh_activites()
-        
-        control.notify(f'{control.ADDON_NAME}: Database', 'Metadata Database Successfully Cleared', sound=False)
+        if not silent:
+            control.notify(f'{control.ADDON_NAME}: Database', 'Metadata Database Successfully Cleared', sound=False)
 
 
 def _dict_factory(cursor, row):

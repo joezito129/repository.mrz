@@ -4,7 +4,7 @@ import random
 import re
 import string
 import time
-# import six
+import six
 
 from resources.lib.ui import client, control, database, jsunpack
 from resources.lib.ui.pyaes import AESModeOfOperationCBC, Decrypter, Encrypter

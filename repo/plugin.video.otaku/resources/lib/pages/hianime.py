@@ -10,7 +10,7 @@ from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.indexers.malsync import MALSYNC
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
     _BASE_URL = 'https://hianime.to/'
     js_file = 'https://megacloud.tv/js/player/a/prod/e1-player.min.js'
 
@@ -196,10 +196,10 @@ class sources(BrowserBase):
 
         js = self._get_request(self.js_file)
         cases = re.findall(r'switch\(\w+\){([^}]+?)partKey', js)[0]
-        vars = re.findall(r"\w+=(\w+)", cases)
-        consts = re.findall(r"((?:[,;\s]\w+=0x\w{1,2}){%s,})" % len(vars), js)[0]
+        vars_ = re.findall(r"\w+=(\w+)", cases)
+        consts = re.findall(r"((?:[,;\s]\w+=0x\w{1,2}){%s,})" % len(vars_), js)[0]
         indexes = []
-        for var in vars:
+        for var in vars_:
             var_value = re.search(r',{0}=(\w+)'.format(var), consts)
             if var_value:
                 indexes.append(to_int(var_value.group(1)))

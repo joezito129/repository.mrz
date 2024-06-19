@@ -6,12 +6,12 @@ import pickle
 from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.ui import database, source_utils, control
+from resources.lib.ui import database, source_utils
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
     _BASE_URL = 'https://animetosho.org'
 
     def __init__(self):
@@ -66,8 +66,12 @@ class sources(BrowserBase):
         show = show.lower()
         if 'season' in show:
             query1, query2 = show.rsplit('|', 2)
-            match_1 = re.match(r'.+?(?=season)', query1).group(0).strip() + ')'
-            match_2 = re.match(r'.+?(?=season)', query2).group(0).strip() + ')'
+            match_1 = re.match(r'.+?(?=season)', query1)
+            if match_1:
+                match_1 = match_1.group(0).strip() + ')'
+            match_2 = re.match(r'.+?(?=season)', query2)
+            if match_2:
+                match_2 = match_2.group(0).strip() + ')'
             params['q'] = self._sphinx_clean(f'{match_1}|{match_2}')
 
             self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)

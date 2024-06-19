@@ -81,7 +81,7 @@ class JikanAPI:
 
         parsed = utils.allocate_item(title, f"play/{url}", False, image, info, fanart, poster, isplayable=True)
         if not episodes or not any(x['number'] == episode for x in episodes):
-            database.update_episode(anilist_id, season=season, number=episode, update_time=update_time, kodi_meta=parsed, filler=filler)
+            database.update_episode(anilist_id, season, episode, update_time, parsed, filler=filler)
 
         if title_disable and info.get('playcount') != 1:
             parsed['info']['title'] = res['episode']

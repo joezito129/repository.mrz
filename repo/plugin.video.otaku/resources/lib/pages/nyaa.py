@@ -10,7 +10,7 @@ from resources.lib.ui import database, source_utils
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
     _BASE_URL = 'https://nyaa.si'
 
     def __init__(self):
@@ -33,7 +33,7 @@ class sources(BrowserBase):
         }
         return source
 
-    def process_nyaa_episodes(self, url, params, episode_zfill, season_zfill):
+    def process_nyaa_episodes(self, url, params, episode_zfill, season_zfill, part=None):
         r = requests.get(url, params)
         html = r.text
         mlink = SoupStrainer('div', {'class': 'table-responsive'})
@@ -50,14 +50,17 @@ class sources(BrowserBase):
         regex_ep = r'\de(\d+)\b|\se(\d+)\b|\s-\s(\d{1,3})\b'
         rex = re.compile(regex)
         rex_ep = re.compile(regex_ep)
-
         filtered_list = []
         for torrent in list_:
             torrent['hash'] = re.findall(r'btih:(.*?)(?:&|$)', torrent['magnet'])[0]
-
+            title = torrent['name'].lower()
+            if part:
+                if 'part' in title:
+                    part_match = re.search(r'part([ \d]+)', title)
+                    part_match = int(part_match.group(1).strip())
+                    if part_match != part:
+                        continue
             if season_zfill:
-                title = torrent['name'].lower()
-
                 ep_match = rex_ep.findall(title)
                 ep_match = list(map(int, list(filter(None, itertools.chain(*ep_match)))))
 
@@ -77,11 +80,11 @@ class sources(BrowserBase):
                 filtered_list.append(torrent)
         cache_list = debrid.TorrentCacheCheck().torrentCacheCheck(filtered_list)
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
-        mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill)
+        mapfunc = partial(self.parse_nyaa_view, episode_zfill)
         all_results = list(map(mapfunc, cache_list))
         return all_results
 
-    def process_nyaa_backup(self, url, params, episode=1):
+    def process_nyaa_backup(self, url, params, episode):
         r = requests.get(url, params=params)
         res = r.text
         results = BeautifulSoup(res, 'html.parser')
@@ -168,6 +171,13 @@ class sources(BrowserBase):
         if rescrape:
             return self.get_episode_sources_pack(show, anilist_id, episode)
 
+        if 'part' in show.lower():
+            part = re.search(r'part([ \d]+)', show.lower())
+            if part:
+                part = int(part.group(1).strip())
+        else:
+            part = None
+
         season = database.get_episode_list(anilist_id)[0]['season']
         season_zfill = str(season).zfill(2)
         episode_zfill = episode.zfill(2)
@@ -181,8 +191,7 @@ class sources(BrowserBase):
             's': 'downloads',
             'o': 'desc'
         }
-
-        nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill)
+        nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         if status == 'FINISHED':
             query = '%s "Batch"|"Complete Series"' % show
             episodes = pickle.loads(database.get_show(anilist_id)['kodi_meta'])['episodes']
@@ -201,19 +210,23 @@ class sources(BrowserBase):
                 's': 'seeders',
                 'o': 'desc'
             }
-            nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill)
+            nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         show = show.lower()
         if 'season' in show:
-            query1, query2 = show.split('|', 2)
-            match_1 = re.match(r'.+?(?=season)', query1).group(0).strip() + ')'
-            match_2 = re.match(r'.+?(?=season)', query2).group(0).strip() + ')'
+            query1, query2 = show.rsplit('|', 2)
+            match_1 = re.match(r'.+?(?=season)', query1)
+            if match_1:
+                match_1 = match_1.group(0).strip() + ')'
+            match_2 = re.match(r'.+?(?=season)', query2)
+            if match_2:
+                match_2 = match_2.group(0).strip() + ')'
             query = f'{match_1}|{match_2}'
         params = {
             'f': '0',
             'c': '1_0',
             'q': query.replace(' ', '+')
         }
-        nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill)
+        nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         return nyaa_sources
 
     def get_episode_sources_backup(self, db_query, anilist_id, episode):

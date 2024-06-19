@@ -147,7 +147,7 @@ def ANILIST_GENRES(payload, params):
 # next page for anilist_genres
 @route('anilist_genres/*')
 def ANILIST_GENRES_PAGES(payload, params):
-    genres, tags, page = payload.split("/")[-3:]
+    genres, tags, page = payload.rsplit("/")[-3:]
     control.draw_items(_ANILIST_BROWSER.get_genres_page(genres, tags, int(page)))
 
 
@@ -274,7 +274,7 @@ def DELETE_ANIME_DATABASE(payload, params):
         anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
 
     database.remove_episodes(anilist_id)
-    database.update_show_data(anilist_id)
+    database.remove_show_data(anilist_id)
     control.notify(control.ADDON_NAME, 'Removed from database')
 
 
@@ -332,11 +332,6 @@ def CLEAR_CACHE(payload, params):
     database.cache_clear()
 
 
-@route('clear_torrent_cache')
-def CLEAR_TORRENT_CACHE(payload, params):
-    database.torrent_cache_clear()
-
-
 @route('rebuild_database')
 def REBUILD_DATABASE(payload, params):
     from resources.lib.ui.database_sync import AnilistSyncDatabase
@@ -354,12 +349,10 @@ def TOOLS_MENU(payload, params):
         (control.lang(30027), "change_log", 'changelog.png'),
         (control.lang(30020), "settings", 'open_settings_menu.png'),
         (control.lang(30021), "clear_cache", 'clear_cache.png'),
-        (control.lang(30022), "clear_torrent_cache", 'clear_local_torrent_cache.png'),
         (control.lang(30023), "clear_history", 'clear_search_history.png'),
         (control.lang(30026), "rebuild_database", 'rebuild_database.png'),
         ("Sync Completed List", "completed_sync", "sync_completed.png"),
         ("Download Manager", 'download_manager', 'download_manager.png')
-        # (control.lang(30024), "wipe_addon_data", 'wipe_addon_data.png'),
     ]
     control.draw_items([utils.allocate_item(name, url, False, image) for name, url, image in TOOLS_ITEMS], "addons")
 

@@ -11,7 +11,7 @@ from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.indexers.malsync import MALSYNC
 
 
-class sources(BrowserBase):
+class Sources(BrowserBase):
     _BASE_URL = 'https://aniwave.to/'
     EKEY = 'tGn6kIpVXBEUmqjD'
     DKEY = 'LUyDrL4qIxtIxOGs'
