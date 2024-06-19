@@ -80,7 +80,7 @@ class Sources(BrowserBase):
                 filtered_list.append(torrent)
         cache_list = debrid.TorrentCacheCheck().torrentCacheCheck(filtered_list)
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
-        mapfunc = partial(self.parse_nyaa_view, episode_zfill)
+        mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill)
         all_results = list(map(mapfunc, cache_list))
         return all_results
 
