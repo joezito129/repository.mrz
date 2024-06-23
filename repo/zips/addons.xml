@@ -261,7 +261,7 @@
 
 
   </extension>
-</addon><addon id="plugin.video.seren" version="3.0.0" name="Seren" provider-name="Nixgates">
+</addon><addon id="plugin.video.seren" version="3.0.1" name="Seren" provider-name="Nixgates">
     <requires>
         <import addon="xbmc.addon" version="17.9.910" />
         <import addon="xbmc.python" version="3.0.0" />
@@ -277,7 +277,7 @@
     </extension>
     <extension point="xbmc.service" library="service.py" />
     <extension point="xbmc.addon.metadata">
-        <reuselanguageinvoker>false</reuselanguageinvoker>
+        <reuselanguageinvoker>true</reuselanguageinvoker>
         <summary lang="en">Seren - Modular Multi-source Addon</summary>
         <description lang="en">Seren is a modular provider based, cloud service streaming software that is tightly
             interwoven with Trakt. Seren provides the freedom to view media from a single menu system from service
