@@ -1,11 +1,12 @@
 import threading
-from abc import ABCMeta
-from abc import abstractmethod
-from contextlib import contextmanager
-
 import xbmc
 import xbmcaddon
 import xbmcgui
+
+from abc import ABCMeta
+from abc import abstractmethod
+from contextlib import contextmanager
+from resources.lib.modules import globals
 
 
 class SettingsCache(metaclass=ABCMeta):
@@ -214,7 +215,6 @@ class PersistedSettingsCache(SettingsCache):
                 while self._RUNTIME_SETTINGS.get_bool_setting(self.SETTINGS_LOCK_NAME):
                     if self._KODI_MONITOR.waitForAbort(0.01):
                         raise self.KodiShutdown("Kodi Shutdown")
-                # pylint: disable=not-context-manager
                 self._RUNTIME_SETTINGS.set_setting(self.SETTINGS_LOCK_NAME, True)
                 yield
         finally:

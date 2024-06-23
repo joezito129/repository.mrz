@@ -1,22 +1,19 @@
-# Import Thread lock workaround
-# noinspection PyUnresolvedReferences
 import contextlib
 import json
 import os
 import re
 import traceback
 import unicodedata
-from functools import cached_property
-from urllib import parse
-from xml.etree import ElementTree
-
 import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
 import xbmcvfs
-from unidecode import unidecode
 
+from functools import cached_property
+from urllib import parse
+from xml.etree import ElementTree
+from unidecode import unidecode
 from resources.lib.common import tools
 from resources.lib.modules.settings_cache import PersistedSettingsCache
 from resources.lib.modules.settings_cache import RuntimeSettingsCache
@@ -260,17 +257,23 @@ listitem_properties = [
 ]
 
 
+addonInfo = xbmcaddon.Addon().getAddonInfo
+ADDON_ID = addonInfo('id')
+settings = xbmcaddon.Addon(ADDON_ID)
+language = settings.getLocalizedString
+addonInfo = settings.getAddonInfo
+ADDON_NAME = addonInfo('name')
+ADDON_ICON = addonInfo('icon')
+ADDON_PATH = settings.getAddonInfo('path')
+dataPath = xbmcvfs.translatePath(addonInfo('profile'))
+
 class GlobalVariables:
     CONTENT_MENU = ""
-    CONTENT_FILES = "files"
     CONTENT_MOVIE = "movies"
     CONTENT_SHOW = "tvshows"
     CONTENT_SEASON = "seasons"
     CONTENT_EPISODE = "episodes"
     CONTENT_GENRES = "genres"
-    CONTENT_YEARS = "years"
-    MEDIA_MENU = ""
-    MEDIA_FOLDER = "file"
     MEDIA_MOVIE = "movie"
     MEDIA_SHOW = "tvshow"
     MEDIA_SEASON = "season"
@@ -629,6 +632,8 @@ class GlobalVariables:
             return "119"
         elif self.KODI_VERSION == 20:
             return "121"
+        elif self.KODI_VERSION == 21:
+            return "131"
 
         raise KeyError("Unsupported kodi version")
 
@@ -893,10 +898,7 @@ class GlobalVariables:
         elif level == "info":
             xbmc.log(msg, level=xbmc.LOGINFO)
         elif level == "notice":
-            if self.KODI_VERSION >= 19:
-                xbmc.log(msg, level=xbmc.LOGINFO)
-            else:
-                xbmc.log(msg, level=xbmc.LOGNOTICE)  # pylint: disable=no-member
+            xbmc.log(msg, level=xbmc.LOGINFO)
         elif level == "warning":
             xbmc.log(msg, level=xbmc.LOGWARNING)
         else:
@@ -967,11 +969,8 @@ class GlobalVariables:
 
         if skin_dir := xbmc.getSkinDir():
             if isinstance(skin_color := skin_color_lookup.get(skin_dir), dict):
-                skin_color = skin_color.get(
-                    xbmc.getInfoLabel("Skin.CurrentTheme").lower(), skin_color.get("default", None)
-                )
+                skin_color = skin_color.get(xbmc.getInfoLabel("Skin.CurrentTheme").lower(), skin_color.get("default", None))
             return skin_color
-        return None
 
     def get_user_text_color(self):
         """Get the user selected color setting when nothing is selecting it returns
@@ -983,7 +982,6 @@ class GlobalVariables:
         color = self.get_setting("general.displayColor")
         if not color or color == "None" or color == "inherit":
             color = self._try_get_color_from_skin() or "deepskyblue"
-
         return color
 
     def color_string(self, text, color=None):
@@ -996,7 +994,7 @@ class GlobalVariables:
         :return:Text wrapped in a Kodi color tag.
         :rtype:str
         """
-        if color == "default" or not color or color == "inherit":
+        if not color or color == "default" or color == "inherit":
             color = self.get_user_text_color()
 
         return f"[COLOR {color}]{text}[/COLOR]"
@@ -1018,16 +1016,16 @@ class GlobalVariables:
         self.close_busy_dialog()
         self.close_all_dialogs()
 
-    def show_busy_dialog(self):
+    @staticmethod
+    def show_busy_dialog():
         xbmc.executebuiltin("ActivateWindow(busydialognocancel)")
 
-    def close_all_dialogs(self):
+    @staticmethod
+    def close_all_dialogs():
         xbmc.executebuiltin("Dialog.Close(all,true)")
 
-    def close_ok_dialog(self):
-        xbmc.executebuiltin("Dialog.Close(okdialog, true)")
-
-    def close_busy_dialog(self):
+    @staticmethod
+    def close_busy_dialog():
         xbmc.executebuiltin("Dialog.Close(busydialog)")
         xbmc.executebuiltin("Dialog.Close(busydialognocancel)")
 
@@ -1073,7 +1071,8 @@ class GlobalVariables:
     def all_debrid_enabled(self):
         return bool(self.get_setting("alldebrid.apikey") != "" and self.get_bool_setting("alldebrid.enabled"))
 
-    def container_refresh(self):
+    @staticmethod
+    def container_refresh():
         return xbmc.executebuiltin("Container.Refresh")
 
     def trigger_widget_refresh(self, if_playing=True):
@@ -1090,13 +1089,9 @@ class GlobalVariables:
         :type if_playing: bool
         """
         player = xbmc.Player()
-        if (
-            self.get_bool_runtime_setting("widget_refreshing")
-            or (player.isPlaying() and not if_playing)
-            or xbmc.getCondVisibility(  # Don't wait if we are playing as it will refresh after
-                "Library.IsScanningVideo"
-            )  # Don't do library update if already scanning library
-        ):
+        if self.get_bool_runtime_setting("widget_refreshing") or (player.isPlaying() and not if_playing) or xbmc.getCondVisibility("Library.IsScanningVideo"):
+            # Don't wait if we are playing as it will refresh after
+            # Don't do library update if already scanning library
             del player
             return
         try:
@@ -1145,57 +1140,47 @@ class GlobalVariables:
         return tuple({ext for ext in xbmc.getSupportedMedia("video").split("|") if ext not in {"", ".zip", ".rar"}})
 
     def add_directory_item(self, name, **params):
+        item = xbmcgui.ListItem(label=name, offscreen=True)
+        vinfo = item.getVideoInfoTag()
+
         menu_item = params.pop("menu_item", {})
         if not isinstance(menu_item, dict):
             menu_item = {}
 
-        item = xbmcgui.ListItem(label=name, offscreen=True)
-        item.setContentLookup(False)
+        cm = params.pop("cm", [])
 
         info = menu_item.pop("info", {})
-        item.addStreamInfo("video", {})
-
-        if info is None or not isinstance(info, dict):
+        if not isinstance(info, dict):
             info = {}
 
+        art = menu_item.pop("art", {})
+        if not isinstance(art, dict):
+            art = {}
+
+        item.setContentLookup(False)
+        # item.addStreamInfo("video", {})
+
         self._apply_listitem_properties(item, info)
-        if self.studio_limit:
-            self.handle_studio_icon_skin_workaround(item, info)
+        # if self.studio_limit:
+        #     self.handle_studio_icon_skin_workaround(item, info)
 
         if "unwatched_episodes" in menu_item:
             item.setProperty("UnWatchedEpisodes", str(menu_item["unwatched_episodes"]))
         if "watched_episodes" in menu_item:
             item.setProperty("WatchedEpisodes", str(menu_item["watched_episodes"]))
-        if (
-            menu_item.get("episode_count", 0)
-            and menu_item.get("watched_episodes", 0)
-            and menu_item.get("episode_count", 0) == menu_item.get("watched_episodes", 0)
-        ):
+        if menu_item.get("episode_count", 0) and menu_item.get("watched_episodes", 0) and menu_item.get("episode_count", 0) == menu_item.get("watched_episodes", 0):
             info["playcount"] = 1
-        if (
-            menu_item.get("watched_episodes", 0) == 0
-            and menu_item.get("episode_count", 0)
-            and menu_item.get("episode_count", 0) > 0
-        ):
+        if menu_item.get("watched_episodes", 0) == 0 and menu_item.get("episode_count", 0) and menu_item.get("episode_count", 0) > 0:
             item.setProperty("WatchedEpisodes", str(0))
             item.setProperty("UnWatchedEpisodes", str(menu_item.get("episode_count", 0)))
         if "episode_count" in menu_item:
             item.setProperty("TotalEpisodes", str(menu_item["episode_count"]))
         if "season_count" in menu_item:
             item.setProperty("TotalSeasons", str(menu_item["season_count"]))
-        if (
-            "percent_played" in menu_item
-            and menu_item.get("percent_played") is not None
-            and float(menu_item.get("percent_played", 0)) > 0
-        ):
+        if "percent_played" in menu_item and menu_item.get("percent_played") is not None and float(menu_item.get("percent_played", 0)) > 0:
             item.setProperty("percentplayed", str(menu_item["percent_played"]))
-        if (
-            "resume_time" in menu_item
-            and menu_item.get("resume_time") is not None
-            and int(menu_item.get("resume_time", 0)) > 0
-        ):
-            params["resume"] = str(menu_item["resume_time"])
-            item.setProperty("resumetime", str(menu_item["resume_time"]))
+        if "resume_time" in menu_item and menu_item.get("resume_time") is not None and int(menu_item.get("resume_time", 0)) > 0:
+            info['resume'] = params["resume"] = str(menu_item["resume_time"])
         if "play_count" in menu_item and menu_item.get("play_count") is not None:
             info["playcount"] = menu_item["play_count"]
         if "air_date" in menu_item and menu_item.get("air_date") is not None:
@@ -1204,7 +1189,7 @@ class GlobalVariables:
         if "description" in params:
             info["plot"] = info["overview"] = info["description"] = params.pop("description", None)
         if menu_item.get("user_rating"):
-            item.setProperty("userrating", str(menu_item["user_rating"]))
+            info['userrating'] = str(menu_item['user_rating'])
 
         special_sort = params.pop("special_sort", None)
         if special_sort is not None:
@@ -1216,14 +1201,14 @@ class GlobalVariables:
         if params.pop("is_playable", False):
             item.setProperty("IsPlayable", "true")
             is_folder = params.pop("is_folder", False)
+            art['tvshow.poster'] = art.pop('poster')
         else:
             item.setProperty("IsPlayable", "false")
             is_folder = params.pop("is_folder", True)
 
         cast = menu_item.get("cast", [])
-        if cast is None or not isinstance(cast, (set, list)):
-            cast = []
-        item.setCast(cast)
+        if isinstance(cast, (set, list)):
+            vinfo.setCast([xbmc.Actor(p['name'], p['role'], p['order'], p['thumbnail']) for p in cast])
 
         for key, value in info.items():
             if key.endswith("_id"):
@@ -1235,29 +1220,17 @@ class GlobalVariables:
             "imdb_id": "imdb",
             "tvdb_id": "tvdb",
         }
-        item.setUniqueIDs(
-            {
-                unique_id_key: info[f"tvshow.{id_key}" if media_type in ["episode", "season"] else id_key]
-                for id_key, unique_id_key in id_keys.items()
-                if info.get(f"tvshow.{id_key}" if media_type in ["episode", "season"] else id_key)
-            }
-        )
+        unique_ids = {unique_id_key: str(info[f"tvshow.{id_key}" if media_type in ["episode", "season"] else id_key]) for id_key, unique_id_key in id_keys.items() if info.get(f"tvshow.{id_key}" if media_type in ["episode", "season"] else str(id_key))}
+        vinfo.setUniqueIDs(unique_ids)
 
         for i in info:
             if i.startswith("rating."):
-                item.setRating(i.split(".")[1], float(info[i].get("rating", 0.0)), int(info[i].get("votes", 0)), False)
+                vinfo.setRating(float(info[i].get("rating", 0.0)), int(info[i].get("votes", 0)), i.split(".")[1], False)
 
-        cm = params.pop("cm", [])
-        if cm is None or not isinstance(cm, (set, list)):
-            cm = []
-        item.addContextMenuItems(cm)
+        if isinstance(cm, (set, list)):
+            item.addContextMenuItems(cm)
 
-        art = menu_item.pop("art", {})
-        if art is None or not isinstance(art, dict):
-            art = {}
-        if (
-            art.get("fanart", art.get("season.fanart", art.get("tvshow.fanart", None))) is None
-        ) and not self.fanart_fallback_disabled:
+        if (art.get("fanart", art.get("season.fanart", art.get("tvshow.fanart", None))) is None) and not self.fanart_fallback_disabled:
             art["fanart"] = self.DEFAULT_FANART
         if art.get("poster", art.get("season.poster", art.get("tvshow.poster", None))) is None:
             art["poster"] = self.DEFAULT_POSTER
@@ -1273,7 +1246,7 @@ class GlobalVariables:
         # Convert dates to localtime for display
         self.convert_info_dates(info)
 
-        item.setInfo("video", info)
+        self.set_info(vinfo, info)
 
         bulk_add = params.pop("bulk_add", False)
         url = self.create_url(self.BASE_URL, params)
@@ -1282,8 +1255,63 @@ class GlobalVariables:
         else:
             xbmcplugin.addDirectoryItem(handle=self.PLUGIN_HANDLE, url=url, listitem=item, isFolder=is_folder)
 
-    def add_menu_items(self, item_list):
-        xbmcplugin.addDirectoryItems(self.PLUGIN_HANDLE, item_list, len(item_list))
+    def set_info(self, v_tag, info):
+        if info.get('title'):
+            v_tag.setTitle(info['title'])
+        if info.get('mediatype'):
+            v_tag.setMediaType(info['mediatype'])
+        if info.get('tvshowtitle'):
+            v_tag.setTvShowTitle(info['tvshowtitle'])
+        if info.get('plot'):
+            v_tag.setPlot(info['plot'])
+        if info.get('year'):
+            v_tag.setYear(int(info['year']))
+        if info.get('premiered'):
+            v_tag.setPremiered(info['premiered'])
+        if info.get('status'):
+            v_tag.setTvShowStatus(info['status'])
+        if info.get('genre'):
+            v_tag.setGenres(info['genre'])
+        if info.get('mpaa'):
+            v_tag.setMpaa(info['mpaa'])
+        if info.get('rating'):
+            v_tag.setRating(info['rating'])
+        if info.get('season'):
+            v_tag.setSeason(info['season'])
+        if info.get('episode'):
+            v_tag.setEpisode(info['episode'])
+        if info.get('aired'):
+            v_tag.setFirstAired(info['aired'])
+        if info.get('playcount'):
+            v_tag.setPlaycount(info['playcount'])
+        if info.get('originalTitle'):
+            v_tag.setOriginalTitle(info['originalTitle'])
+        if info.get('trailer'):
+            v_tag.setTrailer(info['trailer'])
+        if info.get('sortepisode'):
+            v_tag.setSortEpisode(info['sortepisode'])
+        if info.get('sortseason'):
+            v_tag.setSortSeason(info['sortseason'])
+        if info.get('sorttitle'):
+            v_tag.setSortTitle(info['sorttitle'])
+        if info.get('director'):
+            v_tag.setDirectors(info['director'])
+        if info.get('writer'):
+            v_tag.setWriters(info['writer'])
+        if info.get('votes'):
+            v_tag.setVotes(info['votes'])
+        if info.get('duration'):
+            v_tag.setDuration(info['duration'])
+        if info.get('imdbnumber'):
+            v_tag.setIMDBNumber(info['imdbnumber'])
+        if info.get('tagline'):
+            v_tag.setTagLine(info['tagline'])
+        if info.get('userrating'):
+            v_tag.setUserRating(info['userrating'])
+        if info.get('resume'):
+            print(info['resume'])
+            # v_tag.setResumePoint(float(info['resume']))
+            v_tag.setResumePoint(float(info['resume']), info.get('duration', 0))
 
     @staticmethod
     def clean_info_keys(info_dict):
@@ -1318,7 +1346,6 @@ class GlobalVariables:
 
     def set_view_type(self, content_type):
         def _execute_set_view_mode(view):
-            xbmc.sleep(200)
             xbmc.executebuiltin(f"Container.SetViewMode({view})")
 
         if self.get_bool_setting("general.setViews") and self.is_addon_visible():
@@ -1326,21 +1353,20 @@ class GlobalVariables:
             if view_type > 0:
                 tools.run_threaded(_execute_set_view_mode, view_type)
 
-    def is_addon_visible(self):
+    @staticmethod
+    def is_addon_visible():
         return xbmc.getInfoLabel('Container.PluginName') == "plugin.video.seren"
 
     def cancel_directory(self):
         if g.FROM_WIDGET:
-            g.add_directory_item(
-                g.get_language_string(284, addon=False),
-                menu_item=g.create_icon_dict("trakt_sync", base_path=g.ICONS_PATH),
-            )
+            g.add_directory_item(g.get_language_string(284, addon=False), menu_item=g.create_icon_dict("trakt_sync", base_path=g.ICONS_PATH))
             xbmcplugin.setContent(self.PLUGIN_HANDLE, g.CONTENT_MENU)
             xbmcplugin.endOfDirectory(self.PLUGIN_HANDLE, succeeded=True, cacheToDisc=False)
         else:
             xbmcplugin.endOfDirectory(self.PLUGIN_HANDLE, succeeded=False, cacheToDisc=False)
 
-    def read_all_text(self, file_path):
+    @staticmethod
+    def read_all_text(file_path):
         try:
             f = xbmcvfs.File(file_path, "r")
             return f.read()
@@ -1350,7 +1376,8 @@ class GlobalVariables:
             with contextlib.suppress(Exception):
                 f.close()
 
-    def write_all_text(self, file_path, content):
+    @staticmethod
+    def write_all_text(file_path, content):
         try:
             f = xbmcvfs.File(file_path, "w")
             return f.write(content)
@@ -1360,14 +1387,16 @@ class GlobalVariables:
             with contextlib.suppress(Exception):
                 f.close()
 
-    def notification(self, heading, message, time=5000, sound=True):
-        if self.get_bool_setting("general.disableNotificationSound"):
+    @staticmethod
+    def notification(heading, message, time=5000, sound=True):
+        if getSetting("general.disableNotificationSound") == 'true':
             sound = False
         dialogue = xbmcgui.Dialog()
         dialogue.notification(heading, message, time=time, sound=sound)
         del dialogue
 
-    def get_keyboard_input(self, heading=None, default=None, hidden=False):
+    @staticmethod
+    def get_keyboard_input(heading=None, default=None, hidden=False):
         k = xbmc.Keyboard(default, heading, hidden)
         k.doModal()
         input_value = k.getText() if k.isConfirmed() else None
@@ -1402,7 +1431,8 @@ class GlobalVariables:
         else:
             return subtitle_language["value"]
 
-    def convert_language_iso(self, from_value):
+    @staticmethod
+    def convert_language_iso(from_value):
         return xbmc.convertLanguage(from_value, xbmc.ISO_639_1)
 
     @staticmethod
@@ -1450,7 +1480,8 @@ class GlobalVariables:
 
         return colored | white if (colored and white) else colored or white
 
-    def create_url(self, base_url, params):
+    @staticmethod
+    def create_url(base_url, params):
         if params is None:
             return base_url
         if "action_args" in params and isinstance(params["action_args"], dict):
@@ -1567,15 +1598,19 @@ class GlobalVariables:
         if setting_offset is not None:
             xbmc.executebuiltin(f"SetFocus({-(80 - setting_offset)})")
 
-    def create_icon_dict(self, icon_slug, base_path, art_types=None):
+    @staticmethod
+    def create_icon_dict(icon_slug, base_path, art_types=None):
         keys = art_types or ['icon', 'poster', 'thumb', 'fanart']
         return {"art": dict.fromkeys(keys, f"{base_path}{icon_slug}.png")}
 
-    @staticmethod
-    def print(string, *args):
-        for i in list(args):
-            string = f'{string} {i}'
-        xbmcgui.Dialog().textviewer('print', f'{string}')
-        del args, string
+
+def getSetting(key):
+    return settings.getSetting(key)
+
+def print(string, *args):
+    for i in list(args):
+        string = f'{string} {i}'
+    xbmcgui.Dialog().textviewer('print', f'{string}')
+    del args, string
 
 g = GlobalVariables()

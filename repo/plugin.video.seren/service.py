@@ -1,9 +1,8 @@
 import sqlite3
 import sys
-from random import randint
-
 import xbmc
 
+from random import randint
 from resources.lib.common import tools
 
 if tools.is_stub():
@@ -11,7 +10,6 @@ if tools.is_stub():
     from mock_kodi import MOCK
 
 from resources.lib.modules.globals import g
-
 from resources.lib.modules.seren_version import do_version_change
 from resources.lib.modules.serenMonitor import SerenMonitor
 from resources.lib.modules.update_news import do_update_news

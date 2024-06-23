@@ -343,20 +343,20 @@ class SerenPlayer(xbmc.Player):
             if not hasattr(provider_module, "get_listitem") and hasattr(provider_module, "sources"):
                 provider_module = provider_module.sources()
             item = provider_module.get_listitem(stream_link)
-            item.setInfo("video", info)
         else:
             item = xbmcgui.ListItem(path=stream_link)
             info["FileNameAndPath"] = parse.unquote(self.playing_file)
-            item.setInfo("video", info)
             item.setProperty("IsPlayable", "true")
 
+        vinfo = item.getVideoInfoTag()
+        g.set_info(vinfo, info)
         art = self.item_information.get("art", {})
         item.setArt(art if isinstance(art, dict) else {})
         cast = self.item_information.get("cast", [])
-        item.setCast(cast if isinstance(cast, list) else [])
-        item.setUniqueIDs(
-            {i.split("_")[0]: info[i] for i in info if i.endswith("id")},
-        )
+        if isinstance(cast, list):
+            vinfo.setCast([xbmc.Actor(p['name'], p['role'], p['order'], p['thumbnail']) for p in cast])
+
+        vinfo.setUniqueIDs({i.split("_")[0]: info[i] for i in info if i.endswith("id")})
         return item
 
     def _add_support_for_external_trakt_scrobbling(self):
@@ -366,7 +366,7 @@ class SerenPlayer(xbmc.Player):
             "imdb_id": "imdb",
             "trakt_slug": "slug",
             "tvdb_id": "tvdb",
-            "trakt_id": "trakt",
+            "trakt_id": "trakt"
         }
 
         info = self.item_information.get("info", {})
@@ -374,7 +374,6 @@ class SerenPlayer(xbmc.Player):
             meta_id = info.get(f"tvshow.{id}" if info.get("mediatype") == "episode" else id)
             if meta_id:
                 trakt_meta[keys[id]] = meta_id
-
         g.HOME_WINDOW.setProperty("script.trakt.ids", json.dumps(trakt_meta, sort_keys=True))
 
     def _update_progress(self, offset=None):
@@ -425,12 +424,7 @@ class SerenPlayer(xbmc.Player):
         self.scrobble_started = True
 
     def _trakt_stop_watching(self):
-        if (
-            not self.trakt_enabled
-            or not self.scrobbling_enabled
-            or self.scrobbled
-            or self.current_time < self.ignoreSecondsAtStart
-        ):
+        if not self.trakt_enabled or not self.scrobbling_enabled or self.scrobbled or self.current_time < self.ignoreSecondsAtStart:
             return
 
         post_data = self._build_trakt_object()
