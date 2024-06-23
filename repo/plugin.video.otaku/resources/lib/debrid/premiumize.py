@@ -197,32 +197,6 @@ class Premiumize:
             self._handle_add_to_cloud(magnet)
             return stream_link
 
-    def resolve_magnet(self, magnet, args, torrent, pack_select):
-
-        if 'showInfo' not in args:
-            return self._single_magnet_resolve(magnet, args)
-
-        folder_details = self.direct_download(magnet)['content']
-        if pack_select is not False and pack_select is not None:
-            return self.user_select(folder_details)
-
-        folder_details = source_utils.clear_extras_by_string(args, 'extras', folder_details)
-        folder_details = source_utils.clear_extras_by_string(args, 'specials', folder_details)
-        folder_details = source_utils.clear_extras_by_string(args, 'featurettes', folder_details)
-        folder_details = source_utils.clear_extras_by_string(args, 'deleted scenes', folder_details)
-        folder_details = source_utils.clear_extras_by_string(args, 'sample', folder_details)
-
-        folder_details = [i for i in folder_details if source_utils.is_file_ext_valid(i['link'])]
-
-        identified_file = source_utils.get_best_match('path', folder_details, args)
-
-        stream_link = self._fetch_transcode_or_standard(identified_file)
-
-        if stream_link is not None:
-            self._handle_add_to_cloud(magnet)
-
-        return stream_link
-
     def _handle_add_to_cloud(self, magnet):
         pass
         # if tools.getSetting('premiumize.addToCloud') == 'true':
@@ -250,3 +224,7 @@ class Premiumize:
             hosters['premium']['premiumize'] = [(i, i.split('.')[0]) for i in host_list['directdl']]
         else:
             hosters['premium']['premiumize'] = []
+
+    def resolve_uncached_source(self, source, runinbackground):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.ok_dialog(heading, 'Cache Reolver Has not been added for Premiumize')

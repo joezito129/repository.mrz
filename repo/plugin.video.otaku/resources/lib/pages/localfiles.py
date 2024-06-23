@@ -26,7 +26,8 @@ class Sources(BrowserBase):
         all_results = list(map(mapfunc, match_files))
         return all_results
 
-    def process_offline_search(self, f, episode):
+    @staticmethod
+    def process_offline_search(f, episode):
         source = {
             'release_title': f,
             'hash': os.path.join(PATH, f),
@@ -35,7 +36,7 @@ class Sources(BrowserBase):
             'debrid_provider': PATH,
             'provider': 'local_files',
             'episode_re': episode,
-            'size': self.get_size(os.path.getsize(os.path.join(PATH, f))),
+            'size': source_utils.get_size(os.path.getsize(os.path.join(PATH, f))),
             'info': source_utils.getInfo(f),
             'lang': source_utils.getAudio_lang(f)
         }

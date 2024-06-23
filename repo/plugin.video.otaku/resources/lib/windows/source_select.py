@@ -1,4 +1,5 @@
 import pickle
+import random
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
@@ -11,7 +12,6 @@ class SourceSelect(BaseWindow):
 
     def __init__(self, xml_file, location, actionArgs=None, sources=None, anilist_id=None, rescrape=None, **kwargs):
         super().__init__(xml_file, location, actionArgs=actionArgs)
-
         self.actionArgs = actionArgs
         self.sources = sources
         self.anilist_id = anilist_id
@@ -34,8 +34,8 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
                 self.setProperty('item.art.poster', anime_init[0][episode - 1]['image'].get('poster_'))
                 self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image'].get('thumb'))
-                if control.getSetting('interface.fanart.disable') == 'false':
-                    self.setProperty('item.art.fanart', anime_init[0][episode - 1]['image'].get('fanart', control.OTAKU_FANART_PATH))
+                if not control.bools.fanart_disable:
+                    self.setProperty('item.art.fanart', random.choice(anime_init[0][episode - 1]['image'].get('fanart')))
             except IndexError:
                 self.setProperty('item.info.season', '-1')
                 self.setProperty('item.info.episode', '-1')
@@ -56,8 +56,8 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
                 self.setProperty('item.art.poster', kodi_meta.get('poster_'))
                 self.setProperty('item.art.thumb', kodi_meta.get('thumb'))
-                if control.getSetting('interface.fanart.disable') == 'false':
-                    self.setProperty('item.art.fanart', kodi_meta.get('fanart', control.OTAKU_FANART_PATH))
+                if not control.bools.fanart_disable:
+                    self.setProperty('item.art.fanart', random.choice(kodi_meta.get('fanart')))
                 self.setProperty('item.info.aired', kodi_meta.get('start_date'))
 
                 try:

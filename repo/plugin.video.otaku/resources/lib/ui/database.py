@@ -238,7 +238,6 @@ def update_show_data(anilist_id, data, last_updated=''):
 def update_episode(show_id, season, number, update_time, kodi_meta, filler=''):
     lock.acquire()
     cursor = _get_cursor()
-    kodi_meta = pickle.dumps(kodi_meta)
     try:
         cursor.execute('REPLACE INTO episodes (anilist_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (show_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()

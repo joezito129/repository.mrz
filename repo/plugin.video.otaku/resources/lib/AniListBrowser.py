@@ -16,6 +16,8 @@ class AniListBrowser:
 
     def __init__(self):
         self._TITLE_LANG = control.title_lang(int(control.getSetting("titlelanguage")))
+        self.perpage = int(control.getSetting('interface.perpage.general'))
+
         if control.getSetting('contentformat.bool') == "true":
             formats = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
             self.format_in_type = formats[int(control.getSetting('contentformat.menu'))]
@@ -54,11 +56,12 @@ class AniListBrowser:
         season, year = self.get_season_year('Aired')
         variables = {
             'page': page,
+            'perpage': self.perpage,
             'type': "ANIME",
             'season': season,
             'year': f'{year}%',
-            'status': "RELEASING",
-            'sort': "POPULARITY_DESC",
+            # 'status': "RELEASING",
+            'sort': "TRENDING_DESC"
         }
 
         if self.format_in_type:
@@ -74,10 +77,11 @@ class AniListBrowser:
         season, year = self.get_season_year('next')
         variables = {
             'page': page,
+            'perpage': self.perpage,
             'type': "ANIME",
             'season': season,
             'year': f'{year}%',
-            'sort': "POPULARITY_DESC",
+            'sort': "TRENDING_DESC"
         }
 
         if self.format_in_type:
@@ -92,8 +96,9 @@ class AniListBrowser:
     def get_top_100_anime(self, page=1):
         variables = {
             'page': page,
+            'perpage': self.perpage,
             'type': "ANIME",
-            'sort': "SCORE_DESC",
+            'sort': "SCORE_DESC"
         }
 
         if self.format_in_type:
@@ -108,19 +113,19 @@ class AniListBrowser:
     def get_search(self, query, page=1):
         variables = {
             'page': page,
+            'perpage': self.perpage,
             'search': query,
             'sort': "SEARCH_MATCH",
-            'type': "ANIME",
+            'type': "ANIME"
         }
         search = self.get_search_res(variables, page)
-        if control.getSetting('search.adult') == "true":
+        if control.bools.search_adult:
             variables['isAdult'] = True
             search_adult = self.get_search_res(variables, page)
             for i in search_adult["ANIME"]:
                 i['title']['english'] = f'{i["title"]["english"]} - {control.colorString("Adult", "red")}'
             search['ANIME'] += search_adult['ANIME']
-
-        return self.process_anilist_view(search, "search/%s/%%d" % query, page)
+        return self.process_anilist_view(search, f"search/{query}/%d", page)
 
     def get_recommendations(self, anilist_id, page=1):
         variables = {
@@ -163,6 +168,7 @@ class AniListBrowser:
         query = '''
         query (
             $page: Int = 1,
+            $perpage: Int = 20
             $type: MediaType,
             $isAdult: Boolean = false,
             $format:[MediaFormat],
@@ -172,7 +178,7 @@ class AniListBrowser:
             $status: MediaStatus,
             $sort: [MediaSort] = [POPULARITY_DESC, SCORE_DESC]
         ) {
-            Page (page: $page, perPage: 20) {
+            Page (page: $page, perPage: $perpage) {
                 pageInfo {
                     hasNextPage
                 }
@@ -210,6 +216,10 @@ class AniListBrowser:
                     duration
                     countryOfOrigin
                     averageScore
+                    trailer {
+                        id
+                        site
+                    }
                     characters (
                         page: 1,
                         sort: ROLE,
@@ -242,7 +252,6 @@ class AniListBrowser:
             }
         }
         '''
-
         r = requests.post(self._URL, json={'query': query, 'variables': variables})
         results = r.json()
         json_res = results['data']['Page']
@@ -251,13 +260,14 @@ class AniListBrowser:
     def get_search_res(self, variables, page=1):
         query = '''
         query (
-            $page: Int = 1,
+            $page: Int=1,
+            $perpage: Int=20
             $type: MediaType,
             $isAdult: Boolean = false,
             $search: String,
             $sort: [MediaSort] = [SCORE_DESC, POPULARITY_DESC]
         ) {
-            Page (page: $page, perPage: 20) {
+            Page (page: $page, perPage: $perpage) {
                 pageInfo {
                     hasNextPage
                 }
@@ -291,6 +301,10 @@ class AniListBrowser:
                     duration
                     countryOfOrigin
                     averageScore
+                    trailer {
+                        id
+                        site
+                    }
                     characters (
                         page: 1,
                         sort: ROLE,
@@ -331,10 +345,10 @@ class AniListBrowser:
 
     def get_recommendations_res(self, variables, page=1):
         query = '''
-        query ($id: Int, $page: Int) {
+        query ($id: Int, $page: Int, $perpage: Int=1) {
           Media(id: $id, type: ANIME) {
             id
-            recommendations(page: $page, perPage: 25, sort: [RATING_DESC, ID]) {
+            recommendations(page: $page, perPage: $perpage, sort: [RATING_DESC, ID]) {
               pageInfo {
                 hasNextPage
               }
@@ -370,6 +384,10 @@ class AniListBrowser:
                           name
                         }
                       }
+                    }
+                    trailer {
+                        id
+                        site
                     }
                     characters (perPage: 10) {
                       edges {
@@ -441,6 +459,10 @@ class AniListBrowser:
                         name
                       }
                     }
+                  }
+                  trailer {
+                    id
+                    site
                   }
                   characters (perPage: 10) {
                     edges {
@@ -545,7 +567,6 @@ class AniListBrowser:
 
         if "errors" in results.keys():
             return
-
         json_res = results['data']['Media']
         return json_res
 
@@ -596,6 +617,10 @@ class AniListBrowser:
                         }
                     }
                 }
+            }
+            trailer {
+                id
+                site
             }
             studios {
                 edges {
@@ -654,7 +679,9 @@ class AniListBrowser:
         return database.get_show(str(res['id']))
 
     @div_flavor
-    def _base_anilist_view(self, res, completed={}, mal_dub=None, dubsub_filter=None):
+    def _base_anilist_view(self, res, completed=None, mal_dub=None, dubsub_filter=None):
+        if not completed:
+            completed = {}
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
         kitsu_id = ''
@@ -721,13 +748,13 @@ class AniListBrowser:
         except TypeError:
             pass
 
-        # try:
-        #     if res['trailer']['site'] == 'youtube':
-        #         info['trailer'] = 'plugin://plugin.video.youtube/play/?video_id={0}'.format(res['trailer']['id'])
-        #     else:
-        #         info['trailer'] = 'plugin://plugin.video.dailymotion_com/?url={0}&mode=playVideo'.format(res['trailer']['id'])
-        # except TypeError:
-        #     pass
+        try:
+            if res['trailer']['site'] == 'youtube':
+                info['trailer'] = f"plugin://plugin.video.youtube/play/?video_id={res['trailer']['id']}"
+            else:
+                info['trailer'] = f"plugin://plugin.video.dailymotion_com/?url={res['trailer']['id']}&mode=playVideo"
+        except (KeyError, TypeError):
+            pass
 
         dub = True if mal_dub and mal_dub.get(str(res.get('idMal', -1))) else False
 
@@ -852,13 +879,14 @@ class AniListBrowser:
         query = '''
         query (
             $page: Int,
+            $perpage: Int=20,
             $type: MediaType,
             $isAdult: Boolean = false,
             $includedGenres: [String],
             $includedTags: [String],
             $sort: [MediaSort] = [SCORE_DESC, POPULARITY_DESC]
         ) {
-            Page (page: $page, perPage: 20) {
+            Page (page: $page, perPage: $perpage) {
                 pageInfo {
                     hasNextPage
                 }
@@ -894,6 +922,10 @@ class AniListBrowser:
                     isAdult
                     countryOfOrigin
                     averageScore
+                    trailer {
+                        id
+                        site
+                    }
                     characters (
                         page: 1,
                         sort: ROLE,

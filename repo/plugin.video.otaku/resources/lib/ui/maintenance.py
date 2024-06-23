@@ -47,7 +47,7 @@ def update_mappings_db():
 
 
 def sync_watchlist(silent=False):
-    if control.getSetting('watchlist.sync.enabled') == 'true':
+    if control.bools.watchlist_sync:
         from resources.lib.WatchlistFlavor import WatchlistFlavor
 
         flavor = WatchlistFlavor.get_update_flavor()

@@ -9,14 +9,17 @@ from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.ui import database, source_utils
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
+from resources.lib.ui.control import bools
 
 
 class Sources(BrowserBase):
     _BASE_URL = 'https://animetosho.org'
-
+    
     def __init__(self):
         self.all_sources = []
         self.sources = []
+        self.cached = []
+        self.uncached = []
 
     def get_sources(self, show, anilist_id, episode, status, media_type, rescrape):
         show = self._clean_title(show)
@@ -80,7 +83,12 @@ class Sources(BrowserBase):
         for source in self.sources:
             if source not in self.all_sources:
                 self.all_sources.append(source)
-        return self.all_sources
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
+
+        return {'cached': self.cached, 'uncached': self.uncached}
 
     @staticmethod
     def process_animetosho_episodes(url, params, episode, season):
@@ -89,13 +97,20 @@ class Sources(BrowserBase):
         soup = BeautifulSoup(html, "html.parser")
         soup_all = soup.find('div', id='content').find_all('div', class_='home_list_entry')
         rex = r'(magnet:)+[^"]*'
-        list_ = [{
-            'name': soup.find('div', class_='link').a.text,
-            'magnet': soup.find('a', {'href': re.compile(rex)}).get('href'),
-            'size': soup.find('div', class_='size').text,
-            'downloads': 0,
-            'torrent': soup.find('a', class_='dllink').get('href')
-        } for soup in soup_all]
+        list_ = []
+        for soup in soup_all:
+            list_item = {
+                'name': soup.find('div', class_='link').a.text,
+                'magnet': soup.find('a', {'href': re.compile(rex)}).get('href'),
+                'size': soup.find('div', class_='size').text,
+                'downloads': 0,
+                'torrent': soup.find('a', class_='dllink').get('href')
+            }
+            try:
+                list_item['seeders'] = int(re.match(r'Seeders: (\d+)', soup.find('span', {'title': re.compile(r'Seeders')}).get('title')).group(1))
+            except AttributeError:
+                list_item['seeders'] = 0
+            list_.append(list_item)
 
         regex = r'\ss(\d+)|season\s(\d+)|(\d+)+(?:st|[nr]d|th)\sseason'
         regex_ep = r'\de(\d+)\b|\se(\d+)\b|\s-\s(\d{1,3})\b'
@@ -131,23 +146,36 @@ class Sources(BrowserBase):
             else:
                 filtered_list.append(torrent)
 
-        cache_list = debrid.TorrentCacheCheck().torrentCacheCheck(filtered_list)
+        cache_list, uncashed_list_ = debrid.TorrentCacheCheck().torrentCacheCheck(filtered_list)
+        uncashed_list = [i for i in uncashed_list_ if i['seeders'] > 0]
+
+        uncashed_list = sorted(uncashed_list, key=lambda k: k['seeders'], reverse=True)
+        cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
+
         mapfunc = partial(parse_animetosho_view, episode=episode)
         all_results = list(map(mapfunc, cache_list))
+        if bools.showuncached:
+            mapfunc2 = partial(parse_animetosho_view, episode=episode, cached=False)
+            all_results += list(map(mapfunc2, uncashed_list))
         return all_results
 
 
-def parse_animetosho_view(res, episode):
+def parse_animetosho_view(res, episode, cached=True):
     source = {
         'release_title': res['name'],
         'hash': res['hash'],
         'type': 'torrent',
         'quality': source_utils.getQuality(res['name']),
-        'debrid_provider': res['debrid_provider'],
+        'debrid_provider': res.get('debrid_provider'),
         'provider': 'animetosho',
         'episode_re': episode,
         'size': res['size'],
         'info': source_utils.getInfo(res['name']),
-        'lang': source_utils.getAudio_lang(res['name'])
+        'lang': source_utils.getAudio_lang(res['name']),
+        'cached': cached,
+        'seeders': res['seeders']
     }
+    if not cached:
+        source['magnet'] = res['magnet']
+        source['type'] += ' (uncached)'
     return source

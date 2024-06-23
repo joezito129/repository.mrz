@@ -138,7 +138,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         params = {
             "status": status,
             "sort": self.__get_sort(),
-            "limit": 100,
+            "limit": int(control.getSetting('interface.perpage.watchlist')),
             "offset": offset,
             "fields": ','.join(fields),
             "nsfw": True

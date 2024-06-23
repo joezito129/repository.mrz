@@ -6,7 +6,7 @@ import requests
 from functools import partial
 from bs4 import BeautifulSoup, SoupStrainer
 from resources.lib import debrid
-from resources.lib.ui import database, source_utils
+from resources.lib.ui import database, source_utils, control
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
@@ -15,23 +15,9 @@ class Sources(BrowserBase):
 
     def __init__(self):
         self.all_sources = []
+        self.cached = []
+        self.uncached = []
         self.sources = []
-
-    @staticmethod
-    def parse_nyaa_view(res, episode):
-        source = {
-            'release_title': res['name'],
-            'hash': res['hash'],
-            'type': 'torrent',
-            'quality': source_utils.getQuality(res['name']),
-            'debrid_provider': res['debrid_provider'],
-            'provider': 'nyaa',
-            'episode_re': episode,
-            'size': res['size'],
-            'info': source_utils.getInfo(res['name']),
-            'lang': source_utils.getAudio_lang(res['name'])
-        }
-        return source
 
     def process_nyaa_episodes(self, url, params, episode_zfill, season_zfill, part=None):
         r = requests.get(url, params)
@@ -43,8 +29,9 @@ class Sources(BrowserBase):
             {'magnet': i.find('a', {'href': re.compile(rex)}).get('href'),
              'name': i.find_all('a', {'class': None})[1].get('title'),
              'size': i.find_all('td', {'class': 'text-center'})[1].text.replace('i', ''),
-             'downloads': int(i.find_all('td', {'class': 'text-center'})[-1].text)}
-            for i in soup.select("tr.danger,tr.default,tr.success")
+             'downloads': int(i.find_all('td', {'class': 'text-center'})[-1].text),
+             'seeders': int(i.find_all('td', {'class': 'text-center'})[-3].text)
+             } for i in soup.select("tr.danger,tr.default,tr.success")
         ]
         regex = r'\ss(\d+)|season\s(\d+)|(\d+)+(?:st|[nr]d|th)\sseason'
         regex_ep = r'\de(\d+)\b|\se(\d+)\b|\s-\s(\d{1,3})\b'
@@ -78,10 +65,17 @@ class Sources(BrowserBase):
                     filtered_list.append(torrent)
             else:
                 filtered_list.append(torrent)
-        cache_list = debrid.TorrentCacheCheck().torrentCacheCheck(filtered_list)
+
+        cache_list, uncashed_list_ = debrid.TorrentCacheCheck().torrentCacheCheck(filtered_list)
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
+
+        uncashed_list = [i for i in uncashed_list_ if i['seeders'] > 0]
+        uncashed_list = sorted(uncashed_list, key=lambda k: k['seeders'], reverse=True)
         mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill)
         all_results = list(map(mapfunc, cache_list))
+        if control.bools.showuncached:
+            mapfunc2 = partial(self.parse_nyaa_view, episode=episode_zfill, cached=False)
+            all_results += list(map(mapfunc2, uncashed_list))
         return all_results
 
     def process_nyaa_backup(self, url, params, episode):
@@ -89,24 +83,27 @@ class Sources(BrowserBase):
         res = r.text
         results = BeautifulSoup(res, 'html.parser')
         rex = r'(magnet:)+[^"]*'
+
         search_results = [
             (i.find_all('a', {'href': re.compile(rex)})[0].get('href'),
              i.find_all('a', {'class': None})[1].get('title'),
              i.find_all('td', {'class': 'text-center'})[1].text,
-             i.find_all('td', {'class': 'text-center'})[-1].text)
-            for i in results.select("tr.danger,tr.default,tr.success")][:30]
+             i.find_all('td', {'class': 'text-center'})[-1].text,
+             i.find_all('td', {'class': 'text-center'})[-3].text
+             ) for i in results.select("tr.danger,tr.default,tr.success")][:30]
 
         list_ = [
             {'magnet': magnet,
              'name': name,
              'size': size.replace('i', ''),
-             'downloads': int(downloads)
-             } for magnet, name, size, downloads in search_results]
+             'downloads': int(downloads),
+             'seeders': int(seeders)
+             } for magnet, name, size, downloads, seeders in search_results]
 
         for torrent in list_:
             torrent['hash'] = re.findall(r'btih:(.*?)(?:&|$)', torrent['magnet'])[0]
 
-        cache_list = debrid.TorrentCacheCheck().torrentCacheCheck(list_)
+        cache_list, uncashed_list = debrid.TorrentCacheCheck().torrentCacheCheck(list_)
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
 
         mapfunc = partial(self.parse_nyaa_view, episode=episode)
@@ -122,22 +119,23 @@ class Sources(BrowserBase):
             (i.find_all('a', {'href': re.compile(rex)})[0].get('href'),
              i.find_all('a', {'class': None})[1].get('title'),
              i.find_all('td', {'class': 'text-center'})[1].text,
-             i.find_all('td', {'class': 'text-center'})[-1].text)
-            for i in results.select("tr.danger,tr.default,tr.success")
-        ]
+             i.find_all('td', {'class': 'text-center'})[-1].text,
+             i.find_all('td', {'class': 'text-center'})[-3].text
+             ) for i in results.select("tr.danger,tr.default,tr.success")]
 
         list_ = [
             {
              'magnet': magnet,
              'name': name,
              'size': size.replace('i', ''),
-             'downloads': int(downloads)
-             } for magnet, name, size, downloads in search_results]
+             'downloads': int(downloads),
+             'seeders': int(seeders)
+             } for magnet, name, size, downloads, seeders in search_results]
 
         for idx, torrent in enumerate(list_):
             torrent['hash'] = re.findall(r'btih:(.*?)(?:&|$)', torrent['magnet'])[0]
 
-        cache_list = debrid.TorrentCacheCheck().torrentCacheCheck(list_)
+        cache_list, uncashed_list = debrid.TorrentCacheCheck().torrentCacheCheck(list_)
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
         mapfunc = partial(self.parse_nyaa_view, episode=1)
         all_results = list(map(mapfunc, cache_list))
@@ -149,22 +147,24 @@ class Sources(BrowserBase):
             return self.get_movie_sources(query, anilist_id)
 
         self.sources = self.get_episode_sources(query, anilist_id, episode, status, rescrape)
-
         if not self.sources and ':' in query:
             q1, q2 = query.split('|', 2)
             q1 = q1[1:-1].split(':')[0]
             q2 = q2[1:-1].split(':')[0]
             query2 = '({0})|({1})'.format(q1, q2)
             self.sources = self.get_episode_sources(query2, anilist_id, episode, status, rescrape)
-
         if not self.sources:
             self.sources = self.get_episode_sources_backup(query, anilist_id, episode)
 
-        # remove any duplicate sources
+        # make sure no duplicate sources
         for source in self.sources:
             if source not in self.all_sources:
                 self.all_sources.append(source)
-        return self.all_sources
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
+        return {'cached': self.cached, 'uncached': self.uncached}
 
     def get_episode_sources(self, show, anilist_id, episode, status, rescrape):
         nyaa_sources = []
@@ -324,3 +324,24 @@ class Sources(BrowserBase):
         params['q'] = show.replace(' ', '+')
 
         return self.process_nyaa_movie(self._BASE_URL, params)
+
+    @staticmethod
+    def parse_nyaa_view(res, episode, cached=True):
+        source = {
+            'release_title': res['name'],
+            'hash': res['hash'],
+            'type': 'torrent',
+            'quality': source_utils.getQuality(res['name']),
+            'debrid_provider': res.get('debrid_provider'),
+            'provider': 'nyaa',
+            'episode_re': episode,
+            'size': res['size'],
+            'info': source_utils.getInfo(res['name']),
+            'lang': source_utils.getAudio_lang(res['name']),
+            'cached': cached,
+            'seeders': res['seeders']
+        }
+        if not cached:
+            source['magnet'] = res['magnet']
+            source['type'] += ' (uncached)'
+        return source

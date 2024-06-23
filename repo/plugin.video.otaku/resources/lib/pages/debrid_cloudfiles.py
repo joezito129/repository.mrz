@@ -18,7 +18,7 @@ class Sources(BrowserBase):
             self.threads.append(threading.Thread(target=self.rd_cloud_inspection, args=(query, episode,)))
         if debrid.get('premiumize'):
             self.threads.append(threading.Thread(target=self.premiumize_cloud_inspection, args=(query, episode,)))
-        if debrid.get('alldebrid'):
+        if debrid.get('all_debrid'):
             self.threads.append(threading.Thread(target=self.alldebrid_cloud_inspection, args=(query, episode,)))
         for i in self.threads:
             i.start()
@@ -59,7 +59,7 @@ class Sources(BrowserBase):
                     'release_title': torrent['filename'],
                     'info': source_utils.getInfo(torrent['filename']),
                     'debrid_provider': 'real_debrid',
-                    'size': self.get_size(torrent['bytes']),
+                    'size': source_utils.get_size(torrent['bytes']),
                     'torrent': torrent,
                     'torrent_files': torrent_files,
                     'torrent_info': torrent_info,
@@ -121,7 +121,7 @@ class Sources(BrowserBase):
                     'release_title': torrent['filename'],
                     'info': source_utils.getInfo(torrent['filename']),
                     'debrid_provider': 'all_debrid',
-                    'size': self.get_size(torrent['size']),
+                    'size': source_utils.get_size(torrent['size']),
                     'episode': episode
                 }
             )
@@ -136,5 +136,5 @@ class Sources(BrowserBase):
             'release_title': item['name'],
             'info': source_utils.getInfo(item['name']),
             'debrid_provider': 'premiumize',
-            'size': self.get_size(int(item['size']))
+            'size': source_utils.get_size(int(item['size']))
         })

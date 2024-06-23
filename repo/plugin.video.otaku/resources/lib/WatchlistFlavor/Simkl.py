@@ -36,12 +36,12 @@ class SimklWLF(WatchlistFlavorBase):
 
         control.copy2clip(device_code["user_code"])
         control.progressDialog.create('SIMKL Auth')
-        control.progressDialog.update(
-            100,
-            control.lang(30100).format(control.colorString('https://simkl.com/pin')) + '[CR]'
-            + control.lang(30101).format(control.colorString(device_code['user_code'])) + '[CR]'
-            + control.lang(30102)
-        )
+        f_string = f'''
+{control.lang(30100).format(control.colorString('https://simkl.com/pin'))}
+{control.lang(30101).format(control.colorString(device_code['user_code']))}
+{control.lang(30102)}
+'''
+        control.progressDialog.update(100, f_string)
         inter = int(device_code['expires_in'] / device_code['interval'])
         for i in range(inter):
             if control.progressDialog.iscanceled():
@@ -59,22 +59,14 @@ class SimklWLF(WatchlistFlavorBase):
                     user = r.json()['user']
                     login_data['username'] = user['name']
                 return login_data
-            control.progressDialog.update(int((inter - i) / inter * 100),
-                control.lang(30100).format(control.colorString('https://simkl.com/pin')) + '[CR]'
-                + control.lang(30101).format(control.colorString(device_code['user_code'])) + '[CR]'
-                + control.lang(30102) + '[CR]'
-                + f'Code Valid for {control.colorString(device_code["expires_in"] - i * device_code["interval"])} Seconds'
-            )
+            f_string = f'''
+{control.lang(30100).format(control.colorString('https://simkl.com/pin'))}
+{control.lang(30101).format(control.colorString(device_code['user_code']))}
+{control.lang(30102)}
+Code Valid for {control.colorString(device_code["expires_in"] - i * device_code["interval"])} Seconds d
+'''
+            control.progressDialog.update(int((inter - i) / inter * 100), f_string)
             time.sleep(device_code['interval'])
-
-    @staticmethod
-    def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true'):
-            return []
-        next_page = page + 1
-        name = "Next Page (%d)" % next_page
-        offset = ''
-        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
 
     def __get_sort(self):
         sort_types = {
@@ -203,7 +195,7 @@ class SimklWLF(WatchlistFlavorBase):
         episode_count = res["total_episodes_count"]
 
         if 0 < episode_count < next_up:
-            return None
+            return
 
         base_title = res['show']['title']
 

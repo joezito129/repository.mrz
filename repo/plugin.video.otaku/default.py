@@ -208,9 +208,8 @@ def PLAY(payload, params):
     anilist_id, episode, filter_lang = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
-    sources = OtakuBrowser.get_sources(anilist_id, episode, filter_lang, 'show', rescrape, source_select)
+    sources = OtakuBrowser.get_sources(anilist_id, episode, 'show', rescrape, source_select)
     _mock_args = {"anilist_id": anilist_id, "episode": episode}
-
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
@@ -235,7 +234,7 @@ def PLAY_MOVIE(payload, params):
             from resources.lib.AniListBrowser import AniListBrowser
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
-    sources = OtakuBrowser.get_sources(anilist_id, 1, None, 'movie', rescrape, source_select)
+    sources = OtakuBrowser.get_sources(anilist_id, 1, 'movie', rescrape, source_select)
     _mock_args = {'anilist_id': anilist_id}
 
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
@@ -382,6 +381,7 @@ if __name__ == "__main__":
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(player.playList) != 0 and not player.player().isPlaying():
         player.playList.clear()
+
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')

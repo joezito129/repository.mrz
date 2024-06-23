@@ -36,9 +36,9 @@ class BaseWindow(control.xmlWindow):
             fanart = control.OTAKU_FANART_PATH
 
         if isinstance(fanart, list):
-            fanart = control.OTAKU_FANART_PATH if control.getSetting('interface.fanart.disable') == 'true' else random.choice(fanart)
+            fanart = control.OTAKU_FANART_PATH if control.bools.fanart_disable else random.choice(fanart)
         if isinstance(clearlogo, list):
-            clearlogo = control.OTAKU_LOGO2_PATH if control.getSetting('interface.clearlogo.disable') == 'true' else random.choice(clearlogo)
+            clearlogo = control.OTAKU_LOGO2_PATH if control.bools.clearlogo_disable else random.choice(clearlogo)
 
         self.setProperty('item.art.poster', self.item_information.get('poster'))
         self.setProperty('item.art.fanart', fanart)

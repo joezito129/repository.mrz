@@ -80,8 +80,10 @@ class JikanAPI:
         info['code'] = code
 
         parsed = utils.allocate_item(title, f"play/{url}", False, image, info, fanart, poster, isplayable=True)
-        if not episodes or not any(x['number'] == episode for x in episodes):
-            database.update_episode(anilist_id, season, episode, update_time, parsed, filler=filler)
+
+        kodi_meta = pickle.dumps(parsed)
+        if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
+            database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
 
         if title_disable and info.get('playcount') != 1:
             parsed['info']['title'] = res['episode']

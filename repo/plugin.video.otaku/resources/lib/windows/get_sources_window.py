@@ -12,13 +12,14 @@ class GetSources(BaseWindow):
         control.closeBusyDialog()
         self.setProperty('process_started', 'false')
         self.canceled = False
-        self.return_data = None
+        self.return_data = []
         self.args = actionArgs
         self.progress = 0
         self.setProperty('progress', '0')
         self.silent = False
         self.torrents_qual_len = [0, 0, 0, 0]
-        self.hosters_qual_len = [0, 0, 0, 0]
+        self.embeds_qual_len = [0, 0, 0, 0]
+        self.torrentSources = []
         self.torrentCacheSources = []
         self.embedSources = []
         self.cloud_files = []
@@ -49,25 +50,24 @@ class GetSources(BaseWindow):
         if not self.silent:
             control.dialogWindow.close(self)
 
-    def setText(self, text=None):
+    def setText(self, text):
         if self.silent:
             return
-        if text:
-            self.setProperty('notification_text', str(text))
+        self.setProperty('notification_text', str(text))
         self.update_properties()
 
     def update_properties(self):
 
-        self.setProperty('4k_sources', str(self.torrents_qual_len[0] + self.hosters_qual_len[0]))
-        self.setProperty('1080p_sources', str(self.torrents_qual_len[1] + self.hosters_qual_len[1]))
-        self.setProperty('720p_sources', str(self.torrents_qual_len[2] + self.hosters_qual_len[2]))
-        self.setProperty('SD_sources', str(self.torrents_qual_len[3] + self.hosters_qual_len[3]))
+        self.setProperty('4k_sources', str(self.torrents_qual_len[0] + self.embeds_qual_len[0]))
+        self.setProperty('1080p_sources', str(self.torrents_qual_len[1] + self.embeds_qual_len[1]))
+        self.setProperty('720p_sources', str(self.torrents_qual_len[2] + self.embeds_qual_len[2]))
+        self.setProperty('SD_sources', str(self.torrents_qual_len[3] + self.embeds_qual_len[3]))
 
-        self.setProperty('total_torrents', str(len([i for i in self.torrentCacheSources])))
-        self.setProperty('cached_torrents', str(len([i for i in self.torrentCacheSources])))
-        self.setProperty('hosters_sources', str(len([i for i in self.embedSources])))
-        self.setProperty('cloud_sources', str(len([i for i in self.cloud_files])))
-        self.setProperty('localfiles', str(len([i for i in self.local_files])))
+        self.setProperty('total_torrents', str(len(self.torrentSources)))
+        self.setProperty('cached_torrents', str(len(self.torrentCacheSources)))
+        self.setProperty('hosters_sources', str(len(self.embedSources)))
+        self.setProperty('cloud_sources', str(len(self.cloud_files)))
+        self.setProperty('localfiles', str(len(self.local_files)))
 
         self.setProperty("remaining_providers_count", str((len(self.remainingProviders))))
 

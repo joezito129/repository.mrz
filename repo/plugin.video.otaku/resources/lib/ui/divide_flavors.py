@@ -3,7 +3,7 @@ from resources.lib.ui import control
 
 def div_flavor(f):
     def wrapper(*args, **kwargs):
-        if control.getSetting("divflavors.bool") == "true":
+        if control.bools.div_flavor:
             import json
             dubsub_filter = control.getSetting("divflavors.menu")
             with open(control.maldubFile) as file:

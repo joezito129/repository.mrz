@@ -1,8 +1,14 @@
+Changelog v5.0.34 (2024-06-23):
+- Added UnCached Sorces
+- Removed Debrid Priority
+- Added perPage
+- improved episode database
+
 Changelog v5.0.33 (2024-06-18):
 - Improved scrapping sorting
 - Improved simkl season
 - Improved scraping
-- Cleeaned up database.py
+- Cleaned up database.py
 
 Changelog v5.0.32 (2024-06-18):
 - Removed Seasons from database

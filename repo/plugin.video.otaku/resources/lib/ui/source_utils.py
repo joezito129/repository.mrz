@@ -157,6 +157,16 @@ def get_cache_check_reg(episode):
     return re.compile(reg_string)
 
 
+def get_size(size=0):
+    power = 1024.0
+    n = 0
+    power_labels = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB'}
+    while size > power:
+        size /= power
+        n += 1
+    return '{0:.2f} {1}'.format(size, power_labels[n])
+
+
 def get_best_match(dict_key, dictionary_list, episode, pack_select=False):
     regex = get_cache_check_reg(episode)
     files = []

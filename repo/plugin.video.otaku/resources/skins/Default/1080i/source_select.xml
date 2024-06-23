@@ -239,11 +239,22 @@
                         <textcolor>FFFFFFFF</textcolor>
                         <shadowcolor>dimgrey</shadowcolor>
                         <font>font10</font>
-                        <label>$ADDON[plugin.video.otaku 40238]: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
+                        <label>Info: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
                     </control>
                     <control type="label">
-                        <centertop>70%</centertop>
+                        <top>60</top>
                         <left>750</left>
+                        <width>350</width>
+                        <height>0</height>
+                        <font>font10</font>
+                        <textcolor>66FFFFFF</textcolor>
+                        <align>left</align>
+                        <aligny>center</aligny>
+                        <label>Seeders: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(seeders)][/COLOR][/UPPERCASE]</label>
+                    </control>
+                    <control type="label">
+                        <left>750</left>
+                        <top>90</top>
                         <width>350</width>
                         <height>0</height>
                         <font>font10</font>
@@ -361,11 +372,22 @@
                     <textcolor>FFFFFFFF</textcolor>
 		            <shadowcolor>dimgrey</shadowcolor>
                     <font>font10</font>
-                    <label>$ADDON[plugin.video.otaku 40238]: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
+                    <label>Info: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="label">
-                    <centertop>70%</centertop>
+                    <top>60</top>
                     <left>750</left>
+                    <width>350</width>
+                    <height>0</height>
+                    <font>font10</font>
+                    <textcolor>66FFFFFF</textcolor>
+                    <align>left</align>
+                    <aligny>center</aligny>
+                    <label>Seeders: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(seeders)][/COLOR][/UPPERCASE]</label>
+                </control>
+                <control type="label">
+                    <left>750</left>
+                    <top>90</top>
                     <width>350</width>
                     <height>0</height>
                     <font>font10</font>

@@ -1,5 +1,4 @@
 import os
-import random
 import requests
 import xbmcvfs
 
@@ -12,9 +11,8 @@ def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=No
     if image and '/' not in image:
         image = os.path.join(control.OTAKU_ICONS_PATH, image)
     if fanart:
-        fanart = random.choice(fanart)
-        if '/' not in fanart:
-            fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
+        if not isinstance(fanart, list) and '/' not in fanart:
+            fanart = [os.path.join(control.OTAKU_ICONS_PATH, fanart)]
     if poster and '/' not in poster:
         poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
 

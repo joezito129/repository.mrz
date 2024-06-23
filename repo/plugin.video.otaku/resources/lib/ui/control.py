@@ -1,3 +1,5 @@
+import random
+
 import xbmc, xbmcgui, xbmcaddon, xbmcplugin, xbmcvfs
 import os
 import sys
@@ -11,12 +13,12 @@ except IndexError:
 
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_ID = addonInfo('id')
-__settings__ = xbmcaddon.Addon(ADDON_ID)
-__language__ = __settings__.getLocalizedString
-addonInfo = __settings__.getAddonInfo
+settings = xbmcaddon.Addon(ADDON_ID)
+language = settings.getLocalizedString
+addonInfo = settings.getAddonInfo
 ADDON_NAME = addonInfo('name')
 ADDON_ICON = addonInfo('icon')
-ADDON_PATH = __settings__.getAddonInfo('path')
+ADDON_PATH = settings.getAddonInfo('path')
 dataPath = xbmcvfs.translatePath(addonInfo('profile'))
 
 
@@ -32,7 +34,7 @@ completed_json = os.path.join(dataPath, 'completed.json')
 IMAGES_PATH = os.path.join(ADDON_PATH, 'resources', 'images')
 OTAKU_FANART_PATH = os.path.join(ADDON_PATH, 'fanart.jpg')
 OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
-OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', __settings__.getSetting("interface.icons"))
+OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', settings.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
 xmlWindow = xbmcgui.WindowXMLDialog
@@ -107,7 +109,7 @@ def simkl_enabled():
 
 
 def watchlist_to_update():
-    if getSetting('watchlist.update.enabled') == 'true':
+    if bools.watchlist_update:
         flavor = getSetting('watchlist.update.flavor').lower()
         if getSetting('%s.enabled' % flavor) == 'true':
             return flavor
@@ -131,15 +133,15 @@ def refresh():
 
 
 def getSetting(key):
-    return __settings__.getSetting(key)
+    return settings.getSetting(key)
 
 
 def setSetting(settingid, value):
-    return __settings__.setSetting(settingid, value)
+    return settings.setSetting(settingid, value)
 
 
 def lang(x):
-    return __language__(x)
+    return language(x)
 
 
 def addon_url(url):
@@ -176,6 +178,10 @@ def textviewer_dialog(title, text):
 
 def yesno_dialog(title, text, nolabel=None, yeslabel=None):
     return xbmcgui.Dialog().yesno(title, text, nolabel, yeslabel)
+
+
+def yesnocustom_dialog(title, text, customlabel='', nolabel='', yeslabel='', autoclose=0, defaultbutton=0):
+    return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
 def notify(title, text, icon=OTAKU_LOGO2_PATH, time=5000, sound=True):
@@ -233,7 +239,7 @@ def set_videotags(li, info):
         vinfo.setTrailer(info['trailer'])
 
 
-def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable, fanart_disable=False, clearlogo_disable=False):
+def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     u = addon_url(url)
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
@@ -242,9 +248,11 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable, 
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
 
-    if art.get('fanart') is None or fanart_disable:
+    if art.get('fanart') is None or bools.fanart_disable:
         art['fanart'] = OTAKU_FANART_PATH
-    if clearlogo_disable:
+    else:
+        art['fanart'] = random.choice(art['fanart'])
+    if bools.clearlogo_disable:
         art['clearlogo'] = OTAKU_ICONS_PATH
 
     if isplayable:
@@ -255,27 +263,25 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable, 
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
-def bulk_draw_items(video_data, draw_cm, fanart_disable, clearlogo_disable):
-    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable'], fanart_disable, clearlogo_disable) for vid in video_data]
+def bulk_draw_items(video_data, draw_cm):
+    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable']) for vid in video_data]
     xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
 def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
     if not draw_cm:
         draw_cm = []
-    if getSetting('context.deletefromdatabase') == 'true' and contentType == 'tvshows':
+    if bools.context_deletefromdatabase and contentType == 'tvshows':
         draw_cm.append(("Delete from database", 'delete_anime_database'))
-    elif getSetting('context.marked.watched') == 'true' and contentType == 'episodes':
+    elif bools.context_marked_watched and contentType == 'episodes':
         draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
     # for x in cm:
         #     draw_cm.append(x)
-    fanart_disable = getSetting('interface.fanart.disable') == 'true'
-    clearlogo_disable = getSetting('interface.clearlogo.disable') == 'true'
     if len(video_data) > 99:
-        bulk_draw_items(video_data, draw_cm, fanart_disable, clearlogo_disable)
+        bulk_draw_items(video_data, draw_cm)
     else:
         for vid in video_data:
-            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable'], fanart_disable, clearlogo_disable)
+            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable'])
 
     xbmcplugin.setContent(HANDLE, contentType)
     if contentType == 'episodes':
@@ -284,7 +290,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, succeeded=True, updateListing=False, cacheToDisc=True)
 
-    if getSetting('interface.viewtypes.bool') == 'true':
+    if bools.viewtypes:
         if contentType == 'addons':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.addon')))
         elif contentType == 'tvshows':
@@ -293,7 +299,7 @@ def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
 
     # move to episode position currently watching
-    if contentType == "episodes" and getSetting('general.smart.scroll.enable') == 'true':
+    if contentType == "episodes" and bools.smart_scroll:
         xbmc.sleep(int(getSetting('general.smart.scroll.time')))
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
@@ -419,3 +425,26 @@ def print_(string, *args):
     windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=ADDON_NAME, text=f'{string}')
     windows.run()
     del windows
+
+
+class Bools:
+    def __init__(self):
+        self.showuncached = getSetting('show.uncached') == 'true'
+        self.smart_scroll = getSetting('general.smart.scroll.enable') == 'true'
+        self.viewtypes = getSetting('interface.viewtypes.bool') == 'true'
+        self.clearlogo_disable = getSetting('interface.clearlogo.disable') == 'true'
+        self.fanart_disable = getSetting('interface.fanart.disable') == 'true'
+        self.context_marked_watched = getSetting('context.marked.watched') == 'true'
+        self.context_deletefromdatabase = getSetting('context.deletefromdatabase') == 'true'
+        self.context_marked_watched = getSetting('context.deletefromdatabase') == 'true'
+        self.watchlist_update = getSetting('watchlist.update.enabled') == 'true'
+        self.watchlist_sync = getSetting('watchlist.sync.enabled') == 'true'
+        self.filler = getSetting('jz.filler') == 'true'
+        self.clean_titles = getSetting('interface.cleantitles') == 'true'
+        self.show_empty_eps = getSetting('interface.showemptyeps') == 'true'
+        self.terminateoncloud = getSetting('general.terminate.oncloud') == 'true'
+        self.div_flavor = getSetting("divflavors.bool") == "true"
+        self.search_adult = getSetting('search.adult') == "true"
+
+
+bools = Bools()

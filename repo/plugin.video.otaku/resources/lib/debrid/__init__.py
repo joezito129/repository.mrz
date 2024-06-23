@@ -11,6 +11,11 @@ class TorrentCacheCheck:
         self.realdebridCached = []
         self.all_debridCached = []
         self.debrid_linkCached = []
+
+        self.premiumizeUnCached = []
+        self.realdebridUnCached = []
+        self.all_debridUnCached = []
+        self.debrid_linkUnCached = []
         self.threads = []
 
     def torrentCacheCheck(self, torrent_list):
@@ -31,8 +36,9 @@ class TorrentCacheCheck:
         for i in self.threads:
             i.join()
 
-        cachedList = self.realdebridCached + self.premiumizeCached + self.all_debridCached + self.debrid_linkCached
-        return cachedList
+        cached_list = self.realdebridCached + self.premiumizeCached + self.all_debridCached + self.debrid_linkCached
+        uncashed_list = self.realdebridUnCached + self.premiumizeUnCached + self.all_debridUnCached + self.debrid_linkUnCached
+        return cached_list, uncashed_list
 
     def all_debrid_worker(self, torrent_list):
         api = all_debrid.AllDebrid()
@@ -44,15 +50,14 @@ class TorrentCacheCheck:
         if not cache_check:
             return
 
-        cache_list = []
         cached_items = [m.get('hash') for m in cache_check if m.get('instant') is True]
 
         for i in torrent_list:
+            i['debrid_provider'] = 'all_debrid'
             if i['hash'] in cached_items:
-                i['debrid_provider'] = 'all_debrid'
-                cache_list.append(i)
-
-        self.all_debridCached = cache_list
+                self.all_debridCached.append(i)
+            else:
+                self.all_debridUnCached.append(i)
 
     def debrid_link_worker(self, torrent_list):
         if len(torrent_list) == 0:
@@ -63,32 +68,26 @@ class TorrentCacheCheck:
         if not cache_check:
             return
 
-        cache_list = []
         for i in torrent_list:
+            i['debrid_provider'] = 'debrid_link'
             if i['hash'] in list(cache_check.keys()):
-                i['debrid_provider'] = 'debrid_link'
-                cache_list.append(i)
-
-        self.debrid_linkCached = cache_list
+                self.debrid_linkCached.append(i)
+            else:
+                self.debrid_linkUnCached.append(i)
 
     def real_debrid_worker(self, torrent_list):
         hash_list = [i['hash'] for i in torrent_list]
         if len(hash_list) == 0:
             return
-        realDebridCache = real_debrid.RealDebrid().checkHash(hash_list)
-
-        cache_list = []
+        api = real_debrid.RealDebrid()
+        realDebridCache = api.checkHash(hash_list)
         for torrent in torrent_list:
-            try:
-                if 'rd' not in realDebridCache.get(torrent['hash'], {}):
-                    continue
-                if len(realDebridCache[torrent['hash']]['rd']) >= 1:
-                    torrent['debrid_provider'] = 'real_debrid'
-                    cache_list.append(torrent)
-            except KeyError:
-                pass
-
-        self.realdebridCached = cache_list
+            hash_info = realDebridCache.get(torrent['hash'], {})
+            torrent['debrid_provider'] = 'real_debrid'
+            if 'rd' in hash_info and len(hash_info['rd']) >= 1:
+                self.realdebridCached.append(torrent)
+            else:
+                self.realdebridUnCached.append(torrent)
 
     def premiumize_worker(self, torrent_list):
         hash_list = [i['hash'] for i in torrent_list]
@@ -96,10 +95,10 @@ class TorrentCacheCheck:
             return
         premiumizeCache = premiumize.Premiumize().hash_check(hash_list)
         premiumizeCache = premiumizeCache['response']
-        cache_list = []
-        for index, torrent in enumerate(torrent_list):
-            if premiumizeCache[index] is True:
-                torrent['debrid_provider'] = 'premiumize'
-                cache_list.append(torrent)
 
-        self.premiumizeCached = cache_list
+        for index, torrent in enumerate(torrent_list):
+            torrent['debrid_provider'] = 'premiumize'
+            if premiumizeCache[index] is True:
+                self.premiumizeCached.append(torrent)
+            else:
+                self.premiumizeUnCached.append(torrent)

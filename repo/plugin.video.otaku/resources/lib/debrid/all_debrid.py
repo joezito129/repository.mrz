@@ -85,7 +85,7 @@ class AllDebrid:
         response = r.json()['data']
         self.cache_check_results += response.get('magnets')
 
-    def upload_magnet(self, magnet_hash):
+    def addMagnet(self, magnet_hash):
         params = {
             'agent': self.agent_identifier,
             'apikey': self.apikey,
@@ -131,7 +131,7 @@ class AllDebrid:
         return r.json()['data']
 
     def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
-        magnet_id = self.upload_magnet(magnet)['magnets'][0]['id']
+        magnet_id = self.addMagnet(magnet)['magnets'][0]['id']
         folder_details = self.magnet_status(magnet_id)['magnets']['links']
         folder_details = [{'link': x['link'], 'path': x['filename']} for x in folder_details]
 
@@ -157,3 +157,7 @@ class AllDebrid:
         }
         r = requests.get(f'{self.base_url}/magnet/delete', params=params)
         return r.ok
+
+    def resolve_uncached_source(self, source, runinbackground):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.ok_dialog(heading, 'Cache Reolver Has not been added for Premiumize')

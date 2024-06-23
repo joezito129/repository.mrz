@@ -11,13 +11,12 @@ class SIMKLAPI:
     def __init__(self):
         # self.ClientID = "5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b" # Swag API Key
         # self.ClientID = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0" # My API key
-        
+
         self.ClientID = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8"  # Otaku API key
         self.baseUrl = "https://api.simkl.com"
         self.imagePath = "https://wsrv.nl/?url=https://simkl.in/episodes/%s_w.webp"
 
-    def parse_episode_view(self, res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
-                           dub_data, filler_data, filler_enable, title_disable, episodes=None):
+    def parse_episode_view(self, res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
         episode = int(res['episode'])
 
         url = f"{anilist_id}/{episode}/"
@@ -49,20 +48,22 @@ class SIMKLAPI:
         except (IndexError, TypeError):
             filler = ''
         code = jz.get_second_label(info, dub_data)
-        if not code and filler_enable:
+        if not code and control.bools.filler:
             filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
         parsed = utils.allocate_item(title, f"play/{url}", False, image, info, fanart, poster, isplayable=True)
-        if not episodes or not any(x['number'] == episode for x in episodes):
-            database.update_episode(anilist_id, season, episode, update_time, parsed, filler=filler)
 
-        if title_disable and info.get('playcount') != 1:
+        kodi_meta = pickle.dumps(parsed)
+        if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
+            database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
+
+        if control.bools.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["episode"]}'
             parsed['info']['plot'] = None
         return parsed
 
-    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable):
+    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
         from datetime import date
         update_time = date.today().isoformat()
 
@@ -76,11 +77,10 @@ class SIMKLAPI:
         result_meta = self.get_episode_meta(anilist_id)
         result_ep = [x for x in result_meta if x['type'] == 'episode']
 
-        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                          tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
+        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
 
         all_results = list(map(mapfunc, result_ep))
-        if control.getSetting('interface.showemptyeps') == 'true':
+        if control.bools.show_empty_eps:
             total_ep = result.get('total_episodes', 0)
             empty_ep = []
             for ep in range(len(all_results) + 1, total_ep + 1):
@@ -90,15 +90,15 @@ class SIMKLAPI:
                     'episode': ep,
                     'image': poster
                 })
-            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                                  tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster,
+                                  fanart=fanart, eps_watched=eps_watched, update_time=update_time,
+                                  tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
             all_results += list(map(mapfunc_emp, empty_ep))
 
         control.notify("SIMKL", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
-    def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle,
-                        dub_data=None, filler_enable=False, title_disable=False):
+    def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
         import datetime
         import time
 
@@ -113,13 +113,13 @@ class SIMKLAPI:
         result_ep = [x for x in result_meta if x['type'] == 'episode']
         if len(result_ep) > len(episodes):
             season = episodes[0]['season']
-            mapfunc2 = partial(self.parse_episode_view, episodes=episodes, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
-                               eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                               filler_data=None, filler_enable=filler_enable, title_disable=title_disable)
+            mapfunc2 = partial(self.parse_episode_view, episodes=episodes, anilist_id=anilist_id, season=season,
+                               poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
+                               tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=None)
             all_results = list(map(mapfunc2, result_ep))
             control.notify("SIMKL Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
-            mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data, filler_enable=filler_enable, title_disable=title_disable)
+            mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
             all_results = list(map(mapfunc1, episodes))
         return all_results
 
@@ -134,18 +134,18 @@ class SIMKLAPI:
 
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
-        filler_enable = control.getSetting('jz.filler') == 'true'
-        title_disable = control.getSetting('interface.cleantitles') == 'true'
         if episodes:
             if kodi_meta['status'] != "FINISHED":
-                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data, filler_enable, title_disable), 'episodes'
-            return indexers.process_episodes(episodes, eps_watched, dub_data, filler_enable, title_disable), 'episodes'
+                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle,
+                                            dub_data), 'episodes'
+            return indexers.process_episodes(episodes, eps_watched, dub_data), 'episodes'
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
             from resources.jz import anime_filler
             filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:
             filler_data = None
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data,
+                                         filler_data), 'episodes'
 
     def get_anime_info(self, anilist_id):
         show_ids = database.get_show(anilist_id)

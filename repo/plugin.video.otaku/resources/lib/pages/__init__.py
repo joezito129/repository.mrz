@@ -23,17 +23,17 @@ class Sources(DisplayWindow):
         self.remainingProviders = self.embedProviders + self.torrentProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
-        self.hosters_qual_len = [0, 0, 0, 0]
+        self.embeds_qual_len = [0, 0, 0, 0]
         self.silent = False
-        self.return_data = (None, None, None)
+        self.return_data = []
         self.progress = 1
         self.threads = []
 
         self.cloud_files = []
-        self.terminate_on_cloud = control.getSetting('general.terminate.oncloud') == 'true'
 
         self.torrentSources = []
         self.torrentCacheSources = []
+        self.torrentUnCacheSources = []
         self.embedSources = []
         self.usercloudSources = []
         self.local_files = []
@@ -108,30 +108,37 @@ class Sources(DisplayWindow):
             self.updateProgress()
             self.setProgress()
             self.setText("4K: %s | 1080: %s | 720: %s | SD: %s" % (
-                control.colorString(self.torrents_qual_len[0] + self.hosters_qual_len[0]),
-                control.colorString(self.torrents_qual_len[1] + self.hosters_qual_len[1]),
-                control.colorString(self.torrents_qual_len[2] + self.hosters_qual_len[2]),
-                control.colorString(self.torrents_qual_len[3] + self.hosters_qual_len[3]),
+                control.colorString(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
+                control.colorString(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
+                control.colorString(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
+                control.colorString(self.torrents_qual_len[3] + self.embeds_qual_len[3])
             ))
             time.sleep(.5)
 
-            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or self.terminate_on_cloud and len(self.cloud_files) > 0:
+            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.bools.terminateoncloud and len(self.cloud_files) > 0:
                 break
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100
 
-        if len(self.torrentCacheSources) + len(self.embedSources) + len(self.cloud_files) + len(self.local_files) == 0:
+        if len(self.torrentSources) + len(self.embedSources) + len(self.cloud_files) + len(self.local_files) == 0:
             self.return_data = []
         else:
-            self.return_data = self.sortSources(self.torrentCacheSources, self.embedSources, self.cloud_files, self.local_files)
+            self.return_data = self.sortSources(self.torrentSources, self.embedSources, self.cloud_files, self.local_files)
         self.close()
+        return self.return_data
 
     def nyaa_worker(self, query, anilist_id, episode, status, media_type, rescrape):
-        self.torrentCacheSources += nyaa.Sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
+        all_sources = nyaa.Sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
+        self.torrentUnCacheSources += all_sources['uncached']
+        self.torrentCacheSources += all_sources['cached']
+        self.torrentSources += all_sources['cached'] + all_sources['uncached']
         self.remainingProviders.remove('nyaa')
 
     def animetosho_worker(self, query, anilist_id, episode, status, media_type, rescrape):
-        self.torrentCacheSources += animetosho.Sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
+        all_sources = animetosho.Sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
+        self.torrentUnCacheSources += all_sources['uncached']
+        self.torrentCacheSources += all_sources['cached']
+        self.torrentSources += all_sources['cached'] + all_sources['uncached']
         self.remainingProviders.remove('animetosho')
 
 #   ### embeds ###
@@ -167,7 +174,7 @@ class Sources(DisplayWindow):
         if control.premiumize_enabled() and control.getSetting('premiumize.cloudInspection') == 'true':
             debrid['premiumize'] = True
         if control.all_debrid_enabled() and control.getSetting('alldebrid.cloudInspection') == 'true':
-            debrid['alldebrid'] = True
+            debrid['all_debrid'] = True
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
@@ -186,37 +193,11 @@ class Sources(DisplayWindow):
             resolutions = ['EQ']
         return resolutions
 
-    @staticmethod
-    def debrid_priority():
-        p = []
-        if control.getSetting('premiumize.enabled') == 'true':
-            p.append({'slug': 'premiumize', 'priority': int(control.getSetting('premiumize.priority'))})
-        if control.getSetting('realdebrid.enabled') == 'true':
-            p.append({'slug': 'real_debrid', 'priority': int(control.getSetting('rd.priority'))})
-        if control.getSetting('alldebrid.enabled') == 'true':
-            p.append({'slug': 'all_debrid', 'priority': int(control.getSetting('alldebrid.priority'))})
-        if control.getSetting('dl.enabled') == 'true':
-            p.append({'slug': 'debrid_link', 'priority': int(control.getSetting('dl.priority'))})
-        p.append({'slug': '', 'priority': 11})
-        p = sorted(p, key=lambda i: i['priority'])
-        return p
-
     def sortSources(self, torrent_list, embed_list, cloud_files, other_list):
         sortedList = []
         resolutions = self.resolutionList()
-        debrid_priorities = self.debrid_priority()
 
         for resolution in resolutions:
-            for debrid in debrid_priorities:
-                for torrent in torrent_list:
-                    if debrid['slug'] == torrent['debrid_provider']:
-                        if torrent['quality'] == resolution:
-                            sortedList.append(torrent)
-
-            for file in embed_list:
-                if file['quality'] == resolution:
-                    sortedList.append(file)
-
             # for cloud_file in cloud_files:
             #     if cloud_file['quality'] == resolution:
             #         sortedList.append(cloud_file)
@@ -224,6 +205,14 @@ class Sources(DisplayWindow):
             # for other in other_list:
             #     if other['quality'] == resolution:
             #         sortedList.append(other)
+
+            for torrent in torrent_list:
+                if torrent['quality'] == resolution:
+                    sortedList.append(torrent)
+
+            for file in embed_list:
+                if file['quality'] == resolution:
+                    sortedList.append(file)
 
         if control.getSetting('general.disable265') == 'true':
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
@@ -253,19 +242,15 @@ class Sources(DisplayWindow):
         return sortedList
 
     def updateProgress(self):
-        list1 = [
+        self.torrents_qual_len = [
             len([i for i in self.torrentSources if i['quality'] == '4K']),
             len([i for i in self.torrentSources if i['quality'] == '1080p']),
             len([i for i in self.torrentSources if i['quality'] == '720p']),
-            len([i for i in self.torrentSources if i['quality'] == '480p']),
+            len([i for i in self.torrentSources if i['quality'] == '480p'])
         ]
-
-        self.torrents_qual_len = list1
-        list2 = [
+        self.embeds_qual_len = [
             len([i for i in self.embedSources if i['quality'] == '4K']),
             len([i for i in self.embedSources if i['quality'] == '1080p']),
             len([i for i in self.embedSources if i['quality'] == '720p']),
-            len([i for i in self.embedSources if i['quality'] == 'EQ']),
+            len([i for i in self.embedSources if i['quality'] == 'EQ'])
         ]
-
-        self.hosters_qual_len = list2

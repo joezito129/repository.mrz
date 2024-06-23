@@ -12,8 +12,8 @@ def parse_history_view(res):
 
 
 def search_history(search_array):
-    result = list(map(parse_history_view, search_array))
-    result.insert(0, utils.allocate_item("New Search", "search", True, 'new_search.png'))
+    result = [utils.allocate_item("New Search", "search", True, 'new_search.png')]
+    result += list(map(parse_history_view, search_array))
     result.append(utils.allocate_item("Clear Search History...", "clear_history", False, 'clear_search_history.png'))
     return result
 
@@ -98,7 +98,7 @@ def get_anime_init(anilist_id):
     return data
 
 
-def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, source_select=False):
+def get_sources(anilist_id, episode, media_type, rescrape=False, source_select=False):
     show = database.get_show(anilist_id)
     if not show:
         from resources.lib.AniListBrowser import AniListBrowser
@@ -109,7 +109,6 @@ def get_sources(anilist_id, episode, filter_lang, media_type, rescrape=False, so
         'anilist_id': anilist_id,
         'episode': episode,
         'status': kodi_meta['status'],
-        'filter_lang': filter_lang,
         'media_type': media_type,
         'rescrape': rescrape,
         'get_backup': get_backup,

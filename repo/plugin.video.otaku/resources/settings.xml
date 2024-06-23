@@ -4,14 +4,13 @@
 	<category label="JZ Settings">
 		<!-- General -->
 		<setting type="lsep" label="General"/>
-		<setting id="jz.dub" label="Show Dub Release Dates" type="bool" default="true"/>
-<!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true"/>-->
+		<setting id="jz.dub" type="bool" label="Show Dub Release Dates" default="true"/>
+		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|animeschedule" default="animeschedule" />
+<!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
+		<setting id="jz.filler" type="bool" label="Show Filler Info If Found"  default="false" />
 
-		<setting id="jz.filler" label="Show Filler Info If Found" type="bool" default="false" />
+		<!-- new settings -->
 
-		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
-		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
-		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
 	</category>
 
 	<!-- General -->
@@ -21,10 +20,7 @@
 		<setting id="searchhistory" type="enum" label="40301" values="Yes|No" default="Yes"/>
 		<setting id="general.smart.scroll.enable" label="enable Smart Scroll" type="bool" default="true" />
 		<setting id="general.smart.scroll.time" label="Wait time in ms" type="slider" option="int" range="100,100,2000" default="500" subsetting="true" visible="eq(-1,true) "/>
-		<setting type="lsep" label="Language Invoker"/>
-		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close"
-			 action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
-		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
+		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
 
 		<!-- Meta Api -->
 		<setting type="lsep" label="Meta Api" />
@@ -33,6 +29,8 @@
 
 		<!-- Interface -->
 		<setting type="lsep" label="40302"/>
+		<setting id="interface.perpage.general" type="slider"  label="Per Page General View" option="int" range="1,50" default="20" />
+		<setting id="interface.perpage.watchlist" type="slider"  label="Per Page Watchlist View (Does not work on Anilist or Simkl)" option="int" range="1,100" default="20" />
 		<setting id="interface.viewtypes.bool" label="Force view types on menus" type="bool" default="false"/>
 		<setting id="interface.viewtypes.addon" type="labelenum" label="General Menu View" values="Wide List|List" default="Wide List" visible="eq(-1,true)"/>
 		<setting id="interface.viewtypes.tvshows" type="labelenum" label="TV Show View" values="Wide List|Wall|Banner|Fanart|List|Poster|Shift|Info Wall" default="Wide List" visible="eq(-2,true)"/>
@@ -47,12 +45,15 @@
 		<setting type="lsep" label="Widgets" />
 		<setting id="widget.hide.nextpage" label="Hide Next up Widget" type="bool" default="true" />
 
+		<!-- Context -->
+		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
+		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
 	</category>
 
 	<!-- Provider -->
 	<category label="40226">
 		<setting type="lsep" label="Torrents" />
-		<setting id="provider.nyaa" type="bool" label="Nyaa" default="true" enable="eq(1,false)" />
+		<setting id="provider.nyaa" type="bool" label="Nyaa" default="true" />
 		<setting id="provider.animetosho" type="bool" label="Anime Tosho" default="true" />
 
 		<setting type="lsep" label="Other" />
@@ -62,7 +63,6 @@
 		<setting id="provider.hianime" type="bool" label="Hianime" default="true" />
 		<setting id="provider.animess" type="bool" label="Animess" default="false" />
 		<setting id="provider.animixplay" type="bool" label="Animixplay" default="false" />
-		<setting id="provider.aniplay" type="bool" label="Aniplay" default="false" />
 		<setting id="provider.aniwave" type="bool" label="Aniwave" default="true" />
 		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
 	</category>
@@ -102,6 +102,7 @@
 		<setting id="general.maxResolution" type="enum" label="40328" values="EQ|480p|720p|1080p|4k" default="4k" />
 		<setting id="general.disable265" type="bool" label="40329" default="false" />
 		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="Both" />
+		<setting id="show.uncached" type="bool" label="Show UnCached Sources" default="false" />
 
 		<!-- Source Sorting -->
 		<setting type="lsep" label="40331"/>
@@ -136,8 +137,8 @@
 		<setting id="rd.auth.status" type="text" label="Real-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="rd.auth_start" type="action" label="40338" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)" visible="eq(-3,true)" />
 		<setting id="rd.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)" visible="eq(-4,true)" />
-		<setting id="rd.priority" type="slider" subsetting="true" label="40339" option="int" range="1,10" default="10" visible="eq(-5,true)" />
-		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-6,true)" />
+<!--		<setting id="rd.priority" type="slider" subsetting="true" label="40339" option="int" range="1,10" default="10" visible="eq(-5,true)" />-->
+		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-5,true)" />
 
 		<!-- All Debrid -->
 		<setting type="lsep" label="40340" />
@@ -145,8 +146,8 @@
 		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
 		<setting id="alldebrid.auth.status" type="text" label="All-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-3,true)" />
-		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-4,true)" />
-		<setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-5,true)" />
+<!--		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-4,true)" />-->
+		<setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
 		
 		<!-- Debrid-Link -->
 		<setting type="lsep" label="40411" />
@@ -154,15 +155,15 @@
 		<setting id="dl.username" type="text" default="" label="40413" enable="false" visible="eq(-1,true)"/>
 		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/debridlink)" visible="eq(-2,true)" />
 		<setting id="dl.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)" visible="eq(-3,true)" />
-		<setting id="dl.priority" type="slider" subsetting="true" label="40415" option="int" range="1,10" default="10" visible="eq(-4,true)" />
+<!--		<setting id="dl.priority" type="slider" subsetting="true" label="40415" option="int" range="1,10" default="10" visible="eq(-4,true)" />-->
 
 		<!-- Premiumize -->
 		<setting type="lsep" label="40363" />
 		<setting id="premiumize.enabled" type="bool" default="false" label="40364" />
 		<setting id="premiumize.username" type="text" label="40365" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/premiumize)" visible="eq(-2,true)" />
-		<setting id="premiumize.priority" type="slider" subsetting="true" label="40367" option="int" range="1,10" default="10" visible="eq(-3,true)" />
-		<setting id="premiumize.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
+<!--		<setting id="premiumize.priority" type="slider" subsetting="true" label="40367" option="int" range="1,10" default="10" visible="eq(-3,true)" />-->
+		<setting id="premiumize.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-3,true)" />
 	</category>
 
 	<!-- Watchlist -->
@@ -224,15 +225,18 @@
 		<setting id="tools" label="50012" type="bool" default="true"/>
 	</category>
 
-	<!-- Shortcuts -->
+	<!-- Maintenance -->
 	<category label="40416">
 		<!-- Tools -->
 		<setting type="lsep" label="50005"/>
 		<setting id="change_log" type="action" label="30027" action="RunPlugin(plugin://plugin.video.otaku/change_log)"/>
 		<setting id="clear_cache" type="action" label="30021" action="RunPlugin(plugin://plugin.video.otaku/clear_cache)"/>
-		<setting id="clear_torrent_cache" type="action" label="30022" action="RunPlugin(plugin://plugin.video.otaku/clear_torrent_cache)"/>
 		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_history)"/>
 		<setting id="rebuild_database" type="action" label="30026" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database)"/>
 		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync)"/>
+
+		<setting type="lsep" label="Language Invoker"/>
+		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
+		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
 	</category>
 </settings>

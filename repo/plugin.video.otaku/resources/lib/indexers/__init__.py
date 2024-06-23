@@ -6,9 +6,8 @@ from resources import jz
 
 def parse_episodes(res, eps_watched, dub_data=None, filler_enable=False, title_disable=False):
     parsed = pickle.loads(res['kodi_meta'])
-    if eps_watched:
-        if int(eps_watched) >= res['number']:
-            parsed['info']['playcount'] = 1
+    if eps_watched and int(eps_watched) >= res['number']:
+        parsed['info']['playcount'] = 1
     if title_disable and parsed['info'].get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["number"]}'
         parsed['info']['plot'] = None
@@ -31,7 +30,7 @@ def process_dub(anilist_id, ename):
 
     show_data = database.get_show_data(anilist_id)
     if not show_data or show_data['last_updated'] != update_time:
-        if control.getSetting('dub.api') == 'teamup':
+        if control.getSetting('jz.dub.api') == 'teamup':
             from resources.jz.TeamUp import teamup
             dub_data = teamup.get_dub_data(ename)
             data = {"dub_data": dub_data}

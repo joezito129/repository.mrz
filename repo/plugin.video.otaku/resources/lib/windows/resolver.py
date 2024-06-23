@@ -47,6 +47,9 @@ class Resolver(BaseWindow):
             self.setProperty('source_info', " ".join(i['info']))
             self.setProperty('source_type', i['type'])
 
+            if 'uncached' in i['type']:
+                self.return_data = self.resolve_uncache(i)
+                break
             if i['type'] == 'torrent':
                 stream_link = self.resolve_source(self.resolvers[i['debrid_provider']], i)
 
@@ -108,6 +111,31 @@ class Resolver(BaseWindow):
             stream_link = None
         return stream_link
 
+    def resolve_uncache(self, source):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        f_string = f'''
+[I]{source['release_title']}[/I]
+
+This source is not cached would you like to cache it now?        
+        '''
+        yesnocustom = control.yesnocustom_dialog(heading, f_string, "Cancel", "Run in Background", "Run in Forground")
+        if yesnocustom == -1 or yesnocustom == 2:
+            self.canceled = True
+            return
+        if yesnocustom == 0:
+            runbackground = True
+        elif yesnocustom == 1:
+            runbackground = False
+        else:
+            return
+
+        api = self.resolvers[source['debrid_provider']]()
+        resolved_cache = api.resolve_uncached_source(source, runbackground)
+        if not resolved_cache:
+            self.canceled = True
+
+        return resolved_cache
+
     def doModal(self, sources, args, pack_select):
         if not sources:
             return None
@@ -122,6 +150,7 @@ class Resolver(BaseWindow):
         self.setProperty('source_info', " ".join(self.sources[0]['info']))
         self.setProperty('source_type', self.sources[0]['type'])
         self.setProperty('source_size', self.sources[0]['size'])
+        self.setProperty('source_seeders', str(self.sources[0].get('seeders', '')))
         if not self.silent:
             super(Resolver, self).doModal()
         else:

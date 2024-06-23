@@ -128,12 +128,14 @@ class DebridLink:
             if selected_file is not None:
                 return selected_file['link']
 
-        sources = [(item.get('size'), item.get('downloadUrl'))
-                   for item in files
-                   if any(item.get('name').lower().endswith(x) for x in ['avi', 'mp4', 'mkv'])]
+        sources = [(item.get('size'), item.get('downloadUrl'))for item in files if any(item.get('name').lower().endswith(x) for x in ['avi', 'mp4', 'mkv'])]
 
         selected_file = max(sources)[1]
         if selected_file is None:
             return
 
         return selected_file
+
+    def resolve_uncached_source(self, source, runinbackground):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.ok_dialog(heading, 'Cache Reolver Has not been added for Premiumize')
