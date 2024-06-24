@@ -28,6 +28,11 @@ class SIMKLAPI:
         image = self.imagePath % res['img'] if res.get('img') else poster
 
         info = {
+            'UniqueIDs': {
+                'anilist_id': str(anilist_id),
+                'mal_id': '',
+                'kitsu_id': ''
+            },
             'plot': res.get('description', ''),
             'title': title,
             'season': season,
@@ -52,7 +57,7 @@ class SIMKLAPI:
             filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
-        parsed = utils.allocate_item(title, f"play/{url}", False, image, info, fanart, poster, isplayable=True)
+        parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
 
         kodi_meta = pickle.dumps(parsed)
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
@@ -109,7 +114,7 @@ class SIMKLAPI:
         # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")
 
         diff = (datetime.datetime.today() - last_updated).days
-        result_meta = self.get_episode_meta(anilist_id) if diff > 3 else []
+        result_meta = self.get_episode_meta(anilist_id) if diff > int(control.getSetting('interface.check.updates')) else []
         result_ep = [x for x in result_meta if x['type'] == 'episode']
         if len(result_ep) > len(episodes):
             season = episodes[0]['season']
@@ -119,6 +124,7 @@ class SIMKLAPI:
             all_results = list(map(mapfunc2, result_ep))
             control.notify("SIMKL Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
+            database.update_episode(anilist_id, episodes[0]['season'], episodes[0]['number'], update_time, episodes[0]['kodi_meta'], episodes[0]['filler'])
             mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
             all_results = list(map(mapfunc1, episodes))
         return all_results

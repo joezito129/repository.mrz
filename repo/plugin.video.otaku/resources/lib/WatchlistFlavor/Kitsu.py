@@ -71,7 +71,7 @@ class KitsuWLF(WatchlistFlavorBase):
         name = "Next Page (%d)" % next_page
         parsed = parse.urlparse(hasNextPage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
-        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)
 
     def __get_sort(self):
         sort_types = {
@@ -109,7 +109,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "image": f'{res[0].lower()}.png',
             'info': {}
         }
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     @staticmethod
     def action_statuses():
@@ -198,9 +198,9 @@ class KitsuWLF(WatchlistFlavorBase):
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     def _base_next_up_view(self, res, eres):
         kitsu_id = eres['id']
@@ -244,14 +244,14 @@ class KitsuWLF(WatchlistFlavorBase):
 
         if next_up_meta:
             base['url'] = url
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
             base['url'] = f"play_movie/{anilist_id}/{mal_id}/{kitsu_id}"
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     def _mapping_mal(self, kitsu_id):
         mal_id = ''

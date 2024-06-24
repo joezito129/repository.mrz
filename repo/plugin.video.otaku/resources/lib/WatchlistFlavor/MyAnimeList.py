@@ -73,7 +73,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         next_page = page + 1
         name = "Next Page (%d)" % next_page
         offset = (re.compile("offset=(.+?)&").findall(hasNextPage))[0]
-        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {}, 'fanart': 'next.png'})
+        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)
 
     def __get_sort(self):
         sort_types = {
@@ -105,7 +105,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "image": f'{res[0].lower()}.png',
             "info": {}
         }
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     @staticmethod
     def action_statuses():
@@ -211,8 +211,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
-        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
+            return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
 
     def _base_next_up_view(self, res):
         mal_id = res['node']['id']
@@ -264,13 +264,13 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
         if next_up_meta:
             base['url'] = url
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     def get_watchlist_anime_entry(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')

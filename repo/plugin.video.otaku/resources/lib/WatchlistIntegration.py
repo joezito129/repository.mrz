@@ -30,21 +30,23 @@ def WL_LOGOUT(payload, params):
 
 @route('watchlist/*')
 def WATCHLIST(payload, params):
-    return control.draw_items(WatchlistFlavor.watchlist_request(payload), contentType="addons")
+    return control.draw_items(WatchlistFlavor.watchlist_request(payload), 'addons')
 
 
 @route('watchlist_status_type/*')
 def WATCHLIST_STATUS_TYPE(payload, params):
     flavor, status = payload.rsplit("/")
     next_up = bool(params.get('next_up'))
-    return control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up))
+    content_type = 'videos' if next_up else 'tvshows'
+    return control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up), content_type)
 
 
 @route('watchlist_status_type_pages/*')
 def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
     flavor, status, offset, page = payload.rsplit("/")
     next_up = bool(params.get('next_up'))
-    return control.draw_items(WatchlistFlavor.watchlist_status_request_pages(flavor, status, next_up, offset, int(page)))
+    content_type = 'videos' if next_up else 'tvshows'
+    return control.draw_items(WatchlistFlavor.watchlist_status_request_pages(flavor, status, next_up, offset, int(page)), content_type)
 
 
 @route('watchlist_to_ep/*')
@@ -141,7 +143,7 @@ def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:
-            items.insert(0, (f'{flavor.username}\'s {flavor.title}', f'watchlist/{flavor.flavor_name}', flavor.image))
+            items.insert(0, (f'{flavor.username}\'s {flavor.title}', f'watchlist/{flavor.flavor_name}', {'plot': f'{flavor.username}\'s {flavor.title}'}, flavor.image))
     return items
 
 

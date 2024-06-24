@@ -77,7 +77,7 @@ class AniListWLF(WatchlistFlavorBase):
             "image": f'{res[0].lower()}.png',
             "info": {}
         }
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     @staticmethod
     def action_statuses():
@@ -288,8 +288,8 @@ class AniListWLF(WatchlistFlavorBase):
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
-        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
+            return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
 
     def _base_next_up_view(self, res):
         progress = res['progress']
@@ -353,13 +353,11 @@ class AniListWLF(WatchlistFlavorBase):
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False)
-
+            return utils.parse_view(base, False, True)
         if next_up_meta:
             base['url'] = url
-            return utils.parse_view(base, False)
-
-        return utils.parse_view(base)
+            return utils.parse_view(base, False, True)
+        return utils.parse_view(base, True, False)
 
     def get_watchlist_anime_entry(self, anilist_id):
         query = '''

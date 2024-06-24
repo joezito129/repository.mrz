@@ -5,17 +5,15 @@ import xbmcvfs
 from resources.lib.ui import control
 
 
-def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=None, cast=None, landscape=None, banner=None, isplayable=False, clearart=None, clearlogo=None):
+def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=None, poster=None, cast=None, landscape=None, banner=None, clearart=None, clearlogo=None):
     if not cast:
         cast = []
     if image and '/' not in image:
         image = os.path.join(control.OTAKU_ICONS_PATH, image)
-    if fanart:
-        if not isinstance(fanart, list) and '/' not in fanart:
-            fanart = [os.path.join(control.OTAKU_ICONS_PATH, fanart)]
+    if fanart and not isinstance(fanart, list) and '/' not in fanart:
+        fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
     if poster and '/' not in poster:
         poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
-
     new_res = {
         'isfolder': isfolder,
         'isplayable': isplayable,
@@ -37,13 +35,14 @@ def allocate_item(name, url, isfolder, image='', info='', fanart=None, poster=No
     return new_res
 
 
-def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
+def parse_view(base, isfolder, isplayable, dub=False, dubsub_filter=None):
     if dubsub_filter == 'Dub':
         if dub:
             parsed_view = [allocate_item(
                 "%s" % base["name"],
                 base["url"] + '0',
-                is_dir,
+                isfolder,
+                isplayable,
                 image=base["image"],
                 info=base["info"],
                 fanart=base.get("fanart"),
@@ -62,7 +61,8 @@ def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
         parsed_view = [allocate_item(
             base["name"],
             base["url"],
-            isfolder=is_dir,
+            isfolder,
+            isplayable,
             image=base["image"],
             info=base["info"],
             fanart=base.get("fanart"),
@@ -76,7 +76,8 @@ def parse_view(base, is_dir=True, dub=False, dubsub_filter=None):
         parsed_view = [allocate_item(
             base["name"],
             base["url"],
-            isfolder=is_dir,
+            isfolder,
+            isplayable,
             image=base["image"],
             info=base["info"],
             fanart=base.get("fanart"),

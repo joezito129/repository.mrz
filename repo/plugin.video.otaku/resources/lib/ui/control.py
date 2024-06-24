@@ -1,5 +1,4 @@
 import random
-
 import xbmc, xbmcgui, xbmcaddon, xbmcplugin, xbmcvfs
 import os
 import sys
@@ -202,7 +201,8 @@ def context_menu(context_list):
 
 def set_videotags(li, info):
     vinfo = li.getVideoInfoTag()
-    vinfo.setTitle(info['title'])
+    if info.get('title'):
+        vinfo.setTitle(info['title'])
     if info.get('mediatype'):
         vinfo.setMediaType(info['mediatype'])
     if info.get('tvshowtitle'):
@@ -232,11 +232,14 @@ def set_videotags(li, info):
     if info.get('code'):
         vinfo.setProductionCode(info['code'])
     if info.get('cast'):
-        vinfo.setCast([xbmc.Actor(p['name'], p['role'], info['cast'].index(p), p['thumbnail']) for p in info['cast']])
+        vinfo.setCast([xbmc.Actor(c['name'], c['role'], i, c['thumbnail']) for i, c in enumerate(info['cast'])])
     if info.get('OriginalTitle'):
         vinfo.setOriginalTitle(info['OriginalTitle'])
     if info.get('trailer'):
         vinfo.setTrailer(info['trailer'])
+    if info.get('UniqueIDs'):
+        # vinfo.setUniqueIDs(info['UniqueIDs'], 'anilist_id')
+        vinfo.setUniqueIDs(info['UniqueIDs'])
 
 
 def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
@@ -251,10 +254,18 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     if art.get('fanart') is None or bools.fanart_disable:
         art['fanart'] = OTAKU_FANART_PATH
     else:
-        art['fanart'] = random.choice(art['fanart'])
+        if isinstance(art['fanart'], list):
+            if bools.fanart_select:
+                if info.get('UniqueIDs', {}).get('anilist_id'):
+                    fanart_select = getSetting(f'fanart.select.anilist.{info["UniqueIDs"]["anilist_id"]}')
+                    art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
+                else:
+                    art['fanart'] = OTAKU_FANART_PATH
+            else:
+                art['fanart'] = random.choice(art['fanart'])
+
     if bools.clearlogo_disable:
         art['clearlogo'] = OTAKU_ICONS_PATH
-
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
@@ -268,38 +279,44 @@ def bulk_draw_items(video_data, draw_cm):
     xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
-def draw_items(video_data, contentType="tvshows", draw_cm=None, bulk_add=False):
+def draw_items(video_data, content_type=None, draw_cm=None):
     if not draw_cm:
         draw_cm = []
-    if bools.context_deletefromdatabase and contentType == 'tvshows':
+    if bools.context_deletefromdatabase and content_type == 'tvshows':
         draw_cm.append(("Delete from database", 'delete_anime_database'))
-    elif bools.context_marked_watched and contentType == 'episodes':
+    elif bools.context_marked_watched and content_type == 'episodes':
         draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
-    # for x in cm:
-        #     draw_cm.append(x)
+    if bools.fanart_select and content_type == 'tvshows':
+        draw_cm.append(('Select Fanart', 'select_fanart'))
     if len(video_data) > 99:
         bulk_draw_items(video_data, draw_cm)
     else:
         for vid in video_data:
-            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable'])
+            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
 
-    xbmcplugin.setContent(HANDLE, contentType)
-    if contentType == 'episodes':
+    if content_type:
+        xbmcplugin.setContent(HANDLE, content_type)
+
+    if content_type == 'episodes':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
-    elif contentType == 'tvshows':
+    elif content_type == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
-    xbmcplugin.endOfDirectory(HANDLE, succeeded=True, updateListing=False, cacheToDisc=True)
+
+    xbmcplugin.endOfDirectory(HANDLE, True, False, True)
 
     if bools.viewtypes:
-        if contentType == 'addons':
-            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.addon')))
-        elif contentType == 'tvshows':
+        if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
-        elif contentType == 'episodes':
+        elif content_type == 'episodes':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
+        else:
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
+    else:
+        if content_type == 'tvshows':
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % 50)
 
     # move to episode position currently watching
-    if contentType == "episodes" and bools.smart_scroll:
+    if content_type == "episodes" and bools.smart_scroll:
         xbmc.sleep(int(getSetting('general.smart.scroll.time')))
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
@@ -332,6 +349,7 @@ def get_view_type(viewtype):
         'Wall': 500,
         'Banner': 501,
         'Fanart': 502,
+        'List': 0
     }
     return viewTypes[viewtype]
 
@@ -445,6 +463,7 @@ class Bools:
         self.terminateoncloud = getSetting('general.terminate.oncloud') == 'true'
         self.div_flavor = getSetting("divflavors.bool") == "true"
         self.search_adult = getSetting('search.adult') == "true"
+        self.fanart_select = getSetting('interface.fanart.select.bool') == 'true'
 
 
 bools = Bools()

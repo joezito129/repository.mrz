@@ -29,7 +29,7 @@ class Sources(BrowserBase):
             # todo add re-scape stuff here
             pass
         if media_type != "movie":
-            season = database.get_episode_list(anilist_id)[0]['season']
+            season = database.get_episode(anilist_id)['season']
             season = str(season).zfill(2)
             episode = episode.zfill(2)
             query = f'{query} "\\- {episode}"'

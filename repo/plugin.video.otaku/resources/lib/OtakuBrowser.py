@@ -8,13 +8,13 @@ from resources.lib.ui import control, database, utils
 
 
 def parse_history_view(res):
-    return utils.allocate_item(res, f'search/{res}/1', True)
+    return utils.allocate_item(res, f'search/{res}/1', True, False)
 
 
 def search_history(search_array):
-    result = [utils.allocate_item("New Search", "search", True, 'new_search.png')]
+    result = [utils.allocate_item("New Search", "search", True, False, 'new_search.png')]
     result += list(map(parse_history_view, search_array))
-    result.append(utils.allocate_item("Clear Search History...", "clear_history", False, 'clear_search_history.png'))
+    result.append(utils.allocate_item("Clear Search History...", "clear_history", False, False, 'clear_search_history.png'))
     return result
 
 
@@ -31,7 +31,7 @@ def get_episodeList(anilist_id, pass_idx):
             'premiered': str(kodi_meta['start_date']),
             'year': int(str(kodi_meta['start_date'])[:4])
         }
-        items = [utils.allocate_item(title, 'null', False, info=info, poster=kodi_meta['poster'], isplayable=True)]
+        items = [utils.allocate_item(title, 'null', False, True, info=info, poster=kodi_meta['poster'])]
 
     else:
         episodes = database.get_episode_list(anilist_id)

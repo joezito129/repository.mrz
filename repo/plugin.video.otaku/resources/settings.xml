@@ -31,10 +31,13 @@
 		<setting type="lsep" label="40302"/>
 		<setting id="interface.perpage.general" type="slider"  label="Per Page General View" option="int" range="1,50" default="20" />
 		<setting id="interface.perpage.watchlist" type="slider"  label="Per Page Watchlist View (Does not work on Anilist or Simkl)" option="int" range="1,100" default="20" />
+		<setting id="interface.check.updates" type="slider"  label="How long Before Checking for New Episodes (days)" option="int" range="1,30" default="5" />
 		<setting id="interface.viewtypes.bool" label="Force view types on menus" type="bool" default="false"/>
-		<setting id="interface.viewtypes.addon" type="labelenum" label="General Menu View" values="Wide List|List" default="Wide List" visible="eq(-1,true)"/>
+		<setting id="interface.viewtypes.general" type="labelenum" label="General Menu View" values="Wide List|List" default="Wide List" visible="eq(-1,true)"/>
 		<setting id="interface.viewtypes.tvshows" type="labelenum" label="TV Show View" values="Wide List|Wall|Banner|Fanart|List|Poster|Shift|Info Wall" default="Wide List" visible="eq(-2,true)"/>
 		<setting id="interface.viewtypes.episodes" type="labelenum" label="Episode View" values="Wide List|Wall|Info Wall" default="Wide List" visible="eq(-3,true)"/>
+
+		<setting id="interface.fanart.select.bool" label="Selected Fanart (Select Fanart in Context menu on shows)" type="bool" default="false"/>
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
 		<setting id="interface.fanart.disable" type="bool" label="Disable Fanart" default="true" />

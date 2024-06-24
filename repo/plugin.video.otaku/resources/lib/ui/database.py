@@ -269,6 +269,16 @@ def get_episode_list(show_id):
     return episodes
 
 
+def get_episode(show_id):
+    lock.acquire()
+    cursor = _get_cursor()
+    cursor.execute('SELECT* FROM episodes WHERE anilist_id=?', (show_id,))
+    episode = cursor.fetchone()
+    cursor.close()
+    control.try_release_lock(lock)
+    return episode
+
+
 def get_show(anilist_id):
     lock.acquire()
     cursor = _get_connection_cursor(control.anilistSyncDB)

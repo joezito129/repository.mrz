@@ -34,12 +34,9 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
                 self.setProperty('item.art.poster', anime_init[0][episode - 1]['image'].get('poster_'))
                 self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image'].get('thumb'))
-                if not control.bools.fanart_disable:
-                    self.setProperty('item.art.fanart', random.choice(anime_init[0][episode - 1]['image'].get('fanart')))
             except IndexError:
                 self.setProperty('item.info.season', '-1')
                 self.setProperty('item.info.episode', '-1')
-                self.setProperty('item.art.fanart', control.OTAKU_FANART_PATH)
 
             try:
                 year, month, day = anime_init[0][episode - 1]['info'].get('aired', '0000-00-00').split('-')
@@ -56,10 +53,7 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
                 self.setProperty('item.art.poster', kodi_meta.get('poster_'))
                 self.setProperty('item.art.thumb', kodi_meta.get('thumb'))
-                if not control.bools.fanart_disable:
-                    self.setProperty('item.art.fanart', random.choice(kodi_meta.get('fanart')))
                 self.setProperty('item.info.aired', kodi_meta.get('start_date'))
-
                 try:
                     self.setProperty('item.info.year', kodi_meta.get('start_date').split('-')[0])
                 except AttributeError:

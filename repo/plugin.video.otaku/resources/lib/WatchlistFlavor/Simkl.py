@@ -113,7 +113,7 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
             "image": '%s.png' % res[0].lower(),
             "info": {}
         }
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         results = self.get_all_items(status)
@@ -180,8 +180,8 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
         if res["total_episodes_count"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
-        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
+            return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
 
     def _base_next_up_view(self, res):
         show_ids = res['show']['ids']
@@ -238,13 +238,13 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
         if res["total_episodes_count"] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
         if next_up_meta:
             base['url'] = 'play/%d/%d/' % (anilist_id, next_up)
-            return utils.parse_view(base, False)
+            return utils.parse_view(base, False, True)
 
-        return utils.parse_view(base)
+        return utils.parse_view(base, True, False)
 
     @staticmethod
     def get_watchlist_anime_entry(anilist_id):

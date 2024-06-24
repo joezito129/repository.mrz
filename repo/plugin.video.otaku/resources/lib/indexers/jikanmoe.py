@@ -46,8 +46,7 @@ class JikanAPI:
         return res_data
 
     @staticmethod
-    def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
-                           dub_data, filler_data, filler_enable, title_disable, episodes=None):
+    def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, filler_enable, title_disable, episodes=None):
 
         episode = res['mal_id']
         url = f"{anilist_id}/{episode}/"
@@ -79,7 +78,7 @@ class JikanAPI:
             filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
-        parsed = utils.allocate_item(title, f"play/{url}", False, image, info, fanart, poster, isplayable=True)
+        parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
 
         kodi_meta = pickle.dumps(parsed)
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
@@ -136,12 +135,10 @@ class JikanAPI:
         # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")    # todo add when python 11 is added
 
         diff = (datetime.datetime.today() - last_updated).days
-        result = self.get_episode_meta(anilist_id) if diff > 3 else []
+        result = self.get_episode_meta(anilist_id) if diff > int(control.getSetting('interface.check.updates')) else []
         if len(result) > len(episodes):
             season = episodes[0]['season']
-            mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
-                               eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                               filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable, episodes=episodes)
+            mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable, episodes=episodes)
             all_results = list(map(mapfunc2, result))
             control.notify("Jikanmoa", f'{tvshowtitle} Appended to Database', icon=poster)
         else:

@@ -178,7 +178,7 @@ class Sources(BrowserBase):
         else:
             part = None
 
-        season = database.get_episode_list(anilist_id)[0]['season']
+        season = database.get_episode(anilist_id)['season']
         season_zfill = str(season).zfill(2)
         episode_zfill = episode.zfill(2)
         query = f'{show} "- {episode_zfill}"'
@@ -252,7 +252,7 @@ class Sources(BrowserBase):
         kodi_meta['query'] = f'{db_query}|{show["general_title"]}'
         database.update_kodi_meta(anilist_id, kodi_meta)
 
-        season = database.get_episode_list(anilist_id)[0]['season']
+        season = database.get_episode(anilist_id)['season']
         episode_zfill = episode.zfill(2)
 
         query = f'{show} "- {episode_zfill}"'
@@ -277,7 +277,7 @@ class Sources(BrowserBase):
         if episodes:
             query += '|"01-{0}"|"01~{0}"|"01 - {0}"|"01 ~ {0}"'.format(episodes)
 
-        season = database.get_episode_list(anilist_id)[0]['season']
+        season = database.get_episode(anilist_id)['season']
         season_zfill = str(season).zfill(2)
         query += '|"S{0}"|"Season {0}"'.format(season_zfill)
 

@@ -58,7 +58,7 @@ class ANIZIPAPI:
         if not code and filler_enable:
             filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
-        parsed = utils.allocate_item(title, f"play/{url}", False, image, info, fanart, poster, isplayable=True)
+        parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
 
         kodi_meta = pickle.dumps(parsed)
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
@@ -117,7 +117,7 @@ class ANIZIPAPI:
         # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")
 
         diff = (datetime.datetime.today() - last_updated).days
-        if diff > 3:
+        if diff > int(control.getSetting('interface.check.updates')):
             result = self.get_anime_info(anilist_id)
             result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
         else:

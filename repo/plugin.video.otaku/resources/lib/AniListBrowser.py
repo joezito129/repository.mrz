@@ -36,7 +36,7 @@ class AniListBrowser:
 
         next_page = page + 1
         name = "Next Page (%d)" % next_page
-        return [utils.allocate_item(name, base_url % next_page, True, 'next.png', fanart='next.png')]
+        return [utils.allocate_item(name, base_url % next_page, True, False, 'next.png', {'plot': name}, 'next.png')]
 
     @staticmethod
     def get_season_year(period='current'):
@@ -130,6 +130,7 @@ class AniListBrowser:
     def get_recommendations(self, anilist_id, page=1):
         variables = {
             'page': page,
+            'perPage': self.perpage,
             'id': anilist_id
         }
         recommendations = database.get_(self.get_recommendations_res, 24, variables, page)
@@ -167,8 +168,8 @@ class AniListBrowser:
     def get_base_res(self, variables, page=1):
         query = '''
         query (
-            $page: Int = 1,
-            $perpage: Int = 20
+            $page: Int=1,
+            $perpage: Int=20
             $type: MediaType,
             $isAdult: Boolean = false,
             $format:[MediaFormat],
@@ -345,7 +346,7 @@ class AniListBrowser:
 
     def get_recommendations_res(self, variables, page=1):
         query = '''
-        query ($id: Int, $page: Int, $perpage: Int=1) {
+        query ($id: Int, $page: Int, $perpage: Int=20) {
           Media(id: $id, type: ANIME) {
             id
             recommendations(page: $page, perPage: $perpage, sort: [RATING_DESC, ID]) {
@@ -708,12 +709,17 @@ class AniListBrowser:
             desc = desc.replace('\n', '')
 
         info = {
+            'UniqueIDs': {
+                'anilist_id': str(anilist_id),
+                'mal_id': str(mal_id),
+                'kitsu_id': str(kitsu_id)
+            },
             'genre': res.get('genres'),
             'title': title,
             'plot': desc,
             'status': res.get('status'),
             'mediatype': 'tvshow',
-            'country': res.get('countryOfOrigin', ''),
+            'country': res.get('countryOfOrigin', '')
         }
 
         if completed.get(str(anilist_id)):
@@ -779,9 +785,8 @@ class AniListBrowser:
         if res['format'] in ['MOVIE', 'ONA'] and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, dub=dub, dubsub_filter=dubsub_filter)
-
-        return utils.parse_view(base, dub=dub, dubsub_filter=dubsub_filter)
+            return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
+        return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
 
     def database_update_show(self, res):
         anilist_id = res['id']

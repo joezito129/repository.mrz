@@ -1,4 +1,4 @@
-import xbmcgui, xbmcvfs
+import xbmcgui, xbmcvfs, xbmc
 import json
 import os
 import math
@@ -65,7 +65,7 @@ class DownloadManager(BaseWindow):
         while not control.abort_requested() and not self.abort:
             self.downloads = manager.get_all_tasks_info()
             self.populate_menu_items()
-            time.sleep(1)
+            xbmc.sleep(1000)
 
     def populate_menu_items(self):
         def create_menu_item(download_item):

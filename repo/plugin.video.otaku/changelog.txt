@@ -1,3 +1,8 @@
+Changelog v5.0.35 (2024-06-24):
+- Improved UI
+- Added Select Fanart
+- Added setting for when to check for episode meta
+
 Changelog v5.0.34 (2024-06-23):
 - Added UnCached Sorces
 - Removed Debrid Priority

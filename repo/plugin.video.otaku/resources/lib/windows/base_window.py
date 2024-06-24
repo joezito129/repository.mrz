@@ -13,8 +13,8 @@ class BaseWindow(control.xmlWindow):
 
         if actionArgs is None or actionArgs.get('item_type') == 'skip_intro':
             return
-
-        if actionArgs.get('anilist_id'):
+        anilist_id = actionArgs.get('anilist_id')
+        if anilist_id:
             self.item_information = pickle.loads(database.get_show(actionArgs['anilist_id'])['kodi_meta'])
             show_meta = database.get_show_meta(actionArgs['anilist_id'])
             if show_meta:
@@ -35,8 +35,15 @@ class BaseWindow(control.xmlWindow):
         if not actionArgs.get('playnext') and not fanart:
             fanart = control.OTAKU_FANART_PATH
 
-        if isinstance(fanart, list):
-            fanart = control.OTAKU_FANART_PATH if control.bools.fanart_disable else random.choice(fanart)
+        if fanart is None or control.bools.fanart_disable:
+            fanart = control.OTAKU_FANART_PATH
+        else:
+            if isinstance(fanart, list):
+                if control.bools.fanart_select:
+                    fanart_select = control.getSetting(f'fanart.select.anilist.{anilist_id}')
+                    fanart = fanart_select if fanart_select else random.choice(fanart)
+                else:
+                    fanart = random.choice(fanart)
         if isinstance(clearlogo, list):
             clearlogo = control.OTAKU_LOGO2_PATH if control.bools.clearlogo_disable else random.choice(clearlogo)
 

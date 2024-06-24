@@ -1,5 +1,6 @@
 import threading
 import time
+import xbmc
 
 from resources.lib.pages import (nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniwave, gogoanime, localfiles)
 from resources.lib.ui import control
@@ -113,7 +114,7 @@ class Sources(DisplayWindow):
                 control.colorString(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
                 control.colorString(self.torrents_qual_len[3] + self.embeds_qual_len[3])
             ))
-            time.sleep(.5)
+            xbmc.sleep(500)
 
             if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.bools.terminateoncloud and len(self.cloud_files) > 0:
                 break
