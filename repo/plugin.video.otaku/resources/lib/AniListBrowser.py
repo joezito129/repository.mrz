@@ -673,7 +673,6 @@ class AniListBrowser:
 
     def process_res(self, res):
         self.database_update_show(res)
-        control.print(res)
         get_meta.collect_meta_([res])
         return database.get_show(str(res['id']))
 

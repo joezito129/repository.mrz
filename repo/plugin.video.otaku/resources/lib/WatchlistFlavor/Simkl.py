@@ -246,7 +246,6 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
         # }
         # r = requests.post(f'{self._URL}/sync/watched', headers=self.__headers(), params=params)
         # result = r.json()
-        # control.print(result)
         # anime_entry = {
         #     'eps_watched': results['num_episodes_watched'],
         #     'status': results['status'],
