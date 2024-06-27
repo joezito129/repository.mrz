@@ -5,7 +5,7 @@
 		<!-- General -->
 		<setting type="lsep" label="General"/>
 		<setting id="jz.dub" type="bool" label="Show Dub Release Dates" default="true"/>
-		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|animeschedule" default="animeschedule" />
+		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|Animeschedule" default="animeschedule" />
 <!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
 		<setting id="jz.filler" type="bool" label="Show Filler Info If Found"  default="false" />
 
