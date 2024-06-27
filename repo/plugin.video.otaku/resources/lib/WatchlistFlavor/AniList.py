@@ -1,9 +1,6 @@
-import itertools
-import pickle
-import random
 import requests
 
-from resources.lib.ui import database, utils, control
+from resources.lib.ui import utils, control
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
 from resources.lib.ui.divide_flavors import div_flavor
 
@@ -27,8 +24,8 @@ class AniListWLF(WatchlistFlavorBase):
         query ($name: String) {
             User(name: $name) {
                 id
-                }
             }
+        }
         '''
 
         variables = {
@@ -38,6 +35,8 @@ class AniListWLF(WatchlistFlavorBase):
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
         if "errors" in results.keys():
+            control.setSetting('anilist.token', '')
+            control.setSetting('anilist.username', '')
             return
         userId = results['data']['User']['id']
         login_data = {
@@ -58,26 +57,19 @@ class AniListWLF(WatchlistFlavorBase):
 
     def watchlist(self):
         statuses = [
-            ("Next Up", "CURRENT?next_up=true"),
-            ("Current", "CURRENT"),
-            ("Rewatching", "REPEATING"),
-            ("Plan to Watch", "PLANNING"),
-            ("Paused", "PAUSED"),
-            ("Completed", "COMPLETED"),
-            ("Dropped", "DROPPED")
+            ("Next Up", "CURRENT?next_up=true", 'nextup.png'),
+            ("Current", "CURRENT", 'watching.png'),
+            ("Rewatching", "REPEATING", 'rewatching.png'),
+            ("Plan to Watch", "PLANNING", 'plantowatch.png'),
+            ("Paused", "PAUSED", 'onhold.png'),
+            ("Completed", "COMPLETED", 'completed.png'),
+            ("Dropped", "DROPPED", 'dropped.png')
         ]
-        all_results = map(self._base_watchlist_view, statuses)
-        all_results = list(itertools.chain(*all_results))
-        return all_results
+        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res in statuses]
 
     def _base_watchlist_view(self, res):
-        base = {
-            "name": res[0],
-            "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
-            "image": f'{res[0].lower()}.png',
-            "info": {}
-        }
-        return utils.parse_view(base, True, False)
+        url = f'watchlist_status_type/{self._NAME}/{res[1]}'
+        return [utils.allocate_item(res[0], url, True, False, f'{res[0].lower()}.png')]
 
     @staticmethod
     def action_statuses():
@@ -189,7 +181,6 @@ class AniListWLF(WatchlistFlavorBase):
     def _process_status_view(self, query, variables, next_up):
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
-
         lists = results['data']['MediaListCollection']['lists']
         entries = []
         for mlist in lists:
@@ -198,9 +189,7 @@ class AniListWLF(WatchlistFlavorBase):
                     entries.append(entrie)
 
         all_results = map(self._base_next_up_view, reversed(entries)) if next_up else map(self._base_watchlist_status_view, reversed(entries))
-
-        all_results = [i for i in all_results if i is not None]
-        all_results = list(itertools.chain(*all_results))
+        all_results = list(all_results)
         return all_results
 
     @div_flavor
@@ -210,7 +199,6 @@ class AniListWLF(WatchlistFlavorBase):
 
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
-        kitsu_id = ''
 
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
@@ -265,7 +253,7 @@ class AniListWLF(WatchlistFlavorBase):
 
         base = {
             "name": '%s - %d/%d' % (title, progress, res['episodes'] if res['episodes'] else 0),
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{progress}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{progress}',
             "image": res['coverImage']['extraLarge'],
             "poster": res['coverImage']['extraLarge'],
             "fanart": res['coverImage']['extraLarge'],
@@ -273,20 +261,8 @@ class AniListWLF(WatchlistFlavorBase):
             "info": info
         }
 
-        show_meta = database.get_show_meta(anilist_id)
-        if show_meta:
-            art = pickle.loads(show_meta['art'])
-            if art.get('fanart'):
-                base['fanart'] = random.choice(art['fanart'])
-            if art.get('thumb'):
-                base['landscape'] = random.choice(art['thumb'])
-            if art.get('clearart'):
-                base['clearart'] = random.choice(art['clearart'])
-            if art.get('clearlogo'):
-                base['clearlogo'] = random.choice(art['clearlogo'])
-
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -297,7 +273,6 @@ class AniListWLF(WatchlistFlavorBase):
 
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
-        kitsu_id = ''
 
         next_up = progress + 1
         episode_count = res['episodes'] if res['episodes'] else 0
@@ -331,27 +306,15 @@ class AniListWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{progress}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{progress}',
             "image": image,
             "info": info,
             "fanart": image,
             "poster": poster
         }
 
-        show_meta = database.get_show_meta(anilist_id)
-        if show_meta:
-            art = pickle.loads(show_meta['art'])
-            if art.get('fanart'):
-                base['fanart'] = random.choice(art['fanart'])
-            if art.get('thumb'):
-                base['landscape'] = random.choice(art['thumb'])
-            if art.get('clearart'):
-                base['clearart'] = random.choice(art['clearart'])
-            if art.get('clearlogo'):
-                base['clearlogo'] = random.choice(art['clearlogo'])
-
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
         if next_up_meta:

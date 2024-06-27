@@ -1,12 +1,12 @@
 <window>
 	<controls>
 		<control type="group">
-			<left>280</left>
-			<top>50</top>
+			<left>110</left>
+			<top>90</top>
 			<control type="group">
-				<width>1360</width>
+				<width>1700</width>
 				<control type="image">
-					<height>980</height>
+					<height>900</height>
 					<texture colordiffuse="FF555555">texture.png</texture>
 				</control>
 				<control type="image">
@@ -15,8 +15,8 @@
 				</control>
 				<control type="label">
 					<top>40</top>
-					<left>105</left>
-					<width max="1115">auto</width>
+					<left>0</left>
+					<width max="1700">auto</width>
 					<height>20</height>
 					<font>font16</font>
 					<textcolor>white</textcolor>
@@ -25,10 +25,10 @@
 					<label>$INFO[Window().Property(otaku.heading)]</label>
 				</control>
 				<control type="textbox" id="2000">
-					<left>80</left>
-					<top>120</top>
-					<width>1100</width>
-					<height>830</height>
+					<left>0</left>
+					<top>100</top>
+					<width>1670</width>
+					<height>800</height>
 					<onup>2000</onup>
 					<ondown>2000</ondown>
 					<scrolltime tween="sine">400</scrolltime>
@@ -38,10 +38,10 @@
 					<pagecontrol>2060</pagecontrol>
 				</control>
 				<control type="scrollbar" id="2060">
-					<left>1320</left>
-					<top>114</top>
+					<left>1670</left>
+					<top>100</top>
 					<width>30</width>
-					<height>850</height>
+					<height>800</height>
 					<texturesliderbackground border="15">scrollbars/scrollbaruni-bg.png</texturesliderbackground>
 					<texturesliderbar border="15">scrollbars/scrollbaruni-bar.png</texturesliderbar>
 					<texturesliderbarfocus border="15">scrollbars/scrollbaruni-bar-focus.png</texturesliderbarfocus>
@@ -53,7 +53,7 @@
 					<ondown>2060</ondown>
 					<showonepage>false</showonepage>
 					<orientation>vertical</orientation>
-					<hitrect x="0" y="114" w="1360" h="850">None</hitrect>
+					<hitrect x="0" y="100" w="1700" h="800">None</hitrect>
 				</control>
 			</control>
 		</control>

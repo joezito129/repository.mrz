@@ -83,7 +83,6 @@ class SIMKLAPI:
         result_ep = [x for x in result_meta if x['type'] == 'episode']
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
-
         all_results = list(map(mapfunc, result_ep))
         if control.bools.show_empty_eps:
             total_ep = result.get('total_episodes', 0)
@@ -95,9 +94,7 @@ class SIMKLAPI:
                     'episode': ep,
                     'image': poster
                 })
-            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster,
-                                  fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                                  tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
             all_results += list(map(mapfunc_emp, empty_ep))
 
         control.notify("SIMKL", f'{tvshowtitle} Added to Database', icon=poster)
@@ -116,11 +113,10 @@ class SIMKLAPI:
         diff = (datetime.datetime.today() - last_updated).days
         result_meta = self.get_episode_meta(anilist_id) if diff > int(control.getSetting('interface.check.updates')) else []
         result_ep = [x for x in result_meta if x['type'] == 'episode']
+
         if len(result_ep) > len(episodes):
             season = episodes[0]['season']
-            mapfunc2 = partial(self.parse_episode_view, episodes=episodes, anilist_id=anilist_id, season=season,
-                               poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                               tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=None)
+            mapfunc2 = partial(self.parse_episode_view, episodes=episodes, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=None)
             all_results = list(map(mapfunc2, result_ep))
             control.notify("SIMKL Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
@@ -135,6 +131,15 @@ class SIMKLAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         eps_watched = kodi_meta.get('eps_watched')
+        if not eps_watched:
+            if control.bools.watchlist_data:
+                from resources.lib.WatchlistFlavor import WatchlistFlavor
+                flavor = WatchlistFlavor.get_update_flavor()
+                if flavor:
+                    data = flavor.get_watchlist_anime_entry(anilist_id)
+                    if data.get('eps_watched'):
+                        eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
+                        database.update_kodi_meta(anilist_id, kodi_meta)
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
@@ -150,8 +155,7 @@ class SIMKLAPI:
             filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:
             filler_data = None
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data,
-                                         filler_data), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data), 'episodes'
 
     def get_anime_info(self, anilist_id):
         show_ids = database.get_show(anilist_id)

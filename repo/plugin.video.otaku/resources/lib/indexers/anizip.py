@@ -21,7 +21,7 @@ class ANIZIPAPI:
 
     @staticmethod
     def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle,
-                           dub_data, filler_data, filler_enable, title_disable, episodes=None):
+                           dub_data, filler_data, episodes=None):
         episode = int(res['episode'])
 
         url = "%s/%s/" % (anilist_id, episode)
@@ -55,7 +55,7 @@ class ANIZIPAPI:
         except (IndexError, TypeError):
             filler = ''
         code = jz.get_second_label(info, dub_data)
-        if not code and filler_enable:
+        if not code and control.bools.filler:
             filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
         parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
@@ -64,12 +64,12 @@ class ANIZIPAPI:
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
             database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
 
-        if title_disable and info.get('playcount') != 1:
+        if control.bools.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {episode}'
             parsed['info']['plot'] = None
         return parsed
 
-    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data, filler_enable, title_disable):
+    def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
         from datetime import date
         update_time = date.today().isoformat()
 
@@ -78,12 +78,9 @@ class ANIZIPAPI:
             return []
 
         result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
-
         season = result_ep[0]['seasonNumber']
 
-        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
-                          eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                          filler_data=filler_data, filler_enable=filler_enable, title_disable=title_disable)
+        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
 
         all_results = list(map(mapfunc, result_ep))
         if control.getSetting('interface.showemptyeps') == 'true':
@@ -96,10 +93,7 @@ class ANIZIPAPI:
                     'episode': ep,
                     'image': poster
                 })
-            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster,
-                                  fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                                  tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data,
-                                  filler_enable=filler_enable, title_disable=title_disable)
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
             all_results += list(map(mapfunc_emp, empty_ep))
 
         control.notify("Anizip", f'{tvshowtitle} Added to Database', icon=poster)
@@ -126,7 +120,7 @@ class ANIZIPAPI:
             season = episodes[0]['season']
             mapfunc2 = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart,
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                               filler_data=None, filler_enable=filler_enable, title_disable=title_disable, episodes=episodes)
+                               filler_data=None, episodes=episodes)
             all_results = list(map(mapfunc2, result_ep))
             control.notify("ANIZIP Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
@@ -140,22 +134,27 @@ class ANIZIPAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         eps_watched = kodi_meta.get('eps_watched')
+        if not eps_watched:
+            if control.bools.watchlist_data:
+                from resources.lib.WatchlistFlavor import WatchlistFlavor
+                flavor = WatchlistFlavor.get_update_flavor()
+                if flavor:
+                    data = flavor.get_watchlist_anime_entry(anilist_id)
+                    if data.get('eps_watched'):
+                        eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
+                        database.update_kodi_meta(anilist_id, kodi_meta)
         episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
 
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
-        filler_enable = control.getSetting('jz.filler') == 'true'
-        title_disable = control.getSetting('interface.cleantitles') == 'true'
         if episodes:
             if kodi_meta['status'] != "FINISHED":
-                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data,
-                                            filler_enable, title_disable), 'episodes'
-            return indexers.process_episodes(episodes, eps_watched, dub_data, filler_enable, title_disable), 'episodes'
+                return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data), 'episodes'
+            return indexers.process_episodes(episodes, eps_watched, dub_data), 'episodes'
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
             from resources.jz import anime_filler
             filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:
             filler_data = None
-        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data,
-                                         filler_enable, title_disable), 'episodes'
+        return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data), 'episodes'

@@ -5,8 +5,6 @@ import re
 from bs4 import BeautifulSoup
 from resources.lib.ui import database
 
-# from resources.lib.ui import control
-
 base_url = "https://animeschedule.net/api/v3"
 dub_list = []
 

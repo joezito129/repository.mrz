@@ -313,7 +313,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
     else:
         if content_type == 'tvshows':
-            xbmc.executebuiltin('Container.SetViewMode(%d)' % 50)
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % 0)
 
     # move to episode position currently watching
     if content_type == "episodes" and bools.smart_scroll:
@@ -464,6 +464,7 @@ class Bools:
         self.div_flavor = getSetting("divflavors.bool") == "true"
         self.search_adult = getSetting('search.adult') == "true"
         self.fanart_select = getSetting('interface.fanart.select.bool') == 'true'
+        self.watchlist_data = getSetting('interface.watchlist.data') == 'true'
 
 
 bools = Bools()

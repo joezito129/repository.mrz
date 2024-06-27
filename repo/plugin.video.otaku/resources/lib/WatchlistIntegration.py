@@ -52,7 +52,7 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
 @route('watchlist_to_ep/*')
 def WATCHLIST_TO_EP(payload, params):
     payload_list = payload.rsplit("/")
-    anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+    anilist_id, mal_id, eps_watched = payload_list
     if mal_id:
         show_meta = database.get_show_mal(mal_id)
         if not show_meta:
@@ -76,10 +76,10 @@ def CONTEXT_MENU(payload, params):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
         return
     payload_list = payload.rsplit('/')[1:]
-    if len(payload_list) == 5:
-        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+    if len(payload_list) == 4:
+        path, anilist_id, mal_id, eps_watched = payload_list
     else:
-        path, anilist_id, mal_id, kitsu_id = payload_list
+        path, anilist_id, mal_id = payload_list
     if not anilist_id:
         show = database.get_show_mal(mal_id)
         if not show:
@@ -90,8 +90,10 @@ def CONTEXT_MENU(payload, params):
         if not show:
             show = AniListBrowser().get_anilist(anilist_id)
     flavor = WatchlistFlavor.get_update_flavor()
+    if not flavor:
+        control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
+        return
     actions = WatchlistFlavor.context_statuses()
-
     kodi_meta = pickle.loads(show['kodi_meta'])
     title = kodi_meta['title_userPreferred']
 
@@ -143,7 +145,8 @@ def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:
-            items.insert(0, (f'{flavor.username}\'s {flavor.title}', f'watchlist/{flavor.flavor_name}', {'plot': f'{flavor.username}\'s {flavor.title}'}, flavor.image))
+            title = f'{flavor.username}\'s {flavor.title}'
+            items.insert(0, (title, f'watchlist/{flavor.flavor_name}', {'plot': title}, flavor.image))
     return items
 
 

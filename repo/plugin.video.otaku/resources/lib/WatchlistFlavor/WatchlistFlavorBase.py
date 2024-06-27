@@ -11,7 +11,7 @@ class WatchlistFlavorBase:
     _NAME = None
     _IMAGE = None
 
-    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None, title_lang=None):
+    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None):
         self._auth_var = auth_var
         self._username = username
         self._password = password
@@ -19,7 +19,7 @@ class WatchlistFlavorBase:
         self._token = token
         self._refresh = refresh
         self._sort = sort
-        self._title_lang = title_lang if title_lang else control.title_lang(int(control.getSetting("titlelanguage")))
+        self._title_lang = control.title_lang(int(control.getSetting("titlelanguage")))
 
     @classmethod
     def name(cls):

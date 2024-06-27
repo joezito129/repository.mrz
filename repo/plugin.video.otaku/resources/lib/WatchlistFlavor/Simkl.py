@@ -1,6 +1,5 @@
 import time
 import requests
-import itertools
 import pickle
 
 from resources.lib.ui import utils, database, control
@@ -79,18 +78,16 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
 
     def watchlist(self):
         statuses = [
-            ("Next Up", "watching?next_up=true"),
-            ("Currently Watching", "watching"),
-            ("Completed", "completed"),
-            ("On Hold", "hold"),
+            ("Next Up", "watching?next_up=true", 'nextup.png'),
+            ("Currently Watching", "watching", 'watching.png'),
+            ("Completed", "completed", 'completed.png'),
+            ("On Hold", "hold", 'onhold.png'),
             # ("Dropped", "notinteresting"),
-            ("Dropped", "dropped"),
-            ("Plan to Watch", "plantowatch"),
-            ("All Anime", "ALL")
+            ("Dropped", "dropped", 'dropped.png'),
+            ("Plan to Watch", "plantowatch", 'plantowatch.png'),
+            ("All Anime", "ALL", 'allanime.png')
         ]
-        all_results = map(self._base_watchlist_view, statuses)
-        all_results = list(itertools.chain(*all_results))
-        return all_results
+        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res in statuses]
 
     @staticmethod
     def action_statuses():
@@ -107,13 +104,8 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
         return actions
 
     def _base_watchlist_view(self, res):
-        base = {
-            "name": res[0],
-            "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
-            "image": '%s.png' % res[0].lower(),
-            "info": {}
-        }
-        return utils.parse_view(base, True, False)
+        url = f'watchlist_status_type/{self._NAME}/{res[1]}'
+        return [utils.allocate_item(res[0], url, True, False, f'{res[0].lower()}.png')]
 
     def get_watchlist_status(self, status, next_up, offset=0, page=1):
         results = self.get_all_items(status)
@@ -121,11 +113,10 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
             return []
 
         if next_up:
-            all_results = filter(lambda x: True if x else False, map(self._base_next_up_view, results['anime']))
+            all_results = list(filter(lambda x: True if x else False, map(self._base_next_up_view, results['anime'])))
         else:
-            all_results = map(self._base_watchlist_status_view, results['anime'])
+            all_results = list(map(self._base_watchlist_status_view, results['anime']))
 
-        all_results = list(itertools.chain(*all_results))
         sort_pref = self.__get_sort()
 
         if sort_pref == 'anime_title':
@@ -145,7 +136,6 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
 
         mal_id = show_ids.get('mal', '')
         anilist_id = show_ids.get('anilist', '')
-        kitsu_id = show_ids.get('kitsu', '')
 
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
         show = database.get_show(anilist_id)
@@ -172,13 +162,13 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
 
         base = {
             "name": '%s - %d/%d' % (title, res["watched_episodes_count"], res["total_episodes_count"]),
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["watched_episodes_count"]}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["watched_episodes_count"]}',
             "image": f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg',
             "info": info
         }
 
         if res["total_episodes_count"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -188,7 +178,6 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
 
         mal_id = show_ids.get('mal', '')
         # anilist_id = show_ids.get('anilist', '')
-        kitsu_id = show_ids.get('kitsu', '')
 
         progress = res['watched_episodes_count']
         next_up = progress + 1
@@ -228,7 +217,7 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["watched_episodes_count"]}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["watched_episodes_count"]}',
             "image": image,
             "info": info,
             "fanart": image,
@@ -236,7 +225,7 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
         }
 
         if res["total_episodes_count"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 
@@ -248,6 +237,21 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
 
     @staticmethod
     def get_watchlist_anime_entry(anilist_id):
+        # mal_id = self._get_mapping_id(anilist_id, 'mal_id')
+        # if not mal_id:
+        #     return
+        #
+        # params = {
+        #     'mal': mal_id
+        # }
+        # r = requests.post(f'{self._URL}/sync/watched', headers=self.__headers(), params=params)
+        # result = r.json()
+        # control.print(result)
+        # anime_entry = {
+        #     'eps_watched': results['num_episodes_watched'],
+        #     'status': results['status'],
+        #     'score': results['score']
+        # }
         return {}
         # anime_entry = {
         #     'eps_watched': item_dict['progress'],

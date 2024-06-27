@@ -38,55 +38,16 @@ def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=N
 def parse_view(base, isfolder, isplayable, dub=False, dubsub_filter=None):
     if dubsub_filter == 'Dub':
         if dub:
-            parsed_view = [allocate_item(
-                "%s" % base["name"],
-                base["url"] + '0',
-                isfolder,
-                isplayable,
-                image=base["image"],
-                info=base["info"],
-                fanart=base.get("fanart"),
-                poster=base["image"],
-                landscape=base.get("landscape"),
-                banner=base.get("banner"),
-                clearart=base.get("clearart"),
-                clearlogo=base.get("clearlogo")
-            )]
+            parsed_view = allocate_item(base["name"], base["url"] + '0', isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
         else:
-            parsed_view = []
+            parsed_view = None
     elif dubsub_filter == 'Both':
         if dub:
             base['name'] += ' [COLOR blue](Dub)[/COLOR]'
             base['info']['title'] = base['name']
-        parsed_view = [allocate_item(
-            base["name"],
-            base["url"],
-            isfolder,
-            isplayable,
-            image=base["image"],
-            info=base["info"],
-            fanart=base.get("fanart"),
-            poster=base["image"],
-            landscape=base.get("landscape"),
-            banner=base.get("banner"),
-            clearart=base.get("clearart"),
-            clearlogo=base.get("clearlogo")
-        )]
+        parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
     else:
-        parsed_view = [allocate_item(
-            base["name"],
-            base["url"],
-            isfolder,
-            isplayable,
-            image=base["image"],
-            info=base["info"],
-            fanart=base.get("fanart"),
-            poster=base["image"],
-            landscape=base.get("landscape"),
-            banner=base.get("banner"),
-            clearart=base.get("clearart"),
-            clearlogo=base.get("clearlogo")
-        )]
+        parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
     return parsed_view
 
 
@@ -141,4 +102,7 @@ def get_season(titles_list):
         except AttributeError:
             pass
         s_ids = [seasonnum]
-    return int(s_ids[0])
+    season = int(s_ids[0])
+    if season > 10:
+        season = 1
+    return season

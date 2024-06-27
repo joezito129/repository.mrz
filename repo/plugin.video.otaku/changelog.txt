@@ -1,3 +1,7 @@
+Changelog v5.0.36 (2024-06-26):
+- Removed kitsu in url
+- Removed chain
+
 Changelog v5.0.35 (2024-06-24):
 - Improved UI
 - Added Select Fanart

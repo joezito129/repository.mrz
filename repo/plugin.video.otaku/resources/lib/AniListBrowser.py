@@ -1,6 +1,5 @@
 import ast
 import datetime
-import itertools
 import json
 import pickle
 import random
@@ -644,20 +643,18 @@ class AniListBrowser:
         get_meta.collect_meta_(json_res['ANIME'])
         completed = self.open_completed()
         mapfunc = partial(self._base_anilist_view, completed=completed)
-        all_results = map(mapfunc, json_res['ANIME'])
-        all_results = list(itertools.chain(*all_results))
-
+        all_results = list(map(mapfunc, json_res['ANIME']))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
     def process_recommendations_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
-        res = [edge['node']['mediaRecommendation'] for edge in json_res['edges']]
+        res = [edge['node']['mediaRecommendation'] for edge in json_res['edges'] if edge['node']['mediaRecommendation']]
         completed = self.open_completed()
-        mapfunc = partial(self._base_anilist_view, completed=completed)
         get_meta.collect_meta_(res)
-        all_results = map(mapfunc, res)
-        all_results = list(itertools.chain(*all_results))
+
+        mapfunc = partial(self._base_anilist_view, completed=completed)
+        all_results = list(map(mapfunc, res))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
@@ -669,13 +666,14 @@ class AniListBrowser:
                 tnode['relationType'] = edge['relationType']
                 res.append(tnode)
         completed = self.open_completed()
+        get_meta.collect_meta_(res)
         mapfunc = partial(self._base_anilist_view, completed=completed)
-        all_results = map(mapfunc, res)
-        all_results = list(itertools.chain(*all_results))
+        all_results = list(map(mapfunc, res))
         return all_results
 
     def process_res(self, res):
         self.database_update_show(res)
+        control.print(res)
         get_meta.collect_meta_([res])
         return database.get_show(str(res['id']))
 
@@ -685,7 +683,6 @@ class AniListBrowser:
             completed = {}
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
-        kitsu_id = ''
 
         show = database.get_show(anilist_id)
         if not show:
@@ -710,9 +707,7 @@ class AniListBrowser:
 
         info = {
             'UniqueIDs': {
-                'anilist_id': str(anilist_id),
-                'mal_id': str(mal_id),
-                'kitsu_id': str(kitsu_id)
+                'anilist_id': str(anilist_id)
             },
             'genre': res.get('genres'),
             'title': title,
@@ -766,13 +761,14 @@ class AniListBrowser:
 
         base = {
             "name": title,
-            "url": f'animes/{anilist_id}/{mal_id}/{kitsu_id}',
+            "url": f'animes/{anilist_id}/{mal_id}',
             "image": res['coverImage']['extraLarge'],
             "poster": res['coverImage']['extraLarge'],
             "fanart": res['coverImage']['extraLarge'],
             "banner": res.get('bannerImage'),
             "info": info
         }
+
         if kodi_meta.get('fanart'):
             base['fanart'] = kodi_meta['fanart']
         if kodi_meta.get('thumb'):
@@ -783,7 +779,7 @@ class AniListBrowser:
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
 
         if res['format'] in ['MOVIE', 'ONA'] and res['episodes'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -791,7 +787,6 @@ class AniListBrowser:
     def database_update_show(self, res):
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
-        # kitsu_id = ''
 
         titles = self._get_titles(res)
 
@@ -982,8 +977,7 @@ class AniListBrowser:
         completed = self.open_completed()
         mapfunc = partial(self._base_anilist_view, completed=completed)
         get_meta.collect_meta_(anime_res)
-        all_results = map(mapfunc, anime_res)
-        all_results = list(itertools.chain(*all_results))
+        all_results = list(map(mapfunc, anime_res))
         all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 

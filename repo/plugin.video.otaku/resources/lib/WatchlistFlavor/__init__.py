@@ -103,10 +103,9 @@ class WatchlistFlavor:
         username = control.getSetting('%s.username' % name)
         password = control.getSetting('%s.password' % name)
         sort = control.getSetting('%s.sort' % name)
-        title_lang = control.getSetting('%s.titles' % name)
 
         flavor_class = WatchlistFlavor.__get_flavor_class(name)
-        return flavor_class(auth_var, username, password, user_id, token, refresh, sort, title_lang)
+        return flavor_class(auth_var, username, password, user_id, token, refresh, sort)
 
     @staticmethod
     def __set_login(flavor, res):

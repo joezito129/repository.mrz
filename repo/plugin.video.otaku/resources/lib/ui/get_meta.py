@@ -8,8 +8,6 @@ from resources.lib.indexers.tmdb import TMDBAPI
 def collect_meta_(anime_list):
     threads = []
     for anime in anime_list:
-        if 'media' in anime.keys():
-            anime = anime['media']
         anilist_id = anime['id']
         show_meta = database.get_show_meta(anilist_id)
         if not show_meta:

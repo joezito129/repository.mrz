@@ -37,7 +37,7 @@ def add_last_watched(items):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
         last_watched_title = kodi_meta.get('title_userPreferred')
         last_watched = f'{control.lang(30000)}[I]{last_watched_title}[/I]'
-        items.insert(0, (last_watched, f'animes/{anilist_id}///', {'plot': last_watched}, kodi_meta['poster']))
+        items.insert(0, (last_watched, f'animes/{anilist_id}/', {'plot': last_watched}, kodi_meta['poster']))
     except TypeError:
         pass
     return items
@@ -46,10 +46,10 @@ def add_last_watched(items):
 @route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
     payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 4:
-        path, anilist_id, mal_id, kitsu_id = payload_list
+    if len(payload_list) == 3:
+        path, anilist_id, mal_id = payload_list
     else:
-        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+        path, anilist_id, mal_id, eps_watched = payload_list
 
     if not anilist_id:
         try:
@@ -71,10 +71,10 @@ def RECOMMENDATIONS_NEXT(payload, params):
 @route('find_relations/*')
 def FIND_RELATIONS(payload, params):
     payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 4:
-        path, anilist_id, mal_id, kitsu_id = payload_list
+    if len(payload_list) == 3:
+        path, anilist_id, mal_id = payload_list
     else:
-        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+        path, anilist_id, mal_id, eps_watched = payload_list
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -88,21 +88,7 @@ def FIND_RELATIONS(payload, params):
 @route('animes/*')
 def ANIMES_PAGE(payload, params):
     payload_list = payload.rsplit("/")
-    if len(payload_list) == 3:
-        anilist_id, mal_id, kitsu_id = payload_list
-    else:
-        from resources.lib.WatchlistFlavor import WatchlistFlavor
-        anilist_id, mal_id, kitsu_id, null = payload_list
-        flavor = WatchlistFlavor.get_update_flavor()
-        if flavor:
-            try:
-                data = flavor.get_watchlist_anime_entry(anilist_id)
-                show_meta = database.get_show(anilist_id)
-                kodi_meta = pickle.loads(show_meta['kodi_meta'])
-                kodi_meta['eps_watched'] = data.get('eps_watched', 0)
-                database.update_kodi_meta(anilist_id, kodi_meta)
-            except KeyError:
-                pass
+    anilist_id, mal_id = payload_list
     anime_general, content = OtakuBrowser.get_anime_init(anilist_id)
     control.draw_items(anime_general, content)
 
@@ -157,7 +143,7 @@ def ANILIST_GENRES_PAGES(payload, params):
 def SEARCH_HISTORY(payload, params):
     history = database.getSearchHistory('show')
     if int(control.getSetting('searchhistory')) == 0:
-        control.draw_items(OtakuBrowser.search_history(history), '', [('Remove from History', 'remove_search_item')])
+        control.draw_items(OtakuBrowser.search_history(history), 'addons', [('Remove from History', 'remove_search_item')])
     else:
         SEARCH(payload, params)
 
@@ -226,7 +212,7 @@ def PLAY(payload, params):
 @route('play_movie/*')
 def PLAY_MOVIE(payload, params):
     payload_list = payload.rsplit("/")
-    anilist_id, mal_id, kitsu_id = payload_list
+    anilist_id, mal_id = payload_list
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     if not anilist_id:
@@ -259,18 +245,17 @@ def MARKED_AS_WATCHED(payload, params):
     watchlist_update_episode(anilist_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
     show = database.get_show(anilist_id)
-    kitsu_id = show['kitsu_id']
     mal_id = show['mal_id']
-    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{episode})')
+    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{episode})')
 
 
 @route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload, params):
     payload_list = payload.rsplit("/")
-    if len(payload_list) == 4:
-        path, anilist_id, mal_id, kitsu_id = payload_list
+    if len(payload_list) == 3:
+        path, anilist_id, mal_id, = payload_list
     else:
-        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+        path, anilist_id, mal_id, eps_watched = payload_list
     if not anilist_id:
         anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
 
@@ -316,10 +301,10 @@ def SELECT_FANART(payload, params):
         fanart += ["None", ""]
         control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f) for i, f in enumerate(fanart_display)], '')
         return
-    elif len(payload_list) == 4:
-        path, anilist_id, mal_id, kitsu_id = payload_list
+    elif len(payload_list) == 3:
+        path, anilist_id, mal_id = payload_list
     else:
-        path, anilist_id, mal_id, kitsu_id, eps_watched = payload_list
+        path, anilist_id, mal_id, eps_watched = payload_list
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -328,10 +313,10 @@ def SELECT_FANART(payload, params):
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
     episode = database.get_episode(anilist_id)
-    if episode:
-        control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/select_fanart/{anilist_id})')
-    else:
-        control.ok_dialog(control.ADDON_NAME, "Please Open Episode Meta To Be Able To Chose Fanart")
+    if not episode:
+        OtakuBrowser.get_anime_init(anilist_id)
+
+    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/select_fanart/{anilist_id})')
 
 
 @route('fanart/*')

@@ -71,7 +71,7 @@ class KitsuWLF(WatchlistFlavorBase):
         name = "Next Page (%d)" % next_page
         parsed = parse.urlparse(hasNextPage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
-        return utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)
+        return [utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)]
 
     def __get_sort(self):
         sort_types = {
@@ -91,25 +91,14 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def watchlist(self):
         statuses = [
-            ("Next Up", "current?next_up=true"),
-            ("Current", "current"),
-            ("Want to Watch", "planned"),
-            ("Completed", "completed"),
-            ("On Hold", "on_hold"),
-            ("Dropped", "dropped")
+            ("Next Up", "current?next_up=true", 'nextup.png'),
+            ("Current", "current", 'watching.png'),
+            ("Want to Watch", "planned", 'plantowatch.png'),
+            ("Completed", "completed", 'completed.png'),
+            ("On Hold", "on_hold", 'onhold.png'),
+            ("Dropped", "dropped", 'dropped.png')
         ]
-        all_results = map(self._base_watchlist_status_view, statuses)
-        all_results = list(itertools.chain(*all_results))
-        return all_results
-
-    def _base_watchlist_status_view(self, res):
-        base = {
-            "name": res[0],
-            "url": 'watchlist_status_type/%s/%s' % (self._NAME, res[1]),
-            "image": f'{res[0].lower()}.png',
-            'info': {}
-        }
-        return utils.parse_view(base, True, False)
+        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res in statuses]
 
     @staticmethod
     def action_statuses():
@@ -196,7 +185,7 @@ class KitsuWLF(WatchlistFlavorBase):
         }
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/{kitsu_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 
@@ -235,7 +224,7 @@ class KitsuWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["attributes"]["progress"]}',
             "image": image,
             "info": info,
             "fanart": image,
@@ -247,7 +236,7 @@ class KitsuWLF(WatchlistFlavorBase):
             return utils.parse_view(base, False, True)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f"play_movie/{anilist_id}/{mal_id}/{kitsu_id}"
+            base['url'] = f"play_movie/{anilist_id}/{mal_id}"
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 
