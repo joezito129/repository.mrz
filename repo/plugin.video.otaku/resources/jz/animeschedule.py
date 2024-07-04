@@ -1,6 +1,7 @@
 import requests
 import datetime
 import re
+import time
 
 from bs4 import BeautifulSoup
 from resources.lib.ui import database
@@ -49,7 +50,6 @@ def add_to_list(ep_number, date_time):
     try:
         dub_time = str(datetime.datetime.strptime(date_time[:16], "%Y-%m-%dT%H:%M") - datetime.timedelta(hours=5))[:16]
     except TypeError:
-        import time
         date_time = re.sub('T', '', date_time)
         date_time = re.sub(':', '', date_time)
         dub_time = str(datetime.datetime(*(time.strptime(date_time[:14], "%Y-%m-%d%H%M")[0:7])) - datetime.timedelta(hours=5))[:16]

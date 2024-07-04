@@ -10,7 +10,6 @@ PATH = control.getSetting('download.location')
 
 
 class Sources(BrowserBase):
-
     def get_sources(self, query, anilist_id, episode):
         filenames = os.listdir(PATH)
         clean_filenames = [re.sub(r'\[.*?]\s*', '', i) for i in filenames]
@@ -41,11 +40,3 @@ class Sources(BrowserBase):
             'lang': source_utils.getAudio_lang(f)
         }
         return source
-
-    @staticmethod
-    def get_title_clean(title):
-        title = title.replace('(', '')
-        title = title.replace(')', '')
-        title = title.replace('-', '')
-        title = f'{title} '
-        return title

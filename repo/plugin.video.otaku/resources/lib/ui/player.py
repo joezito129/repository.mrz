@@ -1,11 +1,11 @@
 import xbmc, xbmcgui, xbmcplugin
 import requests
 
-from resources.lib.ui import control, utils, database, client, maintenance
+from resources.lib.ui import control, database, client, maintenance
 from urllib import parse
 from resources.lib.indexers import aniskip
 
-playList = xbmc.PlayList(1)
+playList = control.playList
 player = xbmc.Player
 
 
@@ -273,12 +273,13 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
     item = xbmcgui.ListItem(path=linkInfo['url'])
 
     if subs:
-        utils.del_subs()
+        from resources.lib.ui import embed_extractor
+        embed_extractor.del_subs()
         subtitles = []
         for sub in subs:
             sub_url = sub.get('url')
             sub_lang = sub.get('lang')
-            subtitles.append(utils.get_sub(sub_url, sub_lang))
+            subtitles.append(embed_extractor.get_sub(sub_url, sub_lang))
         item.setSubtitles(subtitles)
 
     if 'Content-Type' in linkInfo['headers'].keys():

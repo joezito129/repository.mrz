@@ -3,6 +3,8 @@ import pickle
 import re
 
 from functools import partial
+
+import requests
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
 from resources.lib.ui import database, client
@@ -20,13 +22,7 @@ class Sources(BrowserBase):
 
         headers = {'Origin': self._BASE_URL[:-1],
                    'Referer': self._BASE_URL}
-        r = database.get_(
-            client.request,
-            8,
-            self._BASE_URL + 'search',
-            params={'keyword': title},
-            headers=headers
-        )
+        r = requests.get(f'{self._BASE_URL}search', headers=headers, params={'keyword': title}).text
 
         soup = BeautifulSoup(r, 'html.parser')
         items = soup.find_all('div', {'class': re.compile('^post')})
@@ -149,8 +145,7 @@ class Sources(BrowserBase):
                         }
 
                         if subs:
-                            source.update({'subs': [{'url': subs, 'lang': 'English'}]})
-
+                            source['subs'] = [{'url': subs, 'lang': 'English'}]
                         sources.append(source)
 
         return sources

@@ -2,10 +2,11 @@ import xbmcvfs
 import threading
 
 from resources.lib.ui import control
-from sqlite3 import dbapi2
+from sqlite3 import dbapi2, version
 
 
 database_path = control.anilistSyncDB
+sqlite_version = version
 
 
 class AnilistSyncDatabase:
@@ -52,8 +53,7 @@ class AnilistSyncDatabase:
 
     def _set_base_activites(self):
         cursor = self._get_cursor()
-        cursor.execute('INSERT INTO activities(sync_id, otaku_version)'
-                       'VALUES(1, ?)', (self.last_meta_update,))
+        cursor.execute('INSERT INTO activities(sync_id, otaku_version) VALUES(1, ?)', (self.last_meta_update,))
 
         cursor.connection.commit()
         self.activites = cursor.fetchone()
@@ -89,8 +89,7 @@ class AnilistSyncDatabase:
     def _build_show_table(self):
         threading.Lock().acquire()
         cursor = self._get_cursor()
-        cursor.execute('CREATE TABLE IF NOT EXISTS shows '
-                       '(anilist_id INTEGER PRIMARY KEY, '
+        cursor.execute('CREATE TABLE IF NOT EXISTS shows (anilist_id INTEGER PRIMARY KEY, '
                        'mal_id INTEGER,'
                        'simkl_id INTEGER,'
                        'kitsu_id INTEGER,'
@@ -105,8 +104,7 @@ class AnilistSyncDatabase:
     def _build_showmeta_table(self):
         threading.Lock().acquire()
         cursor = self._get_cursor()
-        cursor.execute('CREATE TABLE IF NOT EXISTS shows_meta '
-                       '(anilist_id INTEGER PRIMARY KEY, '
+        cursor.execute('CREATE TABLE IF NOT EXISTS shows_meta (anilist_id INTEGER PRIMARY KEY, '
                        'meta_ids BLOB,'
                        'art BLOB, '
                        'UNIQUE(anilist_id))')
@@ -118,8 +116,7 @@ class AnilistSyncDatabase:
     def _build_show_data_table(self):
         threading.Lock().acquire()
         cursor = self._get_cursor()
-        cursor.execute('CREATE TABLE IF NOT EXISTS show_data '
-                       '(anilist_id INTEGER PRIMARY KEY, '
+        cursor.execute('CREATE TABLE IF NOT EXISTS show_data (anilist_id INTEGER PRIMARY KEY, '
                        'data BLOB NOT NULL, '
                        'last_updated TEXT NOT NULL, '
                        'UNIQUE(anilist_id))')
@@ -131,8 +128,7 @@ class AnilistSyncDatabase:
     def _build_episode_table(self):
         threading.Lock().acquire()
         cursor = self._get_cursor()
-        cursor.execute('CREATE TABLE IF NOT EXISTS episodes ('
-                       'anilist_id INTEGER NOT NULL, '
+        cursor.execute('CREATE TABLE IF NOT EXISTS episodes (anilist_id INTEGER NOT NULL, '
                        'season INTEGER NOT NULL, '
                        'kodi_meta BLOB NOT NULL, '
                        'last_updated TEXT NOT NULL, '
@@ -147,9 +143,7 @@ class AnilistSyncDatabase:
     def _build_sync_activities(self):
         threading.Lock().acquire()
         cursor = self._get_cursor()
-        cursor.execute('CREATE TABLE IF NOT EXISTS activities ('
-                       'sync_id INTEGER PRIMARY KEY, '
-                       'otaku_version TEXT NOT NULL) ')
+        cursor.execute('CREATE TABLE IF NOT EXISTS activities (sync_id INTEGER PRIMARY KEY, otaku_version TEXT NOT NULL)')
         cursor.connection.commit()
         cursor.close()
         control.try_release_lock(threading.Lock())
@@ -157,7 +151,7 @@ class AnilistSyncDatabase:
     @staticmethod
     def _get_cursor():
         conn = _get_connection()
-        conn.execute("PRAGMA FOREIGN_KEYS = 1")
+        conn.execute("PRAGMA FOREIGN_KEYS=1")
         cursor = conn.cursor()
         return cursor
 

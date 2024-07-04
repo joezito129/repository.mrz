@@ -213,6 +213,7 @@ class Sources(BrowserBase):
             nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         show = show.lower()
         if 'season' in show:
+            control.print('2')
             query1, query2 = show.rsplit('|', 2)
             match_1 = re.match(r'.+?(?=season)', query1)
             if match_1:

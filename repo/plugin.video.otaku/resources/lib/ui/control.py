@@ -8,7 +8,7 @@ from urllib import parse
 try:
     HANDLE = int(sys.argv[1])
 except IndexError:
-    HANDLE = -1
+    HANDLE = 0
 
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_ID = addonInfo('id')
@@ -16,10 +16,12 @@ settings = xbmcaddon.Addon(ADDON_ID)
 language = settings.getLocalizedString
 addonInfo = settings.getAddonInfo
 ADDON_NAME = addonInfo('name')
+ADDON_VERSION = addonInfo('version')
 ADDON_ICON = addonInfo('icon')
+OTAKU_FANART = addonInfo('fanart')
 ADDON_PATH = settings.getAddonInfo('path')
 dataPath = xbmcvfs.translatePath(addonInfo('profile'))
-
+kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
 
 cacheFile = os.path.join(dataPath, 'cache.db')
 searchHistoryDB = os.path.join(dataPath, 'search.db')
@@ -30,17 +32,15 @@ maldubFile = os.path.join(dataPath, 'mal_dub.json')
 downloads_json = os.path.join(dataPath, 'downloads.json')
 completed_json = os.path.join(dataPath, 'completed.json')
 
-IMAGES_PATH = os.path.join(ADDON_PATH, 'resources', 'images')
-OTAKU_FANART_PATH = os.path.join(ADDON_PATH, 'fanart.jpg')
 OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
-OTAKU_ICONS_PATH = os.path.join(IMAGES_PATH, 'icons', settings.getSetting("interface.icons"))
+OTAKU_ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', settings.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
 xmlWindow = xbmcgui.WindowXMLDialog
 menuItem = xbmcgui.ListItem
 execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
-playList = xbmc.PlayList(1)
+playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
 
 
 def closeBusyDialog():
@@ -51,23 +51,15 @@ def closeBusyDialog():
 
 
 def log(msg, level="info"):
-    level = xbmc.LOGINFO if level == "info" else xbmc.LOGDEBUG
-
-    bottom_header = '##################'
-    bottom_header = bottom_header.ljust(len(bottom_header) + len(msg), '#')
-
-    top_header = ''.ljust(int(len(bottom_header) / 2), "#")
-    top_header += ' Otaku log '
-    top_header = top_header.ljust(len(top_header) + int(len(bottom_header) / 2), '#')
-    bottom_header = bottom_header.ljust(len(bottom_header) + 11, '#')
-
-    xbmc.log(f'''
-    {top_header}
-
-               {msg}
-
-    {bottom_header}
-''', level)
+    if level == 'info':
+        level = xbmc.LOGINFO
+    elif level == 'warning':
+        level = xbmc.LOGWARNING
+    elif level == 'error':
+        level = xbmc.LOGERROR
+    else:
+        level = xbmc.LOGNONE
+    xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
 
 
 def try_release_lock(lock):
@@ -252,7 +244,7 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
         liz.addContextMenuItems(cm)
 
     if art.get('fanart') is None or bools.fanart_disable:
-        art['fanart'] = OTAKU_FANART_PATH
+        art['fanart'] = OTAKU_FANART
     else:
         if isinstance(art['fanart'], list):
             if bools.fanart_select:
@@ -260,7 +252,7 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
                     fanart_select = getSetting(f'fanart.select.anilist.{info["UniqueIDs"]["anilist_id"]}')
                     art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
                 else:
-                    art['fanart'] = OTAKU_FANART_PATH
+                    art['fanart'] = OTAKU_FANART
             else:
                 art['fanart'] = random.choice(art['fanart'])
 
@@ -297,13 +289,6 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
 
-    if content_type == 'episodes':
-        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
-    elif content_type == 'tvshows':
-        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
-
-    xbmcplugin.endOfDirectory(HANDLE, True, False, True)
-
     if bools.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
@@ -311,9 +296,13 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
         else:
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
-    else:
-        if content_type == 'tvshows':
-            xbmc.executebuiltin('Container.SetViewMode(%d)' % 0)
+
+    if content_type == 'episodes':
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
+    elif content_type == 'tvshows':
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
+
+    xbmcplugin.endOfDirectory(HANDLE, True, False, True)
 
     # move to episode position currently watching
     if content_type == "episodes" and bools.smart_scroll:
@@ -378,13 +367,6 @@ def getChangeLog():
     windows.run()
     del windows
 
-# def append_params(url, params):
-#     url_parts = list(parse.urlparse(url))
-#     query = dict(parse.parse_qsl(url_parts[4]))
-#     query.update(params)
-#     url_parts[4] = parse.urlencode(query)
-#     return parse.urlunparse(url_parts)
-
 
 def toggle_reuselanguageinvoker(forced_state=None):
     def _store_and_reload(output):
@@ -421,11 +403,6 @@ def abort_requested():
     abort_requested_ = monitor.abortRequested()
     del monitor
     return abort_requested_
-
-
-# def format_string(string, format_):
-#     # format_ = B, I
-#     return f'[{format_}]{string}[/{format_}]'
 
 
 def print(string, *args):

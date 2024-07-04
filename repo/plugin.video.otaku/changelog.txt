@@ -1,3 +1,9 @@
+Changelog v5.0.37 (2024-07-04):
+- Got rid of six
+- Cleaned up some code
+- Changed log
+- Improved Re-uselanguageinvoker
+
 Changelog v5.0.36 (2024-06-26):
 - Removed kitsu in url
 - Removed chain

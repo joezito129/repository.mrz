@@ -1,5 +1,4 @@
 import pickle
-import random
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow

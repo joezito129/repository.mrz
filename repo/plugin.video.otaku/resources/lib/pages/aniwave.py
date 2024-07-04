@@ -2,7 +2,7 @@ import base64
 import json
 import pickle
 import re
-import six
+import requests
 
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
@@ -12,15 +12,15 @@ from resources.lib.indexers.malsync import MALSYNC
 
 
 class Sources(BrowserBase):
-    _BASE_URL = 'https://aniwave.to/'
+    _BASE_URL = 'https://aniwave.vc/'
     EKEY = 'tGn6kIpVXBEUmqjD'
     DKEY = 'LUyDrL4qIxtIxOGs'
     CHAR_SUBST_OFFSETS = [-2, -4, -5, 6, 2, -3, 3, 6]
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
-        kodi_meta = pickle.loads(show.get('kodi_meta'))
-        title = kodi_meta.get('name')
+        kodi_meta = pickle.loads(show['kodi_meta'])
+        title = kodi_meta['name']
         title = self._clean_title(title)
 
         all_results = []
@@ -34,29 +34,15 @@ class Sources(BrowserBase):
         if not items:
             headers = {'Referer': self._BASE_URL}
             params = {'keyword': title}
-            r = database.get_(
-                self._get_request,
-                8,
-                self._BASE_URL + 'ajax/anime/search',
-                data=params,
-                headers=headers,
-                XHR=True
-            )
+            r = requests.get(f'{self._BASE_URL}ajax/anime/search', headers=headers, params=params)
             if not r and ':' in title:
                 title = title.split(':')[0]
-                params.update({'keyword': title})
-                r = database.get_(
-                    self._get_request,
-                    8,
-                    self._BASE_URL + 'ajax/anime/search',
-                    data=params,
-                    headers=headers,
-                    XHR=True
-                )
+                params['keyword'] = title
+                r = requests.get(f'{self._BASE_URL}ajax/anime/search', headers=headers, params=params)
             if not r:
                 return all_results
 
-            r = json.loads(r)
+            r = r.json()
             r = BeautifulSoup(r.get('html') or r.get('result', {}).get('html'), "html.parser")
             sitems = r.find_all('a', {'class': 'item'})
             if sitems:
@@ -72,16 +58,13 @@ class Sources(BrowserBase):
         if items:
             slug = items[0]
             all_results = self._process_aw(slug, title=title, episode=episode, langs=srcs)
+
         return all_results
 
     def _process_aw(self, slug, title, episode, langs):
         sources = []
         headers = {'Referer': self._BASE_URL}
-
-        r = database.get_(
-            self._get_request, 8,
-            slug, headers=headers
-        )
+        r = requests.get(slug, headers=headers).text
         sid = re.search(r'id="watch-main.+?data-id="([^"]+)', r)
         if not sid:
             return sources
@@ -89,14 +72,8 @@ class Sources(BrowserBase):
         sid = sid.group(1)
         vrf = self.generate_vrf(sid)
         params = {'vrf': vrf}
-        r = database.get_(
-            self._get_request, 8,
-            '{0}ajax/episode/list/{1}'.format(self._BASE_URL, sid),
-            headers=headers, data=params,
-            XHR=True
-        )
-        res = json.loads(r).get('result')
-
+        r = requests.get(f'{self._BASE_URL}ajax/episode/list/{sid}', headers=headers, params=params)
+        res = r.json()['result']
         elink = SoupStrainer('div', {'class': re.compile('^episodes')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
         items = ediv.find_all('a')
@@ -105,13 +82,8 @@ class Sources(BrowserBase):
             e_id = e_id[0]
             vrf = self.generate_vrf(e_id)
             params = {'vrf': vrf}
-            r = database.get_(
-                self._get_request, 8,
-                '{0}ajax/server/list/{1}'.format(self._BASE_URL, e_id),
-                data=params, headers=headers,
-                XHR=True
-            )
-            eres = json.loads(r).get('result')
+            r = requests.get(f'{self._BASE_URL}ajax/server/list/{e_id}', headers=headers, params=params)
+            eres = r.json().get('result')
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
                 sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
@@ -122,13 +94,8 @@ class Sources(BrowserBase):
                     if edata_name.lower() in self.embeds():
                         vrf = self.generate_vrf(edata_id)
                         params = {'vrf': vrf}
-                        r = self._get_request(
-                            '{0}ajax/server/{1}'.format(self._BASE_URL, edata_id),
-                            data=params,
-                            headers=headers,
-                            XHR=True
-                        )
-                        resp = json.loads(r).get('result')
+                        r = requests.get(f'{self._BASE_URL}ajax/server/{edata_id}', headers=headers, params=params)
+                        resp = r.json().get('result')
                         slink = self.decrypt_vrf(resp.get('url'))
 
                         skip = {}
@@ -136,10 +103,10 @@ class Sources(BrowserBase):
                             skip_data = json.loads(self.decrypt_vrf(resp.get('skip_data')))
                             intro = skip_data.get('intro')
                             if intro:
-                                skip.update({'intro': {'start': intro[0], 'end': intro[1]}})
+                                skip['intro'] = {'start': intro[0], 'end': intro[1]}
                             outro = skip_data.get('outro')
                             if outro:
-                                skip.update({'outro': {'start': outro[0], 'end': outro[1]}})
+                                skip['outro'] = {'start': outro[0], 'end': outro[1]}
 
                         source = {
                             'release_title': '{0} - Ep {1}'.format(title, episode),
@@ -177,24 +144,25 @@ class Sources(BrowserBase):
 
         return out
 
-    @staticmethod
-    def vrf_shift(t, offset=CHAR_SUBST_OFFSETS):
+    def vrf_shift(self, t, offset=None):
+        if not offset:
+            offset = self.CHAR_SUBST_OFFSETS
         o = ''
         for s in range(len(t)):
             o += chr(t[s] if isinstance(t[s], int) else ord(t[s]) + offset[s % 8])
         return o
 
     def generate_vrf(self, content_id, key=EKEY):
-        vrf = self.arc4(six.b(key), six.b(parse.quote(content_id)))
+        vrf = self.arc4(bytes(key.encode(encoding='latin-1')), bytes(parse.quote(content_id).encode(encoding='latin-1')))
         vrf = base64.urlsafe_b64encode(vrf)
-        vrf = six.ensure_str(base64.b64encode(vrf))
+        vrf = base64.b64encode(vrf).decode()
         vrf = vrf.replace('/', '_').replace('+', '-')
         vrf = self.vrf_shift(vrf)
-        vrf = six.ensure_str(base64.b64encode(six.b(vrf[::-1])))
+        vrf = base64.b64encode(bytes(vrf[::-1].encode(encoding='latin-1'))).decode()
         vrf = vrf.replace('/', '_').replace('+', '-')
         return vrf
 
     def decrypt_vrf(self, text, key=DKEY):
-        data = self.arc4(six.b(key), base64.urlsafe_b64decode(six.b(text)))
+        data = self.arc4(bytes(key.encode(encoding='latin-1')), base64.urlsafe_b64decode(bytes(text.encode(encoding='latin-1'))))
         data = parse.unquote(data.decode())
         return data

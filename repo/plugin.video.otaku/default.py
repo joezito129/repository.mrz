@@ -35,9 +35,8 @@ def add_last_watched(items):
     anilist_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
-        last_watched_title = kodi_meta.get('title_userPreferred')
-        last_watched = f'{control.lang(30000)}[I]{last_watched_title}[/I]'
-        items.insert(0, (last_watched, f'animes/{anilist_id}/', {'plot': last_watched}, kodi_meta['poster']))
+        last_watched = f'{control.lang(30000)}[I]{kodi_meta.get('title_userPreferred')}[/I]'
+        items.insert(0, (last_watched, f'animes/{anilist_id}/', kodi_meta['poster']))
     except TypeError:
         pass
     return items
@@ -315,14 +314,12 @@ def SELECT_FANART(payload, params):
     episode = database.get_episode(anilist_id)
     if not episode:
         OtakuBrowser.get_anime_init(anilist_id)
-
     control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/select_fanart/{anilist_id})')
 
 
 @route('fanart/*')
 def FANART(payload, params):
     anilist_id, select = payload.rsplit('/', 2)
-
     episode = database.get_episode(anilist_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart']
     fanart_display = fanart + ["None", "Random"]
@@ -402,12 +399,12 @@ def TOOLS_MENU(payload, params):
 @route('')
 def LIST_MENU(payload, params):
     MENU_ITEMS = [
-        (control.lang(50001), "anilist_airing_anime", {'plot': 'Currently Airing Anime'}, 'airing_anime.png'),
-        (control.lang(50034), "anilist_upcoming_next_season", {'plot': 'Upcoming Anime That Will Air Next Season'}, 'upcoming.png'),
-        (control.lang(50009), "anilist_top_100_anime", {'plot': 'The Top 100 Anime'}, 'top_100_anime.png'),
-        (control.lang(50010), "anilist_genres", {'plot': 'Search By Genres & Tags'}, 'genres_&_tags.png'),
-        (control.lang(50011), "search_history", {'plot': 'Search For Any Anime'}, 'search.png'),
-        (control.lang(50012), "tools", {'plot': 'Tools Manage Your Services'}, 'tools.png')
+        (control.lang(50001), "anilist_airing_anime", 'airing_anime.png'),
+        (control.lang(50034), "anilist_upcoming_next_season", 'upcoming.png'),
+        (control.lang(50009), "anilist_top_100_anime", 'top_100_anime.png'),
+        (control.lang(50010), "anilist_genres", 'genres_&_tags.png'),
+        (control.lang(50011), "search_history", 'search.png'),
+        (control.lang(50012), "tools", 'tools.png')
     ]
 
     if control.getSetting('menu.lastwatched') == 'true':
@@ -417,13 +414,13 @@ def LIST_MENU(payload, params):
     for i in MENU_ITEMS:
         if control.getSetting(i[1]) == 'false':
             MENU_ITEMS_.remove(i)
-    control.draw_items([utils.allocate_item(name, url, True, False, image, info) for name, url, info, image in MENU_ITEMS_], 'addons')
+    control.draw_items([utils.allocate_item(name, url, True, False, image) for name, url, image in MENU_ITEMS_], 'addons')
 
 
 if __name__ == "__main__":
     router_process(control.get_plugin_url(), control.get_plugin_params())
-    if len(player.playList) != 0 and not player.player().isPlaying():
-        player.playList.clear()
+    if len(control.playList) > 0 and not player.player().isPlaying():
+        control.playList.clear()
 
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000

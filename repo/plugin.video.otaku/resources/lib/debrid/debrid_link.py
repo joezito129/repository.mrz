@@ -17,6 +17,9 @@ class DebridLink:
         }
         self.api_url = "https://debrid-link.fr/api/v2"
         self.cache_check_results = {}
+        self.DeviceCode = None
+        self.OauthTimeStep = None
+        self.OauthTimeout = None
 
     def auth_loop(self):
         if control.progressDialog.iscanceled():

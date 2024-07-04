@@ -36,7 +36,6 @@ class Premiumize:
             control.progressDialog.update(progress_percent)
             time.sleep(token['interval'])
             token_ttl -= int(token['interval'])
-
         control.progressDialog.close()
 
         if success:
@@ -46,12 +45,6 @@ class Premiumize:
         data = {'client_id': self.client_id, 'code': device_code, 'grant_type': 'device_code'}
         token = requests.post('https://www.premiumize.me/token', data=data)
         token = token.json()
-
-        # if 'error' in token:
-        #     if token['error'] == "access_denied":
-        #         return False, False
-        #     return True, False
-
         control.setSetting('premiumize.token', token['access_token'])
         self.headers['Authorization'] = 'Bearer {}'.format(token['access_token'])
 
@@ -147,7 +140,6 @@ class Premiumize:
         return stream_link
 
     def folder_streams(self, folderID):
-
         files = self.list_folder(folderID)
         returnFiles = []
         for i in files:
@@ -155,7 +147,7 @@ class Premiumize:
                 if i['transcode_status'] == 'finished':
                     returnFiles.append({'name': i['name'], 'link': i['stream_link'], 'type': 'file'})
                 else:
-                    for extension in source_utils.COMMON_VIDEO_EXTENSIONS:
+                    for extension in source_utils.video_ext():
                         if i['link'].endswith(extension):
                             returnFiles.append({'name': i['name'], 'link': i['link'], 'type': 'file'})
                             break

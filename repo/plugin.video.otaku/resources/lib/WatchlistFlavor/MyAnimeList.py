@@ -260,7 +260,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
         url = f'{self._URL}/anime/{mal_id}'
         r = requests.get(url, headers=self.__headers(), params=params)
-        results = r.json()['my_list_status']
+        results = r.json().get('my_list_status')
         if not results:
             return {}
         anime_entry = {

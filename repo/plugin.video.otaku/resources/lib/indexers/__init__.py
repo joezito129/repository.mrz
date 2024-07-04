@@ -31,7 +31,7 @@ def process_dub(anilist_id, ename):
     show_data = database.get_show_data(anilist_id)
     if not show_data or show_data['last_updated'] != update_time:
         if int(control.getSetting('jz.dub.api')) == 0:
-            from resources.jz.teamup import teamup
+            from resources.jz import teamup
             dub_data = teamup.get_dub_data(ename)
             data = {"dub_data": dub_data}
             database.update_show_data(anilist_id, data, update_time)

@@ -225,10 +225,10 @@ class RealDebrid:
                     break
                 torrent = self.torrentInfo(torrent['id'])
                 f_body = f'''
-                Progress: {torrent['progress']} %
-                Seeders: {torrent.get('seeders', 0)}
-                Speed: {source_utils.get_size(torrent.get('speed', 0))}
-                '''
+            Progress: {torrent['progress']} %
+            Seeders: {torrent.get('seeders', 0)}
+            Speed: {source_utils.get_size(torrent.get('speed', 0))}
+'''
                 control.progressDialog.update(int(torrent.get('progress', 0)), f_body)
                 xbmc.sleep(1000)
         control.progressDialog.close()

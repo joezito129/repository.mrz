@@ -1,6 +1,7 @@
 import json
 import pickle
 import re
+import requests
 
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
@@ -16,8 +17,8 @@ class Sources(BrowserBase):
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
-        kodi_meta = pickle.loads(show.get('kodi_meta'))
-        title = kodi_meta.get('name')
+        kodi_meta = pickle.loads(show['kodi_meta'])
+        title = kodi_meta['name']
         title = self._clean_title(title)
         keyword = title
 
@@ -36,14 +37,7 @@ class Sources(BrowserBase):
 
             headers = {'Referer': self._BASE_URL}
             params = {'keyword': keyword}
-            res = database.get_(
-                self._get_request,
-                8,
-                self._BASE_URL + 'search',
-                data=params,
-                headers=headers
-            )
-
+            res = requests.get(f'{self._BASE_URL}search', headers=headers, params=params).text
             mlink = SoupStrainer('div', {'class': 'flw-item'})
             mdiv = BeautifulSoup(res, "html.parser", parse_only=mlink)
             sdivs = mdiv.find_all('h3')
@@ -74,29 +68,16 @@ class Sources(BrowserBase):
     def _process_aw(self, slug, title, episode, langs):
         sources = []
         headers = {'Referer': self._BASE_URL}
-        r = database.get_(
-            self._get_request,
-            8,
-            self._BASE_URL + 'ajax/v2/episode/list/' + slug.split('-')[-1],
-            headers=headers,
-            XHR=True
-        )
-        res = json.loads(r).get('html')
+        r = requests.get(f'{self._BASE_URL}ajax/v2/episode/list/{slug.split('-')[-1]}')
+        res = r.json().get('html')
         elink = SoupStrainer('div', {'class': re.compile('^ss-list')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
         items = ediv.find_all('a')
         e_id = [x.get('data-id') for x in items if x.get('data-number') == episode]
         if e_id:
             params = {'episodeId': e_id[0]}
-            r = database.get_(
-                self._get_request,
-                8,
-                self._BASE_URL + 'ajax/v2/episode/servers',
-                data=params,
-                headers=headers,
-                XHR=True
-            )
-            eres = json.loads(r).get('html')
+            r = requests.get(f'{self._BASE_URL}ajax/v2/episode/servers', headers=headers, params=params)
+            eres = r.json().get('html')
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
                 sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
@@ -106,13 +87,8 @@ class Sources(BrowserBase):
                     edata_name = src.text.strip().lower()
                     if edata_name.lower() in self.embeds():
                         params = {'id': edata_id}
-                        r = self._get_request(
-                            self._BASE_URL + 'ajax/v2/episode/sources',
-                            data=params,
-                            headers=headers,
-                            XHR=True
-                        )
-                        slink = json.loads(r).get('link')
+                        r = requests.get(f'{self._BASE_URL}ajax/v2/episode/sources', headers=headers, params=params)
+                        slink = r.json().get('link')
                         if edata_name == 'streamtape':
                             source = {
                                 'release_title': '{0} - Ep {1}'.format(title, episode),
@@ -134,28 +110,23 @@ class Sources(BrowserBase):
                             sid = spath.pop(-1)
                             eurl = '{}://{}{}/getSources'.format(sl.scheme, sl.netloc, '/'.join(spath))
                             params = {'id': sid}
-                            res = self._get_request(
-                                eurl,
-                                data=params,
-                                headers=headers,
-                                XHR=True
-                            )
-                            res = json.loads(res)
+                            r = requests.get(eurl, headers=headers, params=params)
+                            res = r.json()
                             subs = res.get('tracks')
                             if subs:
                                 subs = [{'url': x.get('file'), 'lang': x.get('label')} for x in subs if x.get('kind') == 'captions']
                             skip = {}
                             if res.get('intro'):
-                                skip.update({'intro': res.get('intro')})
+                                skip['intro'] = res['intro']
                             if res.get('outro'):
-                                skip.update({'outro': res.get('outro')})
+                                skip['outro'] = res['outro']
                             if res.get('encrypted'):
                                 slink = self._process_link(res.get('sources'))
                             else:
-                                slink = res.get('sources')[0].get('file')
+                                slink = res['sources'][0].get('file')
                             if not slink:
                                 continue
-                            res = self._get_request(slink, headers=headers)
+                            res = requests.get(slink, headers=headers).text
                             quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).+\n(?!#)(.+)', res)
 
                             for qual, qlink in quals:
@@ -194,7 +165,7 @@ class Sources(BrowserBase):
         def chunked(varlist, count):
             return [varlist[i:i + count] for i in range(0, len(varlist), count)]
 
-        js = self._get_request(self.js_file)
+        js = requests.get(self.js_file).text
         cases = re.findall(r'switch\(\w+\){([^}]+?)partKey', js)[0]
         vars_ = re.findall(r"\w+=(\w+)", cases)
         consts = re.findall(r"((?:[,;\s]\w+=0x\w{1,2}){%s,})" % len(vars_), js)[0]

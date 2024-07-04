@@ -76,9 +76,10 @@ class ANIZIPAPI:
         result = self.get_anime_info(anilist_id)
         if not result:
             return []
-
         result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
-        season = result_ep[0]['seasonNumber']
+        if not result_ep:
+            return []
+        season = result_ep[0].get('seasonNumber', 1)
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
 

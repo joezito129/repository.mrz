@@ -203,9 +203,13 @@ def cleanTitle(title):
 
 
 def is_file_ext_valid(file_name):
+    return False if '.' + file_name.split('.')[-1] not in video_ext() else True
+
+
+def video_ext():
     COMMON_VIDEO_EXTENSIONS = xbmc.getSupportedMedia('video').split('|')
     COMMON_VIDEO_EXTENSIONS = [i for i in COMMON_VIDEO_EXTENSIONS if i != '' and i != '.zip']
-    return False if '.' + file_name.split('.')[-1] not in COMMON_VIDEO_EXTENSIONS else True
+    return COMMON_VIDEO_EXTENSIONS
 
 
 def user_select(files, dict_key):

@@ -27,7 +27,9 @@ class route:
         return self._func
 
 
-def router_process(url, params={}):
+def router_process(url, params=None):
+    if not params:
+        params = {}
     payload = "/".join(url.split("/")[1:])
     for route_obj in _REGISTERED_ROUTES:
         if url == route_obj.path or (route_obj.wildcard and url.startswith(route_obj.path)):

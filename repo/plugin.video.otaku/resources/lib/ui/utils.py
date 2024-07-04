@@ -1,6 +1,4 @@
 import os
-import requests
-import xbmcvfs
 
 from resources.lib.ui import control
 
@@ -49,27 +47,6 @@ def parse_view(base, isfolder, isplayable, dub=False, dubsub_filter=None):
     else:
         parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
     return parsed_view
-
-
-def get_sub(sub_url, sub_lang):
-    content = requests.get(sub_url).text
-    subtitle = xbmcvfs.translatePath('special://temp/')
-    fname = 'TemporarySubs.{0}.srt'.format(sub_lang)
-    fpath = os.path.join(subtitle, fname)
-    if sub_url.endswith('.vtt'):
-        fname = fname.replace('.srt', '.vtt')
-        fpath = fpath.replace('.srt', '.vtt')
-
-    with open(fpath, 'w', encoding='utf-8') as f:
-        f.write(content)
-    return 'special://temp/%s' % fname
-
-
-def del_subs():
-    dirs, files = xbmcvfs.listdir('special://temp/')
-    for fname in files:
-        if fname.startswith('TemporarySubs'):
-            xbmcvfs.delete('special://temp/%s' % fname)
 
 
 def get_season(titles_list):

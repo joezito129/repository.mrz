@@ -1,4 +1,3 @@
-from resources.lib.ui import maintenance, database_sync
+from resources.lib.ui import maintenance
 
-database_sync.AnilistSyncDatabase()
 maintenance.run_maintenance()

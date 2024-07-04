@@ -33,10 +33,10 @@ class BaseWindow(control.xmlWindow):
         clearlogo = self.item_information.get('clearlogo', control.OTAKU_LOGO2_PATH)
 
         if not actionArgs.get('playnext') and not fanart:
-            fanart = control.OTAKU_FANART_PATH
+            fanart = control.OTAKU_FANART
 
         if fanart is None or control.bools.fanart_disable:
-            fanart = control.OTAKU_FANART_PATH
+            fanart = control.OTAKU_FANART
         else:
             if isinstance(fanart, list):
                 if control.bools.fanart_select:

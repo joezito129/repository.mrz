@@ -9,8 +9,6 @@
 <!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
 		<setting id="jz.filler" type="bool" label="Show Filler Info If Found"  default="false" />
 
-		<!-- new settings -->
-
 	</category>
 
 	<!-- General -->
@@ -58,7 +56,7 @@
 	<category label="40226">
 		<setting type="lsep" label="Torrents" />
 		<setting id="provider.nyaa" type="bool" label="Nyaa" default="true" />
-		<setting id="provider.animetosho" type="bool" label="Anime Tosho" default="true" />
+		<setting id="provider.animetosho" type="bool" label="AnimeTosho" default="true" />
 
 		<setting type="lsep" label="Other" />
 		<setting id="provider.localfiles" type="bool" label="Local Files" default="true" />
