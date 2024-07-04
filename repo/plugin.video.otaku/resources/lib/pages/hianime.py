@@ -37,7 +37,7 @@ class Sources(BrowserBase):
 
             headers = {'Referer': self._BASE_URL}
             params = {'keyword': keyword}
-            res = requests.get(f'{self._BASE_URL}search', headers=headers, params=params).text
+            res = requests.get("%ssearch" % self._BASE_URL, headers=headers, params=params).text
             mlink = SoupStrainer('div', {'class': 'flw-item'})
             mdiv = BeautifulSoup(res, "html.parser", parse_only=mlink)
             sdivs = mdiv.find_all('h3')
@@ -68,7 +68,9 @@ class Sources(BrowserBase):
     def _process_aw(self, slug, title, episode, langs):
         sources = []
         headers = {'Referer': self._BASE_URL}
-        r = requests.get(f'{self._BASE_URL}ajax/v2/episode/list/{slug.split('-')[-1]}')
+        control.print('here')
+        control.print('here')
+        r = requests.get("%sajax/v2/episode/list/%s" % (self._BASE_URL, slug.split('-')[-1]))
         res = r.json().get('html')
         elink = SoupStrainer('div', {'class': re.compile('^ss-list')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
@@ -76,7 +78,7 @@ class Sources(BrowserBase):
         e_id = [x.get('data-id') for x in items if x.get('data-number') == episode]
         if e_id:
             params = {'episodeId': e_id[0]}
-            r = requests.get(f'{self._BASE_URL}ajax/v2/episode/servers', headers=headers, params=params)
+            r = requests.get("%sajax/v2/episode/servers" % self._BASE_URL, headers=headers, params=params)
             eres = r.json().get('html')
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
@@ -87,7 +89,7 @@ class Sources(BrowserBase):
                     edata_name = src.text.strip().lower()
                     if edata_name.lower() in self.embeds():
                         params = {'id': edata_id}
-                        r = requests.get(f'{self._BASE_URL}ajax/v2/episode/sources', headers=headers, params=params)
+                        r = requests.get("%sajax/v2/episode/sources" % self._BASE_URL, headers=headers, params=params)
                         slink = r.json().get('link')
                         if edata_name == 'streamtape':
                             source = {
