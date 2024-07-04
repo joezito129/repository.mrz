@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.program.change_kodi" name="Change Kodi Settings" version="1.0" provider-name="Mr. Z">
+  <requires>
+
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="main.py">
+    <provides>executable</provides>
+  </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">addon to edit kodi system level settings.</summary>
+        <description lang="en">addon to edit kodi system level settings.</description>
+        <platform>all</platform>
+        <license>GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007</license>
+        <disclaimer lang="en">This addon changes system level code for Kodi and may break Kodi. Use at your own risk!</disclaimer>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
+</addon>
