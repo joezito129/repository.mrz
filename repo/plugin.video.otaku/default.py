@@ -35,7 +35,7 @@ def add_last_watched(items):
     anilist_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
-        last_watched = f'{control.lang(30000)}[I]{kodi_meta.get('title_userPreferred')}[/I]'
+        last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta.get('title_userPreferred'))
         items.insert(0, (last_watched, f'animes/{anilist_id}/', kodi_meta['poster']))
     except TypeError:
         pass
