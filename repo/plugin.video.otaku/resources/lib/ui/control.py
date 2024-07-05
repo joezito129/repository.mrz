@@ -298,6 +298,11 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
 
+    if content_type == 'episodes':
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
+    elif content_type == 'tvshows':
+        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
+    xbmcplugin.endOfDirectory(HANDLE, True, False, True)
     if bools.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
@@ -305,14 +310,6 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
         else:
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
-
-    if content_type == 'episodes':
-        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
-    elif content_type == 'tvshows':
-        xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
-
-    xbmcplugin.endOfDirectory(HANDLE, True, False, True)
-
     # move to episode position currently watching
     if content_type == "episodes" and bools.smart_scroll:
         xbmc.sleep(int(getSetting('general.smart.scroll.time')))
