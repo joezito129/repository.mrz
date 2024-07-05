@@ -289,11 +289,11 @@ def draw_items(video_data, content_type=None, draw_cm=None):
         if bools.context_marked_watched:
             draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
 
-    if len(video_data) > 99:
-        bulk_draw_items(video_data, draw_cm)
-    else:
-        for vid in video_data:
-            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
+    # if len(video_data) > 99:
+    #     bulk_draw_items(video_data, draw_cm)
+    # else:
+    for vid in video_data:
+        xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
 
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
