@@ -117,14 +117,14 @@ class RealDebrid:
             control.setSetting('rd.username', user_info['username'])
             control.setSetting('rd.auth.status', user_info['type'])
 
-    def checkHash(self, hashList):
+    def checkHash(self, hashlist):
         self.cache_check_results = {}
-        hashList = [hashList[x: x + 100] for x in range(0, len(hashList), 100)]
+        hashlist = [hashlist[x: x + 100] for x in range(0, len(hashlist), 100)]
         threads = []
-        for arg in hashList:
+        for arg in hashlist:
             t = threading.Thread(target=self._check_hash_thread, args=[arg])
-            threads.append(t)
             t.start()
+            threads.append(t)
         for i in threads:
             i.join()
         return self.cache_check_results
@@ -149,11 +149,11 @@ class RealDebrid:
     def torrentInfo(self, torrent_id):
         return requests.get(f'{self.BaseUrl}/torrents/info/{torrent_id}', headers=self.__headers()).json()
 
-    def torrentSelect(self, torrentID, fileID='all'):
+    def torrentSelect(self, torrentid, fileid='all'):
         postData = {
-            'files': fileID
+            'files': fileid
         }
-        r = requests.post(f'{self.BaseUrl}/torrents/selectFiles/{torrentID}', headers=self.__headers(), data=postData)
+        r = requests.post(f'{self.BaseUrl}/torrents/selectFiles/{torrentid}', headers=self.__headers(), data=postData)
         return r.ok
 
     def resolve_hoster(self, link):

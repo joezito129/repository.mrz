@@ -1,3 +1,8 @@
+Changelog v5.0.38 (2024-07-05):
+- Fixed Strptime
+- Added cache sources
+- Moved Watchlist Contex menu to code
+
 Changelog v5.0.37 (2024-07-04):
 - Got rid of six
 - Cleaned up some code

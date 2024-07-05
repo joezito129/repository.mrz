@@ -26,7 +26,6 @@ class AllDebrid:
             + control.lang(30101).format(control.colorString(resp['pin'])) + '[CR]'
             + control.lang(30102)
         )
-
         # Seems the All Debrid servers need some time do something with the pin before polling
         # Polling too early will cause an invalid pin error
         xbmc.sleep(5000)
@@ -62,11 +61,11 @@ class AllDebrid:
             return True, 0
         return False, int(resp['expires_in'])
 
-    def check_hash(self, hashList):
+    def check_hash(self, hashlist):
         self.cache_check_results = []
-        hashList = [hashList[x: x + 10] for x in range(0, len(hashList), 10)]
+        hashlist = [hashlist[x: x + 10] for x in range(0, len(hashlist), 10)]
         threads = []
-        for hash_ in hashList:
+        for hash_ in hashlist:
             thread = threading.Thread(target=self._check_hash_thread, args=[hash_])
             threads.append(thread)
             thread.start()
@@ -158,6 +157,7 @@ class AllDebrid:
         r = requests.get(f'{self.base_url}/magnet/delete', params=params)
         return r.ok
 
-    def resolve_uncached_source(self, source, runinbackground):
+    @staticmethod
+    def resolve_uncached_source(source, runinbackground):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
         control.ok_dialog(heading, 'Cache Reolver Has not been added for Premiumize')

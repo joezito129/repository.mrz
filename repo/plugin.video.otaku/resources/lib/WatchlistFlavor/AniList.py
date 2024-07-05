@@ -242,11 +242,11 @@ class AniListWLF(WatchlistFlavorBase):
 
         cast = []
         try:
-            for x in res['characters']['edges']:
+            for i, x in enumerate(res['characters']['edges']):
                 role = x['node']['name']['userPreferred']
                 actor = x['voiceActors'][0]['name']['userPreferred']
                 actor_hs = x['voiceActors'][0]['image'].get('large')
-                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs})
+                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
                 info['cast'] = cast
         except IndexError:
             pass

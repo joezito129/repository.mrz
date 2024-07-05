@@ -14,15 +14,15 @@ class Sources(BrowserBase):
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
-        kodi_meta = pickle.loads(show.get('kodi_meta'))
-        title = kodi_meta.get('name')
+        kodi_meta = pickle.loads(show['kodi_meta'])
+        title = kodi_meta['name']
         title = self._clean_title(title)
         headers = {'Referer': self._BASE_URL}
         params = {'s': title}
-        res = requests.get(self._BASE_URL, headers=headers, params=params).text
+        res = requests.get(self._BASE_URL, headers=headers, params=params, timeout=10).text
         if not res and ':' in title:
             title = title.split(':')[0]
-            params.update({'s': title})
+            params['s'] = title
             res = requests.get(self._BASE_URL, headers=headers, params=params).text
         mlink = SoupStrainer('div', {'class': re.compile('^SectionBusca')})
         mdiv = BeautifulSoup(res, "html.parser", parse_only=mlink)

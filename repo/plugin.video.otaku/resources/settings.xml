@@ -36,20 +36,24 @@
 		<setting id="interface.viewtypes.episodes" type="labelenum" label="Episode View" values="Wide List|Wall|Info Wall" default="Wide List" visible="eq(-3,true)"/>
 
 		<setting id="interface.watchlist.data" label="Get watchlist episode data" type="bool" default="true"/>
-		<setting id="interface.fanart.select.bool" label="Selected Fanart (Select Fanart in Context menu on shows)" type="bool" default="false"/>
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
+		<setting id="interface.fanart.select.bool" label="Selected Fanart (Select Fanart in Context menu on shows)" type="bool" default="false"/>
 		<setting id="interface.fanart.disable" type="bool" label="Disable Fanart" default="true" />
 		<setting id="interface.clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
 		<setting id="interface.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
+
+		<!-- Context -->
+		<setting type="lsep" label="Context Menus" />
+		<setting id="context.WatchList" label="Show 'Watchlist' in context menu" type="bool" default="true" />
+		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
+		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
 
 		<!-- Widgets -->
 		<setting type="lsep" label="Widgets" />
 		<setting id="widget.hide.nextpage" label="Hide Next up Widget" type="bool" default="true" />
 
-		<!-- Context -->
-		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
-		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
+
 	</category>
 
 	<!-- Provider -->

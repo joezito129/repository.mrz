@@ -21,42 +21,19 @@ def get_(function, duration, *args, **kwargs):
     :param duration: Duration of validity of cache in hours
     :param args: Optional arguments for the provided function
     """
-    sources = False
-    reload = False
-    if 'animepahe_reload' in kwargs:
-        reload = kwargs['otaku_reload']
-        kwargs.pop('otaku_reload')
-
-    if 'animepahe_sources' in kwargs:
-        sources = True
-        kwargs.pop('otaku_sources')
-
     key = _hash_function(function, args, kwargs)
+    if 'key' in kwargs:
+        key += kwargs.pop('key')
     cache_result = cache_get(key)
-    if not reload:
-        if cache_result:
-            if _is_cache_valid(cache_result['date'], duration):
-                try:
-                    return_data = ast.literal_eval(cache_result['value'])
-                    return return_data
-                except Exception:
-                    return ast.literal_eval(cache_result['value'])
+    if cache_result and _is_cache_valid(cache_result['date'], duration):
+        return_data = ast.literal_eval(cache_result['value'])
+        return return_data
 
     fresh_result = repr(function(*args, **kwargs))
-
-    if fresh_result is None or fresh_result == 'None':
-        # If the cache is old, but we didn't get fresh result, return the old cache
-        return cache_result if cache_result else None
-
+    cache_insert(key, fresh_result)
+    if not fresh_result:
+        return cache_result if cache_result else fresh_result
     data = ast.literal_eval(fresh_result)
-
-    # Because I'm lazy, I've added this crap code so sources won't cache if there are no results
-    if not sources:
-        cache_insert(key, fresh_result)
-    elif len(data[1]) > 0:
-        cache_insert(key, fresh_result)
-    else:
-        return None
     return data
 
 
@@ -70,7 +47,7 @@ def _get_function_name(function_instance):
 
 def generate_md5(*args):
     md5_hash = hashlib.md5()
-    [md5_hash.update(str(arg).encode('utf-8')) for arg in args]
+    [md5_hash.update(str(arg).encode()) for arg in args]
     return str(md5_hash.hexdigest())
 
 

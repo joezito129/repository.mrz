@@ -1,7 +1,9 @@
-import xbmc, xbmcgui, xbmcplugin
+import xbmc
+import xbmcgui
+import xbmcplugin
 import requests
 
-from resources.lib.ui import control, database, client, maintenance
+from resources.lib.ui import control, database, maintenance
 from urllib import parse
 from resources.lib.indexers import aniskip
 
@@ -9,7 +11,7 @@ playList = control.playList
 player = xbmc.Player
 
 
-class hook_mimetype:
+class HookMimetype:
     __MIME_HOOKS = {}
 
     @classmethod
@@ -27,10 +29,10 @@ class hook_mimetype:
         return func
 
 
-class watchlistPlayer(player):
+class WatchlistPlayer(player):
 
     def __init__(self):
-        super(watchlistPlayer, self).__init__()
+        super(WatchlistPlayer, self).__init__()
         self._episode = None
         self._build_playlist = None
         self._anilist_id = None
@@ -241,14 +243,13 @@ def _prefetch_play_link(link):
     try:
         r = requests.get(url, headers=headers, stream=True)
     except requests.exceptions.SSLError:
-        limit = None if '.m3u8' in url else '0'
-        linkInfo = client.request(url, headers=headers, limit=limit, output='extended', error=True)
-        return {
-            "url": link if '|' in link else linkInfo[5],
-            "headers": linkInfo[2]
-        }
+        yesno = control.yesno_dialog(f'{control.ADDON_NAME}: Request Error', f'{url}\nWould you like to try without verifying TLS certificate?')
+        if yesno == 1:
+            r = requests.get(url, headers=headers, stream=True, verify=False)
+        else:
+            return
     except Exception as e:
-        control.ok_dialog(control.ADDON_NAME, str(e))
+        control.log(str(e), level='warning')
         return
 
     return {
@@ -285,7 +286,7 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
     if 'Content-Type' in linkInfo['headers'].keys():
         item.setProperty('MimeType', linkInfo['headers']['Content-Type'])
         # Run any mimetype hook
-        item = hook_mimetype.trigger(linkInfo['headers']['Content-Type'], item)
+        item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
 
     if rescrape or source_select:
         control.playList.add(linkInfo['url'], item)
@@ -294,14 +295,14 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
         control.set_videotags(item, episode_info['info'])
         item.setArt(episode_info['image'])
         xbmc.Player().play(control.playList, item)
-        watchlistPlayer().handle_player(anilist_id, watchlist_update, None, episode)
+        WatchlistPlayer().handle_player(anilist_id, watchlist_update, None, episode)
         return
 
     xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
-    watchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode)
+    WatchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode)
 
 
-@hook_mimetype('application/dash+xml')
+@HookMimetype('application/dash+xml')
 def _DASH_HOOK(item):
     import inputstreamhelper
     is_helper = inputstreamhelper.Helper('mpd')
@@ -314,7 +315,7 @@ def _DASH_HOOK(item):
     return item
 
 
-@hook_mimetype('application/vnd.apple.mpegurl')
+@HookMimetype('application/vnd.apple.mpegurl')
 def _HLS_HOOK(item):
     stream_url = item.getPath()
     import inputstreamhelper

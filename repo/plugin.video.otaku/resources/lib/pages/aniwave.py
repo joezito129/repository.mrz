@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
 from resources.lib.ui import control, database
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.indexers.malsync import MALSYNC
+from resources.lib.indexers import malsync
 
 
 class Sources(BrowserBase):
@@ -30,7 +30,7 @@ class Sources(BrowserBase):
         elif control.getSetting('general.source') == 'Dub':
             srcs.remove('sub')
 
-        items = MALSYNC().get_slugs(anilist_id=anilist_id, site='9anime')
+        items = malsync.get_slugs(anilist_id=anilist_id, site='9anime')
         if not items:
             headers = {'Referer': self._BASE_URL}
             params = {'keyword': title}

@@ -8,7 +8,7 @@ from urllib import parse
 from resources.lib.ui import control, database
 from resources.lib.ui.jscrypto import jscrypto
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.indexers.malsync import MALSYNC
+from resources.lib.indexers import malsync
 
 
 class Sources(BrowserBase):
@@ -29,7 +29,7 @@ class Sources(BrowserBase):
         elif control.getSetting('general.source') == 'Dub':
             srcs.remove('sub')
 
-        items = MALSYNC().get_slugs(anilist_id=anilist_id, site='Zoro')
+        items = malsync.get_slugs(anilist_id=anilist_id, site='Zoro')
         if not items:
             if kodi_meta.get('start_date'):
                 year = kodi_meta.get('start_date').split('-')[0]
@@ -68,8 +68,6 @@ class Sources(BrowserBase):
     def _process_aw(self, slug, title, episode, langs):
         sources = []
         headers = {'Referer': self._BASE_URL}
-        control.print('here')
-        control.print('here')
         r = requests.get("%sajax/v2/episode/list/%s" % (self._BASE_URL, slug.split('-')[-1]))
         res = r.json().get('html')
         elink = SoupStrainer('div', {'class': re.compile('^ss-list')})
@@ -170,7 +168,7 @@ class Sources(BrowserBase):
         js = requests.get(self.js_file).text
         cases = re.findall(r'switch\(\w+\){([^}]+?)partKey', js)[0]
         vars_ = re.findall(r"\w+=(\w+)", cases)
-        consts = re.findall(r"((?:[,;\s]\w+=0x\w{1,2}){%s,})" % len(vars_), js)[0]
+        consts = re.findall(r"([,;\s]\w+=0x\w{1,2}{%s,})" % len(vars_), js)[0]
         indexes = []
         for var in vars_:
             var_value = re.search(r',{0}=(\w+)'.format(var), consts)
@@ -193,5 +191,5 @@ class Sources(BrowserBase):
                 y += p
             sources = json.loads(jscrypto.decode(sources, key))
             return sources[0].get('file')
-        except:
-            return ''
+        except Exception as e:
+            control.log(str(e), level='warning')

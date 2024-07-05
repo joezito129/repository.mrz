@@ -1,7 +1,7 @@
 _REGISTERED_ROUTES = []
 
 
-class route:
+class Route:
     def __init__(self, route_path):
         self._path = route_path
         self._is_wildcard = False

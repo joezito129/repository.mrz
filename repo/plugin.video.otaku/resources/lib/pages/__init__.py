@@ -3,21 +3,20 @@ import time
 import xbmc
 
 from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniwave, gogoanime, localfiles
-from resources.lib.ui import control
+from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 
 
-def getSourcesHelper(actionArgs):
-    sources_window = Sources(*('get_sources.xml', control.ADDON_PATH), actionArgs=actionArgs)
+def getSourcesHelper(actionargs):
+    sources_window = Sources('get_sources.xml', control.ADDON_PATH, actionargs=actionargs)
     sources = sources_window.doModal()
     del sources_window
     return sources
 
 
 class Sources(GetSources):
-    def __init__(self, xml_file, location, actionArgs=None):
-        super(Sources, self).__init__(xml_file, location, actionArgs)
-
+    def __init__(self, xml_file, location, actionargs=None):
+        super(Sources, self).__init__(xml_file, location, actionargs)
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
         self.embedProviders = ['animess', 'animixplay', 'aniwave', 'gogo', 'hianime']
         self.otherProviders = ['Local Files']
@@ -51,7 +50,7 @@ class Sources(GetSources):
         self.setProperty('process_started', 'true')
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
-            t = threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode, media_type))
+            t = threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode))
             t.start()
             self.threads.append(t)
 
@@ -145,14 +144,14 @@ class Sources(GetSources):
         return self.return_data
 
     def nyaa_worker(self, query, anilist_id, episode, status, media_type, rescrape):
-        all_sources = nyaa.Sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
+        all_sources = database.get_(nyaa.Sources().get_sources, 8, query, anilist_id, episode, status, media_type, rescrape, key='nyaa')
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
         self.torrentSources += all_sources['cached'] + all_sources['uncached']
         self.remainingProviders.remove('nyaa')
 
     def animetosho_worker(self, query, anilist_id, episode, status, media_type, rescrape):
-        all_sources = animetosho.Sources().get_sources(query, anilist_id, episode, status, media_type, rescrape)
+        all_sources = database.get_(animetosho.Sources().get_sources, 8, query, anilist_id, episode, status, media_type, rescrape, key='animetosho')
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
         self.torrentSources += all_sources['cached'] + all_sources['uncached']
@@ -160,31 +159,30 @@ class Sources(GetSources):
 
 #   ### embeds ###
     def hianime_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += hianime.Sources().get_sources(anilist_id, episode)
+        self.embedSources += database.get_(hianime.Sources().get_sources, 8, anilist_id, episode, key='hianime')
         self.remainingProviders.remove('hianime')
 
     def animess_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += animess.Sources().get_sources(anilist_id, episode)
+        self.embedSources += database.get_(animess.Sources().get_sources, 8, anilist_id, episode, key='animess')
         self.remainingProviders.remove('animess')
 
     def animixplay_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += animixplay.Sources().get_sources(anilist_id, episode)
+        self.embedSources += database.get_(animixplay.Sources().get_sources, 8, anilist_id, episode, key='animixplay')
         self.remainingProviders.remove('animixplay')
 
     def aniwave_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += aniwave.Sources().get_sources(anilist_id, episode)
+        self.embedSources += database.get_(aniwave.Sources().get_sources, 8, anilist_id, episode, key='aniwave')
         self.remainingProviders.remove('aniwave')
 
     def gogo_worker(self, anilist_id, episode, rescrape, get_backup):
-        self.embedSources += gogoanime.Sources().get_sources(anilist_id, episode, get_backup)
+        self.embedSources += database.get_(gogoanime.Sources().get_sources, 8, anilist_id, episode, get_backup, key='gogoanime')
         self.remainingProviders.remove('gogo')
 
     def localfiles_worker(self, query, anilist_id, episode, rescrape):
-        if not rescrape:
-            self.local_files += localfiles.Sources().get_sources(query, anilist_id, episode)
+        self.local_files += localfiles.Sources().get_sources(query, anilist_id, episode)
         self.remainingProviders.remove('Local Files')
 
-    def user_cloud_inspection(self, query, anilist_id, episode, media_type):
+    def user_cloud_inspection(self, query, anilist_id, episode):
         debrid = {}
         if control.real_debrid_enabled() and control.getSetting('rd.cloudInspection') == 'true':
             debrid['real_debrid'] = True

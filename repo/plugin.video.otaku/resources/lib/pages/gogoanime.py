@@ -7,7 +7,7 @@ from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui import database, source_utils
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.indexers.malsync import MALSYNC
+from resources.lib.indexers import malsync
 
 
 class Sources(BrowserBase):
@@ -19,7 +19,7 @@ class Sources(BrowserBase):
         title = kodi_meta.get('name')
         title = self._clean_title(title)
 
-        slugs = database.get_(MALSYNC().get_slugs, 168, anilist_id=anilist_id, site='Gogoanime')
+        slugs = database.get_(malsync.get_slugs, 168, anilist_id=anilist_id, site='Gogoanime')
         if not slugs:
             headers = {'Referer': self._BASE_URL}
             params = {
@@ -56,12 +56,12 @@ class Sources(BrowserBase):
                 if not slugs:
                     return []
         slugs = list(slugs.keys()) if isinstance(slugs, dict) else slugs
-        mapfunc = partial(self._process_gogo, show_id=anilist_id, episode=episode)
+        mapfunc = partial(self._process_gogo, episode=episode)
         all_results = list(map(mapfunc, slugs))
         all_results = list(itertools.chain(*all_results))
         return all_results
 
-    def _process_gogo(self, slug, show_id, episode):
+    def _process_gogo(self, slug, episode):
         if slug.startswith('http'):
             slug = slug.split('/')[-1]
         url = "{0}{1}-episode-{2}".format(self._BASE_URL, slug, episode)

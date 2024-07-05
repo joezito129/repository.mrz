@@ -90,12 +90,12 @@ class DebridLink:
             control.setSetting('dl.auth', self.token)
             control.setSetting('dl.expiry', str(int(time.time()) + response.get('expires_in')))
 
-    def check_hash(self, hashList):
-        if isinstance(hashList, list):
+    def check_hash(self, hashlist):
+        if isinstance(hashlist, list):
             self.cache_check_results = {}
-            hashList = [hashList[x: x + 100] for x in range(0, len(hashList), 100)]
+            hashlist = [hashlist[x: x + 100] for x in range(0, len(hashlist), 100)]
             threads = []
-            for arg in hashList:
+            for arg in hashlist:
                 t = threading.Thread(target=self._check_hash_thread, args=[arg])
                 threads.append(t)
                 t.start()
@@ -103,7 +103,7 @@ class DebridLink:
                 i.join()
             return self.cache_check_results
         else:
-            url = "{0}/seedbox/cached?url={1}".format(self.api_url, hashList)
+            url = "{0}/seedbox/cached?url={1}".format(self.api_url, hashlist)
             response = requests.get(url, headers=self.headers).json()
             return response.get('value')
 
@@ -139,6 +139,7 @@ class DebridLink:
 
         return selected_file
 
-    def resolve_uncached_source(self, source, runinbackground):
+    @staticmethod
+    def resolve_uncached_source(source, runinbackground):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
         control.ok_dialog(heading, 'Cache Reolver Has not been added for Premiumize')

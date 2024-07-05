@@ -1,5 +1,6 @@
 import requests
 import pickle
+import datetime
 import time
 
 from functools import partial
@@ -47,7 +48,6 @@ class JikanAPI:
 
     @staticmethod
     def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
-
         episode = res['mal_id']
         url = f"{anilist_id}/{episode}/"
 
@@ -90,8 +90,7 @@ class JikanAPI:
         return parsed
 
     def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
-        from datetime import date
-        update_time = date.today().isoformat()
+        update_time = datetime.date.today().isoformat()
 
         result = self.get_anime_info(anilist_id)
         if not result:
@@ -102,35 +101,26 @@ class JikanAPI:
         season = utils.get_season(title_list)
         result_ep = self.get_episode_meta(anilist_id)
 
-        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season,
-                          poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                          tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
+        mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
 
         all_results = sorted(list(map(mapfunc, result_ep)), key=lambda x: x['info']['episode'])
-        if len(all_results) == 0 or control.getSetting('interface.showemptyeps') == 'true':
+        if control.bools.show_empty_eps:
             total_ep = result.get('episodes', 0)
             empty_ep = []
             for ep in range(len(all_results) + 1, total_ep + 1):
                 empty_ep.append({
-                    # 'title': control.colorString(f'Episode {ep}', 'red'),
                     'title': f'Episode {ep}',
                     'mal_id': ep,
                     'image': poster
                 })
-            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster,
-                                  fanart=fanart, eps_watched=eps_watched, update_time=update_time,
-                                  tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
+            mapfunc_emp = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
             all_results += list(map(mapfunc_emp, empty_ep))
         control.notify("Jikanmoa", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
-    def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None,
-                        dub_data=None):
-        import datetime
-        import time
+    def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None, dub_data=None):
         update_time = datetime.date.today().isoformat()
-        last_updated = datetime.datetime(*(time.strptime(episodes[0]['last_updated'], "%Y-%m-%d")[0:6]))
-        # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")    # todo add when python 11 is added
+        last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
 
         diff = (datetime.datetime.today() - last_updated).days
         result = self.get_episode_meta(anilist_id) if diff > int(control.getSetting('interface.check.updates')) else []
@@ -151,17 +141,17 @@ class JikanAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         eps_watched = kodi_meta.get('eps_watched')
-        if not eps_watched:
-            if control.bools.watchlist_data:
-                from resources.lib.WatchlistFlavor import WatchlistFlavor
-                flavor = WatchlistFlavor.get_update_flavor()
-                if flavor:
-                    data = flavor.get_watchlist_anime_entry(anilist_id)
-                    if data.get('eps_watched'):
-                        eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
-                        database.update_kodi_meta(anilist_id, kodi_meta)
-        episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
+
+        if not eps_watched and control.bools.watchlist_data:
+            from resources.lib.WatchlistFlavor import WatchlistFlavor
+            flavor = WatchlistFlavor.get_update_flavor()
+            if flavor:
+                data = flavor.get_watchlist_anime_entry(anilist_id)
+                if data.get('eps_watched'):
+                    eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
+                    database.update_kodi_meta(anilist_id, kodi_meta)
+        episodes = database.get_episode_list(anilist_id)
 
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
@@ -172,6 +162,9 @@ class JikanAPI:
                 return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data, dub_data), 'episodes'
             return indexers.process_episodes(episodes, eps_watched, dub_data), 'episodes'
 
-        from resources.jz import anime_filler
-        filler_data = anime_filler.get_data(kodi_meta['ename'])
+        if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
+            from resources.jz import anime_filler
+            filler_data = anime_filler.get_data(kodi_meta['ename'])
+        else:
+            filler_data = None
         return self.process_episode_view(anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data), 'episodes'

@@ -1,7 +1,7 @@
 import pickle
 
 from resources.lib.ui import control, database
-from resources.lib.ui.router import route
+from resources.lib.ui.router import Route
 from resources.lib.WatchlistFlavor import WatchlistFlavor
 from resources.lib import OtakuBrowser
 from resources.lib.AniListBrowser import AniListBrowser
@@ -17,39 +17,39 @@ def get_auth_dialog(flavor):
     return WatchlistFlavor.login_request(flavor) if auth else None
 
 
-@route('watchlist_login/*')
+@Route('watchlist_login/*')
 def WL_LOGIN(payload, params):
     auth_dialog = bool(params.get('auth_dialog'))
-    return get_auth_dialog(payload) if auth_dialog else WatchlistFlavor.login_request(payload)
+    get_auth_dialog(payload) if auth_dialog else WatchlistFlavor.login_request(payload)
 
 
-@route('watchlist_logout/*')
+@Route('watchlist_logout/*')
 def WL_LOGOUT(payload, params):
-    return WatchlistFlavor.logout_request(payload)
+    WatchlistFlavor.logout_request(payload)
 
 
-@route('watchlist/*')
+@Route('watchlist/*')
 def WATCHLIST(payload, params):
-    return control.draw_items(WatchlistFlavor.watchlist_request(payload), 'addons')
+    control.draw_items(WatchlistFlavor.watchlist_request(payload), 'addons')
 
 
-@route('watchlist_status_type/*')
+@Route('watchlist_status_type/*')
 def WATCHLIST_STATUS_TYPE(payload, params):
     flavor, status = payload.rsplit("/")
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
-    return control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up), content_type)
+    control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up), content_type)
 
 
-@route('watchlist_status_type_pages/*')
+@Route('watchlist_status_type_pages/*')
 def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
     flavor, status, offset, page = payload.rsplit("/")
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
-    return control.draw_items(WatchlistFlavor.watchlist_status_request_pages(flavor, status, next_up, offset, int(page)), content_type)
+    control.draw_items(WatchlistFlavor.watchlist_status_request_pages(flavor, status, next_up, offset, int(page)), content_type)
 
 
-@route('watchlist_to_ep/*')
+@Route('watchlist_to_ep/*')
 def WATCHLIST_TO_EP(payload, params):
     payload_list = payload.rsplit("/")
     anilist_id, mal_id, eps_watched = payload_list
@@ -58,7 +58,6 @@ def WATCHLIST_TO_EP(payload, params):
         if not show_meta:
             anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
             show_meta = AniListBrowser().get_anilist(anilist_id)
-
     else:
         show_meta = database.get_show(anilist_id)
     anilist_id = show_meta['anilist_id']
@@ -67,15 +66,15 @@ def WATCHLIST_TO_EP(payload, params):
     database.update_kodi_meta(anilist_id, kodi_meta)
 
     anime_general, content_type = OtakuBrowser.get_anime_init(anilist_id)
-    return control.draw_items(anime_general, content_type)
+    control.draw_items(anime_general, content_type)
 
 
-@route('watchlist_context/*')
+@Route('watchlist_context/*')
 def CONTEXT_MENU(payload, params):
     if control.getSetting('watchlist.update.enabled') != 'true':
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
         return
-    payload_list = payload.rsplit('/')[1:]
+    payload_list = payload.rsplit('/')
     if len(payload_list) == 4:
         path, anilist_id, mal_id, eps_watched = payload_list
     else:
@@ -145,7 +144,7 @@ def add_watchlist(items):
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:
-            items.insert(0, (f'{flavor.username}\'s {flavor.title}', f'watchlist/{flavor.flavor_name}', flavor.image))
+            items.insert(0, (f"{flavor.username}'s {flavor.title}", f"watchlist/{flavor.flavor_name}", flavor.image))
     return items
 
 

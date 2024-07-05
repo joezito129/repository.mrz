@@ -13,7 +13,6 @@ def get_dub_data(en_title):
 
     if en_title:
         # match first word or first two words (seperated by {space} )
-
         regex = r'([^ ]+)' if '-' in en_title else r'([^ ]+) ?([^ ]+)?'
         match = re.match(regex, en_title)
         if match.group(0).lower() == 'the':
@@ -43,25 +42,14 @@ def get_dub_data(en_title):
                 if match.group(3) is not None:
                     ep_number1 = match.group(2)
                     ep_number2 = match.group(4)
-                    try:
-                        end_dt_formated = datetime.datetime.strptime(end_dt[:16], "%Y-%m-%dT%H:%M")
-                    except TypeError:
-                        end_dt = re.sub('T', '', end_dt)
-                        end_dt = re.sub(':', '', end_dt)
-                        end_dt_formated = datetime.datetime(*(time.strptime(end_dt[:14], "%Y-%m-%d%H%M")[0:7]))
-                    end_time = f'{end_dt_formated - datetime.timedelta(hours=5)}'[:16]
-                    dub_list = [{"season": season, "episode": f'{i}', "release_time": end_time} for i in range(int(ep_number1), int(ep_number2) + 1)]
+                    dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(end_dt[:16], '%Y-%m-%dT%H:%M')))
+                    dub_time = str(dub_time - datetime.timedelta(hours=5))[:16]
+                    dub_list = [{"season": season, "episode": f'{i}', "release_time": dub_time} for i in range(int(ep_number1), int(ep_number2) + 1)]
 
                 # Only one episode in teamup_dat
                 else:
                     ep_number = match.group(2)
-                    try:
-                        end_dt_formated = datetime.datetime.strptime(end_dt[:16], "%Y-%m-%dT%H:%M")
-                    except TypeError:
-                        end_dt = re.sub('T', '', end_dt)
-                        end_dt = re.sub(':', '', end_dt)
-                        end_dt_formated = datetime.datetime(*(time.strptime(end_dt[:14], "%Y-%m-%d%H%M")[0:7]))
-
-                    end_time = f'{end_dt_formated - datetime.timedelta(hours=5)}'[:16]
-                    dub_list.append({"season": season, "episode": ep_number, "release_time": end_time})
+                    dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(end_dt[:16], '%Y-%m-%dT%H:%M')))
+                    dub_time = str(dub_time - datetime.timedelta(hours=5))[:16]
+                    dub_list.append({"season": season, "episode": ep_number, "release_time": dub_time})
         return dub_list

@@ -69,8 +69,10 @@ def __append_headers(headers):
 
 def __extract_yourupload(url, page_content, referer=None):
     r = re.search(r"jwplayerOptions\s*=\s*{\s*file:\s*'([^']+)", page_content)
-    headers = {'User-Agent': _EDGE_UA,
-               'Referer': url}
+    headers = {
+        'User-Agent': _EDGE_UA,
+        'Referer': url
+    }
     if r:
         return r.group(1) + __append_headers(headers)
 
@@ -78,9 +80,11 @@ def __extract_yourupload(url, page_content, referer=None):
 def __extract_mp4upload(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
     r = re.search(r'src\("([^"]+)', page_content) or re.search(r'src:\s*"([^"]+)', page_content)
-    headers = {'User-Agent': _EDGE_UA,
-               'Referer': url,
-               'verifypeer': 'false'}
+    headers = {
+        'User-Agent': _EDGE_UA,
+        'Referer': url,
+        'verifypeer': 'false'
+    }
     if r:
         return r.group(1) + __append_headers(headers)
 
@@ -88,8 +92,10 @@ def __extract_mp4upload(url, page_content, referer=None):
 def __extract_lulu(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
     r = re.search(r'''sources:\s*\[{file:\s*["']([^"']+)''', page_content)
-    headers = {'User-Agent': _EDGE_UA,
-               'Referer': url}
+    headers = {
+        'User-Agent': _EDGE_UA,
+        'Referer': url
+    }
     if r:
         return r.group(1) + __append_headers(headers)
 
@@ -99,18 +105,18 @@ def __extract_vidplay(url, page_content, referer=None):
         x = 0
         ct = ''
         y = list(range(256))
-        for r in range(256):
-            u = key[r % len(key)]
-            x = (x + y[r] + (u if isinstance(u, int) else ord(u))) % 256
-            y[r], y[x] = y[x], y[r]
+        for r_ in range(256):
+            u = key[r_ % len(key)]
+            x = (x + y[r_] + (u if isinstance(u, int) else ord(u))) % 256
+            y[r_], y[x] = y[x], y[r_]
 
-        s = 0
+        s_ = 0
         x = 0
-        for r in range(len(data)):
-            s = (s + 1) % 256
-            x = (x + y[s]) % 256
-            y[s], y[x] = y[x], y[s]
-            ct += chr((data[r] if isinstance(data[r], int) else ord(data[r])) ^ y[(y[s] + y[x]) % 256])
+        for r_ in range(len(data)):
+            s_ = (s_ + 1) % 256
+            x = (x + y[s_]) % 256
+            y[s_], y[x] = y[x], y[s_]
+            ct += chr((data[r_] if isinstance(data[r_], int) else ord(data[r_])) ^ y[(y[s_] + y[x]) % 256])
 
         if encode:
             ct = base64.b64encode(bytes(ct.encode(encoding='latin-1'))).decode().replace('/', '_').replace('+', '-')
@@ -120,16 +126,15 @@ def __extract_vidplay(url, page_content, referer=None):
         kurl = 'https://raw.githubusercontent.com/Inside4ndroid/vidkey-js/main/keys.json'
         keys = requests.get(kurl)
         k1, k2 = keys.json()
-        v = dex(k1, id_, False)
-        v = dex(k2, v)
-        return v
+        v_ = dex(k1, id_, False)
+        v_ = dex(k2, v_)
+        return v_
 
     headers = {
         'User-Agent': _EDGE_UA,
         'Referer': url
     }
     turl = parse.urljoin(url, '/futoken')
-    # r = client.request(turl, referer=url, headers=headers).decode()
     r = requests.get(turl, headers=headers).text
     k = re.search(r"var\s*k='([^']+)", r)
     if k:
@@ -140,9 +145,7 @@ def __extract_vidplay(url, page_content, referer=None):
             a.append(str(ord(k[i % len(k)]) + ord(v[i])))
         murl = parse.urljoin(url, '/mediainfo/' + ','.join(a) + '?' + url.split('?')[-1])
         headers['Referer'] = url
-
         s = requests.get(murl, headers=headers).json()
-        # s = json.loads(client.request(murl, referer=url, XHR=True, headers=headers))
         if isinstance(s.get('result'), dict):
             uri = s.get('result').get('sources')[0].get('file')
             rurl = parse.urljoin(murl, '/')
@@ -154,8 +157,10 @@ def __extract_kwik(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
     r = re.search(r"const\s*source\s*=\s*'([^']+)", page_content)
     if r:
-        headers = {'User-Agent': _EDGE_UA,
-                   'Referer': url}
+        headers = {
+            'User-Agent': _EDGE_UA,
+            'Referer': url
+        }
         return r.group(1) + __append_headers(headers)
 
 
@@ -165,7 +170,6 @@ def __extract_okru(url, page_content, referer=None):
     aurl = "http://www.ok.ru/dk"
     data = {'cmd': 'videoPlayerMetadata', 'mid': media_id}
     data = parse.urlencode(data)
-    # html = client.request(aurl, post=data)
     html = requests.post(aurl, data=data)
     json_data = html.json()
     if 'error' in json_data:
@@ -180,10 +184,11 @@ def __extract_mixdrop(url, page_content, referer=None):
         surl = r.group(1)
         if surl.startswith('//'):
             surl = 'https:' + surl
-        headers = {'User-Agent': _EDGE_UA,
-                   'Referer': url}
+        headers = {
+            'User-Agent': _EDGE_UA,
+            'Referer': url
+        }
         return surl + __append_headers(headers)
-    return
 
 
 def __extract_filemoon(url, page_content, referer=None):
@@ -292,18 +297,18 @@ def __extract_voe(url, page_content, referer=None):
 
 
 def __extract_goload(url, page_content, referer=None):
-    def _encrypt(msg, key, iv):
+    def _encrypt(msg, key, iv_):
         key = key.encode()
-        encrypter = Encrypter(AESModeOfOperationCBC(key, iv))
+        encrypter = Encrypter(AESModeOfOperationCBC(key, iv_))
         ciphertext = encrypter.feed(msg)
         ciphertext += encrypter.feed()
         ciphertext = base64.b64encode(ciphertext)
         return ciphertext.decode()
 
-    def _decrypt(msg, key, iv):
+    def _decrypt(msg, key, iv_):
         ct = base64.b64decode(msg)
         key = key.encode()
-        decrypter = Decrypter(AESModeOfOperationCBC(key, iv))
+        decrypter = Decrypter(AESModeOfOperationCBC(key, iv_))
         decrypted = decrypter.feed(ct)
         decrypted += decrypter.feed()
         return decrypted.decode()
@@ -318,12 +323,8 @@ def __extract_goload(url, page_content, referer=None):
         params = _decrypt(r.group(1), keys[0], iv)
         eurl = 'https://{0}/encrypt-ajax.php?id={1}&alias={2}'.format(
             host, _encrypt(media_id, keys[0], iv), params)
-        # response = client.request(eurl, XHR=True)
-        try:
-            response = requests.get(eurl).json().get('data')
-            # response = json.loads(response).get('data')
-        except:
-            return
+        r = requests.get(eurl)
+        response = r.json().get('data') if r.ok else None
         if response:
             result = _decrypt(response, keys[1], iv)
             result = json.loads(result)

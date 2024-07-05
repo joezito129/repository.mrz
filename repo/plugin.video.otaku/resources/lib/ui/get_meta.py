@@ -1,8 +1,7 @@
 import threading
 
 from resources.lib.ui import database
-from resources.lib.indexers.fanart import FANARTAPI
-from resources.lib.indexers.tmdb import TMDBAPI
+from resources.lib.indexers import tmdb, fanart
 
 
 def collect_meta_(anime_list):
@@ -23,11 +22,11 @@ def collect_meta_(anime_list):
 
 def update_meta(anilist_id, mtype='tv'):
     meta_ids = database.get_mappings(anilist_id, 'anilist_id')
-    art = FANARTAPI().getArt(meta_ids, mtype)
+    art = fanart.getArt(meta_ids, mtype)
     if not art:
-        art = TMDBAPI().getArt(meta_ids, mtype)
+        art = tmdb.getArt(meta_ids, mtype)
     elif 'fanart' not in art.keys():
-        art2 = TMDBAPI().getArt(meta_ids, mtype)
+        art2 = tmdb.getArt(meta_ids, mtype)
         if art2.get('fanart'):
             art['fanart'] = art['fanart']
     database.update_show_meta(anilist_id, meta_ids, art)

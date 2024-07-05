@@ -66,12 +66,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         control.setSetting('mal.expiry', str(int(time.time()) + int(res['expires_in'])))
 
     @staticmethod
-    def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true'):
+    def handle_paging(hasnextpage, base_url, page):
+        if not hasnextpage or not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true':
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
-        offset = (re.compile("offset=(.+?)&").findall(hasNextPage))[0]
+        offset = (re.compile("offset=(.+?)&").findall(hasnextpage))[0]
         return [utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)]
 
     def __get_sort(self):
@@ -142,7 +142,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         else:
             all_results = list(map(self._base_watchlist_status_view, results['data']))
 
-        all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
+        all_results += self.handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
     @div_flavor

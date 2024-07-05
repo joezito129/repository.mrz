@@ -47,10 +47,6 @@ def get_dub_time(anilist_id):
 
 
 def add_to_list(ep_number, date_time):
-    try:
-        dub_time = str(datetime.datetime.strptime(date_time[:16], "%Y-%m-%dT%H:%M") - datetime.timedelta(hours=5))[:16]
-    except TypeError:
-        date_time = re.sub('T', '', date_time)
-        date_time = re.sub(':', '', date_time)
-        dub_time = str(datetime.datetime(*(time.strptime(date_time[:14], "%Y-%m-%d%H%M")[0:7])) - datetime.timedelta(hours=5))[:16]
+    dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(date_time[:16], '%Y-%m-%dT%H:%M')))
+    dub_time = str(dub_time - datetime.timedelta(hours=5))[:16]
     dub_list.append({"season": 0, "episode": ep_number, "release_time": dub_time})

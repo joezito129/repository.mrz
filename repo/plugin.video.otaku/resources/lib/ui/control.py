@@ -1,5 +1,9 @@
 import random
-import xbmc, xbmcgui, xbmcaddon, xbmcplugin, xbmcvfs
+import xbmc
+import xbmcgui
+import xbmcaddon
+import xbmcplugin
+import xbmcvfs
 import os
 import sys
 
@@ -116,7 +120,7 @@ def copy2clip(txt):
 def colorString(text, color=None):
     if color == 'default' or color == '' or color is None:
         color = 'deepskyblue'
-    return f'[COLOR {color}]{text}[/COLOR]'
+    return f"[COLOR {color}]{text}[/COLOR]"
 
 
 def refresh():
@@ -224,7 +228,7 @@ def set_videotags(li, info):
     if info.get('code'):
         vinfo.setProductionCode(info['code'])
     if info.get('cast'):
-        vinfo.setCast([xbmc.Actor(c['name'], c['role'], i, c['thumbnail']) for i, c in enumerate(info['cast'])])
+        vinfo.setCast([xbmc.Actor(c['name'], c['role'], c['index'], c['thumbnail']) for c in info['cast']])
     if info.get('OriginalTitle'):
         vinfo.setOriginalTitle(info['OriginalTitle'])
     if info.get('trailer'):
@@ -274,12 +278,17 @@ def bulk_draw_items(video_data, draw_cm):
 def draw_items(video_data, content_type=None, draw_cm=None):
     if not draw_cm:
         draw_cm = []
-    if bools.context_deletefromdatabase and content_type == 'tvshows':
-        draw_cm.append(("Delete from database", 'delete_anime_database'))
-    elif bools.context_marked_watched and content_type == 'episodes':
-        draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
-    if bools.fanart_select and content_type == 'tvshows':
-        draw_cm.append(('Select Fanart', 'select_fanart'))
+    if content_type == 'tvshows':
+        if bools.context_watchlist:
+            draw_cm.append(("WatchList", "watchlist_context"))
+        if bools.context_deletefromdatabase:
+            draw_cm.append(("Delete from database", 'delete_anime_database'))
+        if bools.fanart_select:
+            draw_cm.append(('Select Fanart', 'select_fanart'))
+    elif content_type == 'episodes':
+        if bools.context_marked_watched:
+            draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
+
     if len(video_data) > 99:
         bulk_draw_items(video_data, draw_cm)
     else:
@@ -368,26 +377,23 @@ def getChangeLog():
     del windows
 
 
-def toggle_reuselanguageinvoker(forced_state=None):
+def toggle_reuselanguageinvoker():
     def _store_and_reload(output):
         with open(file_path, "w+") as addon_xml_:
             addon_xml_.writelines(output)
         ok_dialog(ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
         execute('LoadProfile({})'.format(xbmc.getInfoLabel("system.profilename")))
-
     file_path = os.path.join(ADDON_PATH, "addon.xml")
-
     with open(file_path) as addon_xml:
         file_lines = addon_xml.readlines()
-
     for i in range(len(file_lines)):
         line_string = file_lines[i]
         if "reuselanguageinvoker" in file_lines[i]:
-            if ("false" in line_string and forced_state is None) or ("false" in line_string and forced_state):
+            if "false" in line_string:
                 file_lines[i] = file_lines[i].replace("false", "true")
                 setSetting("reuselanguageinvoker.status", "Enabled")
                 _store_and_reload(file_lines)
-            elif ("true" in line_string and forced_state is None) or ("true" in line_string and forced_state is False):
+            elif "true" in line_string:
                 file_lines[i] = file_lines[i].replace("true", "false")
                 setSetting("reuselanguageinvoker.status", "Disabled")
                 _store_and_reload(file_lines)
@@ -430,6 +436,7 @@ class Bools:
         self.clearlogo_disable = getSetting('interface.clearlogo.disable') == 'true'
         self.fanart_disable = getSetting('interface.fanart.disable') == 'true'
         self.context_marked_watched = getSetting('context.marked.watched') == 'true'
+        self.context_watchlist = getSetting('context.WatchList') == 'true'
         self.context_deletefromdatabase = getSetting('context.deletefromdatabase') == 'true'
         self.context_marked_watched = getSetting('context.deletefromdatabase') == 'true'
         self.watchlist_update = getSetting('watchlist.update.enabled') == 'true'

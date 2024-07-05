@@ -1,5 +1,7 @@
 import requests
 import pickle
+import datetime
+import time
 
 from functools import partial
 from resources.lib.ui import database, utils, control
@@ -69,8 +71,7 @@ class SIMKLAPI:
         return parsed
 
     def process_episode_view(self, anilist_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
-        from datetime import date
-        update_time = date.today().isoformat()
+        update_time = datetime.date.today().isoformat()
 
         result = self.get_anime_info(anilist_id)
         if not result:
@@ -101,15 +102,8 @@ class SIMKLAPI:
         return all_results
 
     def append_episodes(self, anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
-        import datetime
-        import time
-
         update_time = datetime.date.today().isoformat()
-        last_updated = datetime.datetime(*(time.strptime(episodes[0]['last_updated'], "%Y-%m-%d")[0:6]))
-
-        # todo add when they fucking fix strptime
-        # last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")
-
+        last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
         diff = (datetime.datetime.today() - last_updated).days
         result_meta = self.get_episode_meta(anilist_id) if diff > int(control.getSetting('interface.check.updates')) else []
         result_ep = [x for x in result_meta if x['type'] == 'episode']
@@ -130,18 +124,17 @@ class SIMKLAPI:
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
-        eps_watched = kodi_meta.get('eps_watched')
-        if not eps_watched:
-            if control.bools.watchlist_data:
-                from resources.lib.WatchlistFlavor import WatchlistFlavor
-                flavor = WatchlistFlavor.get_update_flavor()
-                if flavor:
-                    data = flavor.get_watchlist_anime_entry(anilist_id)
-                    if data.get('eps_watched'):
-                        eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
-                        database.update_kodi_meta(anilist_id, kodi_meta)
-        episodes = database.get_episode_list(anilist_id)
         tvshowtitle = kodi_meta['title_userPreferred']
+        eps_watched = kodi_meta.get('eps_watched')
+        if not eps_watched and control.bools.watchlist_data:
+            from resources.lib.WatchlistFlavor import WatchlistFlavor
+            flavor = WatchlistFlavor.get_update_flavor()
+            if flavor:
+                data = flavor.get_watchlist_anime_entry(anilist_id)
+                if data.get('eps_watched'):
+                    eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
+                    database.update_kodi_meta(anilist_id, kodi_meta)
+        episodes = database.get_episode_list(anilist_id)
 
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 

@@ -1,4 +1,6 @@
-import xbmcgui, xbmcvfs, xbmc
+import xbmc
+import xbmcgui
+import xbmcvfs
 import json
 import os
 import math
@@ -8,7 +10,6 @@ import time
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.ui import database, control
 from urllib import parse
-
 
 CLOCK = time.time
 

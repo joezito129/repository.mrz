@@ -24,9 +24,8 @@ import pickle
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, player, utils
-from resources.lib.ui.router import route, router_process
+from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlist, watchlist_update_episode
-
 
 _ANILIST_BROWSER = AniListBrowser()
 
@@ -42,7 +41,7 @@ def add_last_watched(items):
     return items
 
 
-@route('find_recommendations/*')
+@Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
     payload_list = payload.rsplit("/")[1:]
     if len(payload_list) == 3:
@@ -61,13 +60,13 @@ def FIND_RECOMMENDATIONS(payload, params):
 
 
 # next page for find_recommendations
-@route('recommendations_next/*')
+@Route('recommendations_next/*')
 def RECOMMENDATIONS_NEXT(payload, params):
     anilist_id, page = payload.rsplit("/")
     control.draw_items(_ANILIST_BROWSER.get_recommendations(anilist_id, int(page)), 'tvshows')
 
 
-@route('find_relations/*')
+@Route('find_relations/*')
 def FIND_RELATIONS(payload, params):
     payload_list = payload.rsplit("/")[1:]
     if len(payload_list) == 3:
@@ -84,7 +83,7 @@ def FIND_RELATIONS(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_relations(anilist_id), 'tvshows')
 
 
-@route('animes/*')
+@Route('animes/*')
 def ANIMES_PAGE(payload, params):
     payload_list = payload.rsplit("/")
     anilist_id, mal_id = payload_list
@@ -92,53 +91,52 @@ def ANIMES_PAGE(payload, params):
     control.draw_items(anime_general, content)
 
 
-@route('anilist_airing_anime')
+@Route('anilist_airing_anime')
 def ANILIST_AIRING_ANIME(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_airing_anime(), 'tvshows')
 
 
 # next page for anilist_airing_anime
-@route('anilist_airing_anime/*')
+@Route('anilist_airing_anime/*')
 def ANILIST_AIRING_ANIME(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_airing_anime(int(payload)), 'tvshows')
 
 
-@route('anilist_upcoming_next_season')
+@Route('anilist_upcoming_next_season')
 def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_upcoming_next_season(), 'tvshows')
 
 
 # next page for anilist_upcoming_next_season
-@route('anilist_upcoming_next_season/*')
+@Route('anilist_upcoming_next_season/*')
 def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_upcoming_next_season(int(payload)), 'tvshows')
 
 
-@route('anilist_top_100_anime')
+@Route('anilist_top_100_anime')
 def ANILIST_TOP_100_ANIME(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_top_100_anime(), 'tvshows')
 
 
 # next page for anilist_top_100_anime
-@route('anilist_top_100_anime/*')
+@Route('anilist_top_100_anime/*')
 def ANILIST_TOP_100_ANIME_PAGES(payload, params):
-    return control.draw_items(_ANILIST_BROWSER.get_top_100_anime(int(payload)), 'tvshows')
+    control.draw_items(_ANILIST_BROWSER.get_top_100_anime(int(payload)), 'tvshows')
 
 
-@route('anilist_genres')
+@Route('anilist_genres')
 def ANILIST_GENRES(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_genres(
-        lambda grenre_dialog: control.multiselect_dialog(control.lang(50010), grenre_dialog)), 'tvshows')
+    control.draw_items(_ANILIST_BROWSER.get_genres(lambda grenre_dialog: control.multiselect_dialog(control.lang(50010), grenre_dialog)), 'tvshows')
 
 
 # next page for anilist_genres
-@route('anilist_genres/*')
+@Route('anilist_genres/*')
 def ANILIST_GENRES_PAGES(payload, params):
     genres, tags, page = payload.rsplit("/")[-3:]
     control.draw_items(_ANILIST_BROWSER.get_genres_page(genres, tags, int(page)), 'tvshows')
 
 
-@route('search_history')
+@Route('search_history')
 def SEARCH_HISTORY(payload, params):
     history = database.getSearchHistory('show')
     if int(control.getSetting('searchhistory')) == 0:
@@ -147,13 +145,13 @@ def SEARCH_HISTORY(payload, params):
         SEARCH(payload, params)
 
 
-@route('clear_history')
+@Route('clear_history')
 def CLEAR_HISTORY(payload, params):
     database.clearSearchHistory()
     control.refresh()
 
 
-@route('remove_search_item/*')
+@Route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload, params):
     payload_list = payload.rsplit('search/')
     if len(payload_list) >= 2:
@@ -165,7 +163,7 @@ def REMOVE_SEARCH_ITEM(payload, params):
         control.notify(control.ADDON_NAME, "Invalid Search Item")
 
 
-@route('search')
+@Route('search')
 def SEARCH(payload, params):
     query = control.keyboard(control.lang(50011))
     if not query:
@@ -177,20 +175,20 @@ def SEARCH(payload, params):
 
 
 # next page for anilist_search
-@route('search/*')
+@Route('search/*')
 def SEARCH_PAGES(payload, params):
     query, page = payload.rsplit("/", 1)
     control.draw_items(_ANILIST_BROWSER.get_search(query, int(page)), 'tvshows')
 
 
-@route('search_results/*')
+@Route('search_results/*')
 def SEARCH_RESULTS(payload, params):
     query = params.get('query')
     items = _ANILIST_BROWSER.get_search(query, 1)
     control.draw_items(items, 'tvshows')
 
 
-@route('play/*')
+@Route('play/*')
 def PLAY(payload, params):
     anilist_id, episode, filter_lang = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
@@ -208,7 +206,7 @@ def PLAY(payload, params):
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape, source_select)
 
 
-@route('play_movie/*')
+@Route('play_movie/*')
 def PLAY_MOVIE(payload, params):
     payload_list = payload.rsplit("/")
     anilist_id, mal_id = payload_list
@@ -235,7 +233,7 @@ def PLAY_MOVIE(payload, params):
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape, source_select)
 
 
-@route('marked_as_watched/*')
+@Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload, params):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
 
@@ -248,7 +246,7 @@ def MARKED_AS_WATCHED(payload, params):
     control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{episode})')
 
 
-@route('delete_anime_database/*')
+@Route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload, params):
     payload_list = payload.rsplit("/")
     if len(payload_list) == 3:
@@ -263,7 +261,7 @@ def DELETE_ANIME_DATABASE(payload, params):
     control.notify(control.ADDON_NAME, 'Removed from database')
 
 
-@route('auth/*')
+@Route('auth/*')
 def AUTH(payload, params):
     if payload == 'realdebrid':
         from resources.lib.debrid.real_debrid import RealDebrid
@@ -279,7 +277,7 @@ def AUTH(payload, params):
         DebridLink().auth()
 
 
-@route('refresh/*')
+@Route('refresh/*')
 def REFRESH(payload, params):
     if payload == 'realdebrid':
         from resources.lib.debrid.real_debrid import RealDebrid
@@ -289,7 +287,7 @@ def REFRESH(payload, params):
         DebridLink().refreshToken()
 
 
-@route('select_fanart/*')
+@Route('select_fanart/*')
 def SELECT_FANART(payload, params):
     payload_list = payload.rsplit("/")
     if len(payload_list) == 1:
@@ -317,7 +315,7 @@ def SELECT_FANART(payload, params):
     control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/select_fanart/{anilist_id})')
 
 
-@route('fanart/*')
+@Route('fanart/*')
 def FANART(payload, params):
     anilist_id, select = payload.rsplit('/', 2)
     episode = database.get_episode(anilist_id)
@@ -333,7 +331,7 @@ def FANART(payload, params):
     control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[int(select)]}")
 
 
-@route('clear_slected_fanart')
+@Route('clear_slected_fanart')
 def CLEAR_SELECTED_FANART(payload, params):
     fanart_all = control.getSetting(f'fanart.all').split(',')
     for i in fanart_all:
@@ -342,46 +340,46 @@ def CLEAR_SELECTED_FANART(payload, params):
     control.ok_dialog(control.ADDON_NAME, "Completed")
 
 
-@route('download_manager')
+@Route('download_manager')
 def DOWNLOAD_MANAGER(payload, params):
     from resources.lib.windows.download_manager import DownloadManager
     DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
 
 
-@route('settings')
+@Route('settings')
 def SETTINGS(payload, params):
     import xbmcaddon
     xbmcaddon.Addon().openSettings()
 
 
-@route('toggleLanguageInvoker')
+@Route('toggleLanguageInvoker')
 def TOGGLE_LANGUAGE_INVOKER(payload, params):
     control.toggle_reuselanguageinvoker()
 
 
-@route('completed_sync')
+@Route('completed_sync')
 def COMPLETED_SYNC(payload, params):
     from resources.lib.ui import maintenance
     maintenance.sync_watchlist()
 
 
-@route('clear_cache')
+@Route('clear_cache')
 def CLEAR_CACHE(payload, params):
     database.cache_clear()
 
 
-@route('rebuild_database')
+@Route('rebuild_database')
 def REBUILD_DATABASE(payload, params):
     from resources.lib.ui.database_sync import AnilistSyncDatabase
     AnilistSyncDatabase().re_build_database()
 
 
-@route('change_log')
+@Route('change_log')
 def CHANGE_LOG(payload, params):
     control.getChangeLog()
 
 
-@route('tools')
+@Route('tools')
 def TOOLS_MENU(payload, params):
     TOOLS_ITEMS = [
         (control.lang(30027), "change_log", {'plot': "View Changelog"}, 'changelog.png'),
@@ -396,7 +394,7 @@ def TOOLS_MENU(payload, params):
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
 
 
-@route('')
+@Route('')
 def LIST_MENU(payload, params):
     MENU_ITEMS = [
         (control.lang(50001), "anilist_airing_anime", 'airing_anime.png'),
@@ -425,11 +423,3 @@ if __name__ == "__main__":
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')
-
-# todo
-
-# get rid of client module
-# get rid of bare excepts
-
-
-# todo

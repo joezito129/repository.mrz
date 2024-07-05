@@ -14,25 +14,15 @@ class AniListBrowser:
     _URL = "https://graphql.anilist.co"
 
     def __init__(self):
-        self._TITLE_LANG = control.title_lang(int(control.getSetting("titlelanguage")))
+        self._TITLE_LANG = ["romaji", 'english'][int(control.getSetting("titlelanguage"))]
         self.perpage = int(control.getSetting('interface.perpage.general'))
-
-        if control.getSetting('contentformat.bool') == "true":
-            formats = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
-            self.format_in_type = formats[int(control.getSetting('contentformat.menu'))]
-        else:
-            self.format_in_type = ''
-        if control.getSetting('contentorigin.bool') == "true":
-            countries = ['JP', 'KR', 'CN', 'TW']
-            self.countryOfOrigin_type = countries[int(control.getSetting('contentorigin.menu'))]
-        else:
-            self.countryOfOrigin_type = ''
+        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][int(control.getSetting('contentformat.menu'))] if control.getSetting('contentformat.bool') == "true" else ''
+        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][int(control.getSetting('contentorigin.menu'))] if control.getSetting('contentorigin.bool') == "true" else ''
 
     @staticmethod
-    def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true'):
+    def handle_paging(hasnextpage, base_url, page):
+        if not hasnextpage or not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true':
             return []
-
         next_page = page + 1
         name = "Next Page (%d)" % next_page
         return [utils.allocate_item(name, base_url % next_page, True, False, 'next.png', {'plot': name}, 'next.png')]
@@ -65,11 +55,10 @@ class AniListBrowser:
 
         if self.format_in_type:
             variables['format'] = self.format_in_type
-
         if self.countryOfOrigin_type:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        airing = database.get_(self.get_base_res, 24, variables, page)
+        airing = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(airing, "anilist_airing_anime/%d", page)
 
     def get_upcoming_next_season(self, page=1):
@@ -85,11 +74,10 @@ class AniListBrowser:
 
         if self.format_in_type:
             variables['format'] = self.format_in_type
-
         if self.countryOfOrigin_type:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        upcoming = database.get_(self.get_base_res, 24, variables, page)
+        upcoming = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(upcoming, "anilist_upcoming_next_season/%d", page)
 
     def get_top_100_anime(self, page=1):
@@ -102,11 +90,10 @@ class AniListBrowser:
 
         if self.format_in_type:
             variables['format'] = self.format_in_type
-
         if self.countryOfOrigin_type:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        top_100_anime = database.get_(self.get_base_res, 24, variables, page)
+        top_100_anime = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(top_100_anime, "anilist_top_100_anime/%d", page)
 
     def get_search(self, query, page=1):
@@ -117,10 +104,10 @@ class AniListBrowser:
             'sort': "SEARCH_MATCH",
             'type': "ANIME"
         }
-        search = self.get_search_res(variables, page)
+        search = self.get_search_res(variables)
         if control.bools.search_adult:
             variables['isAdult'] = True
-            search_adult = self.get_search_res(variables, page)
+            search_adult = self.get_search_res(variables)
             for i in search_adult["ANIME"]:
                 i['title']['english'] = f'{i["title"]["english"]} - {control.colorString("Adult", "red")}'
             search['ANIME'] += search_adult['ANIME']
@@ -132,7 +119,7 @@ class AniListBrowser:
             'perPage': self.perpage,
             'id': anilist_id
         }
-        recommendations = database.get_(self.get_recommendations_res, 24, variables, page)
+        recommendations = database.get_(self.get_recommendations_res, 24, variables)
         return self.process_recommendations_view(recommendations, f'recommendations_next/{anilist_id}/%d', page)
 
     def get_relations(self, anilist_id):
@@ -164,7 +151,7 @@ class AniListBrowser:
         anilist_res['id'] = anilist_id_
         return self.process_res(anilist_res)
 
-    def get_base_res(self, variables, page=1):
+    def get_base_res(self, variables):
         query = '''
         query (
             $page: Int=1,
@@ -257,7 +244,7 @@ class AniListBrowser:
         json_res = results['data']['Page']
         return json_res
 
-    def get_search_res(self, variables, page=1):
+    def get_search_res(self, variables):
         query = '''
         query (
             $page: Int=1,
@@ -343,7 +330,7 @@ class AniListBrowser:
         json_res = results['data']['Page']
         return json_res
 
-    def get_recommendations_res(self, variables, page=1):
+    def get_recommendations_res(self, variables):
         query = '''
         query ($id: Int, $page: Int, $perpage: Int=20) {
           Media(id: $id, type: ANIME) {
@@ -644,18 +631,16 @@ class AniListBrowser:
         completed = self.open_completed()
         mapfunc = partial(self._base_anilist_view, completed=completed)
         all_results = list(map(mapfunc, json_res['ANIME']))
-        all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
+        all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
     def process_recommendations_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         res = [edge['node']['mediaRecommendation'] for edge in json_res['edges'] if edge['node']['mediaRecommendation']]
-        completed = self.open_completed()
         get_meta.collect_meta_(res)
-
-        mapfunc = partial(self._base_anilist_view, completed=completed)
+        mapfunc = partial(self._base_anilist_view, completed=self.open_completed())
         all_results = list(map(mapfunc, res))
-        all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
+        all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
     def process_relations_view(self, json_res):
@@ -665,9 +650,8 @@ class AniListBrowser:
                 tnode = edge['node']
                 tnode['relationType'] = edge['relationType']
                 res.append(tnode)
-        completed = self.open_completed()
         get_meta.collect_meta_(res)
-        mapfunc = partial(self._base_anilist_view, completed=completed)
+        mapfunc = partial(self._base_anilist_view, completed=self.open_completed())
         all_results = list(map(mapfunc, res))
         return all_results
 
@@ -695,7 +679,7 @@ class AniListBrowser:
             title = res['title']['romaji']
 
         if res.get('relationType'):
-            title += ' [COLOR limegreen][I]{0}[/I][/COLOR]'.format(res['relationType'])
+            title += ' [I]%s[/I]' % control.colorString(res['relationType'], 'limegreen')
 
         desc = res.get('description')
         if desc:
@@ -728,11 +712,11 @@ class AniListBrowser:
 
         try:
             cast = []
-            for x in res['characters']['edges']:
+            for i, x in enumerate(res['characters']['edges']):
                 role = x['node']['name']['userPreferred']
                 actor = x['voiceActors'][0]['name']['userPreferred']
                 actor_hs = x['voiceActors'][0]['image']['large']
-                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs})
+                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
             info['cast'] = cast
         except IndexError:
             pass
@@ -977,7 +961,7 @@ class AniListBrowser:
         mapfunc = partial(self._base_anilist_view, completed=completed)
         get_meta.collect_meta_(anime_res)
         all_results = list(map(mapfunc, anime_res))
-        all_results += self._handle_paging(hasNextPage, base_plugin_url, page)
+        all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
     def get_genres_page(self, genre_string, tag_string, page):

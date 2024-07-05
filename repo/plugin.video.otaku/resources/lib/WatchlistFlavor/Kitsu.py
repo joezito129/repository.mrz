@@ -64,12 +64,12 @@ class KitsuWLF(WatchlistFlavorBase):
         control.setSetting('kitsu.expiry', str(int(time.time()) + int(data['expires_in'])))
 
     @staticmethod
-    def _handle_paging(hasNextPage, base_url, page):
-        if not hasNextPage or (not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true'):
+    def handle_paging(hasnextpage, base_url, page):
+        if not hasnextpage or not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true':
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
-        parsed = parse.urlparse(hasNextPage)
+        parsed = parse.urlparse(hasnextpage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
         return [utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)]
 
@@ -145,7 +145,7 @@ class KitsuWLF(WatchlistFlavorBase):
 
         all_results = list(itertools.chain(*all_results))
 
-        all_results += self._handle_paging(result['links'].get('next'), base_plugin_url, page)
+        all_results += self.handle_paging(result['links'].get('next'), base_plugin_url, page)
         return all_results
 
     def _base_watchlist_view(self, res, eres):

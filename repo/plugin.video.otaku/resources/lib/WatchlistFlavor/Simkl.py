@@ -14,7 +14,7 @@ class SimklWLF(WatchlistFlavorBase):
     _IMAGE = "simkl.png"
 
     # client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'    # Swag
-    # client_id = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0"
+    # client_id = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0"    # JZ
     client_id = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8"      # Otaku
 
     def __headers(self):
@@ -127,7 +127,6 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
             all_results = sorted(all_results, key=lambda x: x['info']['user_rating'] or 0, reverse=True)
         elif sort_pref == 'last_added':
             all_results.reverse()
-        # all_results += self._handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 
     @div_flavor
@@ -252,16 +251,9 @@ Code Valid for {control.colorString(device_code["expires_in"] - i * device_code[
         #     'score': results['score']
         # }
         return {}
-        # anime_entry = {
-        #     'eps_watched': item_dict['progress'],
-        #     'status': item_dict['status'],
-        #     'score': item_dict['ratingTwenty']
-        # }
-        # return anime_entry
 
     def save_completed(self):
         import json
-
         data = self.get_all_items('completed')
         completed = {}
         for dat in data['anime']:

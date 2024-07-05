@@ -88,16 +88,19 @@ def version_check():
     control.log(f'### Python: {control.sys.version}')
     control.log(f'### SQLite: {database_sync.sqlite_version}')
     control.log(f'### Kodi Version: {control.kodi_version}')
+
     if control.getSetting('otaku.version') != control.ADDON_VERSION:
-        control.setSetting("reuselanguageinvoker.status", "Disabled")
+        control.setSetting("reuselanguageinvoker.status", "Enabled")
         control.setSetting('otaku.version', control.ADDON_VERSION)
-        control.log('### Disabled Re-uselanguageinvoker')
+        control.log('### Enabled Re-uselanguageinvoker')
+
+    # if control.getSetting('otaku.version') != control.ADDON_VERSION:
+    #     control.setSetting("reuselanguageinvoker.status", "Disabled")
+    #     control.setSetting('otaku.version', control.ADDON_VERSION)
+    #     control.log('### Disabled Re-uselanguageinvoker')
 
 
 def run_maintenance():
-    # ADD COMMON HOUSEKEEPING ITEMS HERE #
-
-    # Refresh API tokens
     control.log('##################  RUNNING MAINTENANCE  ######################')
     version_check()
     database_sync.AnilistSyncDatabase()
