@@ -289,11 +289,11 @@ def draw_items(video_data, content_type=None, draw_cm=None):
         if bools.context_marked_watched:
             draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
 
-    # if len(video_data) > 99:
-    #     bulk_draw_items(video_data, draw_cm)
-    # else:
-    for vid in video_data:
-        xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
+    if len(video_data) > 99:
+        bulk_draw_items(video_data, draw_cm)
+    else:
+        for vid in video_data:
+            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
 
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
@@ -303,6 +303,12 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     elif content_type == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, True, False, True)
+    if content_type == 'episodes':
+        for _ in range(20):
+            if xbmc.getCondVisibility("Container.HasFiles"):
+                xbmc.sleep(100)
+                break
+            xbmc.sleep(100)
     if bools.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
@@ -310,9 +316,9 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
         else:
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
+
     # move to episode position currently watching
     if content_type == "episodes" and bools.smart_scroll:
-        xbmc.sleep(int(getSetting('general.smart.scroll.time')))
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
             total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
