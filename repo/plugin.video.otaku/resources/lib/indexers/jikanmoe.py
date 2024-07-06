@@ -49,7 +49,7 @@ class JikanAPI:
     @staticmethod
     def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
         episode = res['mal_id']
-        url = f"{anilist_id}/{episode}/"
+        url = f"{anilist_id}/{episode}"
 
         title = res.get('title')
         if not title:
@@ -58,10 +58,11 @@ class JikanAPI:
         image = res['images']['jpg']['image_url'] if res.get('images') else poster
 
         info = {
-            # 'plot': res.get('description', ''),
+            'UniqueIDs': {'anilist_id': str(anilist_id)},
             'title': title,
             'season': season,
             'episode': episode,
+            # 'plot': res.get('description', ''),
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode'
         }
@@ -75,7 +76,7 @@ class JikanAPI:
 
         code = jz.get_second_label(info, dub_data)
         if not code and control.bools.filler:
-            filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
+            filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
         parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)

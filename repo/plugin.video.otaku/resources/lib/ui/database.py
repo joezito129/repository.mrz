@@ -212,11 +212,11 @@ def update_show_data(anilist_id, data, last_updated=''):
         control.try_release_lock(lock)
 
 
-def update_episode(show_id, season, number, update_time, kodi_meta, filler=''):
+def update_episode(anilist_id, season, number, update_time, kodi_meta, filler=''):
     lock.acquire()
     cursor = _get_cursor()
     try:
-        cursor.execute('REPLACE INTO episodes (anilist_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (show_id, season, kodi_meta, update_time, number, filler))
+        cursor.execute('REPLACE INTO episodes (anilist_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (anilist_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
@@ -236,20 +236,20 @@ def get_show_data(anilist_id):
     return show_data
 
 
-def get_episode_list(show_id):
+def get_episode_list(anilist_id):
     lock.acquire()
     cursor = _get_cursor()
-    cursor.execute('SELECT* FROM episodes WHERE anilist_id=?', (show_id,))
+    cursor.execute('SELECT* FROM episodes WHERE anilist_id=?', (anilist_id,))
     episodes = cursor.fetchall()
     cursor.close()
     control.try_release_lock(lock)
     return episodes
 
 
-def get_episode(show_id):
+def get_episode(anilist_id):
     lock.acquire()
     cursor = _get_cursor()
-    cursor.execute('SELECT* FROM episodes WHERE anilist_id=?', (show_id,))
+    cursor.execute('SELECT* FROM episodes WHERE anilist_id=?', (anilist_id,))
     episode = cursor.fetchone()
     cursor.close()
     control.try_release_lock(lock)

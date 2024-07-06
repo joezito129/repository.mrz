@@ -39,8 +39,7 @@ def get_episodeList(anilist_id, pass_idx):
         playlist = control.bulk_player_list(items)[pass_idx:]
 
         for i in playlist:
-            url = i[0]
-            control.playList.add(url=url, listitem=i[1])
+            control.playList.add(url=i[0], listitem=i[1])
     return items
 
 

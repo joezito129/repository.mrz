@@ -109,7 +109,7 @@ class AniListBrowser:
             variables['isAdult'] = True
             search_adult = self.get_search_res(variables)
             for i in search_adult["ANIME"]:
-                i['title']['english'] = f'{i["title"]["english"]} - {control.colorString("Adult", "red")}'
+                i['title']['english'] = f'{i["title"]["english"]} - {control.colorstr("Adult", "red")}'
             search['ANIME'] += search_adult['ANIME']
         return self.process_anilist_view(search, f"search/{query}/%d", page)
 
@@ -679,7 +679,7 @@ class AniListBrowser:
             title = res['title']['romaji']
 
         if res.get('relationType'):
-            title += ' [I]%s[/I]' % control.colorString(res['relationType'], 'limegreen')
+            title += ' [I]%s[/I]' % control.colorstr(res['relationType'], 'limegreen')
 
         desc = res.get('description')
         if desc:
@@ -689,9 +689,7 @@ class AniListBrowser:
             desc = desc.replace('\n', '')
 
         info = {
-            'UniqueIDs': {
-                'anilist_id': str(anilist_id)
-            },
+            'UniqueIDs': {'anilist_id': str(anilist_id)},
             'genre': res.get('genres'),
             'title': title,
             'plot': desc,

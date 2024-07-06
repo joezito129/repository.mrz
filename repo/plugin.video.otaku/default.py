@@ -20,6 +20,7 @@
 # t0 = time.perf_counter_ns()
 
 import pickle
+import xbmcplugin
 
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
@@ -126,7 +127,7 @@ def ANILIST_TOP_100_ANIME_PAGES(payload, params):
 
 @Route('anilist_genres')
 def ANILIST_GENRES(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_genres(lambda grenre_dialog: control.multiselect_dialog(control.lang(50010), grenre_dialog)), 'tvshows')
+    control.draw_items(_ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(50010), g)), 'tvshows')
 
 
 # next page for anilist_genres
@@ -167,7 +168,6 @@ def REMOVE_SEARCH_ITEM(payload, params):
 def SEARCH(payload, params):
     query = control.keyboard(control.lang(50011))
     if not query:
-        import xbmcplugin
         return xbmcplugin.endOfDirectory(control.HANDLE)
     if int(control.getSetting('searchhistory')) == 0:
         database.addSearchHistory(query, 'show')
@@ -190,20 +190,28 @@ def SEARCH_RESULTS(payload, params):
 
 @Route('play/*')
 def PLAY(payload, params):
-    anilist_id, episode, filter_lang = payload.rsplit("/")
+    anilist_id, episode = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
+    resume_time = params.get('resume')
+    if resume_time:
+        resume_time = float(resume_time)
+        context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
+        if context == -1:
+            return
+        elif context == 1:
+            resume_time = None
     sources = OtakuBrowser.get_sources(anilist_id, episode, 'show', rescrape, source_select)
     _mock_args = {"anilist_id": anilist_id, "episode": episode}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
-
     else:
         from resources.lib.windows.resolver import Resolver
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
         link = resolver.doModal(sources, {}, False)
-    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape, source_select)
+
+    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape, source_select, resume_time)
 
 
 @Route('play_movie/*')
@@ -212,6 +220,14 @@ def PLAY_MOVIE(payload, params):
     anilist_id, mal_id = payload_list
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
+    resume_time = params.get('resume')
+    if resume_time:
+        resume_time = float(resume_time)
+        context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
+        if context == -1:
+            return
+        elif context == 1:
+            resume_time = None
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -219,6 +235,7 @@ def PLAY_MOVIE(payload, params):
             from resources.lib.AniListBrowser import AniListBrowser
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
+
     sources = OtakuBrowser.get_sources(anilist_id, 1, 'movie', rescrape, source_select)
     _mock_args = {'anilist_id': anilist_id}
 
@@ -230,14 +247,14 @@ def PLAY_MOVIE(payload, params):
         from resources.lib.windows.resolver import Resolver
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
         link = resolver.doModal(sources, {}, False)
-    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape, source_select)
+    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape, source_select, resume_time)
 
 
 @Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload, params):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
 
-    play, anilist_id, episode, filter_lang = payload.rsplit("/")
+    play, anilist_id, episode = payload.rsplit("/")
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(anilist_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
@@ -296,7 +313,7 @@ def SELECT_FANART(payload, params):
         fanart = pickle.loads(episode['kodi_meta'])['image']['fanart']
         fanart_display = fanart + ["None", "Random (Defualt)"]
         fanart += ["None", ""]
-        control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f) for i, f in enumerate(fanart_display)], '')
+        control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
         return
     elif len(payload_list) == 3:
         path, anilist_id, mal_id = payload_list

@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="context.otaku" version="1.0.15" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
+<addon id="context.otaku" version="1.0.16" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
   <requires>
     <!-- <import addon="xbmc.python" version="3.0.0" /> -->
   </requires>
   <extension point="kodi.context.item">
     <menu id="kodi.core.main">
-      <item library="watchlistLogout.py">
-        <label>Logout</label>
-        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.Contains(ListItem.folderpath,/watchlist/)]</visible>
-      </item>
       <item library="findRecommendations.py">
         <label>Find Recommendations</label>
         <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>

@@ -1,10 +1,11 @@
 import pickle
 import random
+import xbmcgui
 
 from resources.lib.ui import control, database
 
 
-class BaseWindow(control.xmlWindow):
+class BaseWindow(xbmcgui.WindowXMLDialog):
     def __init__(self, xml_file, location, actionArgs=None):
         super().__init__(xml_file, location)
 

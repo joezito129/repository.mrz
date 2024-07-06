@@ -1,4 +1,3 @@
-import xbmc
 import xbmcgui
 import xbmcvfs
 import json
@@ -63,14 +62,13 @@ class DownloadManager(BaseWindow):
             self.close()
 
     def background_info_updater(self):
-        while not control.abort_requested() and not self.abort:
+        while not control.wait_for_abort(1) and not self.abort:
             self.downloads = manager.get_all_tasks_info()
             self.populate_menu_items()
-            xbmc.sleep(1000)
 
     def populate_menu_items(self):
         def create_menu_item(download_item):
-            new_item = xbmcgui.ListItem(label=f"{download_item['filename']}")
+            new_item = xbmcgui.ListItem(label=f"{download_item['filename']}", offscreen=True)
             self.set_menu_item_properties(new_item, download_item)
             return new_item
 

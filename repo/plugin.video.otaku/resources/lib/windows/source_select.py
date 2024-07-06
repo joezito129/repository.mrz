@@ -1,4 +1,5 @@
 import pickle
+import xbmcgui
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
@@ -31,8 +32,6 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.title', anime_init[0][episode - 1]['info'].get('title'))
                 self.setProperty('item.info.plot', anime_init[0][episode - 1]['info'].get('plot'))
                 self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
-                self.setProperty('item.art.poster', anime_init[0][episode - 1]['image'].get('poster_'))
-                self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image'].get('thumb'))
             except IndexError:
                 self.setProperty('item.info.season', '-1')
                 self.setProperty('item.info.episode', '-1')
@@ -50,8 +49,6 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.title', kodi_meta.get('name'))
                 self.setProperty('item.info.plot', kodi_meta.get('plot'))
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
-                self.setProperty('item.art.poster', kodi_meta.get('poster_'))
-                self.setProperty('item.art.thumb', kodi_meta.get('thumb'))
                 self.setProperty('item.info.aired', kodi_meta.get('start_date'))
                 try:
                     self.setProperty('item.info.year', kodi_meta.get('start_date').split('-')[0])
@@ -64,7 +61,7 @@ class SourceSelect(BaseWindow):
         for i in self.sources:
             if not i:
                 continue
-            menu_item = control.menuItem('%s' % i['release_title'])
+            menu_item = xbmcgui.ListItem('%s' % i['release_title'], offscreen=True)
             for info in list(i.keys()):
                 try:
                     value = i[info]

@@ -40,8 +40,6 @@ OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'me
 OTAKU_ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', settings.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
-xmlWindow = xbmcgui.WindowXMLDialog
-menuItem = xbmcgui.ListItem
 execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
@@ -117,7 +115,7 @@ def copy2clip(txt):
         os.system(command)
 
 
-def colorString(text, color=None):
+def colorstr(text, color=None):
     if color == 'default' or color == '' or color is None:
         color = 'deepskyblue'
     return f"[COLOR {color}]{text}[/COLOR]"
@@ -234,8 +232,9 @@ def set_videotags(li, info):
     if info.get('trailer'):
         vinfo.setTrailer(info['trailer'])
     if info.get('UniqueIDs'):
-        # vinfo.setUniqueIDs(info['UniqueIDs'], 'anilist_id')
         vinfo.setUniqueIDs(info['UniqueIDs'])
+    # if info.get('resume'):
+    #     vinfo.setResumePoint(info['resume'], 0)
 
 
 def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
@@ -243,10 +242,10 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
         set_videotags(liz, info)
-    if draw_cm:
-        cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
-        liz.addContextMenuItems(cm)
-
+    cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
+    if 'watchlist/' in url:
+        watchlist = url.rsplit('watchlist/', 2)[1]
+        cm.append((f"Watchlist {colorstr(watchlist.title())} Logout", f'RunPlugin(plugin://{ADDON_ID}/watchlist_logout/{watchlist})'))
     if art.get('fanart') is None or bools.fanart_disable:
         art['fanart'] = OTAKU_FANART
     else:
@@ -265,8 +264,10 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
-    liz.setArt(art)
 
+    if cm:
+        liz.addContextMenuItems(cm)
+    liz.setArt(art)
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
@@ -288,7 +289,6 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     elif content_type == 'episodes':
         if bools.context_marked_watched:
             draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
-
     if len(video_data) > 99:
         bulk_draw_items(video_data, draw_cm)
     else:
@@ -306,9 +306,9 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     if content_type == 'episodes':
         for _ in range(20):
             if xbmc.getCondVisibility("Container.HasFiles"):
-                xbmc.sleep(100)
                 break
             xbmc.sleep(100)
+    xbmc.sleep(200)
     if bools.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
@@ -410,6 +410,13 @@ def is_addon_visible():
 def abort_requested():
     monitor = xbmc.Monitor()
     abort_requested_ = monitor.abortRequested()
+    del monitor
+    return abort_requested_
+
+
+def wait_for_abort(timeout=1.0):
+    monitor = xbmc.Monitor()
+    abort_requested_ = monitor.waitForAbort(timeout)
     del monitor
     return abort_requested_
 

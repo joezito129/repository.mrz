@@ -30,7 +30,7 @@ class RealDebrid:
         if control.progressDialog.iscanceled():
             control.progressDialog.close()
             return
-        time.sleep(self.OauthTimeStep)
+        xbmc.sleep(self.OauthTimeStep)
         params = {
             'client_id': self.ClientID,
             'code': self.DeviceCode
@@ -56,8 +56,8 @@ class RealDebrid:
         control.progressDialog.create('Real-Debrid Auth')
         control.progressDialog.update(
             -1,
-            control.lang(30100).format(control.colorString('https://real-debrid.com/device')) + '[CR]'
-            + control.lang(30101).format(control.colorString(response['user_code'])) + '[CR]'
+            control.lang(30100).format(control.colorstr('https://real-debrid.com/device')) + '[CR]'
+            + control.lang(30101).format(control.colorstr(response['user_code'])) + '[CR]'
             + control.lang(30102)
         )
         self.OauthTimeout = int(response['expires_in'])

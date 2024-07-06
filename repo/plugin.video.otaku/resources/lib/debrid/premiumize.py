@@ -24,8 +24,8 @@ class Premiumize:
         control.copy2clip(token['user_code'])
         control.progressDialog.create(
             control.ADDON_NAME,
-            control.lang(30100).format(control.colorString(token['verification_uri'])) + '[CR]'
-            + control.lang(30101).format(control.colorString(token['user_code'])) + '[CR]'
+            control.lang(30100).format(control.colorstr(token['verification_uri'])) + '[CR]'
+            + control.lang(30101).format(control.colorstr(token['user_code'])) + '[CR]'
             + control.lang(30102)
         )
         control.progressDialog.update(0)

@@ -57,8 +57,8 @@ class DebridLink:
         control.progressDialog.create('Debrid-Link Auth')
         control.progressDialog.update(
             -1,
-            control.lang(30100).format(control.colorString(response.get('verification_url'))) + '[CR]'
-            + control.lang(30101).format(control.colorString(response.get('user_code'))) + '[CR]'
+            control.lang(30100).format(control.colorstr(response.get('verification_url'))) + '[CR]'
+            + control.lang(30101).format(control.colorstr(response.get('user_code'))) + '[CR]'
             + control.lang(30102)
         )
         auth_done = False

@@ -6,13 +6,13 @@ from resources.lib.ui import control
 
 
 def getAudio_lang(release_title):
-    lang = 0
     release_title = cleanTitle(release_title)
     if any(i in release_title for i in ['dual audio']):
         lang = 1
-    if any(i in release_title for i in ['dub', 'dubbed']):
+    elif any(i in release_title for i in ['dub', 'dubbed']):
         lang = 2
-
+    else:
+        lang = 0
     return lang
 
 
@@ -111,9 +111,6 @@ def getInfo(release_title):
         info.append('BLUR')
     if any(i in release_title for i in [' 3d']):
         info.append('3D')
-
-    # if any(i in release_title for i in ['batch', 'complete', 's01+s02']):
-    #     info.append('BATCH')
     return info
 
 

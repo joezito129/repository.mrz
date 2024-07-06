@@ -1,14 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addons><addon id="context.otaku" version="1.0.15" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
+<addons><addon id="context.otaku" version="1.0.16" name="otaku - Global Context Menu Items" provider-name="TeamOtaku">
   <requires>
     
   </requires>
   <extension point="kodi.context.item">
     <menu id="kodi.core.main">
-      <item library="watchlistLogout.py">
-        <label>Logout</label>
-        <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.Contains(ListItem.folderpath,/watchlist/)]</visible>
-      </item>
       <item library="findRecommendations.py">
         <label>Find Recommendations</label>
         <visible>String.StartsWith(ListItem.path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
@@ -187,13 +183,13 @@
       <fanart>fanart.jpg</fanart>
     </assets>
   </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.38.3">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.39">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.beautifulsoup4" />
     <import addon="script.module.inputstreamhelper" />
     <import addon="script.module.requests" />
-    <import addon="context.otaku" version="1.0.15" />
+    <import addon="context.otaku" version="1.0.16" />
   </requires>
   <extension library="default.py" point="xbmc.python.pluginsource">
         <provides>video</provides>

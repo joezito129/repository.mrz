@@ -21,7 +21,7 @@ class SIMKLAPI:
     def parse_episode_view(self, res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
         episode = int(res['episode'])
 
-        url = f"{anilist_id}/{episode}/"
+        url = f"{anilist_id}/{episode}"
 
         title = res.get('title')
         if not title:
@@ -30,11 +30,7 @@ class SIMKLAPI:
         image = self.imagePath % res['img'] if res.get('img') else poster
 
         info = {
-            'UniqueIDs': {
-                'anilist_id': str(anilist_id),
-                'mal_id': '',
-                'kitsu_id': ''
-            },
+            'UniqueIDs': {'anilist_id': str(anilist_id)},
             'plot': res.get('description', ''),
             'title': title,
             'season': season,
@@ -56,7 +52,7 @@ class SIMKLAPI:
             filler = ''
         code = jz.get_second_label(info, dub_data)
         if not code and control.bools.filler:
-            filler = code = control.colorString(filler, color="red") if filler == 'Filler' else filler
+            filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
         parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)

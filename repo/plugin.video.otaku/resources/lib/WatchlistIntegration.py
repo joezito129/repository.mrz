@@ -26,6 +26,7 @@ def WL_LOGIN(payload, params):
 @Route('watchlist_logout/*')
 def WL_LOGOUT(payload, params):
     WatchlistFlavor.logout_request(payload)
+    control.refresh()
 
 
 @Route('watchlist/*')
@@ -96,7 +97,7 @@ def CONTEXT_MENU(payload, params):
     kodi_meta = pickle.loads(show['kodi_meta'])
     title = kodi_meta['title_userPreferred']
 
-    context = control.select_dialog(f"{title}  {control.colorString(f'({str(flavor.flavor_name).capitalize()})', 'blue')}", list(map(lambda x: x[0], actions)))
+    context = control.select_dialog(f"{title}  {control.colorstr(f'({str(flavor.flavor_name).capitalize()})', 'blue')}", list(map(lambda x: x[0], actions)))
     if context != -1:
         heading = f'{control.ADDON_NAME} - ({str(flavor.flavor_name).capitalize()})'
         status = actions[context][1]

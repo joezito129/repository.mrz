@@ -100,7 +100,7 @@ class Resolver(BaseWindow):
         elif source['type'] == 'cloud' or source['type'] == 'hoster':
             if source['torrent_files']:
                 best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'], self.pack_select)
-                if not best_match['path']:
+                if not best_match or not best_match['path']:
                     return
                 for f_index, torrent_file in enumerate(source['torrent_files']):
                     if torrent_file['path'] == best_match['path']:

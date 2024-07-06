@@ -33,6 +33,8 @@ class WatchlistPlayer(player):
 
     def __init__(self):
         super(WatchlistPlayer, self).__init__()
+        self.vtag = None
+        self.resume_time = None
         self._episode = None
         self._build_playlist = None
         self._anilist_id = None
@@ -53,11 +55,12 @@ class WatchlistPlayer(player):
         self.skipintro_aniskip_offset = int(control.getSetting('skipintro.aniskip.offset'))
         self.skipoutro_aniskip_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
-    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode):
+    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, resume_time=None):
         self._anilist_id = anilist_id
         self._watchlist_update = watchlist_update
         self._build_playlist = build_playlist
         self._episode = episode
+        self.resume_time = resume_time
 
         if self.skipintro_aniskip_enable:
             mal_id = database.get_show(anilist_id)['mal_id']
@@ -87,7 +90,8 @@ class WatchlistPlayer(player):
 
     def onPlayBackStarted(self):
         current_ = playList.getposition()
-        self.media_type = playList[current_].getVideoInfoTag().getMediaType()
+        self.vtag = playList[current_].getVideoInfoTag()
+        self.media_type = self.vtag.getMediaType()
         control.setSetting('addon.last_watched', self._anilist_id)
 
     def onPlayBackStopped(self):
@@ -112,14 +116,11 @@ class WatchlistPlayer(player):
         while self.isPlaying() and not self.updated:
             watched_percentage = self.getWatchedPercent()
             self.current_time = self.getTime()
-
             if watched_percentage > self.update_percent:
                 self._watchlist_update(self._anilist_id, self._episode)
                 self.updated = True
-
                 if playList.size() == 0 or playList.getposition() == playList.size() - 1:
                     maintenance.sync_watchlist(True)
-
                 break
             xbmc.sleep(5000)
 
@@ -134,12 +135,8 @@ class WatchlistPlayer(player):
 
         self.total_time = int(self.getTotalTime())
         control.closeAllDialogs()
-
-        subtitle_lang = self.getAvailableSubtitleStreams()
-        if len(subtitle_lang) > 1:
-            if 'eng' in subtitle_lang:
-                subtitle_int = subtitle_lang.index('eng')
-                self.setSubtitleStream(subtitle_int)
+        if self.resume_time:
+            player().seekTime(self.resume_time)
 
         if self.media_type == 'movie':
             return self.onWatchedPercent()
@@ -225,7 +222,7 @@ class PlayerDialogs(xbmc.Player):
 
 def cancelPlayback():
     playList.clear()
-    xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem())
+    xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(offscreen=True))
 
 
 def _prefetch_play_link(link):
@@ -258,7 +255,7 @@ def _prefetch_play_link(link):
     }
 
 
-def play_source(link, anilist_id, watchlist_update, build_playlist, episode, rescrape=False, source_select=False):
+def play_source(link, anilist_id, watchlist_update, build_playlist, episode, rescrape=False, source_select=False, resume_time=None):
     if isinstance(link, tuple):
         link, subs = link
     else:
@@ -271,8 +268,7 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
         cancelPlayback()
         return
 
-    item = xbmcgui.ListItem(path=linkInfo['url'])
-
+    item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
     if subs:
         from resources.lib.ui import embed_extractor
         embed_extractor.del_subs()
@@ -294,8 +290,8 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
         episode_info = playlist_info[episode - 1]
         control.set_videotags(item, episode_info['info'])
         item.setArt(episode_info['image'])
-        xbmc.Player().play(control.playList, item)
-        WatchlistPlayer().handle_player(anilist_id, watchlist_update, None, episode)
+        player().play(control.playList, item)
+        WatchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode, resume_time)
         return
 
     xbmcplugin.setResolvedUrl(control.HANDLE, True, item)

@@ -1,3 +1,8 @@
+Changelog v5.0.39 (2024-07-06):
+- Got rid of wait time for smartscroll
+- Fixed ViewTypes
+- Added Resume time for source select and rescrape
+
 Changelog v5.0.38 (2024-07-05):
 - Fixed Strptime
 - Added cache sources

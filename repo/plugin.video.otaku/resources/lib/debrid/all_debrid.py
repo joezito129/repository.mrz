@@ -22,8 +22,8 @@ class AllDebrid:
         control.copy2clip(resp['pin'])
         control.progressDialog.create(
             control.ADDON_NAME + ': AllDebrid Auth',
-            control.lang(30100).format(control.colorString(resp['base_url'])) + '[CR]'
-            + control.lang(30101).format(control.colorString(resp['pin'])) + '[CR]'
+            control.lang(30100).format(control.colorstr(resp['base_url'])) + '[CR]'
+            + control.lang(30101).format(control.colorstr(resp['pin'])) + '[CR]'
             + control.lang(30102)
         )
         # Seems the All Debrid servers need some time do something with the pin before polling
