@@ -16,12 +16,12 @@ class AniListBrowser:
     def __init__(self):
         self._TITLE_LANG = ["romaji", 'english'][int(control.getSetting("titlelanguage"))]
         self.perpage = int(control.getSetting('interface.perpage.general'))
-        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][int(control.getSetting('contentformat.menu'))] if control.getSetting('contentformat.bool') == "true" else ''
-        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][int(control.getSetting('contentorigin.menu'))] if control.getSetting('contentorigin.bool') == "true" else ''
+        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][int(control.getSetting('contentformat.menu'))] if control.getBool('contentformat.bool') else ''
+        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][int(control.getSetting('contentorigin.menu'))] if control.getBool('contentorigin.bool') else ''
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):
-        if not hasnextpage or not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true':
+        if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
@@ -105,7 +105,7 @@ class AniListBrowser:
             'type': "ANIME"
         }
         search = self.get_search_res(variables)
-        if control.bools.search_adult:
+        if control.getSetting('search.adult') == "true":
             variables['isAdult'] = True
             search_adult = self.get_search_res(variables)
             for i in search_adult["ANIME"]:
@@ -742,7 +742,7 @@ class AniListBrowser:
 
         base = {
             "name": title,
-            "url": f'animes/{anilist_id}/{mal_id}',
+            "url": f'animes/{anilist_id}/{mal_id}/',
             "image": res['coverImage']['extraLarge'],
             "poster": res['coverImage']['extraLarge'],
             "fanart": res['coverImage']['extraLarge'],
@@ -760,7 +760,7 @@ class AniListBrowser:
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
 
         if res['format'] in ['MOVIE', 'ONA'] and res['episodes'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -828,53 +828,46 @@ class AniListBrowser:
 
         r = requests.post(self._URL, json={'query': query})
         results = r.json()
-        genres_list = results['data']['genres']
-
-        del genres_list[6]
-
-        tags_list = []
+        if not results:
+            # genres_list = ['Action', 'Adventure', 'Comedy', 'Drama', 'Ecchi', 'Fantasy', 'Hentai', "Horror", 'Mahou Shoujo', 'Mecha', 'Music', 'Mystery', 'Psychological', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller']
+            genres_list = ['error']
+        else:
+            genres_list = results['data']['genres']
+        # if 'Hentai' in genres_list:
+        #     genres_list.remove('Hentai')
         try:
-            tags = [x for x in results['tags'] if not x['isAdult']]
+            tags_list = [x['name'] for x in results['tags'] if not x['isAdult']]
         except KeyError:
-            tags = []
-        for tag in tags:
-            tags_list.append(tag['name'])
-
-        genres_list += tags_list
-        return self.select_genres(genre_dialog, genres_list)
-
-    def select_genres(self, genre_dialog, genre_display_list):
-        multiselect = genre_dialog(genre_display_list)
+            tags_list = []
+        multiselect = genre_dialog(genres_list + tags_list)
         if not multiselect:
             return []
-        genre_list = []
-        tag_list = []
+        genre_display_list = []
+        tag_display_list = []
         for selection in multiselect:
-            if selection <= 17:
-                genre_list.append(genre_display_list[selection])
-                continue
-            tag_list.append(genre_display_list[selection])
-        return self.genres_payload(genre_list, tag_list)
+            if selection < len(genres_list):
+                genre_display_list.append(genres_list[selection])
+            else:
+                tag_display_list.append(tag_display_list[selection])
+        return self.genres_payload(genre_display_list, tag_display_list)
 
     def genres_payload(self, genre_list, tag_list, page=1):
         query = '''
         query (
             $page: Int,
-            $perpage: Int=20,
+            $perPage: Int=20,
             $type: MediaType,
             $isAdult: Boolean = false,
-            $includedGenres: [String],
-            $includedTags: [String],
+            $genre_in: [String],
             $sort: [MediaSort] = [SCORE_DESC, POPULARITY_DESC]
         ) {
-            Page (page: $page, perPage: $perpage) {
+            Page (page: $page, perPage: $perPage) {
                 pageInfo {
                     hasNextPage
                 }
                 ANIME: media (
                     type: $type,
-                    genre_in: $includedGenres,
-                    tag_in: $includedTags,
+                    genre_in: $genre_in,
                     sort: $sort,
                     isAdult: $isAdult
                 ) {
@@ -939,31 +932,33 @@ class AniListBrowser:
             }
         }
         '''
-
+        if not isinstance(genre_list, list):
+            genre_list = ast.literal_eval(genre_list)
+        if not isinstance(tag_list, list):
+            tag_list = ast.literal_eval(tag_list)
         variables = {
             'page': page,
+            'perPage': self.perpage,
             'type': "ANIME"
         }
         if genre_list:
-            variables["includedGenres"] = genre_list
+            variables['genre_in'] = genre_list
         if tag_list:
-            variables["includedTags"] = tag_list
-        return self.process_genre_view(query, variables, f'anilist_genres/{genre_list}/{tag_list}/%d', page)
+            variables['tag_in'] = tag_list
+        if 'Hentai' in genre_list:
+            variables['isAdult'] = True
+        return self.process_genre_view(query, variables, f"anilist_genres/{genre_list}/{tag_list}/%d", page)
 
     def process_genre_view(self, query, variables, base_plugin_url, page):
         r = requests.post(self._URL, json={'query': query, 'variables': variables})
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
         hasNextPage = results['data']['Page']['pageInfo']['hasNextPage']
-        completed = self.open_completed()
-        mapfunc = partial(self._base_anilist_view, completed=completed)
+        mapfunc = partial(self._base_anilist_view, completed=self.open_completed())
         get_meta.collect_meta_(anime_res)
         all_results = list(map(mapfunc, anime_res))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
-
-    def get_genres_page(self, genre_string, tag_string, page):
-        return self.genres_payload(ast.literal_eval(genre_string), ast.literal_eval(tag_string), page)
 
     @staticmethod
     def open_completed():

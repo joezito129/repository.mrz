@@ -15,7 +15,7 @@ def get_route(anilist_id):
         "anilist-ids": anilist_id
     }
     r = requests.get(f'{base_url}/anime', params=params)
-    return r.json()['anime'][0]['route']
+    return r.json()['anime'][0]['route'] if r.ok else ''
 
 
 def get_dub_time(anilist_id):

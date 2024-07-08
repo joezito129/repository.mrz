@@ -85,7 +85,7 @@ class AniListWLF(WatchlistFlavorBase):
         ]
         return actions
 
-    def get_watchlist_status(self, status, next_up):
+    def get_watchlist_status(self, status, next_up, offset=0, page=1):
         query = '''
         query ($userId: Int, $userName: String, $status: MediaListStatus, $type: MediaType, $sort: [MediaListSort], $forceSingleCompletedList: Boolean) {
             MediaListCollection(userId: $userId, userName: $userName, status: $status, type: $type, sort: $sort, forceSingleCompletedList: $forceSingleCompletedList) {
@@ -286,7 +286,6 @@ class AniListWLF(WatchlistFlavorBase):
 
         anilist_id, next_up_meta, show = self._get_next_up_meta('', progress, anilist_id)
         if next_up_meta:
-            url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):
                 title = '%s - %s' % (title, next_up_meta['title'])
             if next_up_meta.get('image'):
@@ -318,7 +317,7 @@ class AniListWLF(WatchlistFlavorBase):
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
         if next_up_meta:
-            base['url'] = url
+            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
             return utils.parse_view(base, False, True)
         return utils.parse_view(base, True, False)
 

@@ -67,7 +67,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):
-        if not hasnextpage or not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true':
+        if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
@@ -211,7 +211,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         plot = aired = None
         anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
-            url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):
                 title = f'{title} - {next_up_meta["title"]}'
             if next_up_meta.get('image'):
@@ -244,7 +243,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             return utils.parse_view(base, False, True)
 
         if next_up_meta:
-            base['url'] = url
+            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
             return utils.parse_view(base, False, True)
 
         return utils.parse_view(base, True, False)
@@ -252,7 +251,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def get_watchlist_anime_entry(self, anilist_id):
         mal_id = self._get_mapping_id(anilist_id, 'mal_id')
         if not mal_id:
-            return
+            return {}
 
         params = {
             "fields": 'my_list_status'

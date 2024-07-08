@@ -13,7 +13,7 @@ def parse_episodes(res, eps_watched, dub_data=None):
     if control.bools.clean_titles and parsed['info'].get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["number"]}'
         parsed['info']['plot'] = None
-    code = jz.get_second_label(parsed['info'], dub_data, res['filler'], control.bools.filler)
+    code = jz.get_second_label(parsed['info'], dub_data, res['filler'])
     parsed['info']['code'] = code
     return parsed
 

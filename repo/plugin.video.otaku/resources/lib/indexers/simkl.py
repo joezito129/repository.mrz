@@ -150,13 +150,14 @@ class SIMKLAPI:
         simkl_id = show_ids['simkl_id']
 
         if not simkl_id:
-            simkl_id = self.get_simkl_id('anilist', anilist_id)
+            simkl_id = self.get_id('anilist', anilist_id)
             if not simkl_id:
-                mal_id = database.get_mappings(anilist_id, 'anilist_id')['mal_id']
-                simkl_id = self.get_simkl_id('mal', mal_id)
+                mal_id = database.get_mappings(anilist_id, 'anilist_id').get('mal_id')
+                if not mal_id:
+                    return
+                simkl_id = self.get_id('mal', mal_id)
             database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
-        if not simkl_id:
-            return
+
         params = {
             'extended': 'full',
             'client_id': self.ClientID
@@ -170,7 +171,7 @@ class SIMKLAPI:
         simkl_id = show_ids['simkl_id']
         if not simkl_id:
             mal_id = show_ids['mal_id']
-            simkl_id = self.get_simkl_id('mal', mal_id)
+            simkl_id = self.get_id('mal', mal_id)
             database.add_mapping_id(anilist_id, 'simkl_id', simkl_id)
         params = {
             'extended': 'full',
@@ -180,7 +181,7 @@ class SIMKLAPI:
         res = r.json()
         return res
 
-    def get_simkl_id(self, send_id, anime_id):
+    def get_id(self, send_id, anime_id):
         params = {
             send_id: anime_id,
             "client_id": self.ClientID,
@@ -193,7 +194,7 @@ class SIMKLAPI:
 
     def get_mapping_ids(self, send_id, anime_id):
         # return_id = anidb, ann, mal, offjp, wikien, wikijp, instagram, imdb, tmdb, tw, tvdbslug, anilist, animeplanet, anisearch, kitsu, livechart, traktslug
-        simkl_id = self.get_simkl_id(send_id, anime_id)
+        simkl_id = self.get_id(send_id, anime_id)
         params = {
             'extended': 'full',
             'client_id': self.ClientID

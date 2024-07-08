@@ -8,7 +8,6 @@
 		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|Animeschedule" default="animeschedule" />
 <!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
 		<setting id="jz.filler" type="bool" label="Show Filler Info If Found"  default="false" />
-
 	</category>
 
 	<!-- General -->
@@ -37,22 +36,28 @@
 		<setting id="interface.watchlist.data" label="Get watchlist episode data" type="bool" default="true"/>
 		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
-		<setting id="interface.fanart.select.bool" label="Selected Fanart (Select Fanart in Context menu on shows)" type="bool" default="false"/>
 		<setting id="interface.fanart.disable" type="bool" label="Disable Fanart" default="true" />
 		<setting id="interface.clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
 		<setting id="interface.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
+	</category>
 
-		<!-- Context -->
+	<!-- Context and Widgets -->
+	<category label="Contexts and Widgets">
+		<!-- Context Menu -->
 		<setting type="lsep" label="Context Menus" />
-		<setting id="context.WatchList" label="Show 'Watchlist' in context menu" type="bool" default="true" />
-		<setting id="context.deletefromdatabase" label="Show 'delete from database' in context menu" type="bool" default="true" />
-		<setting id="context.marked.watched" label="Show 'Marked as Watched [COLOR blue](Watchlist)[/COLOR]' in context menu" type="bool" default="true" />
+		<setting id="context.otaku.findrecommendations" label="Find Recommendations" type="bool" default="true" />
+		<setting id="context.otaku.findrelations" label="Find Relations" type="bool" default="true" />
+		<setting id="context.otaku.rescrape" label="Rescrape" type="bool" default="true" />
+		<setting id="context.otaku.sourceselect" label="Source Select" type="bool" default="true" />
+		<setting id="context.otaku.logout" label="Logout" type="bool" default="true" />
+		<setting id="context.otaku.deletefromdatabase" label="Delete From Database" type="bool" default="true" />
+		<setting id="context.otaku.watchlist" label="WatchList Manager" type="bool" default="true" />
+		<setting id="context.otaku.markedaswatched" label="Marked as Watched [COLOR blue]WatchList[/COLOR]" type="bool" default="true" />
+		<setting id="context.otaku.fanartselect" label="Select Fanart" type="bool" default="true" />
 
 		<!-- Widgets -->
 		<setting type="lsep" label="Widgets" />
 		<setting id="widget.hide.nextpage" label="Hide Next up Widget" type="bool" default="true" />
-
-
 	</category>
 
 	<!-- Provider -->
@@ -113,13 +118,6 @@
 		<setting type="lsep" label="40331"/>
 		<setting id="general.sortsources" type="enum" label="40332" values="Torrents|Embeds" default="Torrents" />
 		<setting id="general.sourcesort" type="enum" label="40333" values="Dub|None|Sub" default="Dub" />
-
-
-<!--		&lt;!&ndash; Preferences &ndash;&gt;-->
-<!--		<setting type="lsep" label="40313" />-->
-<!--		<setting type="sep"/>-->
-<!--		<setting id="general.audio" type="enum" label="40314" lvalues="40315|40316" default="40316"/>-->
-<!--		<setting id="general.subtitles" type="enum" label="40435" default="40436" lvalues="40436|40437|40438|40439|40440|40441|40442|40443|40444|40445|40446|40447|40448|40449|40450|40451|40452|40453|40454" />-->
 
 		<!-- Search Filtering -->
 		<setting type="lsep" label="40409"/>
@@ -233,7 +231,7 @@
 	<!-- Maintenance -->
 	<category label="40416">
 		<!-- Tools -->
-		<setting type="lsep" label="50005"/>
+		<setting type="lsep" label="40416"/>
 		<setting id="change_log" type="action" label="30027" action="RunPlugin(plugin://plugin.video.otaku/change_log)"/>
 		<setting id="clear_cache" type="action" label="30021" action="RunPlugin(plugin://plugin.video.otaku/clear_cache)"/>
 		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_history)"/>
@@ -241,7 +239,7 @@
 		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync)"/>
 
 		<setting type="lsep" label="Language Invoker"/>
-		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:   [COLOR red]Faster speeds but some instability![/COLOR]" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
-		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
+		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:              Enable For Much Faster Speeds" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
+		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Enabled" enable="false" />
 	</category>
 </settings>

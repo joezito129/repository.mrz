@@ -65,7 +65,7 @@ class KitsuWLF(WatchlistFlavorBase):
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):
-        if not hasnextpage or not control.is_addon_visible() and control.getSetting('widget.hide.nextpage') == 'true':
+        if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
@@ -205,7 +205,6 @@ class KitsuWLF(WatchlistFlavorBase):
 
         anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
-            url = 'play/%d/%d/' % (anilist_id, next_up)
             if next_up_meta.get('title'):
                 title = '%s - %s' % (title, next_up_meta['title'])
             if next_up_meta.get('image'):
@@ -232,7 +231,7 @@ class KitsuWLF(WatchlistFlavorBase):
         }
 
         if next_up_meta:
-            base['url'] = url
+            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
             return utils.parse_view(base, False, True)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
@@ -267,7 +266,7 @@ class KitsuWLF(WatchlistFlavorBase):
     def get_watchlist_anime_entry(self, anilist_id):
         kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
         if not kitsu_id:
-            return False
+            return {}
 
         result = self.get_library_entries(kitsu_id)
         try:

@@ -1,8 +1,8 @@
-# from resources.lib.ui import control
+from resources.lib.ui.control import bools
 
 
-def get_second_label(info, dub_data, filler=None, filler_enable=None):
-    if filler_enable and filler:
+def get_second_label(info, dub_data, filler=None):
+    if bools.filler and filler:
         return filler
 
     code_dub = code_sub = code = None
@@ -29,5 +29,4 @@ def get_second_label(info, dub_data, filler=None, filler_enable=None):
         code = f'Dub {code_dub}'
     elif code_sub:
         code = code_sub
-
     return code

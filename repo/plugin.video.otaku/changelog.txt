@@ -1,3 +1,8 @@
+Changelog v5.0.40 (2024-07-07):
+- Bug Fixes
+- Added settings for context menu
+- Fixed Re-uselanguageinvoker
+
 Changelog v5.0.39 (2024-07-06):
 - Got rid of wait time for smartscroll
 - Fixed ViewTypes

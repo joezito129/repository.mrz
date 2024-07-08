@@ -229,7 +229,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
             return utils.parse_view(base, False, True)
 
         if next_up_meta:
-            base['url'] = 'play/%d/%d/' % (anilist_id, next_up)
+            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
             return utils.parse_view(base, False, True)
 
         return utils.parse_view(base, True, False)

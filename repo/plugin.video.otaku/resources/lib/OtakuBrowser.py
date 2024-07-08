@@ -37,7 +37,6 @@ def get_episodeList(anilist_id, pass_idx):
         episodes = database.get_episode_list(anilist_id)
         items = indexers.process_episodes(episodes, '') if episodes else []
         playlist = control.bulk_player_list(items)[pass_idx:]
-
         for i in playlist:
             control.playList.add(url=i[0], listitem=i[1])
     return items

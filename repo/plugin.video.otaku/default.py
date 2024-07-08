@@ -16,11 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# import time
-# t0 = time.perf_counter_ns()
-
 import pickle
-import xbmcplugin
 
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
@@ -42,14 +38,16 @@ def add_last_watched(items):
     return items
 
 
+@Route('animes/*')
+def ANIMES_PAGE(payload, params):
+    anilist_id, mal_id, eps_watched = payload.rsplit("/")
+    anime_general, content = OtakuBrowser.get_anime_init(anilist_id)
+    control.draw_items(anime_general, content)
+
+
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
-    payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 3:
-        path, anilist_id, mal_id = payload_list
-    else:
-        path, anilist_id, mal_id, eps_watched = payload_list
-
+    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -69,11 +67,7 @@ def RECOMMENDATIONS_NEXT(payload, params):
 
 @Route('find_relations/*')
 def FIND_RELATIONS(payload, params):
-    payload_list = payload.rsplit("/")[1:]
-    if len(payload_list) == 3:
-        path, anilist_id, mal_id = payload_list
-    else:
-        path, anilist_id, mal_id, eps_watched = payload_list
+    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -82,14 +76,6 @@ def FIND_RELATIONS(payload, params):
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
     control.draw_items(_ANILIST_BROWSER.get_relations(anilist_id), 'tvshows')
-
-
-@Route('animes/*')
-def ANIMES_PAGE(payload, params):
-    payload_list = payload.rsplit("/")
-    anilist_id, mal_id = payload_list
-    anime_general, content = OtakuBrowser.get_anime_init(anilist_id)
-    control.draw_items(anime_general, content)
 
 
 @Route('anilist_airing_anime')
@@ -127,48 +113,22 @@ def ANILIST_TOP_100_ANIME_PAGES(payload, params):
 
 @Route('anilist_genres')
 def ANILIST_GENRES(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(50010), g)), 'tvshows')
+    genre = _ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(50010), g))
+    control.draw_items(genre, 'tvshows')
 
 
 # next page for anilist_genres
 @Route('anilist_genres/*')
 def ANILIST_GENRES_PAGES(payload, params):
-    genres, tags, page = payload.rsplit("/")[-3:]
-    control.draw_items(_ANILIST_BROWSER.get_genres_page(genres, tags, int(page)), 'tvshows')
-
-
-@Route('search_history')
-def SEARCH_HISTORY(payload, params):
-    history = database.getSearchHistory('show')
-    if int(control.getSetting('searchhistory')) == 0:
-        control.draw_items(OtakuBrowser.search_history(history), 'addons', [('Remove from History', 'remove_search_item')])
-    else:
-        SEARCH(payload, params)
-
-
-@Route('clear_history')
-def CLEAR_HISTORY(payload, params):
-    database.clearSearchHistory()
-    control.refresh()
-
-
-@Route('remove_search_item/*')
-def REMOVE_SEARCH_ITEM(payload, params):
-    payload_list = payload.rsplit('search/')
-    if len(payload_list) >= 2:
-        payload_list = payload_list[1].rsplit('/', 1)
-        if len(payload_list) == 2:
-            search_item, page = payload_list
-            database.remove_search(table='show', value=search_item)
-    else:
-        control.notify(control.ADDON_NAME, "Invalid Search Item")
+    genres, page = payload.rsplit("/")
+    control.draw_items(_ANILIST_BROWSER.genres_payload(genres, int(page)), 'tvshows')
 
 
 @Route('search')
 def SEARCH(payload, params):
     query = control.keyboard(control.lang(50011))
     if not query:
-        return xbmcplugin.endOfDirectory(control.HANDLE)
+        return control.draw_items([], 'tvshows')
     if int(control.getSetting('searchhistory')) == 0:
         database.addSearchHistory(query, 'show')
     control.draw_items(_ANILIST_BROWSER.get_search(query), 'tvshows')
@@ -184,8 +144,35 @@ def SEARCH_PAGES(payload, params):
 @Route('search_results/*')
 def SEARCH_RESULTS(payload, params):
     query = params.get('query')
-    items = _ANILIST_BROWSER.get_search(query, 1)
-    control.draw_items(items, 'tvshows')
+    control.draw_items(_ANILIST_BROWSER.get_search(query, 1), 'tvshows')
+
+
+@Route('search_history')
+def SEARCH_HISTORY(payload, params):
+    history = database.getSearchHistory('show')
+    if int(control.getSetting('searchhistory')) == 0:
+        control.draw_items(OtakuBrowser.search_history(history), 'addons', [('Remove from History', 'remove_search_item')])
+    else:
+        SEARCH(payload, params)
+
+
+@Route('clear_history')
+def CLEAR_HISTORY(payload, params):
+    database.clearSearchHistory()
+    control.refresh()
+    control.exit_code()
+
+
+@Route('remove_search_item/*')
+def REMOVE_SEARCH_ITEM(payload, params):
+    payload_list = payload.rsplit('search/')
+    if len(payload_list) >= 2:
+        payload_list = payload_list[1].rsplit('/', 1)
+        if len(payload_list) == 2:
+            search_item, page = payload_list
+            database.remove_search(table='show', value=search_item)
+    else:
+        control.notify(control.ADDON_NAME, "Invalid Search Item")
 
 
 @Route('play/*')
@@ -212,6 +199,7 @@ def PLAY(payload, params):
         link = resolver.doModal(sources, {}, False)
 
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape, source_select, resume_time)
+    control.exit_code()
 
 
 @Route('play_movie/*')
@@ -248,34 +236,32 @@ def PLAY_MOVIE(payload, params):
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
         link = resolver.doModal(sources, {}, False)
     player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape, source_select, resume_time)
+    control.exit_code()
 
 
 @Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload, params):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
 
-    play, anilist_id, episode = payload.rsplit("/")
+    anilist_id, episode = payload.rsplit("/")
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(anilist_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
     show = database.get_show(anilist_id)
     mal_id = show['mal_id']
     control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{episode})')
+    control.exit_code()
 
 
 @Route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload, params):
-    payload_list = payload.rsplit("/")
-    if len(payload_list) == 3:
-        path, anilist_id, mal_id, = payload_list
-    else:
-        path, anilist_id, mal_id, eps_watched = payload_list
+    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
     if not anilist_id:
         anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
-
     database.remove_episodes(anilist_id)
     database.remove_show_data(anilist_id)
     control.notify(control.ADDON_NAME, 'Removed from database')
+    control.exit_code()
 
 
 @Route('auth/*')
@@ -304,21 +290,9 @@ def REFRESH(payload, params):
         DebridLink().refreshToken()
 
 
-@Route('select_fanart/*')
-def SELECT_FANART(payload, params):
-    payload_list = payload.rsplit("/")
-    if len(payload_list) == 1:
-        anilist_id = payload
-        episode = database.get_episode(anilist_id)
-        fanart = pickle.loads(episode['kodi_meta'])['image']['fanart']
-        fanart_display = fanart + ["None", "Random (Defualt)"]
-        fanart += ["None", ""]
-        control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
-        return
-    elif len(payload_list) == 3:
-        path, anilist_id, mal_id = payload_list
-    else:
-        path, anilist_id, mal_id, eps_watched = payload_list
+@Route('fanart_select/*')
+def FANART_SELECT(payload, params):
+    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -329,7 +303,11 @@ def SELECT_FANART(payload, params):
     episode = database.get_episode(anilist_id)
     if not episode:
         OtakuBrowser.get_anime_init(anilist_id)
-    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/select_fanart/{anilist_id})')
+        episode = database.get_episode(anilist_id)
+    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart']
+    fanart_display = fanart + ["None", "Random (Defualt)"]
+    fanart += ["None", ""]
+    control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
 
 
 @Route('fanart/*')
@@ -371,29 +349,36 @@ def SETTINGS(payload, params):
 
 @Route('toggleLanguageInvoker')
 def TOGGLE_LANGUAGE_INVOKER(payload, params):
-    control.toggle_reuselanguageinvoker()
+    import service
+    service.toggle_reuselanguageinvoker()
+    control.exit_code()
 
 
 @Route('completed_sync')
 def COMPLETED_SYNC(payload, params):
-    from resources.lib.ui import maintenance
-    maintenance.sync_watchlist()
+    import service
+    service.sync_watchlist()
+    control.exit_code()
 
 
 @Route('clear_cache')
 def CLEAR_CACHE(payload, params):
     database.cache_clear()
+    control.exit_code()
 
 
 @Route('rebuild_database')
 def REBUILD_DATABASE(payload, params):
     from resources.lib.ui.database_sync import AnilistSyncDatabase
     AnilistSyncDatabase().re_build_database()
+    control.exit_code()
 
 
 @Route('change_log')
 def CHANGE_LOG(payload, params):
-    control.getChangeLog()
+    import service
+    service.getChangeLog()
+    control.exit_code()
 
 
 @Route('tools')
@@ -406,7 +391,7 @@ def TOOLS_MENU(payload, params):
         (control.lang(30026), "rebuild_database", {'plot': "Rebuild Database"}, 'rebuild_database.png'),
         ("Sync Completed List", "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
         ("Download Manager", 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
-        ("Clear Selected Fanart", 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, '')
+        ("Clear Selected Fanart", 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
 
@@ -422,7 +407,7 @@ def LIST_MENU(payload, params):
         (control.lang(50012), "tools", 'tools.png')
     ]
 
-    if control.getSetting('menu.lastwatched') == 'true':
+    if control.getBool('menu.lastwatched'):
         MENU_ITEMS = add_last_watched(MENU_ITEMS)
     MENU_ITEMS = add_watchlist(MENU_ITEMS)
     MENU_ITEMS_ = MENU_ITEMS[:]
@@ -433,10 +418,13 @@ def LIST_MENU(payload, params):
 
 
 if __name__ == "__main__":
+    # import time
+    # t0 = time.perf_counter_ns()
+
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(control.playList) > 0 and not player.player().isPlaying():
         control.playList.clear()
 
-# t1 = time.perf_counter_ns()
-# totaltime = (t1-t0)/1_000_000
-# control.print(totaltime, 'ms')
+    # t1 = time.perf_counter_ns()
+    # totaltime = (t1-t0)/1_000_000
+    # control.print(totaltime, 'ms')

@@ -16,14 +16,15 @@ except IndexError:
 
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_ID = addonInfo('id')
-settings = xbmcaddon.Addon(ADDON_ID)
-language = settings.getLocalizedString
-addonInfo = settings.getAddonInfo
+ADDON = xbmcaddon.Addon(ADDON_ID)
+settings = ADDON.getSettings()
+language = ADDON.getLocalizedString
+addonInfo = ADDON.getAddonInfo
 ADDON_NAME = addonInfo('name')
 ADDON_VERSION = addonInfo('version')
 ADDON_ICON = addonInfo('icon')
 OTAKU_FANART = addonInfo('fanart')
-ADDON_PATH = settings.getAddonInfo('path')
+ADDON_PATH = ADDON.getAddonInfo('path')
 dataPath = xbmcvfs.translatePath(addonInfo('profile'))
 kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
 
@@ -37,7 +38,7 @@ downloads_json = os.path.join(dataPath, 'downloads.json')
 completed_json = os.path.join(dataPath, 'completed.json')
 
 OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
-OTAKU_ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', settings.getSetting("interface.icons"))
+OTAKU_ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
 execute = xbmc.executebuiltin
@@ -70,41 +71,41 @@ def try_release_lock(lock):
 
 
 def real_debrid_enabled():
-    return True if getSetting('rd.auth') != '' and getSetting('realdebrid.enabled') == 'true' else False
+    return True if getSetting('rd.auth') != '' and getBool('realdebrid.enabled') else False
 
 
 def debrid_link_enabled():
-    return True if getSetting('dl.auth') != '' and getSetting('dl.enabled') == 'true' else False
+    return True if getSetting('dl.auth') != '' and getBool('dl.enabled') else False
 
 
 def all_debrid_enabled():
-    return True if getSetting('alldebrid.apikey') != '' and getSetting('alldebrid.enabled') == 'true' else False
+    return True if getSetting('alldebrid.apikey') != '' and getBool('alldebrid.enabled') else False
 
 
 def premiumize_enabled():
-    return True if getSetting('premiumize.token') != '' and getSetting('premiumize.enabled') == 'true' else False
+    return True if getSetting('premiumize.token') != '' and getBool('premiumize.enabled') else False
 
 
 def myanimelist_enabled():
-    return True if getSetting('mal.token') != '' and getSetting('mal.enabled') == 'true' else False
+    return True if getSetting('mal.token') != '' and getBool('mal.enabled') else False
 
 
 def kitsu_enabled():
-    return True if getSetting('kitsu.token') != '' and getSetting('kitsu.enabled') == 'true' else False
+    return True if getSetting('kitsu.token') != '' and getBool('kitsu.enabled') else False
 
 
 def anilist_enabled():
-    return True if getSetting('anilist.token') != '' and getSetting('anilist.enabled') == 'true' else False
+    return True if getSetting('anilist.token') != '' and getBool('anilist.enabled') else False
 
 
 def simkl_enabled():
-    return True if getSetting('simkl.token') != '' and getSetting('simkl.enabled') == 'true' else False
+    return True if getSetting('simkl.token') != '' and getBool('simkl.enabled') else False
 
 
 def watchlist_to_update():
-    if bools.watchlist_update:
+    if getBool('watchlist.update.enabled'):
         flavor = getSetting('watchlist.update.flavor').lower()
-        if getSetting('%s.enabled' % flavor) == 'true':
+        if getBool('%s.enabled' % flavor):
             return flavor
 
 
@@ -125,12 +126,16 @@ def refresh():
     return execute('Container.Refresh')
 
 
+def getBool(key):
+    return settings.getBool(key)
+
+
 def getSetting(key):
-    return settings.getSetting(key)
+    return ADDON.getSetting(key)
 
 
 def setSetting(settingid, value):
-    return settings.setSetting(settingid, value)
+    return ADDON.setSetting(settingid, value)
 
 
 def lang(x):
@@ -148,6 +153,11 @@ def get_plugin_url():
 
 def get_plugin_params():
     return dict(parse.parse_qsl(sys.argv[2].replace('?', '')))
+
+
+def exit_code():
+    if getSetting('reuselanguageinvoker.status') == 'Enabled':
+        exit_(1)
 
 
 def keyboard(text):
@@ -242,10 +252,9 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
         set_videotags(liz, info)
-    cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
-    if 'watchlist/' in url:
-        watchlist = url.rsplit('watchlist/', 2)[1]
-        cm.append((f"Watchlist {colorstr(watchlist.title())} Logout", f'RunPlugin(plugin://{ADDON_ID}/watchlist_logout/{watchlist})'))
+    if draw_cm:
+        cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
+        liz.addContextMenuItems(cm)
     if art.get('fanart') is None or bools.fanart_disable:
         art['fanart'] = OTAKU_FANART
     else:
@@ -265,8 +274,6 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
 
-    if cm:
-        liz.addContextMenuItems(cm)
     liz.setArt(art)
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
@@ -279,25 +286,13 @@ def bulk_draw_items(video_data, draw_cm):
 def draw_items(video_data, content_type=None, draw_cm=None):
     if not draw_cm:
         draw_cm = []
-    if content_type == 'tvshows':
-        if bools.context_watchlist:
-            draw_cm.append(("WatchList", "watchlist_context"))
-        if bools.context_deletefromdatabase:
-            draw_cm.append(("Delete from database", 'delete_anime_database'))
-        if bools.fanart_select:
-            draw_cm.append(('Select Fanart', 'select_fanart'))
-    elif content_type == 'episodes':
-        if bools.context_marked_watched:
-            draw_cm.append(("Marked as Watched [COLOR blue]WatchList[/COLOR]", 'marked_as_watched'))
     if len(video_data) > 99:
         bulk_draw_items(video_data, draw_cm)
     else:
         for vid in video_data:
             xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
-
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
-
     if content_type == 'episodes':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
     elif content_type == 'tvshows':
@@ -364,45 +359,6 @@ def exit_(code):
     sys.exit(code)
 
 
-def getChangeLog():
-    addon_version = xbmcaddon.Addon('plugin.video.otaku').getAddonInfo('version')
-    changelog_file = f'{ADDON_PATH}changelog.txt'
-
-    # Read changelog file
-    with open(changelog_file, encoding='utf-8', errors='ignore') as f:
-        changelog_text = f.read()
-
-    # Combine changelog and news text
-    heading = '[B]%s -  v%s - ChangeLog[/B]' % (ADDON_NAME, addon_version)
-    from resources.lib.windows.textviewer import TextViewerXML
-    windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=heading, text=changelog_text)
-    windows.run()
-    del windows
-
-
-def toggle_reuselanguageinvoker():
-    def _store_and_reload(output):
-        with open(file_path, "w+") as addon_xml_:
-            addon_xml_.writelines(output)
-        ok_dialog(ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
-        execute('LoadProfile({})'.format(xbmc.getInfoLabel("system.profilename")))
-    file_path = os.path.join(ADDON_PATH, "addon.xml")
-    with open(file_path) as addon_xml:
-        file_lines = addon_xml.readlines()
-    for i in range(len(file_lines)):
-        line_string = file_lines[i]
-        if "reuselanguageinvoker" in file_lines[i]:
-            if "false" in line_string:
-                file_lines[i] = file_lines[i].replace("false", "true")
-                setSetting("reuselanguageinvoker.status", "Enabled")
-                _store_and_reload(file_lines)
-            elif "true" in line_string:
-                file_lines[i] = file_lines[i].replace("true", "false")
-                setSetting("reuselanguageinvoker.status", "Disabled")
-                _store_and_reload(file_lines)
-            break
-
-
 def is_addon_visible():
     return xbmc.getInfoLabel('Container.PluginName') == 'plugin.video.otaku'
 
@@ -428,37 +384,31 @@ def print(string, *args):
     del args, string
 
 
-def print_(string, *args):
-    for i in list(args):
-        string = f'{string} {i}'
-
-    from resources.lib.windows.textviewer import TextViewerXML
-    windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=ADDON_NAME, text=f'{string}')
-    windows.run()
-    del windows
+# def print_(string, *args):
+#     for i in list(args):
+#         string = f'{string} {i}'
+#
+#     from resources.lib.windows.textviewer import TextViewerXML
+#     windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=ADDON_NAME, text=f'{string}')
+#     windows.run()
+#     del windows
 
 
 class Bools:
     def __init__(self):
-        self.showuncached = getSetting('show.uncached') == 'true'
-        self.smart_scroll = getSetting('general.smart.scroll.enable') == 'true'
-        self.viewtypes = getSetting('interface.viewtypes.bool') == 'true'
-        self.clearlogo_disable = getSetting('interface.clearlogo.disable') == 'true'
-        self.fanart_disable = getSetting('interface.fanart.disable') == 'true'
-        self.context_marked_watched = getSetting('context.marked.watched') == 'true'
-        self.context_watchlist = getSetting('context.WatchList') == 'true'
-        self.context_deletefromdatabase = getSetting('context.deletefromdatabase') == 'true'
-        self.context_marked_watched = getSetting('context.deletefromdatabase') == 'true'
-        self.watchlist_update = getSetting('watchlist.update.enabled') == 'true'
-        self.watchlist_sync = getSetting('watchlist.sync.enabled') == 'true'
-        self.filler = getSetting('jz.filler') == 'true'
-        self.clean_titles = getSetting('interface.cleantitles') == 'true'
-        self.show_empty_eps = getSetting('interface.showemptyeps') == 'true'
-        self.terminateoncloud = getSetting('general.terminate.oncloud') == 'true'
-        self.div_flavor = getSetting("divflavors.bool") == "true"
-        self.search_adult = getSetting('search.adult') == "true"
-        self.fanart_select = getSetting('interface.fanart.select.bool') == 'true'
-        self.watchlist_data = getSetting('interface.watchlist.data') == 'true'
+        self.showuncached = getBool('show.uncached')
+        self.smart_scroll = getBool('general.smart.scroll.enable')
+        self.viewtypes = getBool('interface.viewtypes.bool')
+        self.clearlogo_disable = getBool('interface.clearlogo.disable')
+        self.fanart_disable = getBool('interface.fanart.disable')
+        self.watchlist_sync = getBool('watchlist.sync.enabled')
+        self.filler = getBool('jz.filler')
+        self.clean_titles = getBool('interface.cleantitles')
+        self.show_empty_eps = getBool('interface.showemptyeps')
+        self.terminateoncloud = getBool('general.terminate.oncloud')
+        self.div_flavor = getBool("divflavors.bool")
+        self.watchlist_data = getBool('interface.watchlist.data')
+        self.fanart_select = getBool('context.otaku.fanartselect')
 
 
 bools = Bools()

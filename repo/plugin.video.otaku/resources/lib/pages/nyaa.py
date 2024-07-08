@@ -235,6 +235,9 @@ class Sources(BrowserBase):
         if not show:
             return []
 
+        if isinstance(show, str):
+            show = {'general_title': show}
+
         if show.get('general_title'):
             query = show['general_title']
             _zfill = show.get('zfill', 2)

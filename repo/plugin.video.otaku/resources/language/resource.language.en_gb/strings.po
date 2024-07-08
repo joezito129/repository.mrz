@@ -2,6 +2,11 @@
 # Addon Name: Otaku
 # Addon id: plugin.video.otaku
 # Addon Provider: TeamOtaku
+
+# strings 30000 thru 30999 reserved for plugins and plugin settings
+# strings 31000 thru 31999 reserved for skins
+# strings 32000 thru 32999 reserved for scripts
+# strings 33000 thru 33999 reserved for common strings used in add-ons
 msgid ""
 msgstr ""
 
@@ -29,14 +34,6 @@ msgstr ""
 
 msgctxt "#30023"
 msgid "Clear Search History"
-msgstr ""
-
-msgctxt "#30024"
-msgid "Wipe Addon Data"
-msgstr ""
-
-msgctxt "#30025"
-msgid "This will completely clear your addon settings. Are you sure you want to do this?"
 msgstr ""
 
 msgctxt "#30026"
@@ -77,10 +74,6 @@ msgctxt "#30201"
 msgid "All Cache Successfully Cleared"
 msgstr ""
 
-msgctxt "#30202"
-msgid "Local Result Cache Successfully Cleared"
-msgstr ""
-
 msgctxt "#30203"
 msgid "[COLOR red]WARNING[/COLOR]\nThis will reset all meta information, are you sure?"
 msgstr ""
@@ -106,76 +99,8 @@ msgctxt "#40110"
 msgid "[B]*Note: If using addon on Amazon Fire TV Stick/Android TV Box, you can copy & paste text using a Kodi remote app like [COLOR limegreen]Kore[/COLOR] or [COLOR limegreen]Yatse[/COLOR][/B]"
 msgstr ""
 
-msgctxt "#40221"
-msgid "Torrents"
-msgstr ""
-
-msgctxt "#40222"
-msgid "Cached"
-msgstr ""
-
-msgctxt "#40223"
-msgid "Embeds"
-msgstr ""
-
-msgctxt "#40224"
-msgid "Cloudfiles"
-msgstr ""
-
-msgctxt "#40225"
-msgid "Remaining providers"
-msgstr ""
-
 msgctxt "#40226"
 msgid "Provider"
-msgstr ""
-
-msgctxt "#40227"
-msgid "Source"
-msgstr ""
-
-msgctxt "#40228"
-msgid "Resolution"
-msgstr ""
-
-msgctxt "#40229"
-msgid "Info"
-msgstr ""
-
-msgctxt "#40230"
-msgid "Year"
-msgstr ""
-
-msgctxt "#40231"
-msgid "Rating"
-msgstr ""
-
-msgctxt "#40232"
-msgid "Aired"
-msgstr ""
-
-msgctxt "#40233"
-msgid "Debrid"
-msgstr ""
-
-msgctxt "#40234"
-msgid "Size"
-msgstr ""
-
-msgctxt "#40235"
-msgid "Provider"
-msgstr ""
-
-msgctxt "#40236"
-msgid "Source type"
-msgstr ""
-
-msgctxt "#40237"
-msgid "Resolution"
-msgstr ""
-
-msgctxt "#40238"
-msgid "Info"
 msgstr ""
 
 ######SETTINGS.XML VALUES######
@@ -189,14 +114,6 @@ msgstr ""
 
 msgctxt "#40302"
 msgid "Interface"
-msgstr ""
-
-msgctxt "#40303"
-msgid "Set view types"
-msgstr ""
-
-msgctxt "#40306"
-msgid "tvshows"
 msgstr ""
 
 msgctxt "#40307"
@@ -221,22 +138,6 @@ msgstr ""
 
 msgctxt "#40312"
 msgid "Auto try next link on resolve failure (Source Select)"
-msgstr ""
-
-msgctxt "#40313"
-msgid "Preferences"
-msgstr ""
-
-msgctxt "#40314"
-msgid "Preferred Audio Playback (Dual Audio)"
-msgstr ""
-
-msgctxt "#40315"
-msgid "Japanese"
-msgstr ""
-
-msgctxt "#40316"
-msgid "English"
 msgstr ""
 
 msgctxt "#40317"
@@ -447,48 +348,12 @@ msgctxt "#40372"
 msgid "Inspect Cloud Files on Scrape"
 msgstr ""
 
-msgctxt "#40376"
-msgid "Auto close dialog"
-msgstr ""
-
-msgctxt "#40381"
-msgid "Enable Season Part Scraping"
-msgstr ""
-
-msgctxt "#40382"
-msgid "Manual Watchlist Update"
-msgstr ""
-
-msgctxt "#40383"
-msgid "seconds"
-msgstr ""
-
 msgctxt "#40384"
 msgid "Playing in"
 msgstr ""
 
-msgctxt "#40385"
-msgid "Next Up"
-msgstr ""
-
-msgctxt "#40386"
-msgid "Play now"
-msgstr ""
-
-msgctxt "#40387"
-msgid "Search Subs For Language Other Than English"
-msgstr ""
-
 msgctxt "#40388"
 msgid "Theme"
-msgstr ""
-
-msgctxt "#40389"
-msgid "Coloured"
-msgstr ""
-
-msgctxt "#40390"
-msgid "White"
 msgstr ""
 
 msgctxt "#40391"
@@ -607,14 +472,6 @@ msgctxt "#40425"
 msgid "Timeout for finding sources (seconds)"
 msgstr ""
 
-msgctxt "#40426"
-msgid "Show Changelog every update"
-msgstr ""
-
-msgctxt "#40427"
-msgid "Enable Automatic Subtitles for Dub Streams"
-msgstr ""
-
 msgctxt "#40428"
 msgid "Set Anime Filter"
 msgstr ""
@@ -633,26 +490,6 @@ msgstr ""
 
 msgctxt "#40432"
 msgid "Offset for Aniskip (seconds)"
-msgstr ""
-
-msgctxt "#40433"
-msgid "Disable Scraping Screen Fanart"
-msgstr ""
-
-msgctxt "#40434"
-msgid "Disable Scraping Screen Logo"
-msgstr ""
-
-msgctxt "#40435"
-msgid "Preferred Subtitle Language"
-msgstr ""
-
-msgctxt "#40436"
-msgid "English"
-msgstr ""
-
-msgctxt "#40437"
-msgid "Japanese"
 msgstr ""
 
 ######MAIN Category DIRECTORY#######

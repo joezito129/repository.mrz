@@ -3,7 +3,7 @@ import xbmcgui
 import xbmcplugin
 import requests
 
-from resources.lib.ui import control, database, maintenance
+from resources.lib.ui import control, database
 from urllib import parse
 from resources.lib.indexers import aniskip
 
@@ -119,8 +119,6 @@ class WatchlistPlayer(player):
             if watched_percentage > self.update_percent:
                 self._watchlist_update(self._anilist_id, self._episode)
                 self.updated = True
-                if playList.size() == 0 or playList.getposition() == playList.size() - 1:
-                    maintenance.sync_watchlist(True)
                 break
             xbmc.sleep(5000)
 

@@ -1,3 +1,7 @@
+Changelog v1.0.17 (2024-07-07)
+- Reformated Context Menu
+- Moved All Context Menu items here
+
 Changelog v1.0.16 (2024-07-06)
 - Added resume param to source select and rescrape
 - Moved Watchlist Logout to main code

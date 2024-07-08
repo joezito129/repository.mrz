@@ -21,12 +21,14 @@ def get_auth_dialog(flavor):
 def WL_LOGIN(payload, params):
     auth_dialog = bool(params.get('auth_dialog'))
     get_auth_dialog(payload) if auth_dialog else WatchlistFlavor.login_request(payload)
+    control.exit_code()
 
 
 @Route('watchlist_logout/*')
 def WL_LOGOUT(payload, params):
     WatchlistFlavor.logout_request(payload)
     control.refresh()
+    control.exit_code()
 
 
 @Route('watchlist/*')
@@ -70,16 +72,12 @@ def WATCHLIST_TO_EP(payload, params):
     control.draw_items(anime_general, content_type)
 
 
-@Route('watchlist_context/*')
+@Route('watchlist_manager/*')
 def CONTEXT_MENU(payload, params):
-    if control.getSetting('watchlist.update.enabled') != 'true':
+    if not control.getBool('watchlist.update.enabled'):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
-        return
-    payload_list = payload.rsplit('/')
-    if len(payload_list) == 4:
-        path, anilist_id, mal_id, eps_watched = payload_list
-    else:
-        path, anilist_id, mal_id = payload_list
+        return control.exit_code()
+    path, anilist_id, mal_id, eps_watched = payload.rsplit('/')
     if not anilist_id:
         show = database.get_show_mal(mal_id)
         if not show:
@@ -92,7 +90,7 @@ def CONTEXT_MENU(payload, params):
     flavor = WatchlistFlavor.get_update_flavor()
     if not flavor:
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
-        return
+        return control.exit_code()
     actions = WatchlistFlavor.context_statuses()
     kodi_meta = pickle.loads(show['kodi_meta'])
     title = kodi_meta['title_userPreferred']
@@ -139,6 +137,7 @@ def CONTEXT_MENU(payload, params):
                 control.ok_dialog(heading, f'[I]{title}[/I]  was added to [B]{status}[/B]')
             else:
                 control.ok_dialog(heading, 'Unable to Set Watchlist')
+    return control.exit_code()
 
 
 def add_watchlist(items):

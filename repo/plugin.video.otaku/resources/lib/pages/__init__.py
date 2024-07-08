@@ -54,14 +54,14 @@ class Sources(GetSources):
             t.start()
             self.threads.append(t)
 
-            if control.getSetting('provider.nyaa') == 'true':
+            if control.getBool('provider.nyaa'):
                 t = threading.Thread(target=self.nyaa_worker, args=(query, anilist_id, episode, status, media_type, rescrape))
                 t.start()
                 self.threads.append(t)
             else:
                 self.remainingProviders.remove('nyaa')
 
-            if control.getSetting('provider.animetosho') == 'true':
+            if control.getBool('provider.animetosho'):
                 t = threading.Thread(target=self.animetosho_worker, args=(query, anilist_id, episode, status, media_type, rescrape))
                 t.start()
                 self.threads.append(t)
@@ -73,7 +73,7 @@ class Sources(GetSources):
                 self.remainingProviders.remove(provider)
 
 #       ###  Other ###
-        if control.getSetting('provider.localfiles') == 'true':
+        if control.getBool('provider.localfiles'):
             t = threading.Thread(target=self.localfiles_worker, args=(query, anilist_id, episode, rescrape))
             t.start()
             self.threads.append(t)
@@ -81,35 +81,35 @@ class Sources(GetSources):
             self.remainingProviders.remove('Local Files')
 
 #       ### embeds ###
-        if control.getSetting('provider.hianime') == 'true':
+        if control.getBool('provider.hianime'):
             t = threading.Thread(target=self.hianime_worker, args=(anilist_id, episode, rescrape))
             t.start()
             self.threads.append(t)
         else:
             self.remainingProviders.remove('hianime')
 
-        if control.getSetting('provider.animess') == 'true':
+        if control.getBool('provider.animess'):
             t = threading.Thread(target=self.animess_worker, args=(anilist_id, episode, rescrape))
             t.start()
             self.threads.append(t)
         else:
             self.remainingProviders.remove('animess')
 
-        if control.getSetting('provider.animixplay') == 'true':
+        if control.getBool('provider.animixplay'):
             t = threading.Thread(target=self.animixplay_worker, args=(anilist_id, episode, rescrape))
             t.start()
             self.threads.append(t)
         else:
             self.remainingProviders.remove('animixplay')
 
-        if control.getSetting('provider.aniwave') == 'true':
+        if control.getBool('provider.aniwave'):
             t = threading.Thread(target=self.aniwave_worker, args=(anilist_id, episode, rescrape))
             t.start()
             self.threads.append(t)
         else:
             self.remainingProviders.remove('aniwave')
 
-        if control.getSetting('provider.gogo') == 'true':
+        if control.getBool('provider.gogo'):
             t = threading.Thread(target=self.gogo_worker, args=(anilist_id, episode, rescrape, get_backup))
             t.start()
             self.threads.append(t)

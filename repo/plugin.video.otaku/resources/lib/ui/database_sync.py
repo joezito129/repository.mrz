@@ -156,15 +156,15 @@ class AnilistSyncDatabase:
         return cursor
 
     def re_build_database(self, silent=False):
-        from resources.lib.ui import maintenance
+        import service
 
         if not silent:
             confirm = control.yesno_dialog(control.ADDON_NAME, control.lang(30203))
             if confirm == 0:
                 return
 
-        maintenance.update_mappings_db()
-        maintenance.update_dub_json()
+        service.update_mappings_db()
+        service.update_dub_json()
 
         with open(control.anilistSyncDB, 'w'):
             pass
