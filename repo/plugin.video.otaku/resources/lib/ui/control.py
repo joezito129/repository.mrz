@@ -255,11 +255,11 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     if draw_cm:
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
-    if art.get('fanart') is None or bools.fanart_disable:
+    if art.get('fanart') is None or settingids.fanart_disable:
         art['fanart'] = OTAKU_FANART
     else:
         if isinstance(art['fanart'], list):
-            if bools.fanart_select:
+            if settingids.fanart_select:
                 if info.get('UniqueIDs', {}).get('anilist_id'):
                     fanart_select = getSetting(f'fanart.select.anilist.{info["UniqueIDs"]["anilist_id"]}')
                     art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
@@ -268,12 +268,11 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
             else:
                 art['fanart'] = random.choice(art['fanart'])
 
-    if bools.clearlogo_disable:
+    if settingids.clearlogo_disable:
         art['clearlogo'] = OTAKU_ICONS_PATH
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
-
     liz.setArt(art)
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
@@ -303,8 +302,8 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             if xbmc.getCondVisibility("Container.HasFiles"):
                 break
             xbmc.sleep(100)
-    xbmc.sleep(200)
-    if bools.viewtypes:
+    xbmc.sleep(300)
+    if settingids.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
         elif content_type == 'episodes':
@@ -313,7 +312,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
 
     # move to episode position currently watching
-    if content_type == "episodes" and bools.smart_scroll:
+    if content_type == "episodes" and settingids.smart_scroll:
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
             total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
@@ -394,8 +393,9 @@ def print(string, *args):
 #     del windows
 
 
-class Bools:
+class SettingIDs:
     def __init__(self):
+        # Bools
         self.showuncached = getBool('show.uncached')
         self.smart_scroll = getBool('general.smart.scroll.enable')
         self.viewtypes = getBool('interface.viewtypes.bool')
@@ -410,5 +410,8 @@ class Bools:
         self.watchlist_data = getBool('interface.watchlist.data')
         self.fanart_select = getBool('context.otaku.fanartselect')
 
+        # Ints
 
-bools = Bools()
+        # Str
+
+settingids = SettingIDs()

@@ -36,7 +36,6 @@
 						<width>100%</width>
 						<height>100%</height>
 						<texture colordiffuse="FF12A0C7">white.png</texture>
-						<visible>String.IsEmpty(Window.Property(item.art.thumb)) + String.IsEmpty(Window.Property(item.art.landscape)) + String.IsEmpty(Window.Property(item.art.fanart))</visible>
 					</control>
 					<control type="textbox">
 						<top>10</top>
@@ -49,38 +48,20 @@
 						<align>center</align>
 						<aligny>center</aligny>
 						<label>$INFO[Window.Property(item.info.tvshowtitle)]</label>
-						<visible>String.IsEmpty(Window.Property(item.art.thumb)) + String.IsEmpty(Window.Property(item.art.landscape)) + String.IsEmpty(Window.Property(item.art.fanart))</visible>
-					</control>
-					<control type="image">
-						<width>100%</width>
-						<height>100%</height>
-						<texture>$INFO[Window.Property(item.art.landscape)]</texture>
-						<aspectratio>scale</aspectratio>
-					</control>
-					<control type="image">
-						<width>100%</width>
-						<height>100%</height>
-						<texture>$INFO[Window.Property(item.art.fanart)]</texture>
-						<aspectratio>scale</aspectratio>
-						<visible>String.IsEmpty(Window.Property(item.art.landscape))</visible>
 					</control>
 					<control type="image">
 						<width>100%</width>
 						<height>100%</height>
 						<texture>$INFO[Window.Property(item.art.thumb)]</texture>
 						<aspectratio>scale</aspectratio>
-						<visible>String.IsEmpty(Window.Property(item.art.landscape)) + String.IsEmpty(Window.Property(item.art.fanart))</visible>
 					</control>
 					<control type="progress" id="3014">
 						<width>100%</width>
 						<bottom>0</bottom>
 						<height>5</height>
 						<reveal>true</reveal>
-<!--						<righttexture></righttexture>-->
-<!--						<overlaytexture></overlaytexture>-->
-<!--						<lefttexture></lefttexture>-->
 						<texturebg colordiffuse="33FFFFFF">white.png</texturebg>
-						<midtexture colordiffuse="$INFO[Window.Property(settings.color)]">white.png</midtexture>
+						<midtexture colordiffuse="deepskyblue">white.png</midtexture>
 					</control>
 					<!-- SHADOW -->
 					<control type="image">
@@ -102,7 +83,7 @@
 						<font>font25_title</font>
 						<textcolor>eeffffff</textcolor>
 						<shadowcolor>00000000</shadowcolor>
-						<label>Playing in [COLOR $INFO[Window.Property(settings.color)]]$INFO[Player.TimeRemaining,,][/COLOR]</label>
+						<label>Playing in [COLOR deepskyblue]$INFO[Player.TimeRemaining,,][/COLOR]</label>
 						<visible>!Integer.IsGreater(Player.TimeRemaining,149)</visible>
 					</control>
 					<control type="label">
@@ -129,26 +110,8 @@
 							<font>font12</font>
 							<textcolor>eeffffff</textcolor>
 							<shadowcolor>00000000</shadowcolor>
-							<label>[COLOR $INFO[Window.Property(settings.color)]]$INFO[Window.Property(item.info.title)]  [/COLOR]</label>
+							<label>[COLOR deepskyblue]$INFO[Window.Property(item.info.title)][/COLOR]</label>
 							<visible>!String.IsEmpty(Window.Property(item.info.title))</visible>
-						</control>
-						<control type="image">
-							<width>19</width>
-							<height>19</height>
-							<aspect>keep</aspect>
-							<texture colordiffuse="FFFF4081">star.png</texture>
-							<animation effect="slide" end="0,8" time="0" condition="true">Conditional</animation>
-							<visible>!String.IsEmpty(Window.Property(item.info.rating))</visible>
-						</control>
-						<control type="label">
-							<width>auto</width>
-							<height>35</height>
-							<aligny>center</aligny>
-							<label>$INFO[Window.Property(item.info.rating), ,   ]</label>
-							<font>font12</font>
-							<textcolor>eeffffff</textcolor>
-							<shadowcolor>00000000</shadowcolor>
-							<visible>!String.IsEmpty(Window.Property(item.info.rating))</visible>
 						</control>
 					</control>
 					<!-- Buttons -->
@@ -171,9 +134,9 @@
 							<shadowcolor>22000000</shadowcolor>
 							<aligny>center</aligny>
 							<align>center</align>
-							<texturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</texturefocus>
+							<texturefocus border="10" colordiffuse="deepskyblue">white.png</texturefocus>
 							<texturenofocus border="10" colordiffuse="AA212121">white.png</texturenofocus>
-							<alttexturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</alttexturefocus>
+							<alttexturefocus border="10" colordiffuse="deepskyblue">white.png</alttexturefocus>
 							<alttexturenofocus border="10" colordiffuse="AA212121">white.png</alttexturenofocus>
 							<pulseonselect>no</pulseonselect>
 						</control>
@@ -189,11 +152,10 @@
 							<shadowcolor>22000000</shadowcolor>
 							<aligny>center</aligny>
 							<align>center</align>
-							<texturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</texturefocus>
+							<texturefocus border="10" colordiffuse="deepskyblue">white.png</texturefocus>
 							<texturenofocus border="10" colordiffuse="AA212121">white.png</texturenofocus>
-							<alttexturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</alttexturefocus>
+							<alttexturefocus border="10" colordiffuse="deepskyblue">white.png</alttexturefocus>
 							<alttexturenofocus border="10" colordiffuse="AA212121">white.png</alttexturenofocus>
-							<pulseonselect>no</pulseonselect>
 						</control>
 						<control type="button" id="3002">
 							<label>Close</label>
@@ -207,11 +169,10 @@
 							<shadowcolor>22000000</shadowcolor>
 							<aligny>center</aligny>
 							<align>center</align>
-							<texturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</texturefocus>
+							<texturefocus border="10" colordiffuse="deepskyblue">white.png</texturefocus>
 							<texturenofocus border="10" colordiffuse="AA212121">white.png</texturenofocus>
-							<alttexturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</alttexturefocus>
+							<alttexturefocus border="10" colordiffuse="deepskyblue">white.png</alttexturefocus>
 							<alttexturenofocus border="10" colordiffuse="AA212121">white.png</alttexturenofocus>
-							<pulseonselect>no</pulseonselect>
 						</control>
 					</control>
 				</control>

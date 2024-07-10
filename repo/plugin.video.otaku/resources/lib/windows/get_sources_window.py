@@ -5,18 +5,17 @@ from resources.lib.windows.base_window import BaseWindow
 
 
 class GetSources(BaseWindow):
-
     def __init__(self, xml_file, xml_location, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
 
         control.closeBusyDialog()
         self.setProperty('process_started', 'false')
+        self.setProperty('progress', '0')
+
         self.canceled = False
         self.return_data = []
         self.args = actionArgs
         self.progress = 0
-        self.setProperty('progress', '0')
-        self.silent = False
         self.torrents_qual_len = [0, 0, 0, 0]
         self.embeds_qual_len = [0, 0, 0, 0]
         self.torrentSources = []
@@ -47,17 +46,10 @@ class GetSources(BaseWindow):
             self.canceled = True
 
     def close(self):
-        if not self.silent:
-            control.dialogWindow.close(self)
+        control.dialogWindow.close(self)
 
-    def setText(self, text):
-        if self.silent:
-            return
+    def update_properties(self, text):
         self.setProperty('notification_text', str(text))
-        self.update_properties()
-
-    def update_properties(self):
-
         self.setProperty('4k_sources', str(self.torrents_qual_len[0] + self.embeds_qual_len[0]))
         self.setProperty('1080p_sources', str(self.torrents_qual_len[1] + self.embeds_qual_len[1]))
         self.setProperty('720p_sources', str(self.torrents_qual_len[2] + self.embeds_qual_len[2]))
@@ -75,7 +67,4 @@ class GetSources(BaseWindow):
         self.remaining_providers_list.reset()
         self.remaining_providers_list.addItems(self.remainingProviders)
         self.setProperty("remaining_providers_list", control.colorstr(' | ').join([i.upper() for i in self.remainingProviders]))
-
-    def setProgress(self):
-        if not self.silent:
-            self.setProperty('progress', str(self.progress))
+        self.setProperty('progress', str(self.progress))

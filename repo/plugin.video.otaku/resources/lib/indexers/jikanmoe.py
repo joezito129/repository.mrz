@@ -75,7 +75,7 @@ class JikanAPI:
             filler = ''
 
         code = jz.get_second_label(info, dub_data)
-        if not code and control.bools.filler:
+        if not code and control.settingids.filler:
             filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
@@ -85,7 +85,7 @@ class JikanAPI:
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
             database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
 
-        if control.bools.clean_titles and info.get('playcount') != 1:
+        if control.settingids.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = res['episode']
             parsed['info']['plot'] = None
         return parsed
@@ -105,7 +105,7 @@ class JikanAPI:
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
 
         all_results = sorted(list(map(mapfunc, result_ep)), key=lambda x: x['info']['episode'])
-        if control.bools.show_empty_eps:
+        if control.settingids.show_empty_eps:
             total_ep = result.get('episodes', 0)
             empty_ep = []
             for ep in range(len(all_results) + 1, total_ep + 1):
@@ -144,7 +144,7 @@ class JikanAPI:
         eps_watched = kodi_meta.get('eps_watched')
         tvshowtitle = kodi_meta['title_userPreferred']
 
-        if not eps_watched and control.bools.watchlist_data:
+        if not eps_watched and control.settingids.watchlist_data:
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor:

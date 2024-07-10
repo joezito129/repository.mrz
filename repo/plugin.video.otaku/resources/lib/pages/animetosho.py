@@ -9,7 +9,7 @@ from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.ui import database, source_utils
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
-from resources.lib.ui.control import bools
+from resources.lib.ui.control import settingids
 
 
 class Sources(BrowserBase):
@@ -154,7 +154,7 @@ class Sources(BrowserBase):
 
         mapfunc = partial(parse_animetosho_view, episode=episode)
         all_results = list(map(mapfunc, cache_list))
-        if bools.showuncached:
+        if settingids.showuncached:
             mapfunc2 = partial(parse_animetosho_view, episode=episode, cached=False)
             all_results += list(map(mapfunc2, uncashed_list))
         return all_results

@@ -122,8 +122,7 @@ class Sources(GetSources):
 
         while runtime < timeout:
             self.updateProgress()
-            self.setProgress()
-            self.setText("4K: %s | 1080: %s | 720: %s | SD: %s" % (
+            self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
                 control.colorstr(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
                 control.colorstr(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
                 control.colorstr(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
@@ -131,7 +130,7 @@ class Sources(GetSources):
             ))
             xbmc.sleep(500)
 
-            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.bools.terminateoncloud and len(self.cloud_files) > 0:
+            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.settingids.terminateoncloud and len(self.cloud_files) > 0:
                 break
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100

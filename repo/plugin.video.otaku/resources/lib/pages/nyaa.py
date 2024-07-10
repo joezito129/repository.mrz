@@ -43,7 +43,7 @@ class Sources(BrowserBase):
             title = torrent['name'].lower()
             if part:
                 if 'part' in title:
-                    part_match = re.search(r'part([ \d]+)', title)
+                    part_match = re.search(r'part ?(\d+)', title)
                     part_match = int(part_match.group(1).strip())
                     if part_match != part:
                         continue
@@ -73,7 +73,7 @@ class Sources(BrowserBase):
         uncashed_list = sorted(uncashed_list, key=lambda k: k['seeders'], reverse=True)
         mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill)
         all_results = list(map(mapfunc, cache_list))
-        if control.bools.showuncached:
+        if control.settingids.showuncached:
             mapfunc2 = partial(self.parse_nyaa_view, episode=episode_zfill, cached=False)
             all_results += list(map(mapfunc2, uncashed_list))
         return all_results
@@ -172,7 +172,7 @@ class Sources(BrowserBase):
             return self.get_episode_sources_pack(show, anilist_id, episode)
 
         if 'part' in show.lower():
-            part = re.search(r'part([ \d]+)', show.lower())
+            part = re.search(r'part ?(\d+)', show.lower())
             if part:
                 part = int(part.group(1).strip())
         else:

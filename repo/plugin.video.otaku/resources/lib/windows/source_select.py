@@ -1,6 +1,7 @@
 import pickle
 import xbmcgui
 
+
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.windows.download_manager import Manager
@@ -9,7 +10,6 @@ from resources.lib import OtakuBrowser
 
 
 class SourceSelect(BaseWindow):
-
     def __init__(self, xml_file, location, actionArgs=None, sources=None, anilist_id=None, rescrape=None, **kwargs):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.actionArgs = actionArgs
@@ -29,7 +29,6 @@ class SourceSelect(BaseWindow):
             try:
                 self.setProperty('item.info.season', str(anime_init[0][episode - 1].get('info').get('season')))
                 self.setProperty('item.info.episode', str(anime_init[0][episode - 1].get('info').get('episode')))
-                self.setProperty('item.info.title', anime_init[0][episode - 1]['info'].get('title'))
                 self.setProperty('item.info.plot', anime_init[0][episode - 1]['info'].get('plot'))
                 self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
             except IndexError:
@@ -46,7 +45,6 @@ class SourceSelect(BaseWindow):
             show = database.get_show(actionArgs.get('anilist_id'))
             if show:
                 kodi_meta = pickle.loads(show.get('kodi_meta'))
-                self.setProperty('item.info.title', kodi_meta.get('name'))
                 self.setProperty('item.info.plot', kodi_meta.get('plot'))
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
                 self.setProperty('item.info.aired', kodi_meta.get('start_date'))

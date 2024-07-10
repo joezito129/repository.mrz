@@ -5,7 +5,6 @@ from resources.lib.windows.base_window import BaseWindow
 
 
 class WatchlistFlavorAuth(BaseWindow):
-
     def __init__(self, xml_file, location, flavor=None, **kwargs):
         super().__init__(xml_file, location)
         self.flavor = flavor

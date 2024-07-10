@@ -1,11 +1,9 @@
 import xbmc
 
-from resources.lib.ui import control
 from resources.lib.windows.base_window import BaseWindow
 
 
 class PlayingNext(BaseWindow):
-
     def __init__(self, xml_file, xml_location, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = xbmc.Player()
@@ -14,6 +12,7 @@ class PlayingNext(BaseWindow):
         self.actioned = False
         self.total_time = int(self.player.getTotalTime())
         self.duration = int(self.total_time - self.player.getTime())
+        self.skipoutro_end = actionArgs['skipoutro_end']
 
     def onInit(self):
         self.background_tasks()
@@ -49,7 +48,7 @@ class PlayingNext(BaseWindow):
             self.close()
         if controlID == 3003:   # skipoutro
             self.actioned = True
-            skipoutro_end_skip_time = int(control.getSetting('skipoutro.end.skip.time'))
+            skipoutro_end_skip_time = self.skipoutro_end
             if skipoutro_end_skip_time != 0:
                 self.player.seekTime(skipoutro_end_skip_time)
             self.close()
@@ -60,6 +59,5 @@ class PlayingNext(BaseWindow):
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
             self.close()
-
         if actionID == 7:
             self.handle_action(7)

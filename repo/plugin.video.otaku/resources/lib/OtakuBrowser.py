@@ -12,9 +12,9 @@ def parse_history_view(res):
 
 
 def search_history(search_array):
-    result = [utils.allocate_item("New Search", "search", True, False, 'new_search.png')]
+    result = [utils.allocate_item("New Search", "search//1", True, False, 'new_search.png')]
     result += list(map(parse_history_view, search_array))
-    result.append(utils.allocate_item("Clear Search History...", "clear_history", False, False, 'clear_search_history.png'))
+    result.append(utils.allocate_item("Clear Search History...", "clear_search_history", False, False, 'clear_search_history.png'))
     return result
 
 

@@ -57,7 +57,7 @@ class ANIZIPAPI:
             filler = ''
 
         code = jz.get_second_label(info, dub_data)
-        if not code and control.bools.filler:
+        if not code and control.settingids.filler:
             filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
         parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
@@ -66,7 +66,7 @@ class ANIZIPAPI:
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
             database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
 
-        if control.bools.clean_titles and info.get('playcount') != 1:
+        if control.settingids.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {episode}'
             parsed['info']['plot'] = None
         return parsed
@@ -128,7 +128,7 @@ class ANIZIPAPI:
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
         eps_watched = kodi_meta.get('eps_watched')
-        if not eps_watched and control.bools.watchlist_data:
+        if not eps_watched and control.settingids.watchlist_data:
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor:

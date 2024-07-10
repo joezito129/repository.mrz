@@ -179,7 +179,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "name": '%s - %d/%d' % (eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
                                     res["attributes"]['progress'],
                                     eres["attributes"].get('episodeCount', 0) if eres["attributes"]['episodeCount'] else 0),
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{kitsu_id}/{res["attributes"]["progress"]}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["attributes"]["progress"]}',
             "image": poster_image.get('large', poster_image['original']),
             "info": info
         }
@@ -231,11 +231,11 @@ class KitsuWLF(WatchlistFlavorBase):
         }
 
         if next_up_meta:
-            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
+            base['url'] = 'play/%d/%d/' % (anilist_id, next_up)
             return utils.parse_view(base, False, True)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f"play_movie/{anilist_id}/{mal_id}"
+            base['url'] = f"play_movie/{anilist_id}/{mal_id}/"
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 

@@ -18,6 +18,8 @@
 
 import pickle
 
+import xbmcgui
+
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, player, utils
@@ -32,7 +34,7 @@ def add_last_watched(items):
     try:
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
         last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta.get('title_userPreferred'))
-        items.insert(0, (last_watched, f'animes/{anilist_id}/', kodi_meta['poster']))
+        items.insert(0, (last_watched, f'animes/{anilist_id}//', kodi_meta['poster']))
     except TypeError:
         pass
     return items
@@ -48,6 +50,7 @@ def ANIMES_PAGE(payload, params):
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
     path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
+    page = params.get('page', 1)
     if not anilist_id:
         try:
             anilist_id = database.get_show_mal(mal_id)['anilist_id']
@@ -55,13 +58,6 @@ def FIND_RECOMMENDATIONS(payload, params):
             from resources.lib.AniListBrowser import AniListBrowser
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
-    control.draw_items(_ANILIST_BROWSER.get_recommendations(anilist_id), 'tvshows')
-
-
-# next page for find_recommendations
-@Route('recommendations_next/*')
-def RECOMMENDATIONS_NEXT(payload, params):
-    anilist_id, page = payload.rsplit("/")
     control.draw_items(_ANILIST_BROWSER.get_recommendations(anilist_id, int(page)), 'tvshows')
 
 
@@ -78,73 +74,29 @@ def FIND_RELATIONS(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_relations(anilist_id), 'tvshows')
 
 
-@Route('anilist_airing_anime')
-def ANILIST_AIRING_ANIME(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_airing_anime(), 'tvshows')
-
-
-# next page for anilist_airing_anime
 @Route('anilist_airing_anime/*')
 def ANILIST_AIRING_ANIME(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_airing_anime(int(payload)), 'tvshows')
 
 
-@Route('anilist_upcoming_next_season')
-def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_upcoming_next_season(), 'tvshows')
-
-
-# next page for anilist_upcoming_next_season
 @Route('anilist_upcoming_next_season/*')
 def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_upcoming_next_season(int(payload)), 'tvshows')
 
 
-@Route('anilist_top_100_anime')
-def ANILIST_TOP_100_ANIME(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_top_100_anime(), 'tvshows')
-
-
-# next page for anilist_top_100_anime
 @Route('anilist_top_100_anime/*')
 def ANILIST_TOP_100_ANIME_PAGES(payload, params):
     control.draw_items(_ANILIST_BROWSER.get_top_100_anime(int(payload)), 'tvshows')
 
 
-@Route('anilist_genres')
-def ANILIST_GENRES(payload, params):
-    genre = _ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(50010), g))
-    control.draw_items(genre, 'tvshows')
-
-
-# next page for anilist_genres
 @Route('anilist_genres/*')
 def ANILIST_GENRES_PAGES(payload, params):
-    genres, page = payload.rsplit("/")
-    control.draw_items(_ANILIST_BROWSER.genres_payload(genres, int(page)), 'tvshows')
-
-
-@Route('search')
-def SEARCH(payload, params):
-    query = control.keyboard(control.lang(50011))
-    if not query:
-        return control.draw_items([], 'tvshows')
-    if int(control.getSetting('searchhistory')) == 0:
-        database.addSearchHistory(query, 'show')
-    control.draw_items(_ANILIST_BROWSER.get_search(query), 'tvshows')
-
-
-# next page for anilist_search
-@Route('search/*')
-def SEARCH_PAGES(payload, params):
-    query, page = payload.rsplit("/", 1)
-    control.draw_items(_ANILIST_BROWSER.get_search(query, int(page)), 'tvshows')
-
-
-@Route('search_results/*')
-def SEARCH_RESULTS(payload, params):
-    query = params.get('query')
-    control.draw_items(_ANILIST_BROWSER.get_search(query, 1), 'tvshows')
+    genres, tags, page = payload.rsplit("/")
+    if genres or tags:
+        control.draw_items(_ANILIST_BROWSER.genres_payload(genres, tags, int(page)), 'tvshows')
+    else:
+        genre = _ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(50010), g))
+        control.draw_items(genre, 'tvshows')
 
 
 @Route('search_history')
@@ -156,11 +108,18 @@ def SEARCH_HISTORY(payload, params):
         SEARCH(payload, params)
 
 
-@Route('clear_history')
-def CLEAR_HISTORY(payload, params):
-    database.clearSearchHistory()
-    control.refresh()
-    control.exit_code()
+@Route('search/*')
+def SEARCH(payload, params):
+    query, page = payload.rsplit("/", 1)
+    if not query:
+        query = control.keyboard(control.lang(50011))
+        if not query:
+            return control.draw_items([], 'tvshows')
+        if int(control.getSetting('searchhistory')) == 0:
+            database.addSearchHistory(query, 'show')
+        control.draw_items(_ANILIST_BROWSER.get_search(query), 'tvshows')
+    else:
+        control.draw_items(_ANILIST_BROWSER.get_search(query, int(page)), 'tvshows')
 
 
 @Route('remove_search_item/*')
@@ -204,8 +163,7 @@ def PLAY(payload, params):
 
 @Route('play_movie/*')
 def PLAY_MOVIE(payload, params):
-    payload_list = payload.rsplit("/")
-    anilist_id, mal_id = payload_list
+    anilist_id, mal_id = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume_time = params.get('resume')
@@ -326,59 +284,26 @@ def FANART(payload, params):
     control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[int(select)]}")
 
 
-@Route('clear_slected_fanart')
-def CLEAR_SELECTED_FANART(payload, params):
-    fanart_all = control.getSetting(f'fanart.all').split(',')
-    for i in fanart_all:
-        control.setSetting(f'fanart.select.anilist.{i}', '')
-    control.setSetting('fanart.all', '')
-    control.ok_dialog(control.ADDON_NAME, "Completed")
+# ### Menu Items ###
+@Route('')
+def LIST_MENU(payload, params):
+    MENU_ITEMS = [
+        (control.lang(50001), "anilist_airing_anime/1", 'airing_anime.png'),
+        (control.lang(50034), "anilist_upcoming_next_season/1", 'upcoming.png'),
+        (control.lang(50009), "anilist_top_100_anime/1", 'top_100_anime.png'),
+        (control.lang(50010), "anilist_genres///1", 'genres_&_tags.png'),
+        (control.lang(50011), "search_history", 'search.png'),
+        (control.lang(50012), "tools", 'tools.png')
+    ]
 
-
-@Route('download_manager')
-def DOWNLOAD_MANAGER(payload, params):
-    from resources.lib.windows.download_manager import DownloadManager
-    DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
-
-
-@Route('settings')
-def SETTINGS(payload, params):
-    import xbmcaddon
-    xbmcaddon.Addon().openSettings()
-
-
-@Route('toggleLanguageInvoker')
-def TOGGLE_LANGUAGE_INVOKER(payload, params):
-    import service
-    service.toggle_reuselanguageinvoker()
-    control.exit_code()
-
-
-@Route('completed_sync')
-def COMPLETED_SYNC(payload, params):
-    import service
-    service.sync_watchlist()
-    control.exit_code()
-
-
-@Route('clear_cache')
-def CLEAR_CACHE(payload, params):
-    database.cache_clear()
-    control.exit_code()
-
-
-@Route('rebuild_database')
-def REBUILD_DATABASE(payload, params):
-    from resources.lib.ui.database_sync import AnilistSyncDatabase
-    AnilistSyncDatabase().re_build_database()
-    control.exit_code()
-
-
-@Route('change_log')
-def CHANGE_LOG(payload, params):
-    import service
-    service.getChangeLog()
-    control.exit_code()
+    if control.getBool('menu.lastwatched'):
+        MENU_ITEMS = add_last_watched(MENU_ITEMS)
+    MENU_ITEMS = add_watchlist(MENU_ITEMS)
+    MENU_ITEMS_ = MENU_ITEMS[:]
+    for i in MENU_ITEMS:
+        if control.getSetting(i[1]) == 'false':
+            MENU_ITEMS_.remove(i)
+    control.draw_items([utils.allocate_item(name, url, True, False, image) for name, url, image in MENU_ITEMS_], 'addons')
 
 
 @Route('tools')
@@ -396,25 +321,75 @@ def TOOLS_MENU(payload, params):
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
 
 
-@Route('')
-def LIST_MENU(payload, params):
-    MENU_ITEMS = [
-        (control.lang(50001), "anilist_airing_anime", 'airing_anime.png'),
-        (control.lang(50034), "anilist_upcoming_next_season", 'upcoming.png'),
-        (control.lang(50009), "anilist_top_100_anime", 'top_100_anime.png'),
-        (control.lang(50010), "anilist_genres", 'genres_&_tags.png'),
-        (control.lang(50011), "search_history", 'search.png'),
-        (control.lang(50012), "tools", 'tools.png')
-    ]
+# ### Maintenance ###
+@Route('settings')
+def SETTINGS(payload, params):
+    import xbmcaddon
+    xbmcaddon.Addon().openSettings()
 
-    if control.getBool('menu.lastwatched'):
-        MENU_ITEMS = add_last_watched(MENU_ITEMS)
-    MENU_ITEMS = add_watchlist(MENU_ITEMS)
-    MENU_ITEMS_ = MENU_ITEMS[:]
-    for i in MENU_ITEMS:
-        if control.getSetting(i[1]) == 'false':
-            MENU_ITEMS_.remove(i)
-    control.draw_items([utils.allocate_item(name, url, True, False, image) for name, url, image in MENU_ITEMS_], 'addons')
+
+@Route('change_log')
+def CHANGE_LOG(payload, params):
+    import service
+    service.getChangeLog()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('clear_cache')
+def CLEAR_CACHE(payload, params):
+    database.cache_clear()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('clear_search_history')
+def CLEAR_SEARCH_HISTORY(payload, params):
+    database.clearSearchHistory()
+    control.refresh()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('clear_slected_fanart')
+def CLEAR_SELECTED_FANART(payload, params):
+    fanart_all = control.getSetting(f'fanart.all').split(',')
+    for i in fanart_all:
+        control.setSetting(f'fanart.select.anilist.{i}', '')
+    control.setSetting('fanart.all', '')
+    control.ok_dialog(control.ADDON_NAME, "Completed")
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('rebuild_database')
+def REBUILD_DATABASE(payload, params):
+    from resources.lib.ui.database_sync import AnilistSyncDatabase
+    AnilistSyncDatabase().re_build_database()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('completed_sync')
+def COMPLETED_SYNC(payload, params):
+    import service
+    service.sync_watchlist()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('download_manager')
+def DOWNLOAD_MANAGER(payload, params):
+    from resources.lib.windows.download_manager import DownloadManager
+    DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('toggleLanguageInvoker')
+def TOGGLE_LANGUAGE_INVOKER(payload, params):
+    import service
+    service.toggle_reuselanguageinvoker()
 
 
 if __name__ == "__main__":
@@ -424,7 +399,6 @@ if __name__ == "__main__":
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(control.playList) > 0 and not player.player().isPlaying():
         control.playList.clear()
-
     # t1 = time.perf_counter_ns()
     # totaltime = (t1-t0)/1_000_000
     # control.print(totaltime, 'ms')

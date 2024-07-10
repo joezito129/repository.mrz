@@ -4,7 +4,6 @@ import threading
 from resources.lib.ui import control
 from sqlite3 import dbapi2, version
 
-
 database_path = control.anilistSyncDB
 sqlite_version = version
 
@@ -24,9 +23,7 @@ class AnilistSyncDatabase:
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
         self.last_meta_update = '1.0.6'
-
         threading.Lock().acquire()
-
         self._refresh_activites()
 
         if self.activites is None:

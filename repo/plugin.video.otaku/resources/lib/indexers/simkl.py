@@ -43,6 +43,7 @@ class SIMKLAPI:
 
         try:
             info['aired'] = res['date'][:10]
+
         except KeyError:
             pass
 
@@ -51,7 +52,7 @@ class SIMKLAPI:
         except (IndexError, TypeError):
             filler = ''
         code = jz.get_second_label(info, dub_data)
-        if not code and control.bools.filler:
+        if not code and control.settingids.filler:
             filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
 
@@ -61,7 +62,7 @@ class SIMKLAPI:
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
             database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
 
-        if control.bools.clean_titles and info.get('playcount') != 1:
+        if control.settingids.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["episode"]}'
             parsed['info']['plot'] = None
         return parsed
@@ -81,7 +82,7 @@ class SIMKLAPI:
 
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
         all_results = list(map(mapfunc, result_ep))
-        if control.bools.show_empty_eps:
+        if control.settingids.show_empty_eps:
             total_ep = result.get('total_episodes', 0)
             empty_ep = []
             for ep in range(len(all_results) + 1, total_ep + 1):
@@ -122,7 +123,7 @@ class SIMKLAPI:
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
         eps_watched = kodi_meta.get('eps_watched')
-        if not eps_watched and control.bools.watchlist_data:
+        if not eps_watched and control.settingids.watchlist_data:
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor:

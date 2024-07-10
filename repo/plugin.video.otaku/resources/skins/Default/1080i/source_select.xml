@@ -1,16 +1,6 @@
 <window type="dialog">
     <defaultcontrol>2</defaultcontrol>
-    <coordinates>
-        <left>0</left>
-        <top>0</top>
-    </coordinates>
     <controls>
-        <!-- Background Texture -->
-        <control type="image">
-            <texture background="true">white.png</texture>
-            <colordiffuse>FF000000</colordiffuse>
-        </control>
-        <!-- Background -->
         <control type="image">
             <top>0</top>
             <left>0</left>
@@ -18,51 +8,6 @@
             <height>1080</height>
             <texture background="true">$INFO[Window().Property(item.art.fanart)]</texture>
         </control>
-
-        <!-- MultiFanart -->
-            <control type="group">
-                <visible>Skin.HasSetting(SkinHelper.EnableExtraFanart) + System.HasAddon(script.artwork.helper)</visible>
-
-                <control type="fadelabel" id="1010">
-                    <info>Window().Property(item.art.fanart)</info>
-                    <info>Window().Property(item.art.fanart1)</info>
-                    <info>Window().Property(item.art.fanart2)</info>
-                    <info>Window().Property(item.art.fanart3)</info>
-                    <info>Window().Property(item.art.fanart4)</info>
-                    <info>Window().Property(item.art.fanart5)</info>
-                    <info>Window().Property(item.art.fanart6)</info>
-                    <info>Window().Property(item.art.fanart7)</info>
-                    <info>Window().Property(item.art.fanart8)</info>
-                    <info>Window().Property(item.art.fanart9)</info>
-                    <info>Window().Property(item.art.fanart10)</info>
-                    <info>Window().Property(item.art.fanart11)</info>
-                    <info>Window().Property(item.art.fanart12)</info>
-                    <info>Window().Property(item.art.fanart13)</info>
-                    <info>Window().Property(item.art.fanart14)</info>
-                    <info>Window().Property(item.art.fanart15)</info>
-                    <info>Window().Property(item.art.fanart16)</info>
-                    <info>Window().Property(item.art.fanart17)</info>
-                    <info>Window().Property(item.art.fanart18)</info>
-                    <info>Window().Property(item.art.fanart19)</info>
-                    <info>Window().Property(item.art.fanart20)</info>
-                    <randomize>true</randomize>
-                    <pauseatend>8000</pauseatend>
-                    <scroll>false</scroll>
-                    <scrollout>false</scrollout>
-                    <resetonlabelchange>true</resetonlabelchange>
-                    <textcolor>0x00000000</textcolor>
-                </control>
-
-                <!-- Background -->
-                <control type="multiimage">
-                    <imagepath background="true">$INFO[Control.GetLabel(1010)]</imagepath>
-                    <timeperimage>4000</timeperimage>
-                    <fadetime>1000</fadetime>
-                    <pauseatend>12000</pauseatend>
-                    <randomize>true</randomize>
-                    <loop>no</loop>
-                </control>
-            </control>
 
         <control type="image">
             <top>0</top>
@@ -85,7 +30,7 @@
                 <align>center</align>
                 <aligny>center</aligny>
                 <visible>!String.IsEmpty(Window().Property(item.info.season))</visible>
-                <label>Season: [COLOR $INFO[Window().Property(settings.color)]]$INFO[Window().Property(item.info.season)] [/COLOR] | Episode: [COLOR $INFO[Window().Property(settings.color)]]$INFO[Window().Property(item.info.episode)][/COLOR]</label>
+                <label>Season: [COLOR deepskyblue]$INFO[Window().Property(item.info.season)] [/COLOR] | Episode: [COLOR deepskyblue]$INFO[Window().Property(item.info.episode)][/COLOR]</label>
             </control>
             <control type="image">
                 <width>500</width>
@@ -107,7 +52,7 @@
                     <aligny>center</aligny>
                     <scroll>true</scroll>
                     <scrollspeed>80</scrollspeed>
-                    <label>[COLOR $INFO[Window().Property(settings.color)]]$INFO[Window().Property(item.info.title)] [/COLOR]</label>
+                    <label>[COLOR deepskyblue]$INFO[Window().Property(item.info.title)] [/COLOR]</label>
                 </control>
                 <control type="label">
                     <top>30</top>
@@ -117,7 +62,7 @@
                     <align>center</align>
                     <aligny>center</aligny>
                     <visible>String.IsEmpty(Window().Property(item.info.season))</visible>
-                    <label>Year: [COLOR $INFO[Window().Property(settings.color)]]$INFO[Window().Property(item.info.year)] [/COLOR] | Rating: [COLOR $INFO[Window().Property(settings.color)]]$INFO[Window().Property(item.info.rating)][/COLOR]</label>
+                    <label>Year: [COLOR deepskyblue]$INFO[Window().Property(item.info.year)] [/COLOR] | Rating: [COLOR deepskyblue]$INFO[Window().Property(item.info.rating)][/COLOR]</label>
                 </control>
                 <control type="label">
                     <top>0</top>
@@ -127,7 +72,7 @@
                     <align>center</align>
                     <aligny>center</aligny>
                     <visible>!String.IsEmpty(Window().Property(item.info.season))</visible>
-                    <label>Aired: [COLOR $INFO[Window().Property(settings.color)]]$INFO[Window().Property(item.info.aired)] [/COLOR]</label>
+                    <label>Aired: [COLOR deepskyblue]$INFO[Window().Property(item.info.aired)] [/COLOR]</label>
                 </control>
 
                 <control type="textbox">
@@ -207,7 +152,7 @@
                         <textcolor>FFFFFFFF</textcolor>
                         <align>left</align>
                         <aligny>center</aligny>
-                        <label>Debrid: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(debrid_provider)][/COLOR][/UPPERCASE]</label>
+                        <label>Debrid: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(debrid_provider)][/COLOR][/UPPERCASE]</label>
                     </control>
                     <control type="label">
                         <top>90</top>
@@ -217,7 +162,7 @@
                         <aligny>center</aligny>
                         <textcolor>FFFFFFFF</textcolor>
                         <font>font10</font>
-                        <label>Provider: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(provider)][/COLOR][/UPPERCASE]</label>
+                        <label>Provider: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(provider)][/COLOR][/UPPERCASE]</label>
                     </control>
                     <control type="label">
                         <top>60</top>
@@ -228,7 +173,7 @@
                         <textcolor>FFFFFFFF</textcolor>
                         <shadowcolor>dimgrey</shadowcolor>
                         <font>font10</font>
-                        <label>Type: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(type)][/COLOR][/UPPERCASE]</label>
+                        <label>Type: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(type)][/COLOR][/UPPERCASE]</label>
                     </control>
                     <control type="label">
                         <top>90</top>
@@ -239,7 +184,7 @@
                         <textcolor>FFFFFFFF</textcolor>
                         <shadowcolor>dimgrey</shadowcolor>
                         <font>font10</font>
-                        <label>Info: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
+                        <label>Info: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
                     </control>
                     <control type="label">
                         <top>60</top>
@@ -250,7 +195,7 @@
                         <textcolor>66FFFFFF</textcolor>
                         <align>left</align>
                         <aligny>center</aligny>
-                        <label>Seeders: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(seeders)][/COLOR][/UPPERCASE]</label>
+                        <label>Seeders: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(seeders)][/COLOR][/UPPERCASE]</label>
                     </control>
                     <control type="label">
                         <left>750</left>
@@ -261,7 +206,7 @@
                         <textcolor>66FFFFFF</textcolor>
                         <align>left</align>
                         <aligny>center</aligny>
-                        <label>Size: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(size)][/COLOR][/UPPERCASE]</label>
+                        <label>Size: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(size)][/COLOR][/UPPERCASE]</label>
                     </control>
                   <control type="image">
                         <centertop>50%</centertop>
@@ -340,7 +285,7 @@
                     <textcolor>FFFFFFFF</textcolor>
                     <align>left</align>
                     <aligny>center</aligny>
-                    <label>Debrid: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(debrid_provider)][/COLOR][/UPPERCASE]</label>
+                    <label>Debrid: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(debrid_provider)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="label">
                     <top>90</top>
@@ -350,7 +295,7 @@
                     <aligny>center</aligny>
                     <textcolor>FFFFFFFF</textcolor>
                     <font>font10</font>
-                    <label>Provider: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(provider)][/COLOR][/UPPERCASE]</label>
+                    <label>Provider: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(provider)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="label">
                     <top>60</top>
@@ -361,7 +306,7 @@
                     <textcolor>FFFFFFFF</textcolor>
 		            <shadowcolor>dimgrey</shadowcolor>
                     <font>font10</font>
-                    <label>Type: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(type)][/COLOR][/UPPERCASE]</label>
+                    <label>Type: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(type)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="label">
                     <top>90</top>
@@ -372,7 +317,7 @@
                     <textcolor>FFFFFFFF</textcolor>
 		            <shadowcolor>dimgrey</shadowcolor>
                     <font>font10</font>
-                    <label>Info: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
+                    <label>Info: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(info)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="label">
                     <top>60</top>
@@ -383,7 +328,7 @@
                     <textcolor>66FFFFFF</textcolor>
                     <align>left</align>
                     <aligny>center</aligny>
-                    <label>Seeders: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(seeders)][/COLOR][/UPPERCASE]</label>
+                    <label>Seeders: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(seeders)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="label">
                     <left>750</left>
@@ -394,7 +339,7 @@
                     <textcolor>66FFFFFF</textcolor>
                     <align>left</align>
                     <aligny>center</aligny>
-                    <label>Size: [UPPERCASE][COLOR $INFO[Window().Property(settings.color)]]$INFO[ListItem.Property(size)][/COLOR][/UPPERCASE]</label>
+                    <label>Size: [UPPERCASE][COLOR deepskyblue]$INFO[ListItem.Property(size)][/COLOR][/UPPERCASE]</label>
                 </control>
                 <control type="image">
                     <centertop>50%</centertop>

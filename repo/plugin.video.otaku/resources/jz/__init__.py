@@ -1,8 +1,8 @@
-from resources.lib.ui.control import bools
+from resources.lib.ui.control import settingids
 
 
 def get_second_label(info, dub_data, filler=None):
-    if bools.filler and filler:
+    if settingids.filler and filler:
         return filler
 
     code_dub = code_sub = code = None

@@ -6,7 +6,6 @@ control.sys.path.append(control.dataPath)
 
 
 class Resolver(BaseWindow):
-
     def __init__(self, xml_file, location=None, actionArgs=None, source_select=False):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.return_data = None

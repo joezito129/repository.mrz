@@ -48,7 +48,7 @@ def update_mappings_db():
 
 
 def sync_watchlist(silent=False):
-    if control.bools.watchlist_sync:
+    if control.settingids.watchlist_sync:
         control.log('### Updating Completed Sync')
         from resources.lib.WatchlistFlavor import WatchlistFlavor
 

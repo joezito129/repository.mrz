@@ -45,9 +45,9 @@
 							<shadowcolor>22000000</shadowcolor>
 							<aligny>center</aligny>
 							<align>center</align>
-							<texturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</texturefocus>
+							<texturefocus border="10" colordiffuse="deepskyblue">white.png</texturefocus>
 							<texturenofocus border="10" colordiffuse="AA212121">white.png</texturenofocus>
-							<alttexturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</alttexturefocus>
+							<alttexturefocus border="10" colordiffuse="deepskyblue">white.png</alttexturefocus>
 							<alttexturenofocus border="10" colordiffuse="AA212121">white.png</alttexturenofocus>
 							<pulseonselect>no</pulseonselect>
 						</control>
@@ -63,9 +63,9 @@
 							<shadowcolor>22000000</shadowcolor>
 							<aligny>center</aligny>
 							<align>center</align>
-							<texturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</texturefocus>
+							<texturefocus border="10" colordiffuse="deepskyblue">white.png</texturefocus>
 							<texturenofocus border="10" colordiffuse="AA212121">white.png</texturenofocus>
-							<alttexturefocus border="10" colordiffuse="$INFO[Window.Property(settings.color)]">white.png</alttexturefocus>
+							<alttexturefocus border="10" colordiffuse="deepskyblue">white.png</alttexturefocus>
 							<alttexturenofocus border="10" colordiffuse="AA212121">white.png</alttexturenofocus>
 							<pulseonselect>no</pulseonselect>
 						</control>

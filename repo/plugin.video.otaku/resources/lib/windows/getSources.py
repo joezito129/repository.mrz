@@ -7,15 +7,11 @@ class Sources(DisplayWindow):
         super().__init__(xml_file, location, actionArgs)
         self.torrents_qual_len = [0, 0, 0, 0]
         self.embeds_qual_len = [0, 0, 0, 0]
-        self.silent = False
         self.return_data = []
-        self.progress = 1
 
     def getSources(self, args):
         self.setProperty('process_started', 'true')
-        self.progress = 50
-        self.setProgress()
-        self.setText("4K: %s | 1080: %s | 720: %s | SD: %s" % (
+        self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
             control.colorstr(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
             control.colorstr(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
             control.colorstr(self.torrents_qual_len[2] + self.embeds_qual_len[2]),

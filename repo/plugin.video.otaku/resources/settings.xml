@@ -94,7 +94,7 @@
 		<setting id="skipintro.aniskip.offset" type="slider" subsetting="true" label="40432" visible="eq(-1,true) + eq(-2,true)" range="-10,10" default="-3"/>
 		<setting id="skipintro.time" type="slider" subsetting="true" label="40325" option="int" range="10,100" default="80" visible="eq(-3,true)" />
 		<setting id="skipintro.delay" type="slider" subsetting="true" label="40424" option="int" range="1,100" default="2" visible="eq(-4,true)" />
-		<setting id="skipintro.duration" type="slider" subsetting="true" label="40430" option="int" range="0,5" visible="eq(-5,true)" default="2" />
+		<setting id="skipintro.duration" type="slider" subsetting="true" label="40430" option="int" range="1,5" visible="eq(-5,true)" default="2" />
 
 		<!-- Next Episode Dialog -->
 		<setting type="lsep" label="40317" />
@@ -232,11 +232,14 @@
 	<category label="40416">
 		<!-- Tools -->
 		<setting type="lsep" label="40416"/>
-		<setting id="change_log" type="action" label="30027" action="RunPlugin(plugin://plugin.video.otaku/change_log)"/>
-		<setting id="clear_cache" type="action" label="30021" action="RunPlugin(plugin://plugin.video.otaku/clear_cache)"/>
-		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_history)"/>
-		<setting id="rebuild_database" type="action" label="30026" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database)"/>
-		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync)"/>
+		<setting id="change_log" type="action" label="30027" action="RunPlugin(plugin://plugin.video.otaku/change_log?setting=true)"/>
+		<setting id="clear_cache" type="action" label="30021" action="RunPlugin(plugin://plugin.video.otaku/clear_cache?setting=true)"/>
+		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_search_history?setting=true)"/>
+		<setting id="clear_slected_fanart" type="action" label="Clear Selected Fanart" action="RunPlugin(plugin://plugin.video.otaku/clear_slected_fanart?setting=true)"/>
+		<setting id="rebuild_database" type="action" label="30026" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database?setting=true)"/>
+		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync?setting=true)"/>
+		<setting id="download_manager" type="action" label="Download Manager" action="RunPlugin(plugin://plugin.video.otaku/download_manager?setting=true)"/>
+
 
 		<setting type="lsep" label="Language Invoker"/>
 		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:              Enable For Much Faster Speeds" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>

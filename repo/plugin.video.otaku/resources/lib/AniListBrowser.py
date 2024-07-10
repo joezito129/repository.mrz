@@ -41,7 +41,7 @@ class AniListBrowser:
             season = seasons[int((month - 1) / 3)]
         return season, year
 
-    def get_airing_anime(self, page=1):
+    def get_airing_anime(self, page):
         season, year = self.get_season_year('Aired')
         variables = {
             'page': page,
@@ -61,7 +61,7 @@ class AniListBrowser:
         airing = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(airing, "anilist_airing_anime/%d", page)
 
-    def get_upcoming_next_season(self, page=1):
+    def get_upcoming_next_season(self, page):
         season, year = self.get_season_year('next')
         variables = {
             'page': page,
@@ -80,7 +80,7 @@ class AniListBrowser:
         upcoming = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(upcoming, "anilist_upcoming_next_season/%d", page)
 
-    def get_top_100_anime(self, page=1):
+    def get_top_100_anime(self, page):
         variables = {
             'page': page,
             'perpage': self.perpage,
@@ -113,14 +113,14 @@ class AniListBrowser:
             search['ANIME'] += search_adult['ANIME']
         return self.process_anilist_view(search, f"search/{query}/%d", page)
 
-    def get_recommendations(self, anilist_id, page=1):
+    def get_recommendations(self, anilist_id, page):
         variables = {
             'page': page,
             'perPage': self.perpage,
             'id': anilist_id
         }
         recommendations = database.get_(self.get_recommendations_res, 24, variables)
-        return self.process_recommendations_view(recommendations, f'recommendations_next/{anilist_id}/%d', page)
+        return self.process_recommendations_view(recommendations, f'find_recommendations/recommendations_next/{anilist_id}//?page=%d', page)
 
     def get_relations(self, anilist_id):
         variables = {
@@ -849,9 +849,9 @@ class AniListBrowser:
                 genre_display_list.append(genres_list[selection])
             else:
                 tag_display_list.append(tag_display_list[selection])
-        return self.genres_payload(genre_display_list, tag_display_list)
+        return self.genres_payload(genre_display_list, tag_display_list, 1)
 
-    def genres_payload(self, genre_list, tag_list, page=1):
+    def genres_payload(self, genre_list, tag_list, page):
         query = '''
         query (
             $page: Int,
