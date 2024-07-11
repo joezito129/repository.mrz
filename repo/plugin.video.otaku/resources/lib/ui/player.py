@@ -83,7 +83,6 @@ class WatchlistPlayer(player):
                 self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset
                 self.skipoutro_end = int(skip_times['endTime']) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
-
         self.keepAlive()
 
     def onPlayBackStarted(self):
@@ -93,12 +92,14 @@ class WatchlistPlayer(player):
         control.setSetting('addon.last_watched', self._anilist_id)
 
     def onPlayBackStopped(self):
+        control.closeAllDialogs()
         playList.clear()
 
-    # def onPlayBackEnded(self):
-    #     pass
+    def onPlayBackEnded(self):
+        control.closeAllDialogs()
 
     def onPlayBackError(self):
+        control.closeAllDialogs()
         playList.clear()
         control.exit_(1)
 
@@ -110,7 +111,6 @@ class WatchlistPlayer(player):
     def onWatchedPercent(self):
         if not self._watchlist_update:
             return
-
         while self.isPlaying() and not self.updated:
             watched_percentage = self.getWatchedPercent()
             self.current_time = self.getTime()

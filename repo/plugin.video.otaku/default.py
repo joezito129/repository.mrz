@@ -18,8 +18,6 @@
 
 import pickle
 
-import xbmcgui
-
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, player, utils
@@ -144,7 +142,7 @@ def PLAY(payload, params):
         resume_time = float(resume_time)
         context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
         if context == -1:
-            return
+            return control.exit_code()
         elif context == 1:
             resume_time = None
     sources = OtakuBrowser.get_sources(anilist_id, episode, 'show', rescrape, source_select)
@@ -163,7 +161,7 @@ def PLAY(payload, params):
 
 @Route('play_movie/*')
 def PLAY_MOVIE(payload, params):
-    anilist_id, mal_id = payload.rsplit("/")
+    anilist_id, mal_id, eps_watched = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume_time = params.get('resume')
@@ -258,11 +256,10 @@ def FANART_SELECT(payload, params):
             from resources.lib.AniListBrowser import AniListBrowser
             show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
             anilist_id = show_meta['anilist_id']
-    episode = database.get_episode(anilist_id)
-    if not episode:
+    if not (episode := database.get_episode(anilist_id)):
         OtakuBrowser.get_anime_init(anilist_id)
         episode = database.get_episode(anilist_id)
-    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart']
+    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random (Defualt)"]
     fanart += ["None", ""]
     control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
@@ -272,7 +269,7 @@ def FANART_SELECT(payload, params):
 def FANART(payload, params):
     anilist_id, select = payload.rsplit('/', 2)
     episode = database.get_episode(anilist_id)
-    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart']
+    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random"]
     fanart += ["None", ""]
     fanart_all = control.getSetting(f'fanart.all').split(',')

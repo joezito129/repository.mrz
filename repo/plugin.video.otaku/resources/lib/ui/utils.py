@@ -4,8 +4,6 @@ from resources.lib.ui import control
 
 
 def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=None, poster=None, cast=None, landscape=None, banner=None, clearart=None, clearlogo=None):
-    if not cast:
-        cast = []
     if image and '/' not in image:
         image = os.path.join(control.OTAKU_ICONS_PATH, image)
     if fanart and not isinstance(fanart, list) and '/' not in fanart:

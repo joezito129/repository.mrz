@@ -20,15 +20,11 @@ class SIMKLAPI:
 
     def parse_episode_view(self, res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
         episode = int(res['episode'])
-
         url = f"{anilist_id}/{episode}"
-
         title = res.get('title')
         if not title:
             title = f'Episode {episode}'
-
         image = self.imagePath % res['img'] if res.get('img') else poster
-
         info = {
             'UniqueIDs': {'anilist_id': str(anilist_id)},
             'plot': res.get('description', ''),
@@ -122,8 +118,7 @@ class SIMKLAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
-        eps_watched = kodi_meta.get('eps_watched')
-        if not eps_watched and control.settingids.watchlist_data:
+        if not (eps_watched := kodi_meta.get('eps_watched')) and control.settingids.watchlist_data:
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor:
@@ -132,9 +127,7 @@ class SIMKLAPI:
                     eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
                     database.update_kodi_meta(anilist_id, kodi_meta)
         episodes = database.get_episode_list(anilist_id)
-
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
-
         if episodes:
             if kodi_meta['status'] != "FINISHED":
                 return self.append_episodes(anilist_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data), 'episodes'
@@ -148,9 +141,7 @@ class SIMKLAPI:
 
     def get_anime_info(self, anilist_id):
         show_ids = database.get_show(anilist_id)
-        simkl_id = show_ids['simkl_id']
-
-        if not simkl_id:
+        if not (simkl_id := show_ids['simkl_id']):
             simkl_id = self.get_id('anilist', anilist_id)
             if not simkl_id:
                 mal_id = database.get_mappings(anilist_id, 'anilist_id').get('mal_id')

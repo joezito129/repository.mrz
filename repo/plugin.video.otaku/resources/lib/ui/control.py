@@ -205,44 +205,44 @@ def context_menu(context_list):
 
 def set_videotags(li, info):
     vinfo = li.getVideoInfoTag()
-    if info.get('title'):
-        vinfo.setTitle(info['title'])
-    if info.get('mediatype'):
-        vinfo.setMediaType(info['mediatype'])
-    if info.get('tvshowtitle'):
-        vinfo.setTvShowTitle(info['tvshowtitle'])
-    if info.get('plot'):
-        vinfo.setPlot(info['plot'])
-    if info.get('year'):
-        vinfo.setYear(info['year'])
-    if info.get('premiered'):
-        vinfo.setPremiered(info['premiered'])
-    if info.get('status'):
-        vinfo.setTvShowStatus(info['status'])
-    if info.get('genre'):
-        vinfo.setGenres(info['genre'])
-    if info.get('mpaa'):
-        vinfo.setMpaa(info['mpaa'])
-    if info.get('rating'):
-        vinfo.setRating(info['rating'])
-    if info.get('season'):
-        vinfo.setSeason(info['season'])
-    if info.get('episode'):
-        vinfo.setEpisode(info['episode'])
-    if info.get('aired'):
-        vinfo.setFirstAired(info['aired'])
-    if info.get('playcount'):
-        vinfo.setPlaycount(info['playcount'])
-    if info.get('code'):
-        vinfo.setProductionCode(info['code'])
-    if info.get('cast'):
-        vinfo.setCast([xbmc.Actor(c['name'], c['role'], c['index'], c['thumbnail']) for c in info['cast']])
-    if info.get('OriginalTitle'):
-        vinfo.setOriginalTitle(info['OriginalTitle'])
-    if info.get('trailer'):
-        vinfo.setTrailer(info['trailer'])
-    if info.get('UniqueIDs'):
-        vinfo.setUniqueIDs(info['UniqueIDs'])
+    if title := info.get('title'):
+        vinfo.setTitle(title)
+    if media_type := info.get('mediatype'):
+        vinfo.setMediaType(media_type)
+    if tvshow_title := info.get('tvshowtitle'):
+        vinfo.setTvShowTitle(tvshow_title)
+    if plot := info.get('plot'):
+        vinfo.setPlot(plot)
+    if year := info.get('year'):
+        vinfo.setYear(year)
+    if premiered := info.get('premiered'):
+        vinfo.setPremiered(premiered)
+    if status := info.get('status'):
+        vinfo.setTvShowStatus(status)
+    if genre := info.get('genre'):
+        vinfo.setGenres(genre)
+    if mpaa := info.get('mpaa'):
+        vinfo.setMpaa(mpaa)
+    if rating := info.get('rating'):
+        vinfo.setRating(rating)
+    if season := info.get('season'):
+        vinfo.setSeason(season)
+    if episode := info.get('episode'):
+        vinfo.setEpisode(episode)
+    if aired := info.get('aired'):
+        vinfo.setFirstAired(aired)
+    if playcount := info.get('playcount'):
+        vinfo.setPlaycount(playcount)
+    if code := info.get('code'):
+        vinfo.setProductionCode(code)
+    if cast := info.get('cast'):
+        vinfo.setCast([xbmc.Actor(c['name'], c['role'], c['index'], c['thumbnail']) for c in cast])
+    if originaltitle := info.get('OriginalTitle'):
+        vinfo.setOriginalTitle(originaltitle)
+    if trailer := info.get('trailer'):
+        vinfo.setTrailer(trailer)
+    if uniqueids := info.get('UniqueIDs'):
+        vinfo.setUniqueIDs(uniqueids)
     # if info.get('resume'):
     #     vinfo.setResumePoint(info['resume'], 0)
 
@@ -255,7 +255,7 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     if draw_cm:
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
-    if art.get('fanart') is None or settingids.fanart_disable:
+    if not art.get('fanart') or settingids.fanart_disable:
         art['fanart'] = OTAKU_FANART
     else:
         if isinstance(art['fanart'], list):
@@ -302,7 +302,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             if xbmc.getCondVisibility("Container.HasFiles"):
                 break
             xbmc.sleep(100)
-    xbmc.sleep(300)
+    xbmc.sleep(200)
     if settingids.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
@@ -413,5 +413,6 @@ class SettingIDs:
         # Ints
 
         # Str
+
 
 settingids = SettingIDs()

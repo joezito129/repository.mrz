@@ -6,7 +6,6 @@ from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBas
 class WatchlistFlavor:
     __LOGIN_KEY = "addon.login"
     __LOGIN_FLAVOR_KEY = "%s.flavor" % __LOGIN_KEY
-
     __SELECTED = None
 
     def __init__(self):

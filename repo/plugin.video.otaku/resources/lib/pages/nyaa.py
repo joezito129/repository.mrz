@@ -306,7 +306,15 @@ class Sources(BrowserBase):
         if not self.sources:
             self.sources = self.get_movie_sources_backup(anilist_id)
 
-        return self.sources
+        # make sure no duplicate sources
+        for source in self.sources:
+            if source not in self.all_sources:
+                self.all_sources.append(source)
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
+        return {'cached': self.cached, 'uncached': self.uncached}
 
     def get_movie_sources_backup(self, anilist_id):
         r = requests.get("https://kimetsu-title.firebaseio.com/%s.json" % anilist_id)

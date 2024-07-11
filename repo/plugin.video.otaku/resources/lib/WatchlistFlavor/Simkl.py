@@ -138,10 +138,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
 
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
         show = database.get_show(anilist_id)
-        if show:
-            kodi_meta = pickle.loads(show['kodi_meta'])
-        else:
-            kodi_meta = {}
+        kodi_meta = pickle.loads(show['kodi_meta']) if show else {}
 
         if self._title_lang == 'english':
             title = kodi_meta.get('ename') or res['show']['title']
@@ -167,7 +164,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         }
 
         if res["total_episodes_count"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -189,7 +186,6 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
 
         title = '%s - %s/%s' % (base_title, next_up, episode_count)
         poster = image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg'
-        plot = aired = None
         anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
             kodi_meta = pickle.loads(show['kodi_meta'])
@@ -202,6 +198,8 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
                 image = next_up_meta['image']
             plot = next_up_meta.get('plot')
             aired = next_up_meta.get('aired')
+        else:
+            plot = aired = None
 
         info = {
             'episode': next_up,
@@ -224,7 +222,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         }
 
         if res["total_episodes_count"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 
@@ -313,9 +311,9 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
                 }
             }]
         }
-        url = f'{self._URL}/sync/ratings'
+        url = f"{self._URL}/sync/ratings"
         if score == 0:
-            url = f'{url}/remove'
+            url = f"{url}/remove"
 
         r = requests.post(url, headers=self.__headers(), json=data)
         if r.ok:
@@ -332,7 +330,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
                 }
             }]
         }
-        r = requests.post(f'{self._URL}/sync/history/remove', headers=self.__headers(), json=data)
+        r = requests.post(f"{self._URL}/sync/history/remove", headers=self.__headers(), json=data)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:

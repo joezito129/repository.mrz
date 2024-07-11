@@ -50,13 +50,10 @@ class JikanAPI:
     def parse_episode_view(res, anilist_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
         episode = res['mal_id']
         url = f"{anilist_id}/{episode}"
-
         title = res.get('title')
         if not title:
             title = res["episode"]
-
         image = res['images']['jpg']['image_url'] if res.get('images') else poster
-
         info = {
             'UniqueIDs': {'anilist_id': str(anilist_id)},
             'title': title,
@@ -78,13 +75,10 @@ class JikanAPI:
         if not code and control.settingids.filler:
             filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
-
         parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
-
         kodi_meta = pickle.dumps(parsed)
         if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
             database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
-
         if control.settingids.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = res['episode']
             parsed['info']['plot'] = None
@@ -101,9 +95,7 @@ class JikanAPI:
 
         season = utils.get_season(title_list)
         result_ep = self.get_episode_meta(anilist_id)
-
         mapfunc = partial(self.parse_episode_view, anilist_id=anilist_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
-
         all_results = sorted(list(map(mapfunc, result_ep)), key=lambda x: x['info']['episode'])
         if control.settingids.show_empty_eps:
             total_ep = result.get('episodes', 0)
@@ -137,14 +129,11 @@ class JikanAPI:
 
     def get_episodes(self, anilist_id, show_meta):
         kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
-
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
-        eps_watched = kodi_meta.get('eps_watched')
         tvshowtitle = kodi_meta['title_userPreferred']
-
-        if not eps_watched and control.settingids.watchlist_data:
+        if not (eps_watched := kodi_meta.get('eps_watched')) and control.settingids.watchlist_data:
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor:
@@ -153,9 +142,7 @@ class JikanAPI:
                     eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
                     database.update_kodi_meta(anilist_id, kodi_meta)
         episodes = database.get_episode_list(anilist_id)
-
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
-
         if episodes:
             if kodi_meta['status'] != "FINISHED":
                 from resources.jz import anime_filler

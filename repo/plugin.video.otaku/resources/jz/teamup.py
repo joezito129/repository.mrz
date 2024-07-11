@@ -10,7 +10,6 @@ api_url = "https://api.teamup.com"
 
 
 def get_dub_data(en_title):
-
     if en_title:
         # match first word or first two words (seperated by {space} )
         regex = r'([^ ]+)' if '-' in en_title else r'([^ ]+) ?([^ ]+)?'

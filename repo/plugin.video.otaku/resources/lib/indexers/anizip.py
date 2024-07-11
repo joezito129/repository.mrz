@@ -10,7 +10,6 @@ from resources import jz
 
 
 class ANIZIPAPI:
-
     def __init__(self):
         self.baseUrl = "https://api.ani.zip"
 
@@ -127,8 +126,7 @@ class ANIZIPAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
-        eps_watched = kodi_meta.get('eps_watched')
-        if not eps_watched and control.settingids.watchlist_data:
+        if not (eps_watched := kodi_meta.get('eps_watched')) and control.settingids.watchlist_data:
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor:
@@ -137,7 +135,6 @@ class ANIZIPAPI:
                     eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
                     database.update_kodi_meta(anilist_id, kodi_meta)
         episodes = database.get_episode_list(anilist_id)
-
         dub_data = indexers.process_dub(anilist_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
 
         if episodes:

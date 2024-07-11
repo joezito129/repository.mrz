@@ -14,7 +14,7 @@ def get_route(anilist_id):
     params = {
         "anilist-ids": anilist_id
     }
-    r = requests.get(f'{base_url}/anime', params=params)
+    r = requests.get(f"{base_url}/anime", params=params)
     return r.json()['anime'][0]['route'] if r.ok else ''
 
 

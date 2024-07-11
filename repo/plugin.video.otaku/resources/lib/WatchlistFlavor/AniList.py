@@ -262,7 +262,7 @@ class AniListWLF(WatchlistFlavorBase):
         }
 
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -277,9 +277,8 @@ class AniListWLF(WatchlistFlavorBase):
         next_up = progress + 1
         episode_count = res['episodes'] if res['episodes'] else 0
         base_title = res['title'].get(self._title_lang) or res['title'].get('userPreferred')
-        title = '%s - %s/%s' % (base_title, next_up, episode_count)
+        title = f"{base_title} - {next_up}/{episode_count}"
         poster = image = res['coverImage']['extraLarge']
-        plot = aired = None
 
         if (0 < episode_count < next_up) or (res['nextAiringEpisode'] and next_up == res['nextAiringEpisode']['episode']):
             return None
@@ -287,11 +286,13 @@ class AniListWLF(WatchlistFlavorBase):
         anilist_id, next_up_meta, show = self._get_next_up_meta('', progress, anilist_id)
         if next_up_meta:
             if next_up_meta.get('title'):
-                title = '%s - %s' % (title, next_up_meta['title'])
+                title = f"{title} - {next_up_meta['title']}"
             if next_up_meta.get('image'):
                 image = next_up_meta['image']
             plot = next_up_meta.get('plot')
             aired = next_up_meta.get('aired')
+        else:
+            plot = aired = None
 
         info = {
             'episode': next_up,
@@ -305,7 +306,7 @@ class AniListWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{progress}',
+            "url": f"watchlist_to_ep/{anilist_id}/{mal_id}/{progress}",
             "image": image,
             "info": info,
             "fanart": image,
@@ -313,11 +314,11 @@ class AniListWLF(WatchlistFlavorBase):
         }
 
         if res['format'] == 'MOVIE' and res['episodes'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+            base['url'] = f"play_movie/{anilist_id}/{mal_id}/"
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
         if next_up_meta:
-            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
+            base['url'] = f"play/{anilist_id}/{next_up}"
             return utils.parse_view(base, False, True)
         return utils.parse_view(base, True, False)
 
@@ -358,7 +359,6 @@ class AniListWLF(WatchlistFlavorBase):
 
     def save_completed(self):
         import json
-
         data = self.get_user_anime_list('COMPLETED')
         completed = {}
         for dat in data:

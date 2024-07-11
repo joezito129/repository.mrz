@@ -77,18 +77,19 @@ def CONTEXT_MENU(payload, params):
     if not control.getBool('watchlist.update.enabled'):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
         return control.exit_code()
-    path, anilist_id, mal_id, eps_watched = payload.rsplit('/')
+    payload_list = payload.rsplit('/')
+    if len(payload_list) == 3:
+        path, anilist_id, eps_watched = payload_list
+    else:
+        path, anilist_id, mal_id, eps_watched = payload_list
     if not anilist_id:
-        show = database.get_show_mal(mal_id)
-        if not show:
+        if not (show := database.get_show_mal(mal_id)):
             show = AniListBrowser().get_mal_to_anilist(mal_id)
         anilist_id = show['anilist_id']
     else:
-        show = database.get_show(anilist_id)
-        if not show:
+        if not (show := database.get_show(anilist_id)):
             show = AniListBrowser().get_anilist(anilist_id)
-    flavor = WatchlistFlavor.get_update_flavor()
-    if not flavor:
+    if not (flavor := WatchlistFlavor.get_update_flavor()):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
         return control.exit_code()
     actions = WatchlistFlavor.context_statuses()

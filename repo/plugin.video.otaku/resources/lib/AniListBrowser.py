@@ -628,8 +628,7 @@ class AniListBrowser:
     def process_anilist_view(self, json_res, base_plugin_url, page):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         get_meta.collect_meta_(json_res['ANIME'])
-        completed = self.open_completed()
-        mapfunc = partial(self._base_anilist_view, completed=completed)
+        mapfunc = partial(self._base_anilist_view, completed=self.open_completed())
         all_results = list(map(mapfunc, json_res['ANIME']))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
@@ -666,23 +665,18 @@ class AniListBrowser:
             completed = {}
         anilist_id = res['id']
         mal_id = res.get('idMal', '')
-
-        show = database.get_show(anilist_id)
-        if not show:
+        if not database.get_show(anilist_id):
             self.database_update_show(res)
 
         show_meta = database.get_show_meta(anilist_id)
         kodi_meta = pickle.loads(show_meta.get('art')) if show_meta else {}
 
-        title = res['title'][self._TITLE_LANG]
-        if not title:
-            title = res['title']['romaji']
+        title = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
         if res.get('relationType'):
             title += ' [I]%s[/I]' % control.colorstr(res['relationType'], 'limegreen')
 
-        desc = res.get('description')
-        if desc:
+        if desc := res.get('description'):
             desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
             desc = desc.replace('<b>', '[B]').replace('</b>', '[/B]')
             desc = desc.replace('<br>', '[CR]')
@@ -758,8 +752,7 @@ class AniListBrowser:
             base['clearart'] = random.choice(kodi_meta['clearart'])
         if kodi_meta.get('clearlogo'):
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
-
-        if res['format'] in ['MOVIE', 'ONA'] and res['episodes'] == 1:
+        if res['format'] in ['MOVIE', 'ONA', 'SPECIAL'] and res['episodes'] == 1:
             base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)

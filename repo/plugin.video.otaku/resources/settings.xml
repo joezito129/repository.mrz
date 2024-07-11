@@ -240,7 +240,7 @@
 		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync?setting=true)"/>
 		<setting id="download_manager" type="action" label="Download Manager" action="RunPlugin(plugin://plugin.video.otaku/download_manager?setting=true)"/>
 
-
+		<!-- Language Invoker -->
 		<setting type="lsep" label="Language Invoker"/>
 		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:              Enable For Much Faster Speeds" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
 		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Enabled" enable="false" />

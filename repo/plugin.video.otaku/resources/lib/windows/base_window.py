@@ -47,7 +47,6 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
 
         self.setProperty('item.art.poster', self.item_information.get('poster'))
         self.setProperty('item.art.clearlogo', clearlogo)
-        self.setProperty('item.art.logo', clearlogo)
         self.setProperty('item.info.title', self.item_information.get('name'))
 
         if self.item_information.get('format') == 'MOVIE':

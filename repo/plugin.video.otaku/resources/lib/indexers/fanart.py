@@ -7,12 +7,7 @@ headers = {'Api-Key': "dfe6380e34f49f9b2b9518184922b49c"}
 
 def getArt(meta_ids, mtype):
     art = {}
-    if mtype == 'movies':
-        mid = meta_ids.get('themoviedb_id')
-    else:
-        mid = meta_ids.get('thetvdb_id')
-
-    if mid:
+    if mid := meta_ids.get('themoviedb_id') if mtype == 'movies' else meta_ids.get('thetvdb_id'):
         r = requests.get(f'{baseUrl}/{mtype}/{mid}', headers=headers)
         res = r.json() if r.ok else {}
         if res:

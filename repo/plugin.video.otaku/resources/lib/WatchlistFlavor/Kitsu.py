@@ -185,7 +185,7 @@ class KitsuWLF(WatchlistFlavorBase):
         }
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 

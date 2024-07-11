@@ -149,12 +149,15 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def _base_watchlist_status_view(self, res, mal_dub=None, dubsub_filter=None):
         mal_id = res['node']['id']
         anilist_id = ''
-
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         title = res['node'].get('title')
         if self._title_lang == 'english':
             title = res['node']['alternative_titles'].get('en') or title
+
+        eps_watched = res['list_status']["num_episodes_watched"]
+        eps = res['node']["num_episodes"]
+        image = res['node']['main_picture'].get('large', res['node']['main_picture']['medium'])
 
         info = {
             'title': title,
@@ -168,26 +171,23 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'studio': [x.get('name') for x in res['node']['studios']]
         }
 
-        try:
-            start_date = res['node']['start_date']
+        if start_date := res['node'].get('start_date'):
             info['premiered'] = start_date
             info['year'] = int(start_date[:4])
-        except KeyError:
-            pass
 
-        if res['node']["num_episodes"] != 0 and res['list_status']["num_episodes_watched"] == res['node']["num_episodes"]:
+        if eps_watched == eps and eps != 0:
             info['playcount'] = 1
 
         base = {
-            "name": '%s - %d/%d' % (title, res['list_status']["num_episodes_watched"], res['node']["num_episodes"]),
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["list_status"]["num_episodes_watched"]}',
-            "image": res['node']['main_picture'].get('large', res['node']['main_picture']['medium']),
+            "name": f"{title} - {eps_watched}/{eps}",
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{eps_watched}',
+            "image": image,
             "info": info,
-            'fanart': res['node']['main_picture']['medium']
+            'fanart': image
         }
 
-        if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+        if res['node']['media_type'] == 'movie' and eps == 1:
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
         return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
@@ -195,21 +195,21 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     def _base_next_up_view(self, res):
         mal_id = res['node']['id']
 
-        progress = res['list_status']["num_episodes_watched"]
-        next_up = progress + 1
-        episode_count = res['node']["num_episodes"]
+        eps_watched = res['list_status']["num_episodes_watched"]
+        next_up = eps_watched + 1
+        eps_total = res['node']["num_episodes"]
 
-        if 0 < episode_count < next_up:
+        if 0 < eps_total < next_up:
             return
 
-        base_title = res['node'].get('title')
+        base_title = res['node']['title']
         if self._title_lang == 'english':
             base_title = res['node']['alternative_titles'].get('en') or base_title
 
-        title = f'{base_title} - {next_up}/{episode_count}'
+        title = f"{base_title} - {next_up}/{eps_total}"
         poster = image = res['node']['main_picture'].get('large', res['node']['main_picture']['medium'])
-        plot = aired = None
-        anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
+
+        anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, eps_watched)
         if next_up_meta:
             if next_up_meta.get('title'):
                 title = f'{title} - {next_up_meta["title"]}'
@@ -217,6 +217,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
                 image = next_up_meta['image']
             plot = next_up_meta.get('plot')
             aired = next_up_meta.get('aired')
+        else:
+            plot = aired = None
 
         info = {
             'episode': next_up,
@@ -230,20 +232,20 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["list_status"]["num_episodes_watched"]}',
+            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{eps_watched}',
             "image": image,
             "info": info,
             "fanart": image,
             "poster": poster
         }
 
-        if res['node']['media_type'] == 'movie' and res['node']["num_episodes"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}'
+        if res['node']['media_type'] == 'movie' and eps_total == 1:
+            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True)
 
         if next_up_meta:
-            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
+            base['url'] = f"play/{anilist_id}/{next_up}"
             return utils.parse_view(base, False, True)
 
         return utils.parse_view(base, True, False)

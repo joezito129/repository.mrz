@@ -49,31 +49,24 @@ class WatchlistFlavorBase:
     def _get_next_up_meta(mal_id, next_up, anilist_id=''):
         next_up_meta = {}
         show = database.get_show(anilist_id) if anilist_id else database.get_show_mal(mal_id)
-
         if show:
             anilist_id = show['anilist_id']
-            show_meta = database.get_show_meta(anilist_id)
-
-            if show_meta:
-                art = pickle.loads(show_meta.get('art'))
+            if show_meta := database.get_show_meta(anilist_id):
+                art = pickle.loads(show_meta['art'])
                 if art.get('fanart'):
-                    next_up_meta['image'] = random.choice(art.get('fanart'))
-
-            episodes = database.get_episode_list(show['anilist_id'])
-            if episodes:
+                    next_up_meta['image'] = random.choice(art['fanart'])
+            if episodes := database.get_episode_list(show['anilist_id']):
                 try:
-                    episode_meta = pickle.loads(episodes[next_up]['kodi_meta'])
+                    if episode_meta := pickle.loads(episodes[next_up]['kodi_meta']):
+                        if control.getBool('interface.cleantitles'):
+                            next_up_meta['title'] = f'Episode {episode_meta["info"]["episode"]}'
+                        else:
+                            next_up_meta['title'] = episode_meta['info']['title']
+                            next_up_meta['plot'] = episode_meta['info']['plot']
+                        next_up_meta['image'] = episode_meta['image']['thumb']
+                        next_up_meta['aired'] = episode_meta['info'].get('aired')
                 except IndexError:
-                    episode_meta = None
-                if episode_meta:
-                    if control.getSetting('interface.cleantitles') == 'false':
-                        next_up_meta['title'] = episode_meta['info']['title']
-                        next_up_meta['plot'] = episode_meta['info']['plot']
-                    else:
-                        next_up_meta['title'] = f'Episode {episode_meta["info"]["episode"]}'
-                    next_up_meta['image'] = episode_meta['image']['thumb']
-                    next_up_meta['aired'] = episode_meta['info'].get('aired')
-
+                    pass
         return anilist_id, next_up_meta, show
 
     def _get_mapping_id(self, anilist_id, flavor):

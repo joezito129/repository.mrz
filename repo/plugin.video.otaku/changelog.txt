@@ -1,4 +1,4 @@
-Changelog v5.0.41 (2024-07-09):
+Changelog v5.0.41 (2024-07-10):
 - Fixed Path issues
 - Cleaned up code
 - Cleaned up Aniskip (send args instead of set settings)

@@ -6,7 +6,6 @@ from resources.lib.ui import source_utils, control
 
 
 class Premiumize:
-
     def __init__(self):
         self.client_id = "855400527"
         self.headers = {

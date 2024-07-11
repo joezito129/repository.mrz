@@ -245,5 +245,4 @@ class RealDebrid:
             control.ok_dialog(heading, f'Finished Caching Source\nThe source has been added to your cloud')
         else:
             self.deleteTorrent(torrent['id'])
-
         return stream_link

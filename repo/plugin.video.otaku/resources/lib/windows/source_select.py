@@ -27,10 +27,12 @@ class SourceSelect(BaseWindow):
             anime_init = OtakuBrowser.get_anime_init(actionArgs.get('anilist_id'))
             episode = int(episode)
             try:
-                self.setProperty('item.info.season', str(anime_init[0][episode - 1].get('info').get('season')))
-                self.setProperty('item.info.episode', str(anime_init[0][episode - 1].get('info').get('episode')))
-                self.setProperty('item.info.plot', anime_init[0][episode - 1]['info'].get('plot'))
+                self.setProperty('item.info.season', str(anime_init[0][episode - 1]['info']['season']))
+                self.setProperty('item.info.episode', str(anime_init[0][episode - 1]['info']['episode']))
+                self.setProperty('item.info.plot', anime_init[0][episode - 1]['info']['plot'])
                 self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
+                self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image']['thumb'])
+                self.setProperty('item.art.poster', anime_init[0][episode - 1]['image']['poster'])
             except IndexError:
                 self.setProperty('item.info.season', '-1')
                 self.setProperty('item.info.episode', '-1')

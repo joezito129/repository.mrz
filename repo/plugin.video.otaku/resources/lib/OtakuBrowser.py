@@ -21,8 +21,8 @@ def search_history(search_array):
 def get_episodeList(anilist_id, pass_idx):
     show = database.get_show(anilist_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
-    if kodi_meta['format'] == 'MOVIE' and kodi_meta['episodes'] == 1:
-        title = kodi_meta['userPreferred'] or kodi_meta['name']
+    if kodi_meta['format'] in ['MOVIE', 'ONA', 'SPECIAL'] and kodi_meta['episodes'] == 1:
+        title = kodi_meta['title_userPreferred'] or kodi_meta['name']
         info = {
             "title": title,
             "mediatype": 'movie',
@@ -76,7 +76,7 @@ def get_anime_init(anilist_id):
         if not show_meta:
             return [], 'episodes'
 
-    if control.getSetting('overide.meta.api') == 'true':
+    if control.getBool('overide.meta.api'):
         meta_api = control.getSetting('meta.api')
         if meta_api == 'simkl':
             data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
@@ -97,8 +97,7 @@ def get_anime_init(anilist_id):
 
 
 def get_sources(anilist_id, episode, media_type, rescrape=False, source_select=False):
-    show = database.get_show(anilist_id)
-    if not show:
+    if not (show := database.get_show(anilist_id)):
         from resources.lib.AniListBrowser import AniListBrowser
         show = AniListBrowser().get_anilist(anilist_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
