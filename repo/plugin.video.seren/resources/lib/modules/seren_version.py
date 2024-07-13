@@ -19,6 +19,4 @@ def do_version_change():
     # This is due to the fact that we still don't recommend having this enabled due to Kodi hard crashes.
     # maintenance.toggle_reuselanguageinvoker(
     #     True if g.get_setting("reuselanguageinvoker") == "Enabled" else False)
-    g.set_setting(
-        "reuselanguageinvoker.status", "Disabled"
-    )  # This ensures setting is reflected as disabled on version change
+    g.set_setting("reuselanguageinvoker.status", "Disabled")  # This ensures setting is reflected as disabled on version change

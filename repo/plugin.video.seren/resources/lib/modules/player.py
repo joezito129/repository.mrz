@@ -139,20 +139,6 @@ class SerenPlayer(xbmc.Player):
         """
         return super().isPlayingVideo()
 
-    def seekTime(self, time):
-        """
-        Seeks the specified amount of time as fractional seconds if playing a file. The time specified is relative to
-        the beginning of the currently. playing media file.
-        :param time: Time to seek as fractional seconds
-        :type time: float
-        :return: None
-        :rtype: None
-        """
-        try:
-            super().seekTime(time)
-        except RuntimeError:
-            g.log("Trying to seek player when not playing a file", "warning")
-
     def getSubtitles(self):
         """
         Get subtitle stream name if playing a file
@@ -505,11 +491,11 @@ class SerenPlayer(xbmc.Player):
             if self._is_file_playing() or self._playback_has_stopped() or g.wait_for_abort(0.25):
                 break
 
-        self.total_time = self.getTotalTime()
+        self.total_time = xbmc.Player().getTotalTime()
         self.min_time_before_scrape = max(self.total_time * 0.2, self.min_time_before_scrape)
 
         if self.offset and not self.resumed:
-            self.seekTime(self.offset)
+            xbmc.Player().seekTime(self.offset)
             self.resumed = True
 
         self._log_debug_information()

@@ -457,7 +457,6 @@ class GlobalVariables:
         """
         get platform on which xbmc run
         """
-        platform = "unknown"
         if xbmc.getCondVisibility("system.platform.android"):
             platform = "android"
         elif xbmc.getCondVisibility("system.platform.linux"):
@@ -468,7 +467,8 @@ class GlobalVariables:
             platform = "xbox" if "Users\\UserMgr" in os.environ.get("TMP") else "windows"
         elif xbmc.getCondVisibility("system.platform.osx"):
             platform = "osx"
-
+        else:
+            platform = "unknown"
         return platform
 
     def _init_cache(self):
@@ -592,9 +592,7 @@ class GlobalVariables:
         self.ADDONS_PATH = tools.translate_path(os.path.join("special://home/", "addons/"))
         self.ADDON_PATH = tools.translate_path(os.path.join("special://home/", f"addons/{self.ADDON_ID.lower()}"))
         self.ADDON_DATA_PATH = tools.translate_path(self.ADDON.getAddonInfo("path"))  # Addon folder
-        self.ADDON_USERDATA_PATH = tools.translate_path(
-            f"special://profile/addon_data/{self.ADDON_ID}/"
-        )  # Addon user data folder
+        self.ADDON_USERDATA_PATH = tools.translate_path(f"special://profile/addon_data/{self.ADDON_ID}/")  # Addon user data folder
         self.SETTINGS_PATH = tools.translate_path(os.path.join(self.ADDON_USERDATA_PATH, "settings.xml"))
         self.ADVANCED_SETTINGS_PATH = tools.translate_path("special://profile/advancedsettings.xml")
         self.KODI_DATABASE_PATH = tools.translate_path("special://database/")
@@ -634,7 +632,6 @@ class GlobalVariables:
             return "121"
         elif self.KODI_VERSION == 21:
             return "131"
-
         raise KeyError("Unsupported kodi version")
 
     def get_kodi_video_db_config(self):
@@ -1163,7 +1160,7 @@ class GlobalVariables:
         self._apply_listitem_properties(item, info)
         # if self.studio_limit:
         #     self.handle_studio_icon_skin_workaround(item, info)
-
+        xbmcgui.Dialog().textviewer('r', str(info))
         if "unwatched_episodes" in menu_item:
             item.setProperty("UnWatchedEpisodes", str(menu_item["unwatched_episodes"]))
         if "watched_episodes" in menu_item:
@@ -1201,7 +1198,8 @@ class GlobalVariables:
         if params.pop("is_playable", False):
             item.setProperty("IsPlayable", "true")
             is_folder = params.pop("is_folder", False)
-            art['tvshow.poster'] = art.pop('poster')
+            if art.get('poster'):
+                art['tvshow.poster'] = art.pop('poster')
         else:
             item.setProperty("IsPlayable", "false")
             is_folder = params.pop("is_folder", True)
@@ -1607,10 +1605,12 @@ class GlobalVariables:
 def getSetting(key):
     return settings.getSetting(key)
 
+
 def print(string, *args):
     for i in list(args):
         string = f'{string} {i}'
     xbmcgui.Dialog().textviewer('print', f'{string}')
     del args, string
+
 
 g = GlobalVariables()
