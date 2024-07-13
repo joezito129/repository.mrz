@@ -1,3 +1,6 @@
+Changelog v1.0.18 (2024-07-11)
+- Fixed some bugs
+
 Changelog v1.0.17 (2024-07-07)
 - Reformated Context Menu
 - Moved All Context Menu items here
