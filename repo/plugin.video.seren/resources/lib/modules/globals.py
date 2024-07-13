@@ -1160,7 +1160,6 @@ class GlobalVariables:
         self._apply_listitem_properties(item, info)
         # if self.studio_limit:
         #     self.handle_studio_icon_skin_workaround(item, info)
-        xbmcgui.Dialog().textviewer('r', str(info))
         if "unwatched_episodes" in menu_item:
             item.setProperty("UnWatchedEpisodes", str(menu_item["unwatched_episodes"]))
         if "watched_episodes" in menu_item:
