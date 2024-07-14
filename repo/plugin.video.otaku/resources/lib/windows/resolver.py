@@ -42,7 +42,7 @@ class Resolver(BaseWindow):
             self.setProperty('release_title', str(i['release_title']))
             self.setProperty('debrid_provider', debrid_provider)
             self.setProperty('source_provider', i['provider'])
-            self.setProperty('source_resolution', i['quality'])
+            self.setProperty('source_resolution', source_utils.res[i['quality']])
             self.setProperty('source_info', " ".join(i['info']))
             self.setProperty('source_type', i['type'])
 
@@ -127,12 +127,10 @@ This source is not cached would you like to cache it now?
             runbackground = False
         else:
             return
-
         api = self.resolvers[source['debrid_provider']]()
         resolved_cache = api.resolve_uncached_source(source, runbackground)
         if not resolved_cache:
             self.canceled = True
-
         return resolved_cache
 
     def doModal(self, sources, args, pack_select):
@@ -145,7 +143,7 @@ This source is not cached would you like to cache it now?
         self.setProperty('release_title', str(self.sources[0]['release_title']))
         self.setProperty('debrid_provider', self.sources[0].get('debrid_provider', 'None').replace('_', ' '))
         self.setProperty('source_provider', self.sources[0]['provider'])
-        self.setProperty('source_resolution', self.sources[0]['quality'])
+        self.setProperty('source_resolution', source_utils.res[self.sources[0]['quality']])
         self.setProperty('source_info', " ".join(self.sources[0]['info']))
         self.setProperty('source_type', self.sources[0]['type'])
         self.setProperty('source_size', self.sources[0]['size'])

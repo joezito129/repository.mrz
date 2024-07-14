@@ -4,6 +4,8 @@ import xbmc
 
 from resources.lib.ui import control
 
+res = ['EQ', '480p', '720p', '1080p', '4k']
+
 
 def getAudio_lang(release_title):
     release_title = cleanTitle(release_title)
