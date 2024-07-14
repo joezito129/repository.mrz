@@ -116,8 +116,28 @@
 
 		<!-- Source Sorting -->
 		<setting type="lsep" label="40331"/>
-		<setting id="general.sortsources" type="enum" label="40332" values="Torrents|Embeds" default="Torrents" />
-		<setting id="general.sourcesort" type="enum" label="40333" values="Dub|None|Sub" default="Dub" />
+		<setting id="sort_select" type="action" label="Choose Sorting..." action="RunPlugin(plugin://plugin.video.otaku/sort_select?setting=true)"/>
+		<setting id="sortmethod.1" type="text" default="2" visible="false" />
+		<setting id="sortmethod.2" type="text" default="1" visible="false" />
+		<setting id="sortmethod.3" type="text" default="3" visible="false" />
+		<setting id="sortmethod.4" type="text" default="4" visible="false" />
+		<setting id="sortmethod.5" type="text" default="0" visible="false" />
+
+		<setting id="sortmethod.1.reverse" type="text" default="False" visible="false" />
+		<setting id="sortmethod.2.reverse" type="text" default="False" visible="false" />
+		<setting id="sortmethod.3.reverse" type="text" default="False" visible="false" />
+		<setting id="sortmethod.4.reverse" type="text" default="False" visible="false" />
+		<setting id="sortmethod.5.reverse" type="text" default="False" visible="false" />
+
+		<setting id="type.1" type="text" default="0" visible="false" />
+		<setting id="type.2" type="text" default="1" visible="false" />
+		<setting id="type.3" type="text" default="2" visible="false" />
+		<setting id="type.4" type="text" default="3" visible="false" />
+
+		<setting id="audio.1" type="text" default="0" visible="false" />
+		<setting id="audio.2" type="text" default="1" visible="false" />
+		<setting id="audio.3" type="text" default="2" visible="false" />
+
 
 		<!-- Search Filtering -->
 		<setting type="lsep" label="40409"/>
@@ -128,7 +148,6 @@
 		<setting id="contentorigin.bool" label="40418" type="bool" default="false"/>
 		<setting id="contentorigin.menu" type="enum" subsetting="true" label="40419" lvalues="40420|40421|40422|40423" default="0" visible="eq(-1,true)"/>
 		<setting id="search.adult" type="bool" label="40410" default="false" />
-
 	</category>
 
 	<!-- Accounts -->

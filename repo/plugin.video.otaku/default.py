@@ -313,6 +313,7 @@ def TOOLS_MENU(payload, params):
         (control.lang(30026), "rebuild_database", {'plot': "Rebuild Database"}, 'rebuild_database.png'),
         ("Sync Completed List", "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
         ("Download Manager", 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
+        ("Choose Sorting...", 'sort_select', {'plot': "Choose Sorting..."}, ''),
         ("Clear Selected Fanart", 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
@@ -371,6 +372,14 @@ def REBUILD_DATABASE(payload, params):
 def COMPLETED_SYNC(payload, params):
     import service
     service.sync_watchlist()
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('sort_select')
+def DOWNLOAD_MANAGER(payload, params):
+    from resources.lib.windows.sort_select import SortSelect
+    SortSelect(*('sort_select.xml', control.ADDON_PATH)).doModal()
     if params.get('setting'):
         control.exit_code()
 

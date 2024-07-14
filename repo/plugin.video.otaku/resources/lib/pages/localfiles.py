@@ -36,6 +36,7 @@ class Sources(BrowserBase):
             'provider': 'local_files',
             'episode_re': episode,
             'size': source_utils.get_size(os.path.getsize(os.path.join(PATH, f))),
+            'byte_size': os.path.getsize(os.path.join(PATH, f)),
             'info': source_utils.getInfo(f),
             'lang': source_utils.getAudio_lang(f)
         }

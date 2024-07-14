@@ -101,10 +101,11 @@ class Sources(BrowserBase):
                     'release_title': title,
                     'hash': link,
                     'type': 'embed',
-                    'quality': 'EQ',
+                    'quality': 0,
                     'debrid_provider': '',
                     'provider': 'gogo',
                     'size': 'NA',
+                    'byte_size': 0,
                     'info': source_utils.getInfo(slug) + [server],
                     'lang': source_utils.getAudio_lang(title)
                 }

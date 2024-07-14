@@ -189,13 +189,6 @@ msgctxt "#40331"
 msgid "Sort Sourcing"
 msgstr ""
 
-msgctxt "#40332"
-msgid "Sort Sources Method"
-msgstr ""
-
-msgctxt "#40333"
-msgid "Sort Preferences"
-msgstr ""
 
 msgctxt "#40334"
 msgid "Accounts"

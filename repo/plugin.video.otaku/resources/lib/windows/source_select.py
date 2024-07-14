@@ -62,6 +62,11 @@ class SourceSelect(BaseWindow):
             if not i:
                 continue
             menu_item = xbmcgui.ListItem('%s' % i['release_title'], offscreen=True)
+            # properties = {
+            #     'type': i['type'],
+            #     'debrid': i['debrid'],
+            #     'provider': i['provider'],
+            # }
             for info in list(i.keys()):
                 try:
                     value = i[info]
@@ -71,7 +76,6 @@ class SourceSelect(BaseWindow):
                     menu_item.setProperty(info, str(value).replace('_', ' '))
                 except UnicodeEncodeError:
                     menu_item.setProperty(info, i[info])
-
             menu_items.append(menu_item)
             self.display_list.addItem(menu_item)
         self.setFocusId(1000)
@@ -81,7 +85,6 @@ class SourceSelect(BaseWindow):
         return self.stream_link
 
     # def onClick(self, controlId):
-
     #     if controlId == 1000:
     #         self.handle_action(7)
 
@@ -122,45 +125,6 @@ class SourceSelect(BaseWindow):
         if actionID in [92, 10]:
             self.stream_link = False
             self.close()
-
-    @staticmethod
-    def info_list_to_sorted_dict(info_list):
-        info = {}
-
-        info_struct = {
-            'videocodec': {
-                'AVC': ['x264', 'x 264', 'h264', 'h 264', 'avc'],
-                'HEVC': ['x265', 'x 265', 'h265', 'h 265', 'hevc'],
-                'XviD': ['xvid'],
-                'DivX': ['divx'],
-                'WMV': ['wmv']
-            },
-            'audiocodec': {
-                'AAC': ['aac'],
-                'DTS': ['dts'],
-                'HD-MA': ['hd ma', 'hdma'],
-                'ATMOS': ['atmos'],
-                'TRUEHD': ['truehd', 'true hd'],
-                'DD+': ['ddp', 'dd+', 'eac3'],
-                'DD': [' dd ', 'dd2', 'dd5', 'dd7', ' ac3'],
-                'MP3': ['mp3'],
-                'WMA': [' wma ']
-            },
-
-            'audiochannels': {
-                '2.0': ['2 0 ', '2 0ch', '2ch'],
-                '5.1': ['5 1 ', '5 1ch', '6ch'],
-                '7.1': ['7 1 ', '7 1ch', '8ch']
-            }
-
-        }
-
-        for property_ in list(info_struct.keys()):
-            for codec in list(info_struct[property_].keys()):
-                if codec in info_list:
-                    info[property_] = codec
-                    break
-        return info
 
     def resolve_item(self, pack_select=False):
         if control.getSetting('general.autotrynext') == 'true' and not pack_select:

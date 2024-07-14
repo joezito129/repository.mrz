@@ -331,7 +331,6 @@ class Sources(BrowserBase):
             params['o'] = 'desc'
             params['q'] = query.replace(' ', '+')
             return self.process_nyaa_backup(self._BASE_URL, params, 1)
-
         params['q'] = show.replace(' ', '+')
 
         return self.process_nyaa_movie(self._BASE_URL, params)
@@ -347,11 +346,15 @@ class Sources(BrowserBase):
             'provider': 'nyaa',
             'episode_re': episode,
             'size': res['size'],
+            'byte_size': 0,
             'info': source_utils.getInfo(res['name']),
             'lang': source_utils.getAudio_lang(res['name']),
             'cached': cached,
             'seeders': res['seeders']
         }
+        match = re.match(r'(\d+).(\d+) (\w+)', res['size'])
+        if match:
+            source['byte_size'] = source_utils.convert_to_bytes(float(f'{match.group(1)}.{match.group(2)}'), match.group(3))
         if not cached:
             source['magnet'] = res['magnet']
             source['type'] += ' (uncached)'

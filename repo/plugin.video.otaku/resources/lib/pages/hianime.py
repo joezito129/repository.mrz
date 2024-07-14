@@ -94,12 +94,14 @@ class Sources(BrowserBase):
                                 'release_title': '{0} - Ep {1}'.format(title, episode),
                                 'hash': slink,
                                 'type': 'embed',
-                                'quality': 'EQ',
+                                'quality': 0,
                                 'debrid_provider': '',
                                 'provider': 'h!anime',
                                 'size': 'NA',
+                                'byte_size': 0,
                                 'info': ['DUB' if lang == 'dub' else 'SUB', edata_name],
                                 'lang': 2 if lang == 'dub' else 0,
+                                'skip': None
                             }
                             sources.append(source)
                         else:
@@ -132,13 +134,13 @@ class Sources(BrowserBase):
                             for qual, qlink in quals:
                                 qual = int(qual)
                                 if qual > 1080:
-                                    quality = '4k'
+                                    quality = 4
                                 elif qual > 720:
-                                    quality = '1080p'
+                                    quality = 3
                                 elif qual > 480:
-                                    quality = '720p'
+                                    quality = 2
                                 else:
-                                    quality = 'EQ'
+                                    quality = 0
 
                                 source = {
                                     'release_title': '{0} - Ep {1}'.format(title, episode),
@@ -148,6 +150,7 @@ class Sources(BrowserBase):
                                     'debrid_provider': '',
                                     'provider': 'h!anime',
                                     'size': 'NA',
+                                    'byte_size': 0,
                                     'info': ['DUB' if lang == 'dub' else 'SUB', edata_name],
                                     'lang': 2 if lang == 'dub' else 0,
                                     'subs': subs,

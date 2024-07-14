@@ -19,13 +19,13 @@ def getAudio_lang(release_title):
 def getQuality(release_title):
     release_title = release_title.lower()
     if '4k' in release_title or '2160' in release_title:
-        quality = '4k'
+        quality = 4
     elif '1080' in release_title:
-        quality = '1080p'
+        quality = 3
     elif '720' in release_title:
-        quality = '720p'
+        quality = 2
     else:
-        quality = '480p'
+        quality = 1
     return quality
 
 
@@ -152,6 +152,21 @@ def get_cache_check_reg(episode):
                  (?![\d])
                  '''.format(season, episode.zfill(2), episode.zfill(3))
     return re.compile(reg_string)
+
+
+def convert_to_bytes(size, units):
+    unit = units.upper()
+    if unit == 'KB':
+        byte_size = size * 2**10
+    elif unit == 'MB':
+        byte_size = size * 2**20
+    elif unit == 'GB':
+        byte_size = size * 2**30
+    elif unit == 'TB':
+        byte_size = size * 2**40
+    else:
+        raise ValueError("Unit must be 'KB', 'MB', 'GB', 'TB' ")
+    return byte_size
 
 
 def get_size(size=0):

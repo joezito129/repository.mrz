@@ -1,3 +1,8 @@
+Changelog v5.0.42 (2024-07-13):
+- Added aniwave and h!anime skiptimes
+- Added Sort Option setting
+- Fixed some bug issues
+
 Changelog v5.0.41 (2024-07-10):
 - Fixed Path issues
 - Cleaned up code

@@ -6,7 +6,7 @@ import pickle
 from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.ui import database, source_utils
+from resources.lib.ui import database, source_utils, control
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
 from resources.lib.ui.control import settingids
@@ -171,10 +171,14 @@ def parse_animetosho_view(res, episode, cached=True):
         'episode_re': episode,
         'size': res['size'],
         'info': source_utils.getInfo(res['name']),
+        'byte_size': 0,
         'lang': source_utils.getAudio_lang(res['name']),
         'cached': cached,
-        'seeders': res['seeders']
+        'seeders': res['seeders'],
     }
+    match = re.match(r'(\d+).(\d+) (\w+)', res['size'])
+    if match:
+        source['byte_size'] = source_utils.convert_to_bytes(float(f'{match.group(1)}.{match.group(2)}'), match.group(3))
     if not cached:
         source['magnet'] = res['magnet']
         source['type'] += ' (uncached)'

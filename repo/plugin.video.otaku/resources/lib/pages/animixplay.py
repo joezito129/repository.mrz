@@ -86,11 +86,11 @@ class Sources(BrowserBase):
                     server = mitem.a.get('data-name')
                     qual = mitem.a.get('title')
                     if '1080p' in qual:
-                        qual = '1080p'
+                        qual = 3
                     elif 'HD' in qual:
-                        qual = '720p'
+                        qual = 2
                     else:
-                        qual = 'EQ'
+                        qual = 0
                     lang = 2 if mitem.a.get('id').endswith('dub') else 0
 
                     data = {
@@ -130,6 +130,7 @@ class Sources(BrowserBase):
                             'debrid_provider': '',
                             'provider': 'animix',
                             'size': 'NA',
+                            'byte_size': 0,
                             'info': [server, 'DUB' if lang == 2 else 'SUB'],
                             'lang': lang
                         }

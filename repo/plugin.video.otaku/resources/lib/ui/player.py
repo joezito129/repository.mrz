@@ -34,9 +34,9 @@ class WatchlistPlayer(player):
         super(WatchlistPlayer, self).__init__()
         self.vtag = None
         self.resume_time = None
-        self._episode = None
+        self.episode = None
         self._build_playlist = None
-        self._anilist_id = None
+        self.anilist_id = None
         self._watchlist_update = None
         self.current_time = 0
         self.updated = False
@@ -54,42 +54,29 @@ class WatchlistPlayer(player):
         self.skipintro_end = self.skipintro_start + int(control.getSetting('skipintro.duration')) * 60
         self.skipoutro_start = 0
         self.skipoutro_end = 0
-        self.skipintro_offset = 0
-        self.skipoutro_offset = 0
+        self.skipintro_offset = int(control.getSetting('skipintro.aniskip.offset'))
+        self.skipoutro_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
     def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, resume_time=None):
-        self._anilist_id = anilist_id
+        self.anilist_id = anilist_id
         self._watchlist_update = watchlist_update
         self._build_playlist = build_playlist
-        self._episode = episode
+        self.episode = episode
         self.resume_time = resume_time
 
-        if self.skipintro_aniskip_enable:
-            mal_id = database.get_show(anilist_id)['mal_id']
-            skipintro_aniskip_res = aniskip.get_skip_times(mal_id, episode, 'op')
-            if skipintro_aniskip_res:
-                skip_times = skipintro_aniskip_res['results'][0]['interval']
-                self.skipintro_offset = int(control.getSetting('skipintro.aniskip.offset'))
-                self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
-                self.skipintro_end = int(skip_times['endTime']) + self.skipintro_offset
-                self.skipintro_aniskip = True
+        if self.skipintro_aniskip_enable or self.skipoutro_aniskip_enable:
+            # process skip times
+            self.process_hianime()
+            self.process_aniwave()
+            self.process_aniskip()
 
-        if self.skipoutro_aniskip_enable:
-            mal_id = database.get_show(anilist_id)['mal_id']
-            skipoutro_aniskip_res = aniskip.get_skip_times(mal_id, episode, 'ed')
-            if skipoutro_aniskip_res:
-                skip_times = skipoutro_aniskip_res['results'][0]['interval']
-                self.skipoutro_offset = int(control.getSetting('skipoutro.aniskip.offset'))
-                self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset
-                self.skipoutro_end = int(skip_times['endTime']) + self.skipoutro_offset
-                self.skipoutro_aniskip = True
         self.keepAlive()
 
     def onPlayBackStarted(self):
         current_ = playList.getposition()
         self.vtag = playList[current_].getVideoInfoTag()
         self.media_type = self.vtag.getMediaType()
-        control.setSetting('addon.last_watched', self._anilist_id)
+        control.setSetting('addon.last_watched', self.anilist_id)
 
     def onPlayBackStopped(self):
         control.closeAllDialogs()
@@ -115,7 +102,7 @@ class WatchlistPlayer(player):
             watched_percentage = self.getWatchedPercent()
             self.current_time = self.getTime()
             if watched_percentage > self.update_percent:
-                self._watchlist_update(self._anilist_id, self._episode)
+                self._watchlist_update(self.anilist_id, self.episode)
                 self.updated = True
                 break
             xbmc.sleep(5000)
@@ -140,10 +127,10 @@ class WatchlistPlayer(player):
         if control.getBool('smartplay.skipintrodialog'):
             while self.isPlaying():
                 self.current_time = int(self.getTime())
-                if self.current_time > self.skipintro_start:
-                    PlayerDialogs().show_skip_intro(self.skipintro_aniskip, self.skipintro_end)
+                if self.current_time > self.skipintro_end:
                     break
-                elif self.current_time > 900:
+                elif self.current_time > self.skipintro_start:
+                    PlayerDialogs().show_skip_intro(self.skipintro_aniskip, self.skipintro_end)
                     break
                 xbmc.sleep(1000)
         self.onWatchedPercent()
@@ -152,10 +139,43 @@ class WatchlistPlayer(player):
         if endpoint != 0:
             while self.isPlaying():
                 self.current_time = int(self.getTime())
-                if self.total_time - self.current_time <= endpoint or self.current_time > self.skipoutro_start != 0:
+                if (not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
                     PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
                     break
                 xbmc.sleep(5000)
+
+    def process_aniskip(self):
+        if self.skipintro_aniskip_enable:
+            mal_id = database.get_show(self.anilist_id)['mal_id']
+            skipintro_aniskip_res = aniskip.get_skip_times(mal_id, self.episode, 'op')
+            if skipintro_aniskip_res:
+                skip_times = skipintro_aniskip_res['results'][0]['interval']
+                self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
+                self.skipintro_end = int(skip_times['endTime']) + self.skipintro_offset
+                self.skipintro_aniskip = True
+
+        if self.skipoutro_aniskip_enable:
+            mal_id = database.get_show(self.anilist_id)['mal_id']
+            skipoutro_aniskip_res = aniskip.get_skip_times(mal_id, self.episode, 'ed')
+            if skipoutro_aniskip_res:
+                skip_times = skipoutro_aniskip_res['results'][0]['interval']
+                self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset
+                self.skipoutro_end = int(skip_times['endTime']) + self.skipoutro_offset
+                self.skipoutro_aniskip = True
+
+    def process_aniwave(self):
+        aniwave_start = int(control.getSetting('aniwave.skipintro.start'))
+        if aniwave_start != -1:
+            self.skipintro_start = aniwave_start + self.skipintro_offset
+            self.skipintro_end = int(control.getSetting('aniwave.skipintro.end')) + self.skipintro_offset
+            self.skipintro_aniskip = True
+
+    def process_hianime(self):
+        hianime_start = int(control.getSetting('hianime.skipintro.start'))
+        if hianime_start != -1:
+            self.skipintro_start = hianime_start + self.skipintro_offset
+            self.skipintro_end = int(control.getSetting('hianime.skipintro.end')) + self.skipintro_offset
+            self.skipintro_aniskip = True
 
 
 class PlayerDialogs(xbmc.Player):

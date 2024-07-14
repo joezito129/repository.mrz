@@ -112,10 +112,11 @@ class Sources(BrowserBase):
                             'release_title': '{0} - Ep {1}'.format(title, episode),
                             'hash': slink,
                             'type': 'embed',
-                            'quality': 'EQ',
+                            'quality': 0,
                             'debrid_provider': '',
                             'provider': 'aniwave',
                             'size': 'NA',
+                            'byte_size': 0,
                             'info': ['DUB' if lang == 'dub' else 'SUB', edata_name],
                             'lang': 2 if lang == 'dub' else 0,
                             'skip': skip

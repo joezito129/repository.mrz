@@ -5,7 +5,7 @@ import xbmc
 from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniwave, gogoanime, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
-
+from resources.lib.windows import sort_select
 
 def getSourcesHelper(actionargs):
     sources_window = Sources('get_sources.xml', control.ADDON_PATH, actionargs=actionargs)
@@ -48,6 +48,12 @@ class Sources(GetSources):
         # source_select = args['source_select']
         get_backup = args['get_backup']
         self.setProperty('process_started', 'true')
+
+        # set skip times to -1 before scraping
+        control.setSetting('aniwave.skipintro.start', '-1')
+        control.setSetting('aniwave.skipintro.end', '-1')
+        control.setSetting('hianime.skipintro.start', '-1')
+        control.setSetting('hianime.skipintro.end', '-1')
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode))
@@ -158,7 +164,13 @@ class Sources(GetSources):
 
 #   ### embeds ###
     def hianime_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += database.get_(hianime.Sources().get_sources, 8, anilist_id, episode, key='hianime')
+        hianime_sources = database.get_(hianime.Sources().get_sources, 8, anilist_id, episode, key='hianime')
+        self.embedSources += hianime_sources
+        for x in hianime_sources:
+            if x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
+                control.setSetting('hianime.skipintro.start', str(x['skip']['intro']['start']))
+                control.setSetting('hianime.skipintro.end', str(x['skip']['intro']['end']))
+                break
         self.remainingProviders.remove('hianime')
 
     def animess_worker(self, anilist_id, episode, rescrape):
@@ -170,7 +182,13 @@ class Sources(GetSources):
         self.remainingProviders.remove('animixplay')
 
     def aniwave_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += database.get_(aniwave.Sources().get_sources, 8, anilist_id, episode, key='aniwave')
+        aniwave_sources = database.get_(aniwave.Sources().get_sources, 8, anilist_id, episode, key='aniwave')
+        self.embedSources += aniwave_sources
+        for x in aniwave_sources:
+            if x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
+                control.setSetting('aniwave.skipintro.start', str(x['skip']['intro']['start']))
+                control.setSetting('aniwave.skipintro.end', str(x['skip']['intro']['end']))
+                break
         self.remainingProviders.remove('aniwave')
 
     def gogo_worker(self, anilist_id, episode, rescrape, get_backup):
@@ -192,65 +210,24 @@ class Sources(GetSources):
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
-    @staticmethod
-    def resolutionList():
-        max_res = int(control.getSetting('general.maxResolution'))
-        if max_res == 4:
-            resolutions = ['4k', '1080p', '720p', '480p', 'EQ']
-        elif max_res == 3:
-            resolutions = ['1080p', '720p', '480p', 'EQ']
-        elif max_res == 2:
-            resolutions = ['720p', '480p', 'EQ']
-        elif max_res == 1:
-            resolutions = ['480p', 'EQ']
-        else:
-            resolutions = ['EQ']
-        return resolutions
-
     def sortSources(self, torrent_list, embed_list, cloud_files, other_list):
-        sortedList = []
-        for resolution in self.resolutionList():
-            # for cloud_file in cloud_files:
-            #     if cloud_file['quality'] == resolution:
-            #         sortedList.append(cloud_file)
+        all_list = torrent_list + embed_list + cloud_files + other_list
+        sortedList = [x for x in all_list if x['quality'] <= int(control.getSetting('general.maxResolution'))]
 
-            # for other in other_list:
-            #     if other['quality'] == resolution:
-            #         sortedList.append(other)
-
-            for torrent in torrent_list:
-                if torrent['quality'] == resolution:
-                    sortedList.append(torrent)
-
-            for file in embed_list:
-                if file['quality'] == resolution:
-                    sortedList.append(file)
-
+        # Filter out sources
         if control.getSetting('general.disable265') == 'true':
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
-
-        sort_type = int(control.getSetting('general.sortsources'))  # torrents=0; embeds=1\
-        if sort_type == 0:
-            sortedList = sorted(sortedList, key=lambda x: x['type'] in ['torrent'], reverse=True)
-        elif sort_type == 1:
-            sortedList = sorted(sortedList, key=lambda x: x['type'] in ['embed', 'direct'], reverse=True)
-
-        sort_lang = int(control.getSetting('general.sourcesort'))   # dub=0; None=1; sub=1
-        if sort_lang == 2:
-            sortedList = sorted(sortedList, key=lambda x: x['lang'] == 0, reverse=True)
-        elif sort_lang == 0:
-            sortedList = sorted(sortedList, key=lambda x: x['lang'] > 0, reverse=True)
-
-        for cloud_file in cloud_files:
-            sortedList.insert(0, cloud_file)
-
-        for other in other_list:
-            sortedList.insert(0, other)
-
         lang = int(control.getSetting("general.source"))
         if lang != 1:
             langs = [0, 1, 2]
             sortedList = [i for i in sortedList if i['lang'] != langs[lang]]
+
+        # Sort Sources
+        SORT_METHODS = ['none', 'type', 'audio', 'resolution', 'size']
+        for x in range(len(SORT_METHODS), 0, -1):
+            reverse = control.getSetting(f'sortmethod.{x}') == 'True'
+            method = SORT_METHODS[int(control.getSetting(f'sortmethod.{x}'))]
+            sortedList = getattr(sort_select, f'sort_by_{method}')(sortedList, not reverse)
         return sortedList
 
     def updateProgress(self):
@@ -267,3 +244,4 @@ class Sources(GetSources):
             len([i for i in self.embedSources if i['quality'] == '720p']),
             len([i for i in self.embedSources if i['quality'] == 'EQ'])
         ]
+

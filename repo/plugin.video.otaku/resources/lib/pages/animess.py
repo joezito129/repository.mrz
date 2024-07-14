@@ -76,10 +76,11 @@ class Sources(BrowserBase):
                     'release_title': '{0} - Ep {1}'.format(title, episode),
                     'hash': '{0}|Referer={1}'.format(slink.group(1), self._BASE_URL),
                     'type': 'direct',
-                    'quality': 'EQ',
+                    'quality': 0,
                     'debrid_provider': '',
                     'provider': 'animess',
                     'size': 'NA',
+                    'byte_size': 0,
                     'info': [lang],
                     'lang': 2 if lang == 'DUB' else 0
                 }
