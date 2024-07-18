@@ -101,7 +101,7 @@ class Sources(BrowserBase):
                                 'byte_size': 0,
                                 'info': ['DUB' if lang == 'dub' else 'SUB', edata_name],
                                 'lang': 2 if lang == 'dub' else 0,
-                                'skip': None
+                                'skip': {}
                             }
                             sources.append(source)
                         else:

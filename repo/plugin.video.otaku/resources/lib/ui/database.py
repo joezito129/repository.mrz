@@ -9,7 +9,6 @@ import threading
 from resources.lib.ui import control
 from sqlite3 import OperationalError, dbapi2
 
-
 cache_table = 'cache'
 lock = threading.Lock()
 

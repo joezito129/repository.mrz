@@ -7,14 +7,14 @@ SORT_METHODS = ['none', 'type', 'audio', 'resolution', 'size']
 SORT_OPTIONS = {
     'sortmethod': SORT_METHODS,
     "none": [],
-    "type": ['cloud', 'torrent', 'embeds', 'files'],
-    "audio": ['dualaudio', 'dub', 'sub'],
+    "type": ['cloud', 'torrent', 'embeds', 'files', "none"],
+    "audio": ['dualaudio', 'dub', 'sub', 'none'],
     "resolution": [],
     "size": []
 }
 
-audio = [1, 2, 0]
-source_type = [['cloud'], ['torrent'], ['direct', 'embed'], ['local_files']]
+audio = [1, 2, 0, 'none']
+source_type = [['cloud'], ['torrent'], ['direct', 'embed'], ['local_files'], ['none']]
 
 
 class SortSelect(BaseWindow):

@@ -945,8 +945,8 @@
 					<onright>5006</onright>
 					<texturefocus></texturefocus>
 					<texturenofocus></texturenofocus>
-					<label>[B][UPPERCASE]$INFO[Window().Property(general.sortmethod.5.label.4)][/UPPERCASE][/B]</label>
-					<visible>!String.IsEmpty(Window().Property(general.sortmethod.5.label.4))</visible>
+					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.4)][/UPPERCASE][/B]</label>
+					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.4))</visible>
 				</control>
 
 				<control type="label" id="5105">
@@ -956,7 +956,7 @@
 					<align>left</align>
 					<aligny>center</aligny>
 					<label>[B][UPPERCASE]->[/UPPERCASE][/B]</label>
-					<visible>!String.IsEmpty(Window().Property(general.sortmethod.5.label.5))</visible>
+					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.5))</visible>
 				</control>
 
 				<control type="button" id="5006">
@@ -970,8 +970,8 @@
 					<onright>5555</onright>
 					<texturefocus></texturefocus>
 					<texturenofocus></texturenofocus>
-					<label>[B][UPPERCASE]$INFO[Window().Property(general.sortmethod.5.label.5)][/UPPERCASE][/B]</label>
-					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.5))</visible>
+					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.5)][/UPPERCASE][/B]</label>
+<!--					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.5))</visible>-->
 				</control>
 			</control>
 		</control>

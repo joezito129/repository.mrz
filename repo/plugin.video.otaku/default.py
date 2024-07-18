@@ -380,16 +380,30 @@ def COMPLETED_SYNC(payload, params):
 def DOWNLOAD_MANAGER(payload, params):
     from resources.lib.windows.sort_select import SortSelect
     SortSelect(*('sort_select.xml', control.ADDON_PATH)).doModal()
-    if params.get('setting'):
-        control.exit_code()
+    control.exit_code()
 
 
 @Route('download_manager')
 def DOWNLOAD_MANAGER(payload, params):
     from resources.lib.windows.download_manager import DownloadManager
     DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
-    if params.get('setting'):
-        control.exit_code()
+    control.exit_code()
+
+
+# @Route('importexport_settings')
+# def IMPORTEXPORT_SETTINGS(payload, params):
+#     import xbmcvfs
+#     import shutil
+#     context = control.context_menu(["Import", "Export"])
+#
+#     # Import
+#     if context == 0:
+#         shutil.copyfile(src, dst)
+#
+#     # Export
+#     elif context == 1:
+#         pass
+#         # savelocation = xbmcvfs.
 
 
 @Route('toggleLanguageInvoker')

@@ -7,6 +7,7 @@ from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
 
+
 def getSourcesHelper(actionargs):
     sources_window = Sources('get_sources.xml', control.ADDON_PATH, actionargs=actionargs)
     sources = sources_window.doModal()
@@ -167,7 +168,7 @@ class Sources(GetSources):
         hianime_sources = database.get_(hianime.Sources().get_sources, 8, anilist_id, episode, key='hianime')
         self.embedSources += hianime_sources
         for x in hianime_sources:
-            if x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
+            if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
                 control.setSetting('hianime.skipintro.start', str(x['skip']['intro']['start']))
                 control.setSetting('hianime.skipintro.end', str(x['skip']['intro']['end']))
                 break
@@ -185,7 +186,7 @@ class Sources(GetSources):
         aniwave_sources = database.get_(aniwave.Sources().get_sources, 8, anilist_id, episode, key='aniwave')
         self.embedSources += aniwave_sources
         for x in aniwave_sources:
-            if x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
+            if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
                 control.setSetting('aniwave.skipintro.start', str(x['skip']['intro']['start']))
                 control.setSetting('aniwave.skipintro.end', str(x['skip']['intro']['end']))
                 break
@@ -225,7 +226,7 @@ class Sources(GetSources):
         # Sort Sources
         SORT_METHODS = ['none', 'type', 'audio', 'resolution', 'size']
         for x in range(len(SORT_METHODS), 0, -1):
-            reverse = control.getSetting(f'sortmethod.{x}') == 'True'
+            reverse = control.getSetting(f'sortmethod.{x}.reverse') == 'True'
             method = SORT_METHODS[int(control.getSetting(f'sortmethod.{x}'))]
             sortedList = getattr(sort_select, f'sort_by_{method}')(sortedList, not reverse)
         return sortedList
