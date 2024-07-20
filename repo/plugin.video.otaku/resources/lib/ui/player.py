@@ -64,11 +64,10 @@ class WatchlistPlayer(player):
         self.episode = episode
         self.resume_time = resume_time
 
-        if self.skipintro_aniskip_enable or self.skipoutro_aniskip_enable:
-            # process skip times
-            self.process_hianime()
-            self.process_aniwave()
-            self.process_aniskip()
+        # process skip times
+        self.process_hianime()
+        self.process_aniwave()
+        self.process_aniskip()
 
         self.keepAlive()
 
@@ -164,18 +163,33 @@ class WatchlistPlayer(player):
                 self.skipoutro_aniskip = True
 
     def process_aniwave(self):
-        aniwave_start = int(control.getSetting('aniwave.skipintro.start'))
-        if aniwave_start != -1:
-            self.skipintro_start = aniwave_start + self.skipintro_offset
-            self.skipintro_end = int(control.getSetting('aniwave.skipintro.end')) + self.skipintro_offset
-            self.skipintro_aniskip = True
+        if self.skipintro_aniskip_enable:
+            aniwave_skipintro_start = int(control.getSetting('aniwave.skipintro.start'))
+            if aniwave_skipintro_start != -1:
+                self.skipintro_start = aniwave_skipintro_start + self.skipintro_offset
+                self.skipintro_end = int(control.getSetting('aniwave.skipintro.end')) + self.skipintro_offset
+                self.skipintro_aniskip = True
+
+        if self.skipoutro_aniskip_enable:
+            aniwave_skipoutro_start = int(control.getSetting('aniwave.skipoutro.start'))
+            if aniwave_skipoutro_start != -1:
+                self.skipoutro_start = aniwave_skipoutro_start + self.skipoutro_offset
+                self.skipoutro_end = int(control.getSetting('aniwave.skipoutro.end')) + self.skipoutro_offset
+                self.skipoutro_aniskip = True
 
     def process_hianime(self):
-        hianime_start = int(control.getSetting('hianime.skipintro.start'))
-        if hianime_start != -1:
-            self.skipintro_start = hianime_start + self.skipintro_offset
-            self.skipintro_end = int(control.getSetting('hianime.skipintro.end')) + self.skipintro_offset
-            self.skipintro_aniskip = True
+        if self.skipintro_aniskip_enable:
+            hianime_skipintro_start = int(control.getSetting('hianime.skipintro.start'))
+            if hianime_skipintro_start != -1:
+                self.skipintro_start = hianime_skipintro_start + self.skipintro_offset
+                self.skipintro_end = int(control.getSetting('hianime.skipintro.end')) + self.skipintro_offset
+                self.skipintro_aniskip = True
+        if self.skipoutro_aniskip_enable:
+            hianime_skipoutro_start = int(control.getSetting('hianime.skipoutro.start'))
+            if hianime_skipoutro_start != -1:
+                self.skipoutro_start = hianime_skipoutro_start + self.skipoutro_offset
+                self.skipoutro_end = int(control.getSetting('hianime.skipoutro.end')) + self.skipoutro_offset
+                self.skipoutro_aniskip = True
 
 
 class PlayerDialogs(xbmc.Player):
@@ -241,7 +255,6 @@ def _prefetch_play_link(link):
             headers[header] = parse.unquote_plus(headers[header])
     else:
         headers = None
-
     try:
         r = requests.get(url, headers=headers, stream=True)
     except requests.exceptions.SSLError:
@@ -272,7 +285,6 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
     if not linkInfo:
         cancelPlayback()
         return
-
     item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
     if subs:
         from resources.lib.ui import embed_extractor

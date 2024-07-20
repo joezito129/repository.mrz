@@ -314,6 +314,7 @@ def TOOLS_MENU(payload, params):
         ("Sync Completed List", "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
         ("Download Manager", 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
         ("Choose Sorting...", 'sort_select', {'plot': "Choose Sorting..."}, ''),
+        ("Import/Export", 'importexport_settings', {'plot': "Import or Export settings.xml file"}, ''),
         ("Clear Selected Fanart", 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
@@ -390,20 +391,36 @@ def DOWNLOAD_MANAGER(payload, params):
     control.exit_code()
 
 
-# @Route('importexport_settings')
-# def IMPORTEXPORT_SETTINGS(payload, params):
-#     import xbmcvfs
-#     import shutil
-#     context = control.context_menu(["Import", "Export"])
-#
-#     # Import
-#     if context == 0:
-#         shutil.copyfile(src, dst)
-#
-#     # Export
-#     elif context == 1:
-#         pass
-#         # savelocation = xbmcvfs.
+@Route('importexport_settings')
+def IMPORTEXPORT_SETTINGS(payload, params):
+    import shutil
+    import os
+
+    context = control.context_menu(["Import", "Export"])
+    setting_xml = os.path.join(control.dataPath, 'settings.xml')
+
+    # Import
+    if context == 0:
+        import_location = control.browse(1, control.ADDON_NAME, 'files', 'settings.xml')
+        if not import_location.endswith('settings.xml'):
+            control.ok_dialog(control.ADDON_NAME, "Invalid File!")
+        else:
+            yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
+            if yesno:
+                shutil.copyfile(import_location, setting_xml)
+                control.setSetting("DMIndex", '')
+                control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
+
+    # Export
+    elif context == 1:
+        export_location = control.browse(3, control.ADDON_NAME, 'files')
+        if not export_location:
+            control.ok_dialog(control.ADDON_NAME, "Please Select Export Location!")
+        else:
+            yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to save settings.xml?")
+            if yesno:
+                shutil.copyfile(setting_xml, os.path.join(export_location, 'settings.xml'))
+                control.ok_dialog(control.ADDON_NAME, "Saved settings.xml")
 
 
 @Route('toggleLanguageInvoker')

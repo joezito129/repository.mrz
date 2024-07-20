@@ -1197,7 +1197,7 @@ class GlobalVariables:
         if params.pop("is_playable", False):
             item.setProperty("IsPlayable", "true")
             is_folder = params.pop("is_folder", False)
-            if art.get('poster'):
+            if art.get('poster') and info.get('mediatype') == 'episode':
                 art['tvshow.poster'] = art.pop('poster')
         else:
             item.setProperty("IsPlayable", "false")

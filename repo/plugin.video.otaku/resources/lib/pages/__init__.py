@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, animess, animixplay, aniwave, gogoanime, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, animixplay, aniwave, gogoanime, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -19,7 +19,7 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
         super(Sources, self).__init__(xml_file, location, actionargs)
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['animess', 'animixplay', 'aniwave', 'gogo', 'hianime']
+        self.embedProviders = ['animixplay', 'aniwave', 'gogo', 'hianime']
         self.otherProviders = ['Local Files']
         self.remainingProviders = self.embedProviders + self.torrentProviders + self.otherProviders
 
@@ -50,11 +50,17 @@ class Sources(GetSources):
         get_backup = args['get_backup']
         self.setProperty('process_started', 'true')
 
-        # set skip times to -1 before scraping
+        # set skipintro times to -1 before scraping
         control.setSetting('aniwave.skipintro.start', '-1')
         control.setSetting('aniwave.skipintro.end', '-1')
         control.setSetting('hianime.skipintro.start', '-1')
         control.setSetting('hianime.skipintro.end', '-1')
+
+        # set skipoutro times to -1 before scraping
+        control.setSetting('aniwave.skipoutro.start', '-1')
+        control.setSetting('aniwave.skipoutro.end', '-1')
+        control.setSetting('hianime.skipoutro.start', '-1')
+        control.setSetting('hianime.skipoutro.end', '-1')
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, anilist_id, episode))
@@ -94,13 +100,6 @@ class Sources(GetSources):
             self.threads.append(t)
         else:
             self.remainingProviders.remove('hianime')
-
-        if control.getBool('provider.animess'):
-            t = threading.Thread(target=self.animess_worker, args=(anilist_id, episode, rescrape))
-            t.start()
-            self.threads.append(t)
-        else:
-            self.remainingProviders.remove('animess')
 
         if control.getBool('provider.animixplay'):
             t = threading.Thread(target=self.animixplay_worker, args=(anilist_id, episode, rescrape))
@@ -171,12 +170,10 @@ class Sources(GetSources):
             if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
                 control.setSetting('hianime.skipintro.start', str(x['skip']['intro']['start']))
                 control.setSetting('hianime.skipintro.end', str(x['skip']['intro']['end']))
-                break
+            if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
+                control.setSetting('hianime.skipoutro.start', str(x['skip']['outro']['start']))
+                control.setSetting('hianime.skipoutro.end', str(x['skip']['outro']['end']))
         self.remainingProviders.remove('hianime')
-
-    def animess_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += database.get_(animess.Sources().get_sources, 8, anilist_id, episode, key='animess')
-        self.remainingProviders.remove('animess')
 
     def animixplay_worker(self, anilist_id, episode, rescrape):
         self.embedSources += database.get_(animixplay.Sources().get_sources, 8, anilist_id, episode, key='animixplay')
@@ -189,7 +186,9 @@ class Sources(GetSources):
             if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
                 control.setSetting('aniwave.skipintro.start', str(x['skip']['intro']['start']))
                 control.setSetting('aniwave.skipintro.end', str(x['skip']['intro']['end']))
-                break
+            if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
+                control.setSetting('aniwave.skipoutro.start', str(x['skip']['outro']['start']))
+                control.setSetting('aniwave.skipoutro.end', str(x['skip']['outro']['end']))
         self.remainingProviders.remove('aniwave')
 
     def gogo_worker(self, anilist_id, episode, rescrape, get_backup):

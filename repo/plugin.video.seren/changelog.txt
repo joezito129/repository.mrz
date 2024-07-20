@@ -1,3 +1,6 @@
+Changelog v3.0.2 (2024-07-20):
+- Only pop poster when media type is episode
+
 Changelog v3.0.2 (2024-07-12):
 - Fix bug
 

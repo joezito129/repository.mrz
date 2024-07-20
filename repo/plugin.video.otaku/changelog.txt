@@ -1,4 +1,10 @@
-Changelog v5.0.42 (2024-07-17):
+Changelog v5.0.44 (2024-07-18):
+- Bug Fixes
+- Removed animess
+- Added Skipoutro [aniwave, h!anime]
+- Added option to import/export settings.xml
+
+Changelog v5.0.43 (2024-07-17):
 - Bug Fixes
 
 Changelog v5.0.42 (2024-07-13):

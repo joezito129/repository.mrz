@@ -181,7 +181,7 @@
             <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.43">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.0.44">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.beautifulsoup4" />
@@ -194,7 +194,7 @@
   </extension>
   <extension point="xbmc.service" library="service.py" />
   <extension point="xbmc.addon.metadata">
-    <reuselanguageinvoker>true</reuselanguageinvoker> 
+    <reuselanguageinvoker>false</reuselanguageinvoker> 
     <summary lang="en">Otaku video Plugin</summary>
     <description lang="en">HD Animes</description>
     <platform>all</platform>
@@ -215,7 +215,7 @@
 
     </assets>
   </extension>
-</addon><addon id="plugin.video.seren" version="3.0.2.1" name="Seren" provider-name="Nixgates">
+</addon><addon id="plugin.video.seren" version="3.0.3" name="Seren" provider-name="Nixgates">
     <requires>
         <import addon="xbmc.addon" version="17.9.910" />
         <import addon="xbmc.python" version="3.0.0" />
@@ -231,7 +231,7 @@
     </extension>
     <extension point="xbmc.service" library="service.py" />
     <extension point="xbmc.addon.metadata">
-        <reuselanguageinvoker>true</reuselanguageinvoker>
+        <reuselanguageinvoker>false</reuselanguageinvoker>
         <summary lang="en">Seren - Modular Multi-source Addon</summary>
         <description lang="en">Seren is a modular provider based, cloud service streaming software that is tightly
             interwoven with Trakt. Seren provides the freedom to view media from a single menu system from service

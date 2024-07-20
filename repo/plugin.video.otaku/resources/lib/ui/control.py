@@ -203,6 +203,10 @@ def context_menu(context_list):
     return xbmcgui.Dialog().contextmenu(context_list)
 
 
+def browse(type_, heading, shares, mask=''):
+    return xbmcgui.Dialog().browse(type_, heading, shares, mask)
+
+
 def set_videotags(li, info):
     vinfo = li.getVideoInfoTag()
     if title := info.get('title'):

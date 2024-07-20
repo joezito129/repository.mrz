@@ -68,11 +68,12 @@ class Sources(BrowserBase):
         sid = re.search(r'id="watch-main.+?data-id="([^"]+)', r)
         if not sid:
             return sources
-
         sid = sid.group(1)
         vrf = self.generate_vrf(sid)
         params = {'vrf': vrf}
         r = requests.get(f'{self._BASE_URL}ajax/episode/list/{sid}', headers=headers, params=params)
+        if not r:
+            return sources
         res = r.json()['result']
         elink = SoupStrainer('div', {'class': re.compile('^episodes')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
