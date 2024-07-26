@@ -407,7 +407,12 @@ def IMPORTEXPORT_SETTINGS(payload, params):
         if not import_location.endswith('settings.xml'):
             control.ok_dialog(control.ADDON_NAME, "Invalid File!")
         else:
-            yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
+            f_string = f'''
+Are you sure you want to replace settings.xml?
+{import_location}
+[I]{setting_xml}[/I]
+'''
+            yesno = control.yesno_dialog(control.ADDON_NAME, f_string)
             if yesno:
                 xbmcvfs.copy(import_location, setting_xml)
                 control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
