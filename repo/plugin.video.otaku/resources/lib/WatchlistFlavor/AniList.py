@@ -45,15 +45,8 @@ class AniListWLF(WatchlistFlavorBase):
         return login_data
 
     def __get_sort(self):
-        sort_types = {
-            "Score": "SCORE",
-            "Progress": "PROGRESS",
-            "Last Updated": "UPDATED_TIME",
-            "Last Added": "ADDED_TIME",
-            "Romaji Title": "MEDIA_TITLE_ROMAJI_DESC",
-            "English Title": "MEDIA_TITLE_ENGLISH_DESC"
-        }
-        return sort_types[self._sort]
+        sort_types = ['MEDIA_TITLE_ENGLISH_DESC', 'MEDIA_TITLE_ROMAJI_DESC', 'SCORE', 'PROGRESS', 'UPDATED_TIME', 'ADDED_TIME']
+        return sort_types[int(self._sort)]
 
     def watchlist(self):
         statuses = [

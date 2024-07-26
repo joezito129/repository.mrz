@@ -1,6 +1,5 @@
 import xbmcaddon
-
-from xbmc import executebuiltin
+import xbmc
 
 properties = [
     "context.otaku.findrecommendations",
@@ -14,7 +13,7 @@ properties = [
     'context.otaku.fanartselect'
 ]
 
-ADDON = xbmcaddon.Addon('plugin.video.otaku')
-
-for prop in properties:
-    executebuiltin(f"SetProperty({prop},{ADDON.getSetting(prop)},home)")
+if xbmc.getCondVisibility('System.HasAddon(%s)' % 'plugin.video.otaku'):
+    ADDON = xbmcaddon.Addon('plugin.video.otaku')
+    for prop in properties:
+        xbmc.executebuiltin(f"SetProperty({prop},{ADDON.getSetting(prop)},home)")

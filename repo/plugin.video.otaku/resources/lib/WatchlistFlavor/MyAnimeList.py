@@ -75,13 +75,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return [utils.parse_view({'name': name, 'url': f'{base_url}/{offset}/{next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)]
 
     def __get_sort(self):
-        sort_types = {
-            "Anime Title": "anime_title",
-            "Last Updated": "list_updated_at",
-            "Anime Start Date": "anime_start_date",
-            "List Score": "list_score"
-        }
-        return sort_types[self._sort]
+        sort_types = ['list_score', 'list_updated_at', 'anime_start_date', 'anime_title']
+        return sort_types[int(self._sort)]
 
     def watchlist(self):
         statuses = [

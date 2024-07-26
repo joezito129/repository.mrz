@@ -119,13 +119,13 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
 
         sort_pref = self.__get_sort()
 
-        if sort_pref == 'anime_title':
+        if sort_pref == '2':  # anime_title
             all_results = sorted(all_results, key=lambda x: x['info']['title'])
-        elif sort_pref == 'list_updated_at':
+        elif sort_pref == '0':    # list_updated_at
             all_results = sorted(all_results, key=lambda x: x['info']['last_watched'] or "0", reverse=True)
-        elif sort_pref == 'user_rating':
+        elif sort_pref == '3':    # user_rating
             all_results = sorted(all_results, key=lambda x: x['info']['user_rating'] or 0, reverse=True)
-        elif sort_pref == 'last_added':
+        elif sort_pref == '1': # last_added
             all_results.reverse()
         return all_results
 

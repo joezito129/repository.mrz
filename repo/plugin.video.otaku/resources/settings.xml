@@ -205,7 +205,7 @@
 		<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="mal.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)" visible="eq(-2,true)"/>
 		<setting id="mal.listsettings" type="action" label="40353" option="close" visible="eq(-3,true)"/>
-		<setting id="mal.sort" type="labelenum" subsetting="true" label="40354" values="List Score|Last Updated|Anime Start Date|Anime Title" default="Last Updated" visible="eq(-4,true)"/>
+		<setting id="mal.sort" type="enum" subsetting="true" label="40354" values="List Score|Last Updated|Anime Start Date|Anime Title" default="1" visible="eq(-4,true)"/>
 
 		<!-- Anilist -->
 		<setting type="lsep" label="40348"/>
@@ -214,7 +214,7 @@
 		<setting id="anilist.token" type="text" subsetting="true" label="40351" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="anilist.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/anilist?auth_dialog=true)" visible="eq(-3,true)"/>
 		<setting id="anilist.listsettings" type="action" label="40353" option="close" visible="eq(-4,true)"/>
-		<setting id="anilist.sort" type="labelenum" subsetting="true" label="40354" values="Romaji Title|English Title|Score|Progress|Last Updated|Last Added" default="Last Updated" visible="eq(-5,true)"/>
+		<setting id="anilist.sort" type="enum" subsetting="true" label="40354" values="Romaji Title|English Title|Score|Progress|Last Updated|Last Added" default="Last Updated" visible="eq(-5,true)"/>
 
 		<!-- Kitsu -->
 		<setting type="lsep" label="40355"/>
@@ -225,14 +225,14 @@
 		<setting id="kitsu.login" type="action" subsetting="true" label="40359" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/kitsu)" visible="eq(-4,true)"/>
 		<setting id="kitsu.listsettings" type="action" label="40353" option="close" visible="eq(-5,true)"/>
 		<setting id="kitsu.sort" type="labelenum" subsetting="true" label="40354" values="Date Updated|Progress|Title" default="Date Updated" visible="eq(-6,true)"/>
-		<setting id="kitsu.titles" type="labelenum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="Canonical" visible="eq(-7,true)"/>
+		<setting id="kitsu.titles" type="enum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="Canonical" visible="eq(-7,true)"/>
 
 		<!--Simkl -->
 		<setting type="lsep" label="SIMKL"/>
 		<setting id="simkl.enabled" label="Enable Simkl" type="bool" default="false"/>
 		<setting id="simkl.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
 		<setting id="simkl.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)" visible="eq(-2,true)"/>
-		<setting id="simkl.sort" type="labelenum" subsetting="true" label="40354" values="Last Updated|Last Added|Anime Title|User Rating" default="Last Updated" />
+		<setting id="simkl.sort" type="enum" subsetting="true" label="40354" values="Last Updated|Last Added|Anime Title|User Rating" default="Last Updated" />
 	</category>
 
 	<!-- Menus -->
@@ -263,7 +263,7 @@
 		<!-- Language Invoker -->
 		<setting type="lsep" label="Language Invoker"/>
 		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:              Enable For Much Faster Speeds" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
-		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Disabled" enable="false" />
+		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Enabled" enable="false" />
 
 		<!-- Import/Export -->
 		<setting type="lsep" label="Import/Export"/>

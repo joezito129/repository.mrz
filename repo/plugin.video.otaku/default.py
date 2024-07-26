@@ -393,8 +393,8 @@ def DOWNLOAD_MANAGER(payload, params):
 
 @Route('importexport_settings')
 def IMPORTEXPORT_SETTINGS(payload, params):
-    import shutil
     import os
+    import xbmcvfs
 
     context = control.context_menu(["Import", "Export"])
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
@@ -402,13 +402,14 @@ def IMPORTEXPORT_SETTINGS(payload, params):
     # Import
     if context == 0:
         import_location = control.browse(1, control.ADDON_NAME, 'files', 'settings.xml')
+        if not import_location:
+            return
         if not import_location.endswith('settings.xml'):
             control.ok_dialog(control.ADDON_NAME, "Invalid File!")
         else:
             yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
             if yesno:
-                shutil.copyfile(import_location, setting_xml)
-                control.setSetting("DMIndex", '')
+                xbmcvfs.copy(import_location, setting_xml)
                 control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
 
     # Export
@@ -419,7 +420,7 @@ def IMPORTEXPORT_SETTINGS(payload, params):
         else:
             yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to save settings.xml?")
             if yesno:
-                shutil.copyfile(setting_xml, os.path.join(export_location, 'settings.xml'))
+                xbmcvfs.copy(setting_xml, os.path.join(export_location, 'settings.xml'))
                 control.ok_dialog(control.ADDON_NAME, "Saved settings.xml")
 
 
