@@ -135,8 +135,15 @@ if __name__ == "__main__":
     version_check()
     database_sync.AnilistSyncDatabase()
     refresh_apis()
-    if control.getSetting('update.time') == '' or time.time() > int(control.getSetting('update.time')) + 2_592_000:
+    if control.getSetting('update.time') == '':
         update_mappings_db()
         update_dub_json()
         sync_watchlist(True)
+    else:
+        update_time = int(control.getSetting('update.time'))
+        if time.time() > update_time + 2_592_000:   # 30 days
+            update_mappings_db()
+        if time.time() > update_time + 604_800: # 7 days
+            update_dub_json()
+            sync_watchlist(True)
     control.log('##################  MAINTENANCE COMPLETE ######################')

@@ -5,7 +5,7 @@
 		<!-- General -->
 		<setting type="lsep" label="General"/>
 		<setting id="jz.dub" type="bool" label="Show Dub Release Dates" default="true"/>
-		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|Animeschedule" default="animeschedule" />
+		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|Animeschedule" default="1" />
 <!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
 		<setting id="jz.filler" type="bool" label="Show Filler Info If Found"  default="false" />
 	</category>
@@ -13,8 +13,8 @@
 	<!-- General -->
 	<category label="40300">
 		<!-- General -->
-		<setting id="titlelanguage" type="enum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="English (Attack on Titan)"/>
-		<setting id="searchhistory" type="enum" label="40301" values="Yes|No" default="Yes"/>
+		<setting id="titlelanguage" type="enum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="1"/>
+		<setting id="searchhistory" type="enum" label="40301" values="Yes|No" default="0"/>
 		<setting id="general.smart.scroll.enable" label="enable Smart Scroll" type="bool" default="true" />
 		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
 
@@ -83,8 +83,8 @@
 		<setting id="general.playstyle.movie" type="enum" label="40308" lvalues="40310|40311" default="0" />
 		<setting id="general.playstyle.episode" type="enum" label="40309" lvalues="40310|40311" default="0" />
 		<setting id="general.autotrynext" type="bool" label="40312" default="true" />
-		<setting id="general.timeout" type="slider" label="40425" option="int" range="2, 60" default="9" />
-		<setting id="general.terminate.oncloud" type="bool" subsetting="true" label="Terminate on cloud sources" default="true" />
+		<setting id="general.timeout" type="slider" label="40425" option="int" range="2, 60" default="10" />
+		<setting id="general.terminate.oncloud" type="bool" subsetting="true" label="Terminate on cloud sources" default="false" />
 
 		<!-- Skip Intro Dialog -->
 		<setting type="lsep" label="40323" />
@@ -110,7 +110,7 @@
 		<setting type="lsep" label="40327"/>
 		<setting id="general.maxResolution" type="enum" label="40328" values="EQ|480p|720p|1080p|4k" default="4" />
 		<setting id="general.disable265" type="bool" label="40329" default="false" />
-		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="Both" />
+		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="1" />
 		<setting id="show.uncached" type="bool" label="Show UnCached Sources" default="false" />
 
 		<!-- Source Sorting -->
@@ -139,13 +139,12 @@
 		<setting id="audio.3" type="text" default="2" visible="false" />
 		<setting id="audio.4" type="text" default="3" visible="false" />
 
-
 		<!-- Search Filtering -->
 		<setting type="lsep" label="40409"/>
 		<setting id="divflavors.bool" label="40428" type="bool" default="false"/>
 		<setting id="divflavors.menu" type="labelenum" subsetting="true" label="40429" values="Dub|Both" default="Both" visible="eq(-1,true)"/>
 		<setting id="contentformat.bool" label="40391" type="bool" default="false"/>
-		<setting id="contentformat.menu" type="enum" subsetting="true" label="40392" lvalues="40393|40394|40395|40396|40397|40398|40399" default="40393" visible="eq(-1,true)"/>
+		<setting id="contentformat.menu" type="enum" subsetting="true" label="40392" lvalues="40393|40394|40395|40396|40397|40398|40399" default="0" visible="eq(-1,true)"/>
 		<setting id="contentorigin.bool" label="40418" type="bool" default="false"/>
 		<setting id="contentorigin.menu" type="enum" subsetting="true" label="40419" lvalues="40420|40421|40422|40423" default="0" visible="eq(-1,true)"/>
 		<setting id="search.adult" type="bool" label="40410" default="false" />
@@ -160,7 +159,6 @@
 		<setting id="rd.auth.status" type="text" label="Real-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="rd.auth_start" type="action" label="40338" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)" visible="eq(-3,true)" />
 		<setting id="rd.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)" visible="eq(-4,true)" />
-<!--		<setting id="rd.priority" type="slider" subsetting="true" label="40339" option="int" range="1,10" default="10" visible="eq(-5,true)" />-->
 		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-5,true)" />
 
 		<!-- All Debrid -->
@@ -169,7 +167,6 @@
 		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
 		<setting id="alldebrid.auth.status" type="text" label="All-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-3,true)" />
-<!--		<setting id="alldebrid.priority" type="slider" subsetting="true" label="40344" option="int" range="1,10" default="10" visible="eq(-4,true)" />-->
 		<setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
 		
 		<!-- Debrid-Link -->
@@ -178,14 +175,12 @@
 		<setting id="dl.username" type="text" default="" label="40413" enable="false" visible="eq(-1,true)"/>
 		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/debridlink)" visible="eq(-2,true)" />
 		<setting id="dl.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)" visible="eq(-3,true)" />
-<!--		<setting id="dl.priority" type="slider" subsetting="true" label="40415" option="int" range="1,10" default="10" visible="eq(-4,true)" />-->
 
 		<!-- Premiumize -->
 		<setting type="lsep" label="40363" />
 		<setting id="premiumize.enabled" type="bool" default="false" label="40364" />
 		<setting id="premiumize.username" type="text" label="40365" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/premiumize)" visible="eq(-2,true)" />
-<!--		<setting id="premiumize.priority" type="slider" subsetting="true" label="40367" option="int" range="1,10" default="10" visible="eq(-3,true)" />-->
 		<setting id="premiumize.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-3,true)" />
 	</category>
 
@@ -214,25 +209,25 @@
 		<setting id="anilist.token" type="text" subsetting="true" label="40351" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="anilist.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/anilist?auth_dialog=true)" visible="eq(-3,true)"/>
 		<setting id="anilist.listsettings" type="action" label="40353" option="close" visible="eq(-4,true)"/>
-		<setting id="anilist.sort" type="enum" subsetting="true" label="40354" values="Romaji Title|English Title|Score|Progress|Last Updated|Last Added" default="Last Updated" visible="eq(-5,true)"/>
+		<setting id="anilist.sort" type="enum" subsetting="true" label="40354" values="Romaji Title|English Title|Score|Progress|Last Updated|Last Added" default="3" visible="eq(-5,true)"/>
 
 		<!-- Kitsu -->
 		<setting type="lsep" label="40355"/>
 		<setting id="kitsu.enabled" label="40356" type="bool" default="false"/>
     	<setting id="kitsu.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)" />
 		<setting id="kitsu.authvar" type="text" subsetting="true" label="40357" default="" visible="eq(-2,true)"/>
-    	<setting id="kitsu.password" type="text" subsetting="true" option="hidden" label="40358" default="" visible="eq(-3,true)"/>
-		<setting id="kitsu.login" type="action" subsetting="true" label="40359" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/kitsu)" visible="eq(-4,true)"/>
-		<setting id="kitsu.listsettings" type="action" label="40353" option="close" visible="eq(-5,true)"/>
-		<setting id="kitsu.sort" type="labelenum" subsetting="true" label="40354" values="Date Updated|Progress|Title" default="Date Updated" visible="eq(-6,true)"/>
-		<setting id="kitsu.titles" type="enum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="Canonical" visible="eq(-7,true)"/>
+    	<setting id="kitsu.password" type="text" subsetting="true" option="hidden" label="40358" default="" visible="eq(-3,true)" />
+		<setting id="kitsu.login" type="action" subsetting="true" label="40359" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/kitsu)" visible="eq(-4,true)" />
+		<setting id="kitsu.listsettings" type="action" label="40353" option="close" visible="eq(-5,true)" />
+		<setting id="kitsu.sort" type="labelenum" subsetting="true" label="40354" values="Date Updated|Progress|Title" default="Date Updated" visible="eq(-6,true)" />
+		<setting id="kitsu.titles" type="enum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="0" visible="eq(-7,true)" />
 
 		<!--Simkl -->
 		<setting type="lsep" label="SIMKL"/>
-		<setting id="simkl.enabled" label="Enable Simkl" type="bool" default="false"/>
-		<setting id="simkl.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
-		<setting id="simkl.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)" visible="eq(-2,true)"/>
-		<setting id="simkl.sort" type="enum" subsetting="true" label="40354" values="Last Updated|Last Added|Anime Title|User Rating" default="Last Updated" />
+		<setting id="simkl.enabled" label="Enable Simkl" type="bool" default="false" />
+		<setting id="simkl.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)" />
+		<setting id="simkl.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)" visible="eq(-2,true)" />
+		<setting id="simkl.sort" type="enum" subsetting="true" label="40354" values="Last Updated|Last Added|Anime Title|User Rating" default="0" visible="eq(-3,true)" />
 	</category>
 
 	<!-- Menus -->

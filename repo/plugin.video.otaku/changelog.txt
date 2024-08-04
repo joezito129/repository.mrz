@@ -1,3 +1,8 @@
+Changelog v5.0.46 (2024-08-04):
+- Added timeout on aniskip api request
+- Changed some settings
+- Added subfolder paths in local files
+
 Changelog v5.0.45 (2024-07-25):
 - Bug Fixes
 

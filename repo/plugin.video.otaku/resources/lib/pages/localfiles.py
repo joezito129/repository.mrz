@@ -11,14 +11,19 @@ PATH = control.getSetting('download.location')
 
 class Sources(BrowserBase):
     def get_sources(self, query, anilist_id, episode):
-        filenames = os.listdir(PATH)
-        clean_filenames = [re.sub(r'\[.*?]\s*', '', i) for i in filenames]
+        filenames = []
+        for root, dirs, files in os.walk(PATH):
+            for file in files:
+                if source_utils.is_file_ext_valid(file):
+                    filenames.append(str(os.path.join(root, file).replace(PATH, '')))
+        clean_filenames = [re.sub(r'\[.*?]\s*', '', os.path.basename(i)) for i in filenames]
+        control.print(clean_filenames)
         filenames_query = ','.join(clean_filenames)
         r = requests.get('https://armkai.vercel.app/api/fuzzypacks', params={"dict": filenames_query, "match": query})
         resp = r.json()
         match_files = []
         for i in resp:
-            if source_utils.is_file_ext_valid(clean_filenames[i]) and episode not in clean_filenames[i].rsplit('-', 1)[1]:
+            if episode not in clean_filenames[i]:
                 continue
             match_files.append(filenames[i])
         mapfunc = partial(self.process_offline_search, episode=episode)
@@ -27,16 +32,17 @@ class Sources(BrowserBase):
 
     @staticmethod
     def process_offline_search(f, episode):
+        full_path = os.path.join(PATH, f)
         source = {
-            'release_title': f,
+            'release_title': os.path.basename(f),
             'hash': os.path.join(PATH, f),
             'type': 'local_files',
             'quality': source_utils.getQuality(f),
             'debrid_provider': PATH,
             'provider': 'local_files',
             'episode_re': episode,
-            'size': source_utils.get_size(os.path.getsize(os.path.join(PATH, f))),
-            'byte_size': os.path.getsize(os.path.join(PATH, f)),
+            'size': source_utils.get_size(os.path.getsize(full_path)),
+            'byte_size': os.path.getsize(full_path),
             'info': source_utils.getInfo(f),
             'lang': source_utils.getAudio_lang(f)
         }

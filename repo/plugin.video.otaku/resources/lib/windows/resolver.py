@@ -51,7 +51,6 @@ class Resolver(BaseWindow):
                 break
             if i['type'] == 'torrent':
                 stream_link = self.resolve_source(self.resolvers[i['debrid_provider']], i)
-
                 if stream_link:
                     self.return_data = stream_link
                     break

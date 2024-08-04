@@ -41,7 +41,7 @@ class Sources(BrowserBase):
         for i in resp:
             torrent = torrents[i]
             filename = re.sub(r'\[.*?]', '', torrent['filename']).lower()
-            if source_utils.is_file_ext_valid(filename) and episode not in filename.rsplit('-', 1)[1]:
+            if source_utils.is_file_ext_valid(filename) and episode not in filename:
                 continue
             torrent_info = api.torrentInfo(torrent['id'])
             torrent_files = [selected for selected in torrent_info['files'] if selected['selected'] == 1]
@@ -102,7 +102,7 @@ class Sources(BrowserBase):
         for i in resp:
             torrent = torrents[i]
             filename = re.sub(r'\[.*?]', '', torrent['filename']).lower()
-            if source_utils.is_file_ext_valid(filename) and episode not in filename.rsplit('-', 1)[1]:
+            if source_utils.is_file_ext_valid(filename) and episode not in filename:
                 continue
 
             torrent_info = api.link_info(torrent['link'])

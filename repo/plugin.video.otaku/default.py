@@ -314,7 +314,6 @@ def TOOLS_MENU(payload, params):
         ("Sync Completed List", "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
         ("Download Manager", 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
         ("Choose Sorting...", 'sort_select', {'plot': "Choose Sorting..."}, ''),
-        ("Import/Export", 'importexport_settings', {'plot': "Import or Export settings.xml file"}, ''),
         ("Clear Selected Fanart", 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
@@ -403,7 +402,7 @@ def IMPORTEXPORT_SETTINGS(payload, params):
     if context == 0:
         import_location = control.browse(1, control.ADDON_NAME, 'files', 'settings.xml')
         if not import_location:
-            return
+            return control.exit_code()
         if not import_location.endswith('settings.xml'):
             control.ok_dialog(control.ADDON_NAME, "Invalid File!")
         else:
@@ -424,6 +423,7 @@ def IMPORTEXPORT_SETTINGS(payload, params):
                 xbmcvfs.copy(setting_xml, os.path.join(export_location, 'settings.xml'))
                 control.ok_dialog(control.ADDON_NAME, "Saved settings.xml")
 
+    return control.exit_code()
 
 @Route('toggleLanguageInvoker')
 def TOGGLE_LANGUAGE_INVOKER(payload, params):
