@@ -363,6 +363,8 @@ def get_sub(sub_url, sub_lang):
     if sub_url.endswith('.vtt'):
         fname = fname.replace('.srt', '.vtt')
         fpath = fpath.replace('.srt', '.vtt')
+    fpath = fpath.encode(encoding='ascii', errors='ignore').decode(encoding='ascii')
+    fname = fname.encode(encoding='ascii', errors='ignore').decode(encoding='ascii')
     with open(fpath, 'w', encoding='utf-8') as f:
         f.write(content)
     return f'special://temp/{fname}'

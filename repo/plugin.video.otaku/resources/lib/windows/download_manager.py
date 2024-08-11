@@ -68,7 +68,7 @@ class DownloadManager(BaseWindow):
 
     def populate_menu_items(self):
         def create_menu_item(download_item):
-            new_item = xbmcgui.ListItem(label=f"{download_item['filename']}", offscreen=True)
+            new_item = xbmcgui.ListItem(label=f"{download_item['filename']}", offscreen=False)
             self.set_menu_item_properties(new_item, download_item)
             return new_item
 

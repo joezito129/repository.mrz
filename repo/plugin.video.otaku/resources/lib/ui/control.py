@@ -160,8 +160,8 @@ def exit_code():
         exit_(1)
 
 
-def keyboard(text):
-    keyboard_ = xbmc.Keyboard('', text, False)
+def keyboard(title, text=''):
+    keyboard_ = xbmc.Keyboard(text, title, False)
     keyboard_.doModal()
     if keyboard_.isConfirmed():
         return keyboard_.getText()

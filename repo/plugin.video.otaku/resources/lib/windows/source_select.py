@@ -61,7 +61,7 @@ class SourceSelect(BaseWindow):
         for i in self.sources:
             if not i:
                 continue
-            menu_item = xbmcgui.ListItem('%s' % i['release_title'], offscreen=True)
+            menu_item = xbmcgui.ListItem('%s' % i['release_title'], offscreen=False)
             # properties = {
             #     'type': i['type'],
             #     'debrid': i['debrid'],
@@ -137,8 +137,6 @@ class SourceSelect(BaseWindow):
             selected_source['name'] = selected_source['release_title']
 
         resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True)
-
         self.stream_link = resolver.doModal(sources, {}, pack_select)
-
         if self.stream_link:
             self.close()

@@ -1,3 +1,8 @@
+Changelog v5.0.47 (xx):
+- Added Edit Search Item
+- Fix some sub encoding errors
+- Moved prefretch source to resolve
+
 Changelog v5.0.46 (2024-08-04):
 - Added timeout on aniskip api request
 - Changed some settings

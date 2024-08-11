@@ -101,7 +101,8 @@ def ANILIST_GENRES_PAGES(payload, params):
 def SEARCH_HISTORY(payload, params):
     history = database.getSearchHistory('show')
     if int(control.getSetting('searchhistory')) == 0:
-        control.draw_items(OtakuBrowser.search_history(history), 'addons', [('Remove from History', 'remove_search_item')])
+        draw_cm = [('Remove from Item', 'remove_search_item'), ("Edit Search Item...", "edit_search_item")]
+        control.draw_items(OtakuBrowser.search_history(history), 'addons', draw_cm)
     else:
         SEARCH(payload, params)
 
@@ -122,14 +123,26 @@ def SEARCH(payload, params):
 
 @Route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload, params):
-    payload_list = payload.rsplit('search/')
-    if len(payload_list) >= 2:
-        payload_list = payload_list[1].rsplit('/', 1)
-        if len(payload_list) == 2:
+    if 'search/' in payload:
+        payload_list = payload.rsplit('search/')[1].rsplit('/', 1)
+        if len(payload_list) == 2 and payload_list[0]:
             search_item, page = payload_list
-            database.remove_search(table='show', value=search_item)
-    else:
-        control.notify(control.ADDON_NAME, "Invalid Search Item")
+            return database.remove_search(table='show', value=search_item)
+    control.notify(control.ADDON_NAME, "Invalid Search Item")
+
+
+@Route('edit_search_item/*')
+def EDIT_SEARCH_ITEM(payload, params):
+    if 'search/' in payload:
+        payload_list = payload.rsplit('search/')[1].rsplit('/', 1)
+        if len(payload_list) == 2 and payload_list[0]:
+            search_item, page = payload_list
+            query = control.keyboard(control.lang(50011), search_item)
+            if query != search_item:
+                database.remove_search(table='show', value=search_item)
+                database.addSearchHistory(query, 'show')
+            return
+    control.notify(control.ADDON_NAME, "Invalid Search Item")
 
 
 @Route('play/*')
@@ -149,13 +162,12 @@ def PLAY(payload, params):
     _mock_args = {"anilist_id": anilist_id, "episode": episode}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        return_data = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
-        link = resolver.doModal(sources, {}, False)
+        return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
 
-    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape, source_select, resume_time)
+    player.play_source(return_data['linkinfo'], return_data['sub'], anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape or source_select, resume_time)
     control.exit_code()
 
 
@@ -185,13 +197,12 @@ def PLAY_MOVIE(payload, params):
 
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        link = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
-
+        return_data = SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args)
-        link = resolver.doModal(sources, {}, False)
-    player.play_source(link, anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape, source_select, resume_time)
+        return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
+
+    player.play_source(return_data['linkinfo'], return_data['sub'], anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape or source_select, resume_time)
     control.exit_code()
 
 

@@ -1,10 +1,8 @@
 import xbmc
 import xbmcgui
 import xbmcplugin
-import requests
 
 from resources.lib.ui import control, database
-from urllib import parse
 from resources.lib.indexers import aniskip
 
 playList = control.playList
@@ -107,11 +105,10 @@ class WatchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
-        for _ in range(60):
+        for inx in range(60):
             xbmc.sleep(500)
-            if self.isPlayingVideo():
-                if self.getTime() < 5 and self.getTotalTime() != 0:
-                    break
+            if self.isPlayingVideo() and self.getTime() < 5 and self.getTotalTime() != 0:
+                break
         if not self.isPlayingVideo():
             return
 
@@ -124,6 +121,8 @@ class WatchlistPlayer(player):
             return self.onWatchedPercent()
 
         if control.getBool('smartplay.skipintrodialog'):
+            if self.skipintro_start < 1:
+                self.skipintro_start = 1
             while self.isPlaying():
                 self.current_time = int(self.getTime())
                 if self.current_time > self.skipintro_end:
@@ -244,47 +243,7 @@ def cancelPlayback():
     xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(offscreen=True))
 
 
-def _prefetch_play_link(link):
-    if not link:
-        return
-    url = link
-    if '|' in url:
-        url, hdrs = link.split('|')
-        headers = dict([item.split('=') for item in hdrs.split('&')])
-        for header in headers:
-            headers[header] = parse.unquote_plus(headers[header])
-    else:
-        headers = None
-    try:
-        r = requests.get(url, headers=headers, stream=True)
-    except requests.exceptions.SSLError:
-        yesno = control.yesno_dialog(f'{control.ADDON_NAME}: Request Error', f'{url}\nWould you like to try without verifying TLS certificate?')
-        if yesno == 1:
-            r = requests.get(url, headers=headers, stream=True, verify=False)
-        else:
-            return
-    except Exception as e:
-        control.log(str(e), level='warning')
-        return
-
-    return {
-        "url": link if '|' in link else r.url,
-        "headers": r.headers
-    }
-
-
-def play_source(link, anilist_id, watchlist_update, build_playlist, episode, rescrape=False, source_select=False, resume_time=None):
-    if isinstance(link, tuple):
-        link, subs = link
-    else:
-        subs = None
-    if isinstance(link, dict):
-        linkInfo = link
-    else:
-        linkInfo = _prefetch_play_link(link)
-    if not linkInfo:
-        cancelPlayback()
-        return
+def play_source(linkInfo, subs, anilist_id, watchlist_update, build_playlist, episode, source_select=False, resume_time=None):
     item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
     if subs:
         from resources.lib.ui import embed_extractor
@@ -301,7 +260,7 @@ def play_source(link, anilist_id, watchlist_update, build_playlist, episode, res
         # Run any mimetype hook
         item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
 
-    if rescrape or source_select:
+    if source_select:
         control.playList.add(linkInfo['url'], item)
         playlist_info = build_playlist(anilist_id, episode)
         episode_info = playlist_info[episode - 1]
