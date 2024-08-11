@@ -166,8 +166,8 @@ def PLAY(payload, params):
     else:
         from resources.lib.windows.resolver import Resolver
         return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
-
-    player.play_source(return_data['linkinfo'], return_data['sub'], anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape or source_select, resume_time)
+    if isinstance(return_data, dict):
+        player.play_source(return_data['linkinfo'], return_data['sub'], anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, int(episode), rescrape or source_select, resume_time)
     control.exit_code()
 
 
@@ -201,8 +201,8 @@ def PLAY_MOVIE(payload, params):
     else:
         from resources.lib.windows.resolver import Resolver
         return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
-
-    player.play_source(return_data['linkinfo'], return_data['sub'], anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape or source_select, resume_time)
+    if isinstance(return_data, dict):
+        player.play_source(return_data['linkinfo'], return_data['sub'], anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, 1, rescrape or source_select, resume_time)
     control.exit_code()
 
 
