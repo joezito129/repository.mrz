@@ -103,8 +103,7 @@ class Resolver(BaseWindow):
             import xbmcplugin, xbmcgui
             control.playList.clear()
             xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(offscreen=True))
-            self.close()
-            control.exit_(1)
+            self.return_data = False
         self.close()
 
     def resolve_source(self, api, source):
