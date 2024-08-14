@@ -20,8 +20,6 @@ class BrowserBase:
 
     @staticmethod
     def embeds():
-        return [
-            'doodstream', 'filelions', 'filemoon', 'iga', 'kwik', 'hd-2',
-            'mp4upload', 'mycloud', 'streamtape', 'streamwish', 'vidcdn',
-            'vidplay', 'yourupload', 'zto'
-        ]
+        return ['doodstream', 'filelions', 'filemoon', 'hd-1', 'hd-2', 'iga', 'kwik',
+         'megaf', 'moonf', 'mp4upload', 'mp4u', 'mycloud', 'streamtape',
+         'streamwish', 'vidcdn', 'vidplay', 'vidstream', 'yourupload', 'zto']

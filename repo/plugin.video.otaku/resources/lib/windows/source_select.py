@@ -112,9 +112,9 @@ class SourceSelect(BaseWindow):
                 else:
                     self.close()
                     source = [self.sources[self.display_list.getSelectedPosition()]]
-                    resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True)
-                    link = resolver.doModal(source, {}, False)
-                    Manager().download_file(link)
+                    return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
+                    if isinstance(return_data, dict):
+                        Manager().download_file(return_data['linkinfo'])
 
             elif context == 2:  # File Selection
                 if not self.sources[self.position]['debrid_provider']:
@@ -131,12 +131,10 @@ class SourceSelect(BaseWindow):
             sources = self.sources[self.position:]
         else:
             sources = [self.sources[self.position]]
-
         if self.rescrape:
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
 
-        resolver = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True)
-        self.stream_link = resolver.doModal(sources, {}, pack_select)
-        if self.stream_link:
+        self.stream_link = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
+        if isinstance(self.stream_link, dict):
             self.close()

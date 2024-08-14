@@ -55,7 +55,7 @@ class WatchlistPlayer(player):
         self.skipintro_offset = int(control.getSetting('skipintro.aniskip.offset'))
         self.skipoutro_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
-    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, resume_time=None):
+    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, resume_time):
         self.anilist_id = anilist_id
         self._watchlist_update = watchlist_update
         self._build_playlist = build_playlist
@@ -244,6 +244,7 @@ def cancelPlayback():
 
 
 def play_source(linkInfo, subs, anilist_id, watchlist_update, build_playlist, episode, source_select=False, resume_time=None):
+    control.print(linkInfo)
     item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
     if subs:
         from resources.lib.ui import embed_extractor
@@ -255,7 +256,7 @@ def play_source(linkInfo, subs, anilist_id, watchlist_update, build_playlist, ep
             subtitles.append(embed_extractor.get_sub(sub_url, sub_lang))
         item.setSubtitles(subtitles)
 
-    if 'Content-Type' in linkInfo['headers'].keys():
+    if linkInfo['headers'].get('Content-Type'):
         item.setProperty('MimeType', linkInfo['headers']['Content-Type'])
         # Run any mimetype hook
         item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
@@ -271,7 +272,7 @@ def play_source(linkInfo, subs, anilist_id, watchlist_update, build_playlist, ep
         return
 
     xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
-    WatchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode)
+    WatchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode, resume_time)
 
 
 @HookMimetype('application/dash+xml')

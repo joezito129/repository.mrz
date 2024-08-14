@@ -1,6 +1,7 @@
 import time
 import requests
 import os
+import json
 
 from resources.lib.ui import control, database_sync
 
@@ -40,7 +41,6 @@ def refresh_apis():
 
 def update_mappings_db():
     control.log("### Updating Mappings")
-    control.setSetting('update.time', str(int(time.time())))
     url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
     r = requests.get(url)
     with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
@@ -71,8 +71,6 @@ def sync_watchlist(silent=False):
 
 
 def update_dub_json():
-    import json
-
     control.log("### Updating Dub json")
     with open(control.maldubFile, 'w') as file:
         mal_dub_raw = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
@@ -80,6 +78,17 @@ def update_dub_json():
         mal_dub = {str(item): {'dub': True} for item in mal_dub_list}
         json.dump(mal_dub, file)
 
+
+def update_keys():
+    control.log("### Updating Keys")
+    kurl = 'https://raw.githubusercontent.com/Ciarands/vidsrc-keys/main/keys.json'
+    resp = requests.get(kurl).json()
+    vidplay = resp.get('embed', {}).get('keys')
+    if vidplay:
+        control.setSetting('keys.vidplay', json.dumps(vidplay))
+    aniwave = resp.get('aniwave', {}).get('keys')
+    if aniwave:
+        control.setSetting('keys.aniwave', json.dumps(aniwave))
 
 def getChangeLog():
     with open(os.path.join(control.ADDON_PATH, 'changelog.txt')) as f:
@@ -135,15 +144,18 @@ if __name__ == "__main__":
     version_check()
     database_sync.AnilistSyncDatabase()
     refresh_apis()
-    if control.getSetting('update.time') == '':
+    if control.getSetting('update.time.30') == '' or control.getSetting('update.time.7') == '':
         update_mappings_db()
         update_dub_json()
         sync_watchlist(True)
+        update_keys()
     else:
-        update_time = int(control.getSetting('update.time'))
-        if time.time() > update_time + 2_592_000:   # 30 days
+        if time.time() > int(control.getSetting('update.time.30')) + 2_592_000:   # 30 days
             update_mappings_db()
-        if time.time() > update_time + 604_800: # 7 days
+            update_keys()
+            control.setSetting('update.time.30', str(int(time.time())))
+        if time.time() > int(control.getSetting('update.time.7')) + 604_800:   # 7 days
             update_dub_json()
             sync_watchlist(True)
+
     control.log('##################  MAINTENANCE COMPLETE ######################')

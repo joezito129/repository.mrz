@@ -13,6 +13,7 @@ class Resolver(BaseWindow):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.return_data = {
             'link': None,
+            'linkinfo': None,
             'sub': None
         }
         self.canceled = False
@@ -90,19 +91,16 @@ class Resolver(BaseWindow):
                 stream_link = i['hash']
                 self.return_data = {
                     'url': stream_link,
-                    'headers': {}
+                    'local': True
                 }
                 break
 
-        if isinstance(self.return_data['link'], dict):
-            self.return_data['linkinfo'] = self.return_data['link']
+        if self.return_data.get('local'):
+            self.return_data['linkinfo'] = self.return_data
         else:
             self.return_data['linkinfo'] = self.prefetch_play_link(self.return_data['link'])
 
         if not self.return_data['linkinfo']:
-            import xbmcplugin, xbmcgui
-            control.playList.clear()
-            xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(offscreen=True))
             self.return_data = False
         self.close()
 
@@ -156,6 +154,7 @@ class Resolver(BaseWindow):
             "headers": r.headers
         }
 
+
     def resolve_uncache(self, source):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
         f_string = f'''
@@ -180,20 +179,19 @@ This source is not cached would you like to cache it now?
         return resolved_cache
 
     def doModal(self, sources, args, pack_select):
-        if sources:
-            self.sources = sources
-            self.args = args
-            self.pack_select = pack_select
-            self.setProperty('release_title', str(self.sources[0]['release_title']))
-            self.setProperty('debrid_provider', self.sources[0].get('debrid_provider', 'None').replace('_', ' '))
-            self.setProperty('source_provider', self.sources[0]['provider'])
-            self.setProperty('source_resolution', source_utils.res[self.sources[0]['quality']])
-            self.setProperty('source_info', " ".join(self.sources[0]['info']))
-            self.setProperty('source_type', self.sources[0]['type'])
-            self.setProperty('source_size', self.sources[0]['size'])
-            self.setProperty('source_seeders', str(self.sources[0].get('seeders', '')))
-            super(Resolver, self).doModal()
-            control.setSetting('last_played', self.sources[0]['release_title'])
+        self.sources = sources
+        self.args = args
+        self.pack_select = pack_select
+        self.setProperty('release_title', str(self.sources[0]['release_title']))
+        self.setProperty('debrid_provider', self.sources[0].get('debrid_provider', 'None').replace('_', ' '))
+        self.setProperty('source_provider', self.sources[0]['provider'])
+        self.setProperty('source_resolution', source_utils.res[self.sources[0]['quality']])
+        self.setProperty('source_info', " ".join(self.sources[0]['info']))
+        self.setProperty('source_type', self.sources[0]['type'])
+        self.setProperty('source_size', self.sources[0]['size'])
+        self.setProperty('source_seeders', str(self.sources[0].get('seeders', '')))
+        super(Resolver, self).doModal()
+        control.setSetting('last_played', self.sources[0]['release_title'])
         return self.return_data
 
     def onAction(self, action):

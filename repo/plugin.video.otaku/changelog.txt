@@ -1,4 +1,8 @@
-Changelog v5.0.47 (xx):
+Changelog v5.0.48 (xx):
+- Fixed Aniwave
+- Fix download manager
+
+Changelog v5.0.47 (2024-08-11):
 - Added Edit Search Item
 - Fix some sub encoding errors
 - Moved prefretch source to resolve

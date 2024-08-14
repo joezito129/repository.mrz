@@ -58,6 +58,7 @@ def log(msg, level="info"):
         level = xbmc.LOGINFO
     elif level == 'warning':
         level = xbmc.LOGWARNING
+        print(msg)
     elif level == 'error':
         level = xbmc.LOGERROR
     else:

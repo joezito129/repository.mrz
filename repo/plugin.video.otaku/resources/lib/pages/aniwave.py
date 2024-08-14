@@ -3,6 +3,7 @@ import json
 import pickle
 import re
 import requests
+import xbmc
 
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
@@ -12,10 +13,8 @@ from resources.lib.indexers import malsync
 
 
 class Sources(BrowserBase):
-    _BASE_URL = 'https://aniwave.vc/'
-    EKEY = 'tGn6kIpVXBEUmqjD'
-    DKEY = 'LUyDrL4qIxtIxOGs'
-    CHAR_SUBST_OFFSETS = [-2, -4, -5, 6, 2, -3, 3, 6]
+    _BASE_URL = 'https://aniwave.to/'
+    EKEY, DKEY = json.loads(control.getSetting('keys.aniwave'))
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
@@ -24,11 +23,12 @@ class Sources(BrowserBase):
         title = self._clean_title(title)
 
         all_results = []
-        srcs = ['sub', 'dub']
+        srcs = ['dub', 'softsub', 'sub']
         if control.getSetting('general.source') == 'Sub':
             srcs.remove('dub')
         elif control.getSetting('general.source') == 'Dub':
             srcs.remove('sub')
+            srcs.remove('softsub')
 
         items = malsync.get_slugs(anilist_id=anilist_id, site='9anime')
         if not items:
@@ -85,6 +85,7 @@ class Sources(BrowserBase):
             params = {'vrf': vrf}
             r = requests.get(f'{self._BASE_URL}ajax/server/list/{e_id}', headers=headers, params=params)
             eres = r.json().get('result')
+            scrapes = 0
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
                 sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
@@ -93,9 +94,13 @@ class Sources(BrowserBase):
                     edata_id = src.get('data-link-id')
                     edata_name = src.text
                     if edata_name.lower() in self.embeds():
+                        if scrapes == 3:
+                            xbmc.sleep(5000)
+                            scrapes = 0
                         vrf = self.generate_vrf(edata_id)
                         params = {'vrf': vrf}
                         r = requests.get(f'{self._BASE_URL}ajax/server/{edata_id}', headers=headers, params=params)
+                        scrapes += 1
                         resp = r.json().get('result')
                         slink = self.decrypt_vrf(resp.get('url'))
 
@@ -110,7 +115,7 @@ class Sources(BrowserBase):
                                 skip['outro'] = {'start': outro[0], 'end': outro[1]}
 
                         source = {
-                            'release_title': '{0} - Ep {1}'.format(title, episode),
+                            'release_title': f"{title} - Ep {episode}",
                             'hash': slink,
                             'type': 'embed',
                             'quality': 0,
@@ -118,7 +123,7 @@ class Sources(BrowserBase):
                             'provider': 'aniwave',
                             'size': 'NA',
                             'byte_size': 0,
-                            'info': ['DUB' if lang == 'dub' else 'SUB', edata_name],
+                            'info': [lang, edata_name],
                             'lang': 2 if lang == 'dub' else 0,
                             'skip': skip
                         }
@@ -143,24 +148,11 @@ class Sources(BrowserBase):
             j = (j + S[i]) % 256
             S[i], S[j] = S[j], S[i]
             app(c ^ S[(S[i] + S[j]) % 256])
-
         return out
-
-    def vrf_shift(self, t, offset=None):
-        if not offset:
-            offset = self.CHAR_SUBST_OFFSETS
-        o = ''
-        for s in range(len(t)):
-            o += chr(t[s] if isinstance(t[s], int) else ord(t[s]) + offset[s % 8])
-        return o
 
     def generate_vrf(self, content_id, key=EKEY):
         vrf = self.arc4(bytes(key.encode(encoding='latin-1')), bytes(parse.quote(content_id).encode(encoding='latin-1')))
-        vrf = base64.urlsafe_b64encode(vrf)
         vrf = base64.b64encode(vrf).decode()
-        vrf = vrf.replace('/', '_').replace('+', '-')
-        vrf = self.vrf_shift(vrf)
-        vrf = base64.b64encode(bytes(vrf[::-1].encode(encoding='latin-1'))).decode()
         vrf = vrf.replace('/', '_').replace('+', '-')
         return vrf
 
