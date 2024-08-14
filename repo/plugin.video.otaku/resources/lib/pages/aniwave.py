@@ -14,7 +14,11 @@ from resources.lib.indexers import malsync
 
 class Sources(BrowserBase):
     _BASE_URL = 'https://aniwave.to/'
-    EKEY, DKEY = json.loads(control.getSetting('keys.aniwave'))
+    aniwave_keys = control.getSetting('keys.aniwave')
+    if aniwave_keys:
+        EKEY, DKEY = json.loads(aniwave_keys)
+    else:
+        EKEY = DKEY = None
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
