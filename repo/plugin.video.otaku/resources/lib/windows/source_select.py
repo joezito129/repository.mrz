@@ -1,7 +1,6 @@
 import pickle
 import xbmcgui
 
-
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.windows.download_manager import Manager
@@ -10,16 +9,14 @@ from resources.lib import OtakuBrowser
 
 
 class SourceSelect(BaseWindow):
-    def __init__(self, xml_file, location, actionArgs=None, sources=None, anilist_id=None, rescrape=None, **kwargs):
+    def __init__(self, xml_file, location, actionArgs=None, sources=None, rescrape=None):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.actionArgs = actionArgs
         self.sources = sources
-        self.anilist_id = anilist_id
         self.rescrape = rescrape
         self.position = -1
         self.canceled = False
         self.display_list = None
-        control.closeBusyDialog()
         self.stream_link = None
 
         episode = actionArgs.get('episode')
@@ -112,9 +109,10 @@ class SourceSelect(BaseWindow):
                 else:
                     self.close()
                     source = [self.sources[self.display_list.getSelectedPosition()]]
+                    self.actionArgs['play'] = False
                     return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
                     if isinstance(return_data, dict):
-                        Manager().download_file(return_data['linkinfo'])
+                        Manager().download_file(return_data['link'])
 
             elif context == 2:  # File Selection
                 if not self.sources[self.position]['debrid_provider']:
@@ -134,7 +132,7 @@ class SourceSelect(BaseWindow):
         if self.rescrape:
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
-
+        self.actionArgs['close'] = self.close
         self.stream_link = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
         if isinstance(self.stream_link, dict):
             self.close()

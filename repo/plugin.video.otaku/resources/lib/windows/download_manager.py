@@ -83,7 +83,6 @@ class DownloadManager(BaseWindow):
                 menu_item = create_menu_item(download)
                 self.display_list.addItem(menu_item)
 
-
     def set_menu_item_properties(self, menu_item, download_info):
         menu_item.setProperty('item.info.speed', download_info['speed'])
         menu_item.setProperty('item.info.progress', str(download_info['progress']))
@@ -109,7 +108,6 @@ class Manager:
 
     def __init__(self):
         self.url_hash = None
-        self.storage_location = control.getSetting('download.location')
         self.file_size = -1
         self.file_size_display = None
         self.progress = -1
@@ -126,6 +124,7 @@ class Manager:
         if not xbmcvfs.exists(control.downloads_json):
             with open(control.downloads_json, 'w') as file:
                 json.dump({}, file)
+        self.storage_location = control.getSetting('download.location')
 
     def create_download_task(self, url_hash):
         self.get_download_index()
@@ -190,6 +189,12 @@ class Manager:
         control.setSetting("DMIndex", ",".join(self.download_ids))
 
     def download_file(self, url, filename=None):
+        if not xbmcvfs.exists(self.storage_location):
+            self.storage_location = control.browse(3, f'{control.ADDON_NAME}: Please Choose A Download Locaton.', 'files')
+            if not xbmcvfs.exists(self.storage_location):
+                return control.ok_dialog(control.ADDON_NAME, "Unable to Find Directory")
+            control.setSetting('download.location', self.storage_location)
+
         self.output_filename = filename
         if self.output_filename is None:
             self.output_filename = url.split("/")[-1]
@@ -220,7 +225,6 @@ class Manager:
         chunks = r.iter_content(chunk_size=1024 * 1024 * 8)
 
         control.notify(control.ADDON_NAME, 'Download Started')
-
         with open(self.output_path, 'wb') as f:
             for chunk in chunks:
                 if chunk:

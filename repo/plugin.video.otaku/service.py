@@ -149,6 +149,8 @@ if __name__ == "__main__":
         update_dub_json()
         sync_watchlist(True)
         update_keys()
+        control.setSetting('update.time.30', str(int(time.time())))
+        control.setSetting('update.time.7', str(int(time.time())))
     else:
         if time.time() > int(control.getSetting('update.time.30')) + 2_592_000:   # 30 days
             update_mappings_db()
@@ -157,5 +159,5 @@ if __name__ == "__main__":
         if time.time() > int(control.getSetting('update.time.7')) + 604_800:   # 7 days
             update_dub_json()
             sync_watchlist(True)
-
+            control.setSetting('update.time.7', str(int(time.time())))
     control.log('##################  MAINTENANCE COMPLETE ######################')

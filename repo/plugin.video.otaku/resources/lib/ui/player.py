@@ -1,30 +1,11 @@
 import xbmc
 import xbmcgui
-import xbmcplugin
 
 from resources.lib.ui import control, database
 from resources.lib.indexers import aniskip
 
 playList = control.playList
 player = xbmc.Player
-
-
-class HookMimetype:
-    __MIME_HOOKS = {}
-
-    @classmethod
-    def trigger(cls, mimetype, item):
-        if mimetype in cls.__MIME_HOOKS.keys():
-            return cls.__MIME_HOOKS[mimetype](item)
-        return item
-
-    def __init__(self, mimetype):
-        self._type = mimetype
-
-    def __call__(self, func):
-        assert self._type not in self.__MIME_HOOKS.keys()
-        self.__MIME_HOOKS[self._type] = func
-        return func
 
 
 class WatchlistPlayer(player):
@@ -105,10 +86,10 @@ class WatchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
-        for inx in range(60):
-            xbmc.sleep(500)
-            if self.isPlayingVideo() and self.getTime() < 5 and self.getTotalTime() != 0:
+        for inx in range(30):
+            if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
+            xbmc.sleep(500)
         if not self.isPlayingVideo():
             return
 
@@ -236,67 +217,3 @@ class PlayerDialogs(xbmc.Player):
     @staticmethod
     def _is_video_window_open():
         return False if xbmcgui.getCurrentWindowId() != 12005 else True
-
-
-def cancelPlayback():
-    playList.clear()
-    xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(offscreen=True))
-
-
-def play_source(linkInfo, subs, anilist_id, watchlist_update, build_playlist, episode, source_select=False, resume_time=None):
-    control.print(linkInfo)
-    item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
-    if subs:
-        from resources.lib.ui import embed_extractor
-        embed_extractor.del_subs()
-        subtitles = []
-        for sub in subs:
-            sub_url = sub.get('url')
-            sub_lang = sub.get('lang')
-            subtitles.append(embed_extractor.get_sub(sub_url, sub_lang))
-        item.setSubtitles(subtitles)
-
-    if linkInfo['headers'].get('Content-Type'):
-        item.setProperty('MimeType', linkInfo['headers']['Content-Type'])
-        # Run any mimetype hook
-        item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
-
-    if source_select:
-        control.playList.add(linkInfo['url'], item)
-        playlist_info = build_playlist(anilist_id, episode)
-        episode_info = playlist_info[episode - 1]
-        control.set_videotags(item, episode_info['info'])
-        item.setArt(episode_info['image'])
-        player().play(control.playList, item)
-        WatchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode, resume_time)
-        return
-
-    xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
-    WatchlistPlayer().handle_player(anilist_id, watchlist_update, build_playlist, episode, resume_time)
-
-
-@HookMimetype('application/dash+xml')
-def _DASH_HOOK(item):
-    import inputstreamhelper
-    is_helper = inputstreamhelper.Helper('mpd')
-    if is_helper.check_inputstream():
-        item.setProperty('inputstream', is_helper.inputstream_addon)
-        item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-        item.setContentLookup(False)
-    else:
-        raise Exception("InputStream Adaptive is not supported.")
-    return item
-
-
-@HookMimetype('application/vnd.apple.mpegurl')
-def _HLS_HOOK(item):
-    stream_url = item.getPath()
-    import inputstreamhelper
-    is_helper = inputstreamhelper.Helper('hls')
-    if '|' not in stream_url and is_helper.check_inputstream():
-        item.setProperty('inputstream', is_helper.inputstream_addon)
-        item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-    item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
-    item.setMimeType('application/vnd.apple.mpegstream_url')
-    item.setContentLookup(False)
-    return item

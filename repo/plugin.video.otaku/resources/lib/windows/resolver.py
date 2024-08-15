@@ -1,11 +1,34 @@
 import requests
+import xbmcgui
+import xbmcplugin
+import xbmc
 
 from urllib import parse
+from resources.lib import OtakuBrowser
+from resources.lib.WatchlistIntegration import watchlist_update_episode
 from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid
-from resources.lib.ui import control, source_utils
+from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
 
 control.sys.path.append(control.dataPath)
+
+
+class HookMimetype:
+    __MIME_HOOKS = {}
+
+    @classmethod
+    def trigger(cls, mimetype, item):
+        if mimetype in cls.__MIME_HOOKS.keys():
+            return cls.__MIME_HOOKS[mimetype](item)
+        return item
+
+    def __init__(self, mimetype):
+        self._type = mimetype
+
+    def __call__(self, func):
+        assert self._type not in self.__MIME_HOOKS.keys()
+        self.__MIME_HOOKS[self._type] = func
+        return func
 
 
 class Resolver(BaseWindow):
@@ -14,7 +37,8 @@ class Resolver(BaseWindow):
         self.return_data = {
             'link': None,
             'linkinfo': None,
-            'sub': None
+            'sub': None,
+            'source': None
         }
         self.canceled = False
         self.sources = None
@@ -27,6 +51,12 @@ class Resolver(BaseWindow):
         }
         self.source_select = source_select
         self.pack_select = False
+        self.anilist_id = actionArgs['anilist_id']
+        self.episode = int(actionArgs['episode'])
+        self.play = actionArgs.get('play')
+        self.source_select_close = actionArgs.get('close')
+        self.resume_time = actionArgs.get('resume_time')
+        self.context = actionArgs.get('context')
 
     def onInit(self):
         self.resolve(self.sources)
@@ -42,6 +72,7 @@ class Resolver(BaseWindow):
 
         # Begin resolving links
         for i in sources:
+            self.return_data['source'] = i
             if self.canceled:
                 break
             debrid_provider = i.get('debrid_provider', 'None').replace('_', ' ')
@@ -102,7 +133,46 @@ class Resolver(BaseWindow):
 
         if not self.return_data['linkinfo']:
             self.return_data = False
-        self.close()
+
+        if self.play and isinstance(self.return_data, dict):
+            self.source_select_close()
+            linkInfo = self.return_data['linkinfo']
+            item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
+            if self.return_data['sub']:
+                from resources.lib.ui import embed_extractor
+                embed_extractor.del_subs()
+                subtitles = []
+                for sub in self.return_data['sub']:
+                    sub_url = sub.get('url')
+                    sub_lang = sub.get('lang')
+                    subtitles.append(embed_extractor.get_sub(sub_url, sub_lang))
+                item.setSubtitles(subtitles)
+
+            if linkInfo['headers'].get('Content-Type'):
+                item.setProperty('MimeType', linkInfo['headers']['Content-Type'])
+                # Run any mimetype hook
+                item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
+
+            if self.context:
+                control.playList.add(linkInfo['url'], item)
+                playlist_info = OtakuBrowser.get_episodeList(self.anilist_id, self.episode)
+                episode_info = playlist_info[self.episode - 1]
+                control.set_videotags(item, episode_info['info'])
+                item.setArt(episode_info['image'])
+                xbmc.Player().play(control.playList, item)
+            else:
+                xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
+
+            monitor = Monitor()
+            for _ in range(30):
+                monitor.waitForAbort(.5)
+                if monitor.abortRequested() or monitor.playbackerror or monitor.playing:
+                    break
+            self.close()
+            player.WatchlistPlayer().handle_player(self.anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
+        else:
+            self.close()
+
 
     def resolve_source(self, api, source):
         api = api()
@@ -199,3 +269,43 @@ This source is not cached would you like to cache it now?
         if actionID in [92, 10]:
             self.canceled = True
             self.close()
+
+
+class Monitor(xbmc.Monitor):
+    def __init__(self):
+        super().__init__()
+        self.playbackerror = False
+        self.playing = False
+
+    def onNotification(self, sender, method, data):
+        if method == 'Player.OnAVStart':
+            self.playing = True
+        elif method == 'Player.OnStop':
+            self.playbackerror = True
+
+
+@HookMimetype('application/dash+xml')
+def _DASH_HOOK(item):
+    import inputstreamhelper
+    is_helper = inputstreamhelper.Helper('mpd')
+    if is_helper.check_inputstream():
+        item.setProperty('inputstream', is_helper.inputstream_addon)
+        item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
+        item.setContentLookup(False)
+    else:
+        raise Exception("InputStream Adaptive is not supported.")
+    return item
+
+
+@HookMimetype('application/vnd.apple.mpegurl')
+def _HLS_HOOK(item):
+    stream_url = item.getPath()
+    import inputstreamhelper
+    is_helper = inputstreamhelper.Helper('hls')
+    if '|' not in stream_url and is_helper.check_inputstream():
+        item.setProperty('inputstream', is_helper.inputstream_addon)
+        item.setProperty('inputstream.adaptive.manifest_type', 'hls')
+    item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
+    item.setMimeType('application/vnd.apple.mpegstream_url')
+    item.setContentLookup(False)
+    return item
