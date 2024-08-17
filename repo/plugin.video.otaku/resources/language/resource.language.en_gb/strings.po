@@ -16,29 +16,65 @@ msgctxt "#30000"
 msgid "Last Watched: "
 msgstr ""
 
+msgctxt "#30001"
+msgid "Airing Anime"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Airing Next Season"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Top 100 Anime"
+msgstr ""
+
+msgctxt "#30004"
+msgid "Genres & Tags"
+msgstr ""
+
+msgctxt "#30005"
+msgid "Search"
+msgstr ""
+
+msgctxt "#30006"
+msgid "Tools"
+msgstr ""
+
 ######TOOLS & SEARCH DIRECTORY#######
-msgctxt "#30027"
+msgctxt "#30010"
 msgid "View Changelog"
 msgstr ""
 
-msgctxt "#30020"
+msgctxt "#30011"
 msgid "Open Settings Menu"
 msgstr ""
 
-msgctxt "#30021"
+msgctxt "#30012"
 msgid "Clear Cache"
 msgstr ""
 
-msgctxt "#30022"
-msgid "Clear Local Torrent Cache"
-msgstr ""
-
-msgctxt "#30023"
+msgctxt "#30013"
 msgid "Clear Search History"
 msgstr ""
 
-msgctxt "#30026"
+msgctxt "#30014"
 msgid "Rebuild Database"
+msgstr ""
+
+msgctxt "#30015"
+msgid "Sync Completed List"
+msgstr ""
+
+msgctxt "#30016"
+msgid "Download Manager"
+msgstr ""
+
+msgctxt "#30017"
+msgid "Choose Sorting.."
+msgstr ""
+
+msgctxt "#30018"
+msgid "Clear Selected Fanart"
 msgstr ""
 
 ######DEBRID DIRECTORY#######
@@ -105,16 +141,164 @@ msgid "Provider"
 msgstr ""
 
 ######SETTINGS.XML VALUES######
-msgctxt "#40300"
+msgctxt "#30300"
 msgid "General"
 msgstr ""
 
-msgctxt "#40301"
+msgctxt "#30301"
+msgid "Title Language"
+msgstr ""
+
+msgctxt "#30302"
 msgid "Enable search history"
 msgstr ""
 
-msgctxt "#40302"
+msgctxt "#30303"
+msgid "Enable Smart Scroll"
+msgstr ""
+
+msgctxt "#30304"
+msgid "Download Location"
+msgstr ""
+
+msgctxt "#30305"
+msgid "Meta API"
+msgstr ""
+
+msgctxt "#30306"
 msgid "Interface"
+msgstr ""
+
+msgctxt "#30307"
+msgid "Per Page General View"
+msgstr ""
+
+msgctxt "#30308"
+msgid "Per Page Watchlist View (does not work on Anilist or Simkl)"
+msgstr ""
+
+msgctxt "#30309"
+msgid "How Long Before Checking for New Episodes (days)"
+msgstr ""
+
+msgctxt "#30310"
+msgid "Force View Types on Menus"
+msgstr ""
+
+msgctxt "#30311"
+msgid "General Menu View"
+msgstr ""
+
+msgctxt "#30312"
+msgid "TV Show View"
+msgstr ""
+
+msgctxt "#30313"
+msgid "Episode View"
+msgstr ""
+
+msgctxt "#30314"
+msgid "Get Watchlist Episode Data"
+msgstr ""
+
+msgctxt "#30315"
+msgid "Disable Title Names and Plot"
+msgstr ""
+
+msgctxt "#30316"
+msgid "Show Empty Episode Meta"
+msgstr ""
+
+msgctxt "#30317"
+msgid "Disable Fanart"
+msgstr ""
+
+msgctxt "#30318"
+msgid "Disable Clearlogo"
+msgstr ""
+
+msgctxt "#30319"
+msgid "Theme"
+msgstr ""
+
+msgctxt "#30320"
+msgid "Context and Widgets"
+msgstr ""
+
+msgctxt "#30321"
+msgid "Find Recommendations"
+msgstr ""
+
+msgctxt "#30322"
+msgid "Find Relations"
+msgstr ""
+
+msgctxt "#30323"
+msgid "Rescrape"
+msgstr ""
+
+msgctxt "#30324"
+msgid "Source Select"
+msgstr ""
+
+msgctxt "#30325"
+msgid "Logout"
+msgstr ""
+
+msgctxt "#30326"
+msgid "Delete from Database"
+msgstr ""
+
+msgctxt "#30327"
+msgid "WatchList manager"
+msgstr ""
+
+msgctxt "#30328"
+msgid "Marked as Watched [COLOR deepskyblue]WatchList[/COLOR]"
+msgstr ""
+
+msgctxt "#30329"
+msgid "Select Fanart"
+msgstr ""
+
+msgctxt "#30330"
+msgid "Widgets"
+msgstr ""
+
+msgctxt "#30331"
+msgid "Hide Next up Widget"
+msgstr ""
+
+msgctxt "#30332"
+msgid "Torrents"
+msgstr ""
+
+msgctxt "#30333"
+msgid "Embeds"
+msgstr ""
+
+msgctxt "#30334"
+msgid "Other"
+msgstr ""
+
+msgctxt "#30340"
+msgid "EQ"
+msgstr ""
+
+msgctxt "#30341"
+msgid "480p"
+msgstr ""
+
+msgctxt "#30342"
+msgid "720p"
+msgstr ""
+
+msgctxt "#30343"
+msgid "1080p"
+msgstr ""
+
+msgctxt "#30344"
+msgid "4k"
 msgstr ""
 
 msgctxt "#40307"
@@ -139,6 +323,10 @@ msgstr ""
 
 msgctxt "#40312"
 msgid "Auto try next link on resolve failure (Source Select)"
+msgstr ""
+
+msgctxt "#40313"
+msgid "Terminate on cloud Sources"
 msgstr ""
 
 msgctxt "#40317"
@@ -189,6 +377,9 @@ msgctxt "#40331"
 msgid "Sort Sourcing"
 msgstr ""
 
+msgctxt "#40332"
+msgid "Show UnCached Sources"
+msgstr ""
 
 msgctxt "#40334"
 msgid "Accounts"
@@ -211,7 +402,11 @@ msgid "Authorize Real-Debrid..."
 msgstr ""
 
 msgctxt "#40339"
-msgid "Real-Debrid Priority"
+msgid "Real-Debrid Status"
+msgstr ""
+
+msgctxt "#40500"
+msgid "Refresh Debrid Token"
 msgstr ""
 
 msgctxt "#40340"
@@ -231,7 +426,7 @@ msgid "Authorize AllDebrid..."
 msgstr ""
 
 msgctxt "#40344"
-msgid "All-Debrid Priority"
+msgid "All-Debrid Status"
 msgstr ""
 
 msgctxt "#40345"
@@ -323,31 +518,11 @@ msgid "Authorize Premiumize..."
 msgstr ""
 
 msgctxt "#40367"
-msgid "Premiumize Priority"
-msgstr ""
-
-msgctxt "#40369"
-msgid "Title Language"
-msgstr ""
-
-msgctxt "#40370"
-msgid "Romaji (Shingeki no Kyojin)"
-msgstr ""
-
-msgctxt "#40371"
-msgid "English (Attack on Titan)"
+msgid "Premiumize Status"
 msgstr ""
 
 msgctxt "#40372"
 msgid "Inspect Cloud Files on Scrape"
-msgstr ""
-
-msgctxt "#40384"
-msgid "Playing in"
-msgstr ""
-
-msgctxt "#40388"
-msgid "Theme"
 msgstr ""
 
 msgctxt "#40391"
@@ -430,10 +605,6 @@ msgctxt "#40416"
 msgid "Maintenance"
 msgstr ""
 
-msgctxt "#40417"
-msgid "Hide Sub Sources"
-msgstr ""
-
 msgctxt "#40418"
 msgid "Set Country Filter"
 msgstr ""
@@ -479,34 +650,38 @@ msgid "Duration of how long the Dialog will appear"
 msgstr ""
 
 msgctxt "#40431"
-msgid "Enable Aniskip [COLOR yellow]BETA[/COLOR]"
+msgid "Enable Aniskip"
 msgstr ""
 
 msgctxt "#40432"
 msgid "Offset for Aniskip (seconds)"
 msgstr ""
 
-######MAIN Category DIRECTORY#######
-msgctxt "#50001"
-msgid "Airing Anime"
+######Providers######
+msgctxt "#30400"
+msgid "Nyaa"
 msgstr ""
 
-msgctxt "#50009"
-msgid "Top 100 Anime"
+msgctxt "#30401"
+msgid "AnimeTosho"
 msgstr ""
 
-msgctxt "#50010"
-msgid "Genres & Tags"
+msgctxt "#30402"
+msgid "HiAnime"
 msgstr ""
 
-msgctxt "#50011"
-msgid "Search"
+msgctxt "#30403"
+msgid "Gogo"
 msgstr ""
 
-msgctxt "#50012"
-msgid "Tools"
+msgctxt "#30404"
+msgid "Aniwave"
 msgstr ""
 
-msgctxt "#50034"
-msgid "Airing Next Season"
+msgctxt "#30405"
+msgid "Animixplay"
+msgstr ""
+
+msgctxt "#30410"
+msgid "Local Files"
 msgstr ""

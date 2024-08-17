@@ -3,6 +3,7 @@
 	<!-- JZ Settings -->
 	<category label="JZ Settings">
 		<!-- General -->
+		<setting type="sep" />
 		<setting type="lsep" label="General"/>
 		<setting id="jz.dub" type="bool" label="Show Dub Release Dates" default="true"/>
 		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|Animeschedule" default="1" />
@@ -11,10 +12,10 @@
 	</category>
 
 	<!-- General -->
-	<category label="40300">
+	<category label="30300">
 		<!-- General -->
-		<setting id="titlelanguage" type="enum" label="40369" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="1"/>
-		<setting id="searchhistory" type="enum" label="40301" values="Yes|No" default="0"/>
+		<setting id="titlelanguage" type="enum" label="30301" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="1"/>
+		<setting id="searchhistory" type="enum" label="30302" values="Yes|No" default="0"/>
 		<setting id="general.smart.scroll.enable" label="enable Smart Scroll" type="bool" default="true" />
 		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
 
@@ -24,7 +25,7 @@
 		<setting id="meta.api" type="labelenum" label="Meta Api" values="simkl|jikanmoa|anizip" default="simkl" visible="eq(-1,true)"/>
 
 		<!-- Interface -->
-		<setting type="lsep" label="40302"/>
+		<setting type="lsep" label="30306"/>
 		<setting id="interface.perpage.general" type="slider"  label="Per Page General View" option="int" range="1,50" default="20" />
 		<setting id="interface.perpage.watchlist" type="slider"  label="Per Page Watchlist View (Does not work on Anilist or Simkl)" option="int" range="1,100" default="100" />
 		<setting id="interface.check.updates" type="slider"  label="How long Before Checking for New Episodes (days)" option="int" range="1,50" default="5" />
@@ -38,7 +39,7 @@
 		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
 		<setting id="interface.fanart.disable" type="bool" label="Disable Fanart" default="false" />
 		<setting id="interface.clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
-		<setting id="interface.icons" type="labelenum" label="40388" values="coloured|white|colouredv2" default="colouredv2"/>
+		<setting id="interface.icons" type="labelenum" label="30319" values="coloured|white|colouredv2" default="colouredv2"/>
 	</category>
 
 	<!-- Context and Widgets -->
@@ -79,7 +80,7 @@
 	<!-- Playback -->
 	<category label="40307">
 		<!-- General -->
-		<setting type="lsep" label="40300" />
+		<setting type="lsep" label="30300" />
 		<setting id="general.playstyle.movie" type="enum" label="40308" lvalues="40310|40311" default="0" />
 		<setting id="general.playstyle.episode" type="enum" label="40309" lvalues="40310|40311" default="0" />
 		<setting id="general.autotrynext" type="bool" label="40312" default="true" />
@@ -146,7 +147,7 @@
 		<setting id="alldebrid.auth.status" type="text" label="All-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
 		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-3,true)" />
 		<setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
-		
+
 		<!-- Debrid-Link -->
 		<setting type="lsep" label="40411" />
 		<setting id="dl.enabled" type="bool" default="false" label="40412" />
@@ -165,7 +166,7 @@
 	<!-- Watchlist -->
 	<category label="40345">
 		<!-- General -->
-		<setting type="lsep" label="40300"/>
+		<setting type="lsep" label="30300"/>
 		<setting id="watchlist.update.enabled" label="40346" type="bool" default="false"/>
 		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList|Simkl" default="MAL" visible="eq(-1,true)"/>
 		<setting id="watchlist.update.percent" type="slider" subsetting="true" label="Set Percent to Mark as Watched" default="80" range="70,90" option="int"/>
@@ -210,28 +211,28 @@
 
 	<!-- Menus -->
 	<category label="40400">
-		<!-- Main Menu Items -->	
+		<!-- Main Menu Items -->
 		<setting type="lsep" label="40400"/>
-		<setting id="anilist_airing_anime" label="50001" type="bool" default="true"/>
-		<setting id="anilist_upcoming_next_season" label="50034" type="bool" default="true"/>
-		<setting id="anilist_top_100_anime" label="50009" type="bool" default="true"/>
-		<setting id="anilist_genres" label="50010" type="bool" default="true" />
+		<setting id="anilist_airing_anime" label="30001" type="bool" default="true"/>
+		<setting id="anilist_upcoming_next_season" label="30002" type="bool" default="true"/>
+		<setting id="anilist_top_100_anime" label="30003" type="bool" default="true"/>
+		<setting id="anilist_genres" label="30004" type="bool" default="true" />
 		<setting id="menu.lastwatched" label="Last Watched" type="bool" default="true" />
-		<setting id="search_history" label="50011" type="bool" default="true" visible="true"/>
-		<setting id="tools" label="50012" type="bool" default="true"/>
+		<setting id="search_history" label="30005" type="bool" default="true" visible="true"/>
+		<setting id="tools" label="30006" type="bool" default="true"/>
 	</category>
 
 	<!-- Maintenance -->
 	<category label="40416">
 		<!-- Tools -->
 		<setting type="lsep" label="40416"/>
-		<setting id="change_log" type="action" label="30027" action="RunPlugin(plugin://plugin.video.otaku/change_log?setting=true)"/>
-		<setting id="clear_cache" type="action" label="30021" action="RunPlugin(plugin://plugin.video.otaku/clear_cache?setting=true)"/>
-		<setting id="clear_history" type="action" label="30023" action="RunPlugin(plugin://plugin.video.otaku/clear_search_history?setting=true)"/>
-		<setting id="clear_slected_fanart" type="action" label="Clear Selected Fanart" action="RunPlugin(plugin://plugin.video.otaku/clear_slected_fanart?setting=true)"/>
-		<setting id="rebuild_database" type="action" label="30026" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database?setting=true)"/>
-		<setting id="completed_sync" type="action" label="Completed Sync" action="RunPlugin(plugin://plugin.video.otaku/completed_sync?setting=true)"/>
-		<setting id="download_manager" type="action" label="Download Manager" action="RunPlugin(plugin://plugin.video.otaku/download_manager?setting=true)"/>
+		<setting id="change_log" type="action" label="30010" action="RunPlugin(plugin://plugin.video.otaku/change_log?setting=true)"/>
+		<setting id="clear_cache" type="action" label="30012" action="RunPlugin(plugin://plugin.video.otaku/clear_cache?setting=true)"/>
+		<setting id="clear_history" type="action" label="30013" action="RunPlugin(plugin://plugin.video.otaku/clear_search_history?setting=true)"/>
+		<setting id="rebuild_database" type="action" label="30014" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database?setting=true)"/>
+		<setting id="completed_sync" type="action" label="30015" action="RunPlugin(plugin://plugin.video.otaku/completed_sync?setting=true)"/>
+		<setting id="download_manager" type="action" label="30016" action="RunPlugin(plugin://plugin.video.otaku/download_manager?setting=true)"/>
+		<setting id="clear_slected_fanart" type="action" label="30018" action="RunPlugin(plugin://plugin.video.otaku/clear_slected_fanart?setting=true)"/>
 
 		<!-- Language Invoker -->
 		<setting type="lsep" label="Language Invoker"/>

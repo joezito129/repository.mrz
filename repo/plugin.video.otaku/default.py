@@ -93,7 +93,7 @@ def ANILIST_GENRES_PAGES(payload, params):
     if genres or tags:
         control.draw_items(_ANILIST_BROWSER.genres_payload(genres, tags, int(page)), 'tvshows')
     else:
-        genre = _ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(50010), g))
+        genre = _ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(30004), g))
         control.draw_items(genre, 'tvshows')
 
 
@@ -111,7 +111,7 @@ def SEARCH_HISTORY(payload, params):
 def SEARCH(payload, params):
     query, page = payload.rsplit("/", 1)
     if not query:
-        query = control.keyboard(control.lang(50011))
+        query = control.keyboard(control.lang(30005))
         if not query:
             return control.draw_items([], 'tvshows')
         if int(control.getSetting('searchhistory')) == 0:
@@ -137,7 +137,7 @@ def EDIT_SEARCH_ITEM(payload, params):
         payload_list = payload.rsplit('search/')[1].rsplit('/', 1)
         if len(payload_list) == 2 and payload_list[0]:
             search_item, page = payload_list
-            query = control.keyboard(control.lang(50011), search_item)
+            query = control.keyboard(control.lang(30005), search_item)
             if query != search_item:
                 database.remove_search(table='show', value=search_item)
                 database.addSearchHistory(query, 'show')
@@ -291,12 +291,12 @@ def FANART(payload, params):
 @Route('')
 def LIST_MENU(payload, params):
     MENU_ITEMS = [
-        (control.lang(50001), "anilist_airing_anime/1", 'airing_anime.png'),
-        (control.lang(50034), "anilist_upcoming_next_season/1", 'upcoming.png'),
-        (control.lang(50009), "anilist_top_100_anime/1", 'top_100_anime.png'),
-        (control.lang(50010), "anilist_genres///1", 'genres_&_tags.png'),
-        (control.lang(50011), "search_history", 'search.png'),
-        (control.lang(50012), "tools", 'tools.png')
+        (control.lang(30001), "anilist_airing_anime/1", 'airing_anime.png'),
+        (control.lang(30002), "anilist_upcoming_next_season/1", 'upcoming.png'),
+        (control.lang(30003), "anilist_top_100_anime/1", 'top_100_anime.png'),
+        (control.lang(30004), "anilist_genres///1", 'genres_&_tags.png'),
+        (control.lang(30005), "search_history", 'search.png'),
+        (control.lang(30006), "tools", 'tools.png')
     ]
 
     if control.getBool('menu.lastwatched'):
@@ -312,15 +312,15 @@ def LIST_MENU(payload, params):
 @Route('tools')
 def TOOLS_MENU(payload, params):
     TOOLS_ITEMS = [
-        (control.lang(30027), "change_log", {'plot': "View Changelog"}, 'changelog.png'),
-        (control.lang(30020), "settings", {'plot': "Open Settings"}, 'open_settings_menu.png'),
-        (control.lang(30021), "clear_cache", {'plot': "Clear Cache"}, 'clear_cache.png'),
-        (control.lang(30023), "clear_history", {'plot': "Clear Search History"}, 'clear_search_history.png'),
-        (control.lang(30026), "rebuild_database", {'plot': "Rebuild Database"}, 'rebuild_database.png'),
-        ("Sync Completed List", "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
-        ("Download Manager", 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
-        ("Choose Sorting...", 'sort_select', {'plot': "Choose Sorting..."}, ''),
-        ("Clear Selected Fanart", 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
+        (control.lang(30010), "change_log", {'plot': "View Changelog"}, 'changelog.png'),
+        (control.lang(30011), "settings", {'plot': "Open Settings"}, 'open_settings_menu.png'),
+        (control.lang(30012), "clear_cache", {'plot': "Clear Cache"}, 'clear_cache.png'),
+        (control.lang(30013), "clear_history", {'plot': "Clear Search History"}, 'clear_search_history.png'),
+        (control.lang(30014), "rebuild_database", {'plot': "Rebuild Database"}, 'rebuild_database.png'),
+        (control.lang(30015), "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
+        (control.lang(30016), 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
+        (control.lang(30017), 'sort_select', {'plot': "Choose Sorting..."}, ''),
+        (control.lang(30018), 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
 

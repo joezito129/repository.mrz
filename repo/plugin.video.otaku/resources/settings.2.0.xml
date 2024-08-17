@@ -1,0 +1,675 @@
+<?xml version="1.0" ?>
+<settings version="1">
+    <section id="otaku">
+        <!-- General -->
+        <category id="general" label="30300" help="">
+            <!-- General -->
+            <group id="1" label="30300">
+                <setting id="titlelanguage" type="integer" label="30301" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="Romaji (Shingeki no Kyojin)">0</option>
+                            <option label="English (Attack on Titan)">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <setting id="searchhistory" type="integer" label="30302" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="Yes">0</option>
+                            <option label="No">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <setting id="general.smart.scroll.enable" type="boolean" label="30303" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="download.location" type="path" label="30304" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <writable>true</writable>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="button" format="path">
+                        <heading>30304</heading>
+                    </control>
+                </setting>
+            </group>
+
+            <!-- Meta Api -->
+            <group id="2" label="30305" help="">
+                <setting id="overide.meta.api" type="boolean" label="30305" help="">
+                    <level>3</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="meta.api" type="string" label="30305" help="">
+                    <level>3</level>
+                    <default>simkl</default>
+                    <constraints>
+                        <options>
+                            <option label="simkl">simkl</option>
+                            <option label="jikanmoa">jikanmoa</option>
+                            <option label="anizip">anizip</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="overide.meta.api">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+
+            <!-- Interface -->
+            <group id="3" label="30306" help="">
+                <setting id="interface.perpage.general" type="integer" label="30307" help="">
+                    <level>0</level>
+                    <default>20</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>50</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="interface.perpage.watchlist" type="integer" label="30308" help="">
+                    <level>0</level>
+                    <default>100</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>100</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="interface.check.updates" type="integer" label="30309" help="">
+                    <level>0</level>
+                    <default>5</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>50</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="interface.viewtypes.bool" type="boolean" label="30310" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.viewtypes.general" type="string" label="30311" help="">
+                    <level>0</level>
+                    <default>Wide List</default>
+                    <constraints>
+                        <options>
+                            <option label="Wide List">Wide List</option>
+                            <option label="List">List</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="interface.viewtypes.tvshows" type="string" label="30312" help="">
+                    <level>0</level>
+                    <default>Wide List</default>
+                    <constraints>
+                        <options>
+                            <option label="Wide List">Wide List</option>
+                            <option label="List">List</option>
+                            <option label="Wall">Wall</option>
+                            <option label="Banner">Banner</option>
+                            <option label="Fanart">Fanart</option>
+                            <option label="Poster">Poster</option>
+                            <option label="Shift">Shift</option>
+                            <option label="Info Wall">Info Wall</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="interface.viewtypes.episodes" type="string" label="30313" help="">
+                    <level>0</level>
+                    <default>Wide List</default>
+                    <constraints>
+                        <options>
+                            <option label="Wide List">Wide List</option>
+                            <option label="List">List</option>
+                            <option label="Wall">Wall</option>
+                            <option label="Info Wall">Info Wall</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="interface.watchlist.data" type="boolean" label="30314" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.cleantitles" type="boolean" label="30315" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.showemptyeps" type="boolean" label="30316" help="">
+                    <level>4</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.fanart.disable" type="boolean" label="30317" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.clearlogo.disable" type="boolean" label="30318" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.icons" type="string" label="30319" help="">
+                    <level>0</level>
+                    <default>Colouredv2</default>
+                    <constraints>
+                        <options>
+                            <option label="Coloured">coloured</option>
+                            <option label="White">white</option>
+                            <option label="Colouredv2">Colouredv2</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+            </group>
+        </category>
+
+        <!-- Context and Widgets -->
+        <category id="Context and Widgets" label="30320" help="" >
+            <group id="1" label="30319" help="">
+                <setting id="context.otaku.findrecommendations" type="boolean" label="30321" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.findrelations" type="boolean" label="30322" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.rescrape" type="boolean" label="30323" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.sourceselect" type="boolean" label="30324" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.logout" type="boolean" label="30325" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.deletefromdatabase" type="boolean" label="30326" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.watchlist" type="boolean" label="30327" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.markaswatched" type="boolean" label="30328" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.fanartselect" type="boolean" label="30329" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="30330" help="">
+                <setting id="widget.hide.nextpage" type="boolean" label="30331" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
+
+        <category id="Provider" label="40226" help="">
+            <group id="1" label="30332" help="">
+                <setting id="provider.nyaa" type="boolean" label="30400" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.animetosho" type="boolean" label="30401" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="30333" help="">
+                <setting id="provider.hianime" type="boolean" label="30402" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.gogo" type="boolean" label="30403" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.aniwave" type="boolean" label="30404" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.animixplay" type="boolean" label="30405" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="3" label="30334" help="">
+                <setting id="provider.localfiles" type="boolean" label="30410" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
+
+        <category id="Playback" label="40307" help="">
+            <group id="1" label="30300" help="">
+                <setting id="general.playstyle.movie" type="integer" label="40308" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="40310">0</option>
+                            <option label="40311">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                </setting>
+                <setting id="general.playstyle.episode" type="integer" label="40309" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="40310">0</option>
+                            <option label="40311">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                </setting>
+                <setting id="general.autotrynext" type="boolean" label="40312" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="general.timeout" type="integer" label="40425" help="">
+                    <level>0</level>
+                    <default>10</default>
+                    <constraints>
+                        <minimum>2</minimum>
+                        <step>1</step>
+                        <maximum>60</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="general.terminate.oncloud" type="boolean" label="40313" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="40323" help="">
+                <setting id="smartplay.skipintrodialog" type="boolean" label="40324" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="skipintro.aniskip.enable" type="boolean" label="40431" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.aniskip.offset" type="integer" label="40432" help="">
+                    <level>0</level>
+                    <default>-3</default>
+                    <constraints>
+                        <minimum>-10</minimum>
+                        <step>1</step>
+                        <maximum>10</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                      <dependencies>
+                        <dependency type="visible">
+                            <and>
+                                <condition setting="smartplay.skipintrodialog">true</condition>
+                                <condition setting="skipintro.aniskip.enable">true</condition>
+                            </and>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.time" type="integer" label="40325" help="">
+                    <level>0</level>
+                    <default>80</default>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <step>1</step>
+                        <maximum>120</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                      <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.delay" type="integer" label="40424" help="">
+                    <level>0</level>
+                    <default>2</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>120</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                      <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.duration" type="integer" label="40430" help="">
+                    <level>0</level>
+                    <default>2</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>5</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                      <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+
+            <group id="3" label="40317" help="">
+                <setting id="smartplay.playingnextdialog" type="boolean" label="40318" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="skipoutro.aniskip.enable" type="boolean" label="40431" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.playingnextdialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipoutro.aniskip.offset" type="integer" label="40432" help="">
+                    <level>0</level>
+                    <default>-3</default>
+                    <constraints>
+                        <minimum>-10</minimum>
+                        <step>1</step>
+                        <maximum>10</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                      <dependencies>
+                        <dependency type="visible">
+                            <and>
+                                <condition setting="smartplay.playingnextdialog">true</condition>
+                                <condition setting="skipoutro.aniskip.enable">true</condition>
+                            </and>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting id="playingnext.time" type="integer" label="40319" help="">
+                    <level>0</level>
+                    <default>120</default>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <step>1</step>
+                        <maximum>180</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                      <dependencies>
+                        <dependency type="visible" setting="smartplay.playingnextdialog">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
+
+        <category id="Sort and Filter" label="40326" help="">
+            <group id="1" label="40327" help="">
+                <setting id="general.maxResolution" type="integer" label="40328" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="30340">0</option>
+                            <option label="30341">1</option>
+                            <option label="30342">2</option>
+                            <option label="30343">3</option>
+                            <option label="30344">4</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <setting id="general.disable265" type="boolean" label="40329" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="general.source" type="integer" label="40330" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="Dub">0</option>
+                            <option label="Both">1</option>
+                            <option label="Sub">2</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+               <setting id="show.uncached" type="boolean" label="40332" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="40331" help="">
+                <setting id="sort_select" type="action" label="30017" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/sort_select?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+            </group>
+            <group id="3" label="40409" help="">
+               <setting id="divflavors.bool" type="boolean" label="40428" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="divflavors.menu" type="string" label="40429" help="">
+                    <level>0</level>
+                    <default>Both</default>
+                    <constraints>
+                        <options>
+                            <option label="Dub">Dub</option>
+                            <option label="Both">Both</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                  <dependencies>
+                        <dependency type="visible" setting="divflavors.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="contentformat.bool" type="boolean" label="40391" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="contentformat.menu" type="integer" label="40392" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="40393">0</option>
+                            <option label="40394">1</option>
+                            <option label="40395">2</option>
+                            <option label="40396">3</option>
+                            <option label="40397">4</option>
+                            <option label="40398">5</option>
+                            <option label="40399">6</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                  <dependencies>
+                        <dependency type="visible" setting="contentformat.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="contentorigin.bool" type="boolean" label="40418" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="contentorigin.menu" type="integer" label="40419" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="40420">0</option>
+                            <option label="40421">1</option>
+                            <option label="40422">2</option>
+                            <option label="40423">3</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                  <dependencies>
+                        <dependency type="visible" setting="contentorigin.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="search.adult" type="boolean" label="40410" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
+
+        <category id="Accounts" label="40334" help="">
+            <!-- Real-Debrid -->
+            <group id="1" label="40335" help="">
+                <setting id="realdebrid.enable" type="boolean" label="40336" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="rd.username" type="string" label="40337" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string">
+                        <heading>40337</heading>
+                    </control>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="realdebrid.enable">true</dependency>
+                    </dependencies>
+                </setting>
+                    <setting id="rd.auth.status" type="string" label="40339" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string">
+                        <heading>40339</heading>
+                    </control>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="realdebrid.enable">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.auth_start" type="action" label="40338" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="realdebrid.enable">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.refresh.token" type="action" label="40338" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="realdebrid.enable">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.cloudInspection" type="boolean" label="40372" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="realdebrid.enable">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
+    </section>
+</settings>
