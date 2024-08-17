@@ -72,7 +72,7 @@ def try_release_lock(lock):
 
 
 def real_debrid_enabled():
-    return True if getSetting('rd.auth') != '' and getBool('realdebrid.enabled') else False
+    return True if getSetting('rd.auth') != '' and getBool('rd.enabled') else False
 
 
 def debrid_link_enabled():
@@ -302,12 +302,12 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     elif content_type == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, True, False, True)
+    xbmc.sleep(200)
     if content_type == 'episodes':
         for _ in range(20):
             if xbmc.getCondVisibility("Container.HasFiles"):
                 break
             xbmc.sleep(100)
-    xbmc.sleep(200)
     if settingids.viewtypes:
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))

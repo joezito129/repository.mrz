@@ -1,251 +1,1438 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<settings>
-	<!-- JZ Settings -->
-	<category label="JZ Settings">
-		<!-- General -->
-		<setting type="sep" />
-		<setting type="lsep" label="General"/>
-		<setting id="jz.dub" type="bool" label="Show Dub Release Dates" default="true"/>
-		<setting id="jz.dub.api" type="enum" label="API to be used for getting Dub times" values="Teamup|Animeschedule" default="1" />
-<!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
-		<setting id="jz.filler" type="bool" label="Show Filler Info If Found"  default="false" />
-	</category>
+<?xml version="1.0" ?>
+<settings version="1">
+    <section id="otaku">
+        <category id="JZ Settings" label="30323" help="">
+            <!-- General -->
+            <group id="1" label="30300" help="">
+                <setting id="jz.dub" type="boolean" label="30320" help="">
+                    <level>3</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="jz.dub.api" type="string" label="30321" help="">
+                    <level>3</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="Teamup">0</option>
+                            <option label="Animeschedule">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <!--		<setting id="jz.sub" label="Show Sub Release Dates" type="bool" default="true" />-->
+                <setting id="jz.filler" type="boolean" label="30322" help="">
+                    <level>3</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
+        <!-- General -->
+        <category id="general" label="30300" help="">
+            <!-- General -->
+            <group id="1" label="30300">
+                <setting id="titlelanguage" type="integer" label="30301" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="Romaji (Shingeki no Kyojin)">0</option>
+                            <option label="English (Attack on Titan)">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <setting id="searchhistory" type="integer" label="30302" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="Yes">0</option>
+                            <option label="No">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <setting id="general.smart.scroll.enable" type="boolean" label="30303" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="download.location" type="path" label="30304" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <writable>true</writable>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="button" format="path">
+                        <heading>30304</heading>
+                    </control>
+                </setting>
+            </group>
 
-	<!-- General -->
-	<category label="30300">
-		<!-- General -->
-		<setting id="titlelanguage" type="enum" label="30301" values="Romaji (Shingeki no Kyojin)|English (Attack on Titan)" default="1"/>
-		<setting id="searchhistory" type="enum" label="30302" values="Yes|No" default="0"/>
-		<setting id="general.smart.scroll.enable" label="enable Smart Scroll" type="bool" default="true" />
-		<setting id="download.location" label="Download Location" type="folder" option="writeable" default="" />
+            <!-- Meta Api -->
+            <group id="2" label="30305" help="">
+                <setting id="overide.meta.api" type="boolean" label="30305" help="">
+                    <level>3</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="meta.api" type="string" label="30305" help="">
+                    <level>3</level>
+                    <default>simkl</default>
+                    <constraints>
+                        <options>
+                            <option label="simkl">simkl</option>
+                            <option label="jikanmoa">jikanmoa</option>
+                            <option label="anizip">anizip</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="overide.meta.api">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
 
-		<!-- Meta Api -->
-		<setting type="lsep" label="Meta Api" />
-		<setting id="overide.meta.api" type="bool" label="Enable Choose Meta Api" default="false" />
-		<setting id="meta.api" type="labelenum" label="Meta Api" values="simkl|jikanmoa|anizip" default="simkl" visible="eq(-1,true)"/>
+            <!-- Interface -->
+            <group id="3" label="30306" help="">
+                <setting id="interface.perpage.general" type="integer" label="30307" help="">
+                    <level>0</level>
+                    <default>20</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>50</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="interface.perpage.watchlist" type="integer" label="30308" help="">
+                    <level>0</level>
+                    <default>100</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>100</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="interface.check.updates" type="integer" label="30309" help="">
+                    <level>0</level>
+                    <default>5</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>50</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                </setting>
+                <setting id="interface.viewtypes.bool" type="boolean" label="30310" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.viewtypes.general" type="string" label="30311" help="">
+                    <level>0</level>
+                    <default>Wide List</default>
+                    <constraints>
+                        <options>
+                            <option label="Wide List">Wide List</option>
+                            <option label="List">List</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="interface.viewtypes.tvshows" type="string" label="30312" help="">
+                    <level>0</level>
+                    <default>Wide List</default>
+                    <constraints>
+                        <options>
+                            <option label="Wide List">Wide List</option>
+                            <option label="List">List</option>
+                            <option label="Wall">Wall</option>
+                            <option label="Banner">Banner</option>
+                            <option label="Fanart">Fanart</option>
+                            <option label="Poster">Poster</option>
+                            <option label="Shift">Shift</option>
+                            <option label="Info Wall">Info Wall</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="interface.viewtypes.episodes" type="string" label="30313" help="">
+                    <level>0</level>
+                    <default>Wide List</default>
+                    <constraints>
+                        <options>
+                            <option label="Wide List">Wide List</option>
+                            <option label="List">List</option>
+                            <option label="Wall">Wall</option>
+                            <option label="Info Wall">Info Wall</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="interface.watchlist.data" type="boolean" label="30314" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.cleantitles" type="boolean" label="30315" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.showemptyeps" type="boolean" label="30316" help="">
+                    <level>4</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.fanart.disable" type="boolean" label="30317" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.clearlogo.disable" type="boolean" label="30318" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="interface.icons" type="string" label="30319" help="">
+                    <level>0</level>
+                    <default>colouredv2</default>
+                    <constraints>
+                        <options>
+                            <option label="Coloured">coloured</option>
+                            <option label="White">white</option>
+                            <option label="Colouredv2">colouredv2</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+            </group>
+        </category>
 
-		<!-- Interface -->
-		<setting type="lsep" label="30306"/>
-		<setting id="interface.perpage.general" type="slider"  label="Per Page General View" option="int" range="1,50" default="20" />
-		<setting id="interface.perpage.watchlist" type="slider"  label="Per Page Watchlist View (Does not work on Anilist or Simkl)" option="int" range="1,100" default="100" />
-		<setting id="interface.check.updates" type="slider"  label="How long Before Checking for New Episodes (days)" option="int" range="1,50" default="5" />
-		<setting id="interface.viewtypes.bool" label="Force view types on menus" type="bool" default="false"/>
-		<setting id="interface.viewtypes.general" type="labelenum" label="General Menu View" values="Wide List|List" default="Wide List" visible="eq(-1,true)"/>
-		<setting id="interface.viewtypes.tvshows" type="labelenum" label="TV Show View" values="Wide List|Wall|Banner|Fanart|List|Poster|Shift|Info Wall" default="Wide List" visible="eq(-2,true)"/>
-		<setting id="interface.viewtypes.episodes" type="labelenum" label="Episode View" values="Wide List|Wall|Info Wall" default="Wide List" visible="eq(-3,true)"/>
+        <!-- Context and Widgets -->
+        <category id="Context and Widgets" label="30500" help="" >
+            <group id="1" label="30319" help="">
+                <setting id="context.otaku.findrecommendations" type="boolean" label="30501" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.findrelations" type="boolean" label="30502" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.rescrape" type="boolean" label="30503" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.sourceselect" type="boolean" label="30504" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.logout" type="boolean" label="30505" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.deletefromdatabase" type="boolean" label="30506" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.watchlist" type="boolean" label="30507" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.markaswatched" type="boolean" label="30508" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="context.otaku.fanartselect" type="boolean" label="30509" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="30510" help="">
+                <setting id="widget.hide.nextpage" type="boolean" label="30511" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
 
-		<setting id="interface.watchlist.data" label="Get watchlist episode data" type="bool" default="true"/>
-		<setting id="interface.cleantitles" label="Disable Title Names and Plot" type="bool" default="false"/>
-		<setting id="interface.showemptyeps" label="Show Empty Episodes" type="bool" default="false" />
-		<setting id="interface.fanart.disable" type="bool" label="Disable Fanart" default="false" />
-		<setting id="interface.clearlogo.disable" type="bool" label="Disable Clearlogo" default="false" />
-		<setting id="interface.icons" type="labelenum" label="30319" values="coloured|white|colouredv2" default="colouredv2"/>
-	</category>
+        <category id="Provider" label="30045" help="">
+            <group id="1" label="30332" help="">
+                <setting id="provider.nyaa" type="boolean" label="30400" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.animetosho" type="boolean" label="30401" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="30333" help="">
+                <setting id="provider.hianime" type="boolean" label="30402" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.gogo" type="boolean" label="30403" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.aniwave" type="boolean" label="30404" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.animixplay" type="boolean" label="30405" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="3" label="30334" help="">
+                <setting id="provider.localfiles" type="boolean" label="30410" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
 
-	<!-- Context and Widgets -->
-	<category label="Contexts and Widgets">
-		<!-- Context Menu -->
-		<setting type="lsep" label="Context Menus" />
-		<setting id="context.otaku.findrecommendations" label="Find Recommendations" type="bool" default="true" />
-		<setting id="context.otaku.findrelations" label="Find Relations" type="bool" default="true" />
-		<setting id="context.otaku.rescrape" label="Rescrape" type="bool" default="true" />
-		<setting id="context.otaku.sourceselect" label="Source Select" type="bool" default="true" />
-		<setting id="context.otaku.logout" label="Logout" type="bool" default="true" />
-		<setting id="context.otaku.deletefromdatabase" label="Delete From Database" type="bool" default="true" />
-		<setting id="context.otaku.watchlist" label="WatchList Manager" type="bool" default="true" />
-		<setting id="context.otaku.markedaswatched" label="Marked as Watched [COLOR blue]WatchList[/COLOR]" type="bool" default="true" />
-		<setting id="context.otaku.fanartselect" label="Select Fanart" type="bool" default="true" />
+        <category id="Playback" label="30345" help="">
+            <group id="1" label="30300" help="">
+                <setting id="general.playstyle.movie" type="integer" label="30346" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="30348">0</option>
+                            <option label="30349">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                </setting>
+                <setting id="general.playstyle.episode" type="integer" label="30347" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="30348">0</option>
+                            <option label="30349">1</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                </setting>
+                <setting id="general.autotrynext" type="boolean" label="30350" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="general.timeout" type="integer" label="30392" help="">
+                    <level>0</level>
+                    <default>10</default>
+                    <constraints>
+                        <minimum>2</minimum>
+                        <step>1</step>
+                        <maximum>60</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                        <heading>30392</heading>
+                    </control>
+                </setting>
+                <setting id="general.terminate.oncloud" type="boolean" label="30351" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="30355" help="">
+                <setting id="smartplay.skipintrodialog" type="boolean" label="30356" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="skipintro.aniskip.enable" type="boolean" label="30396" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.aniskip.offset" type="integer" label="30397" help="">
+                    <level>0</level>
+                    <default>-3</default>
+                    <constraints>
+                        <minimum>-10</minimum>
+                        <step>1</step>
+                        <maximum>10</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible">
+                            <and>
+                                <condition setting="smartplay.skipintrodialog">true</condition>
+                                <condition setting="skipintro.aniskip.enable">true</condition>
+                            </and>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.time" type="integer" label="30357" help="">
+                    <level>0</level>
+                    <default>80</default>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <step>1</step>
+                        <maximum>120</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.delay" type="integer" label="30391" help="">
+                    <level>0</level>
+                    <default>2</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>120</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipintro.duration" type="integer" label="30395" help="">
+                    <level>0</level>
+                    <default>2</default>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <step>1</step>
+                        <maximum>5</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.skipintrodialog">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
 
-		<!-- Widgets -->
-		<setting type="lsep" label="Widgets" />
-		<setting id="widget.hide.nextpage" label="Hide Next up Widget" type="bool" default="true" />
-	</category>
+            <group id="3" label="30352" help="">
+                <setting id="smartplay.playingnextdialog" type="boolean" label="30353" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="skipoutro.aniskip.enable" type="boolean" label="30396" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.playingnextdialog">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="skipoutro.aniskip.offset" type="integer" label="30397" help="">
+                    <level>0</level>
+                    <default>-3</default>
+                    <constraints>
+                        <minimum>-10</minimum>
+                        <step>1</step>
+                        <maximum>10</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible">
+                            <and>
+                                <condition setting="smartplay.playingnextdialog">true</condition>
+                                <condition setting="skipoutro.aniskip.enable">true</condition>
+                            </and>
+                        </dependency>
+                    </dependencies>
+                </setting>
+                <setting id="playingnext.time" type="integer" label="30354" help="">
+                    <level>0</level>
+                    <default>120</default>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <step>1</step>
+                        <maximum>180</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="smartplay.playingnextdialog">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
 
-	<!-- Provider -->
-	<category label="40226">
-		<setting type="lsep" label="Torrents" />
-		<setting id="provider.nyaa" type="bool" label="Nyaa" default="true" />
-		<setting id="provider.animetosho" type="bool" label="AnimeTosho" default="true" />
+        <category id="Sort and Filter" label="30358" help="">
+            <group id="1" label="30359" help="">
+                <setting id="general.maxResolution" type="integer" label="30360" help="">
+                    <level>0</level>
+                    <default>4</default>
+                    <constraints>
+                        <options>
+                            <option label="30340">0</option>
+                            <option label="30341">1</option>
+                            <option label="30342">2</option>
+                            <option label="30343">3</option>
+                            <option label="30344">4</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+                <setting id="general.disable265" type="boolean" label="30361" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="general.source" type="integer" label="30362" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="Dub">0</option>
+                            <option label="Both">1</option>
+                            <option label="Sub">2</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                </setting>
+               <setting id="show.uncached" type="boolean" label="30364" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+            <group id="2" label="30363" help="">
+                <setting id="sort_select" type="action" label="30017" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/sort_select?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+            </group>
+            <group id="3" label="30382" help="">
+               <setting id="divflavors.bool" type="boolean" label="30393" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="divflavors.menu" type="string" label="30394" help="">
+                    <level>0</level>
+                    <default>Both</default>
+                    <constraints>
+                        <options>
+                            <option label="Dub">Dub</option>
+                            <option label="Both">Both</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                  	<dependencies>
+                        <dependency type="visible" setting="divflavors.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="contentformat.bool" type="boolean" label="30372" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="contentformat.menu" type="integer" label="30373" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="30374">0</option>
+                            <option label="30375">1</option>
+                            <option label="30376">2</option>
+                            <option label="30377">3</option>
+                            <option label="30378">4</option>
+                            <option label="30379">5</option>
+                            <option label="30380">6</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                  	<dependencies>
+                        <dependency type="visible" setting="contentformat.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="contentorigin.bool" type="boolean" label="30385" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="contentorigin.menu" type="integer" label="30386" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="30387">0</option>
+                            <option label="30388">1</option>
+                            <option label="30389">2</option>
+                            <option label="30390">3</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                  	<dependencies>
+                        <dependency type="visible" setting="contentorigin.bool">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="search.adult" type="boolean" label="30383" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
 
-		<setting type="lsep" label="Other" />
-		<setting id="provider.localfiles" type="bool" label="Local Files" default="true" />
+        <category id="Accounts" label="30365" help="">
+            <!-- Real-Debrid -->
+            <group id="1" label="30100" help="">
+                <setting id="rd.enabled" type="boolean" label="30101" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="rd.username" type="string" label="30102" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                    <setting id="rd.auth.status" type="string" label="30103" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.auth_start" type="action" label="30104" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.refresh.token" type="action" label="30105" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.cloudInspection" type="boolean" label="30101" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
+        <category id="Accounts" label="30365" help="">
+            <!-- Real-Debrid -->
+            <group id="1" label="30100" help="">
+                <setting id="rd.enabled" type="boolean" label="30101" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="rd.username" type="string" label="30102" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+				<setting id="rd.auth.status" type="string" label="30103" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.auth_start" type="action" label="30104" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.refresh.token" type="action" label="30105" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.cloudInspection" type="boolean" label="30101" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
+        <category id="Accounts" label="30365" help="">
+            <!-- Real-Debrid -->
+            <group id="1" label="30100" help="">
+                <setting id="rd.enabled" type="boolean" label="30101" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="rd.username" type="string" label="30102" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                    <setting id="rd.auth.status" type="string" label="30103" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.auth_start" type="action" label="30104" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.refresh.token" type="action" label="30105" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="rd.cloudInspection" type="boolean" label="30190" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
 
-		<setting type="lsep" label="Embeds" />
-		<setting id="provider.hianime" type="bool" label="Hianime" default="true" />
-		<setting id="provider.animixplay" type="bool" label="Animixplay" default="false" />
-		<setting id="provider.aniwave" type="bool" label="Aniwave" default="false" />
-		<setting id="provider.gogo" type="bool" label="Gogo" default="true" />
-	</category>
+            <!-- ALLDebrid -->
+            <group id="2" label="30110" help="">
+                <setting id="alldebrid.enabled" type="boolean" label="30111" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="alldebrid.username" type="string" label="30112" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="alldebrid.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="alldebrid.auth.status" type="string" label="30113" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="alldebrid.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="alldebrid.auth_start" type="action" label="30114" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="alldebrid.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+<!--                <setting id="alldebrid.refresh.token" type="action" label="30115" help="">-->
+<!--                    <level>0</level>-->
+<!--                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/alldebrid)</data>-->
+<!--                    <control type="button" format="action">-->
+<!--                        <close>true</close>-->
+<!--                    </control>-->
+<!--                    <dependencies>-->
+<!--                        <dependency type="visible" setting="alldebrid.enabled">true</dependency>-->
+<!--                    </dependencies>-->
+<!--                </setting>-->
+                <setting id="alldebrid.cloudInspection" type="boolean" label="30190" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="alldebrid.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+            <!-- Debrid-Link -->
+            <group id="3" label="30120" help="">
+                <setting id="dl.enabled" type="boolean" label="30121" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="dl.username" type="string" label="30122" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+<!--                <setting id="dl.auth.status" type="string" label="30123" help="">-->
+<!--                    <level>0</level>-->
+<!--                    <default/>-->
+<!--                    <constraints>-->
+<!--                        <allowempty>true</allowempty>-->
+<!--                    </constraints>-->
+<!--                    <control type="edit" format="string"/>-->
+<!--                    <enable>false</enable>-->
+<!--                    <dependencies>-->
+<!--                        <dependency type="visible" setting="dl.enabled">true</dependency>-->
+<!--                    </dependencies>-->
+<!--                </setting>-->
+                <setting id="dl.auth_start" type="action" label="30124" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/debridlink)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="dl.refresh.token" type="action" label="30125" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+<!--                <setting id="dl.cloudInspection" type="boolean" label="30190" help="">-->
+<!--                    <level>0</level>-->
+<!--                    <default>false</default>-->
+<!--                    <control type="toggle"/>-->
+<!--                    <dependencies>-->
+<!--                        <dependency type="visible" setting="dl.enabled">true</dependency>-->
+<!--                    </dependencies>-->
+<!--                </setting>-->
+            </group>
 
-	<!-- Playback -->
-	<category label="40307">
-		<!-- General -->
-		<setting type="lsep" label="30300" />
-		<setting id="general.playstyle.movie" type="enum" label="40308" lvalues="40310|40311" default="0" />
-		<setting id="general.playstyle.episode" type="enum" label="40309" lvalues="40310|40311" default="0" />
-		<setting id="general.autotrynext" type="bool" label="40312" default="true" />
-		<setting id="general.timeout" type="slider" label="40425" option="int" range="2, 60" default="10" />
-		<setting id="general.terminate.oncloud" type="bool" subsetting="true" label="Terminate on cloud sources" default="false" />
+            <!-- Premiumize -->
+            <group id="4" label="30130" help="">
+                <setting id="premiumize.enabled" type="boolean" label="30131" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="premiumize.username" type="string" label="30132" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="premiumize.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="premiumize.auth.status" type="string" label="30133" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="premiumize.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="premiumize.auth_start" type="action" label="30134" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/premiumize)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="premiumize.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+<!--                <setting id="premiumize.refresh.token" type="action" label="30135" help="">-->
+<!--                    <level>0</level>-->
+<!--                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/premiumize)</data>-->
+<!--                    <control type="button" format="action">-->
+<!--                        <close>true</close>-->
+<!--                    </control>-->
+<!--                    <dependencies>-->
+<!--                        <dependency type="visible" setting="premiumize.enabled">true</dependency>-->
+<!--                    </dependencies>-->
+<!--                </setting>-->
+                <setting id="premiumize.cloudInspection" type="boolean" label="30190" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="premiumize.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
 
-		<!-- Skip Intro Dialog -->
-		<setting type="lsep" label="40323" />
-		<setting id="smartplay.skipintrodialog" type="bool" label="40324" default="true" />
-		<setting id="skipintro.aniskip.enable" type="bool" subsetting="true" label="40431" default="true" visible="eq(-1,true)" />
-		<setting id="skipintro.aniskip.offset" type="slider" subsetting="true" label="40432" visible="eq(-1,true) + eq(-2,true)" range="-10,10" default="-3"/>
-		<setting id="skipintro.time" type="slider" subsetting="true" label="40325" option="int" range="10,100" default="80" visible="eq(-3,true)" />
-		<setting id="skipintro.delay" type="slider" subsetting="true" label="40424" option="int" range="1,100" default="2" visible="eq(-4,true)" />
-		<setting id="skipintro.duration" type="slider" subsetting="true" label="40430" option="int" range="1,5" visible="eq(-5,true)" default="2" />
+        <category id="Watchlist" label="30369" help="">
+            <group id="1" label="30300" help="">
+                <setting id="watchlist.update.enabled" type="boolean" label="30370" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="contentorigin.menu" type="string" label="30371" help="">
+                    <level>0</level>
+                    <default>MAL</default>
+                    <constraints>
+                        <options>
+                            <option>MAL</option>
+                            <option>Kitsu</option>
+                            <option>AniList</option>
+                            <option>Simkl</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string"/>
+                  <dependencies>
+                      <dependency type="visible" setting="watchlist.update.enabled">true</dependency>
+                  </dependencies>
+                </setting>
+                <setting id="watchlist.update.percent" type="integer" label="30366" help="">
+                    <level>0</level>
+                    <default>80</default>
+                    <constraints>
+                        <minimum>70</minimum>
+                        <step>1</step>
+                        <maximum>90</maximum>
+                    </constraints>
+                    <control type="slider" format="integer">
+                        <popup>true</popup>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="watchlist.update.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="watchlist.1.text" type="string" label="30367" help="">
+                    <level>0</level>
+                    <default/>
+                    <enable>false</enable>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+					<control type="edit" format="string"/>
+                <dependencies>
+                    <dependency type="visible" setting="watchlist.update.enabled">true</dependency>
+                </dependencies>
+                </setting>
+                <setting id="watchlist.sync.enabled" type="boolean" label="30368" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
 
-		<!-- Next Episode Dialog -->
-		<setting type="lsep" label="40317" />
-		<setting type="sep" />
-		<setting id="smartplay.playingnextdialog" type="bool" label="40318" default="true" />
-		<setting id="skipoutro.aniskip.enable" type="bool" subsetting="true" label="40431" default="true" visible="eq(-1,true)" />
-		<setting id="skipoutro.aniskip.offset" type="slider" subsetting="true" label="40432" visible="eq(-1,true) + eq(-2,true)" range="-10,10" default="-3"/>
-		<setting id="playingnext.time" type="slider" subsetting="true" label="40319" option="int" range="10,180" default="120" visible="eq(-3,true)" />
-	</category>
+            <!-- MyAnimeList -->
+            <group id="2" label="30200" help="">
+                <setting id="mal.enabled" type="boolean" label="30201" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="mal.username" type="string" label="30290" help="">
+                    <level>0</level>
+                    <default/>
+                    <enable>false</enable>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+					<control type="edit" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="mal.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="mal.login" type="action" label="30291" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="mal.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="mal.sort" type="integer" label="30292" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="List Score">0</option>
+                            <option label="Last Updated">1</option>
+                            <option label="Anime Start Date">2</option>
+                            <option label="Anime Title">3</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                    <dependencies>
+                        <dependency type="visible" setting="mal.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
 
-	<!-- Sort & Filter -->
-	<category label="40326">
-		<!-- Source Filters -->
-		<setting type="lsep" label="40327"/>
-		<setting id="general.maxResolution" type="enum" label="40328" values="EQ|480p|720p|1080p|4k" default="4" />
-		<setting id="general.disable265" type="bool" label="40329" default="false" />
-		<setting id="general.source" type="enum" label="40330" values="Dub|Both|Sub" default="1" />
-		<setting id="show.uncached" type="bool" label="Show UnCached Sources" default="false" />
+            <!-- Anilist -->
+            <group id="3" label="30210" help="">
+                <setting id="anilist.enabled" type="boolean" label="30211" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="anilist.username" type="string" label="30290" help="">
+                    <level>0</level>
+                    <default/>
+                    <enable>false</enable>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+					<control type="edit" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="anilist.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="anilist.login" type="action" label="30291" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/watchlist_login/anilist?auth_dialog=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="anilist.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="anilist.sort" type="integer" label="30292" help="">
+                    <level>0</level>
+                    <default>4</default>
+                    <constraints>
+                        <options>
+                            <option label="Romaji Title">0</option>
+                            <option label="English Title">1</option>
+                            <option label="Score">2</option>
+                            <option label="Progress">3</option>
+                            <option label="Last Updated">4</option>
+                            <option label="Last Added">5</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                    <dependencies>
+                        <dependency type="visible" setting="anilist.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
 
-		<!-- Source Sorting -->
-		<setting type="lsep" label="40331"/>
-		<setting id="sort_select" type="action" label="Choose Sorting..." action="RunPlugin(plugin://plugin.video.otaku/sort_select?setting=true)"/>
+            <!-- Kitsu -->
+            <group id="4" label="30220" help="">
+                <setting id="kitsu.enabled" type="boolean" label="30221" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="kitsu.username" type="string" label="30290"  parent="kitsu.enabled" help="">
+                    <level>0</level>
+                    <default/>
+                    <enable>false</enable>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string"/>
+                    <dependencies>
+                        <dependency type="visible" setting="kitsu.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="kitsu.authvar" type="string" label="30223"  parent="kitsu.enabled" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+					<control type="edit" format="string">
+						<heading>30223</heading>
+					</control>
+                    <dependencies>
+                        <dependency type="visible" setting="kitsu.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="kitsu.password" type="string" label="30224"  parent="kitsu.enabled" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+					<control type="edit" format="string">
+						<heading>30224</heading>
+                        <hidden>true</hidden>
+					</control>
+                    <dependencies>
+                        <dependency type="visible" setting="kitsu.enabled">true</dependency>
+                    </dependencies>
+                </setting>
 
-		<!-- Search Filtering -->
-		<setting type="lsep" label="40409"/>
-		<setting id="divflavors.bool" label="40428" type="bool" default="false"/>
-		<setting id="divflavors.menu" type="labelenum" subsetting="true" label="40429" values="Dub|Both" default="Both" visible="eq(-1,true)"/>
-		<setting id="contentformat.bool" label="40391" type="bool" default="false"/>
-		<setting id="contentformat.menu" type="enum" subsetting="true" label="40392" lvalues="40393|40394|40395|40396|40397|40398|40399" default="0" visible="eq(-1,true)"/>
-		<setting id="contentorigin.bool" label="40418" type="bool" default="false"/>
-		<setting id="contentorigin.menu" type="enum" subsetting="true" label="40419" lvalues="40420|40421|40422|40423" default="0" visible="eq(-1,true)"/>
-		<setting id="search.adult" type="bool" label="40410" default="false" />
-	</category>
+                <setting id="kitsu.login" type="action" label="30291"  parent="kitsu.enabled" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/watchlist_login/kitsu)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="kitsu.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="kitsu.sort" type="integer" label="30292" parent="kitsu.enabled" help="">
+                    <level>0</level>
+                    <default>1</default>
+                    <constraints>
+                        <options>
+                            <option label="List Score">0</option>
+                            <option label="Last Updated">1</option>
+                            <option label="Anime Start Date">2</option>
+                            <option label="Anime Title">3</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                    <dependencies>
+                        <dependency type="visible" setting="kitsu.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+<!--                <setting id="kitsu.titles" type="integer" label="30225" parent="kitsu.enabled" help="">-->
+<!--                    <level>0</level>-->
+<!--                    <default>0</default>-->
+<!--                    <constraints>-->
+<!--                        <options>-->
+<!--                            <option label="Canonical">0</option>-->
+<!--                            <option label="Romanized">1</option>-->
+<!--                            <option label="English">2</option>-->
+<!--                        </options>-->
+<!--                    </constraints>-->
+<!--                    <control type="spinner" format="string" />-->
+<!--                    <dependencies>-->
+<!--                        <dependency type="visible" setting="kitsu.enabled">true</dependency>-->
+<!--                    </dependencies>-->
+<!--                </setting>-->
+            </group>
 
-	<!-- Accounts -->
-	<category label="40334">
-		<!-- Real-Debrid -->
-		<setting type="lsep" label="40335" />
-		<setting id="realdebrid.enabled" type="bool" default="false" label="40336" />
-		<setting id="rd.username" type="text" label="40337" default="" enable="false" visible="eq(-1,true)" />
-		<setting id="rd.auth.status" type="text" label="Real-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
-		<setting id="rd.auth_start" type="action" label="40338" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)" visible="eq(-3,true)" />
-		<setting id="rd.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)" visible="eq(-4,true)" />
-		<setting id="rd.cloudInspection" type="bool" subsetting="true" label="40372" default="true" visible="eq(-5,true)" />
+            <!-- Simkl -->
+            <group id="5" label="30230" help="">
+                <setting id="simkl.enabled" type="boolean" label="30231" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="simkl.username" type="string" label="30290" parent="simkl.enabled" help="">
+                    <level>0</level>
+                    <default/>
+                    <enable>false</enable>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                        <control type="edit" format="string">
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="simkl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="simkl.login" type="action" label="30291"  parent="simkl.enabled" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="simkl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="simkl.sort" type="integer" label="30292"  parent="simkl.enabled" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="Last Updated">0</option>
+                            <option label="Last Added">1</option>
+                            <option label="Anime Title">2</option>
+                            <option label="User Rating">3</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                    <dependencies>
+                        <dependency type="visible" setting="simkl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="simkl.sort" type="integer" label="30292"  parent="simkl.enabled" help="">
+                    <level>0</level>
+                    <default>0</default>
+                    <constraints>
+                        <options>
+                            <option label="Last Updated">0</option>
+                            <option label="Last Added">1</option>
+                            <option label="Anime Title">2</option>
+                            <option label="User Rating">3</option>
+                        </options>
+                    </constraints>
+                    <control type="spinner" format="string" />
+                    <dependencies>
+                        <dependency type="visible" setting="simkl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
 
-		<!-- All Debrid -->
-		<setting type="lsep" label="40340" />
-		<setting id="alldebrid.enabled" type="bool" default="false" label="40341" />
-		<setting id="alldebrid.username" type="text" default="" label="40342" enable="false" visible="eq(-1,true)"/>
-		<setting id="alldebrid.auth.status" type="text" label="All-Debrid Status" default="" enable="false" visible="eq(-2,true)" />
-		<setting id="alldebrid.auth_start" type="action" label="40343" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/alldebrid)" visible="eq(-3,true)" />
-		<setting id="alldebrid.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-4,true)" />
+        <category id="Menus" label="30381" help="">
+            <!-- Main Menu Items -->
+            <group id="1" label="30381" help="">
+                <setting id="menu.lastwatched" type="boolean" label="30000" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="anilist_airing_anime" type="boolean" label="30001" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="anilist_upcoming_next_season" type="boolean" label="30002" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="anilist_top_100_anime" type="boolean" label="30003" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="anilist_genres" type="boolean" label="30004" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="search_history" type="boolean" label="30005" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="tools" type="boolean" label="30006" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+            </group>
+        </category>
 
-		<!-- Debrid-Link -->
-		<setting type="lsep" label="40411" />
-		<setting id="dl.enabled" type="bool" default="false" label="40412" />
-		<setting id="dl.username" type="text" default="" label="40413" enable="false" visible="eq(-1,true)"/>
-		<setting id="dl.auth_start" type="action" label="40414" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/debridlink)" visible="eq(-2,true)" />
-		<setting id="dl.refresh.token" type="action" label="Refresh Debrid Token" option="close" action="RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)" visible="eq(-3,true)" />
+        <category id="Maintenance" label="30384" help="">
+            <!-- Tools -->
+            <group id="1" label="30384" help="">
+                <setting id="change_log" type="action" label="30010" help="">
+                    <level>1</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/change_log?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="clear_cache" type="action" label="30012" help="">
+                    <level>1</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/clear_cache?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="clear_history" type="action" label="30013" help="">
+                    <level>2</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/clear_history?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="rebuild_database" type="action" label="30014" help="">
+                    <level>2</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/rebuild_database?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="completed_sync" type="action" label="30015" help="">
+                    <level>2</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/completed_sync?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="download_manager" type="action" label="30016" help="">
+                    <level>2</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/download_manager?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="clear_slected_fanart" type="action" label="30018" help="">
+                    <level>2</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/clear_slected_fanart?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+            </group>
 
-		<!-- Premiumize -->
-		<setting type="lsep" label="40363" />
-		<setting id="premiumize.enabled" type="bool" default="false" label="40364" />
-		<setting id="premiumize.username" type="text" label="40365" default="" enable="false" visible="eq(-1,true)" />
-		<setting id="premiumize.auth_start" type="action" label="40366" option="close" action="RunPlugin(plugin://plugin.video.otaku/auth/premiumize)" visible="eq(-2,true)" />
-		<setting id="premiumize.cloudInspection" type="bool" subsetting="true" label="40372" default="false" visible="eq(-3,true)" />
-	</category>
+            <!-- Language Invoker -->
+            <group id="2" label="30324" help="">
+                <setting id="reuselanguageinvoker.toggle" type="action" label="30325" help="">
+                    <level>3</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                </setting>
+                <setting id="reuselanguageinvoker.status" type="string" label="30326" help="">
+                    <level>3</level>
+                    <default>Disabled</default>
+                    <enable>false</enable>
+                        <control type="edit" format="string">
+                    </control>
+                </setting>
+            </group>
 
-	<!-- Watchlist -->
-	<category label="40345">
-		<!-- General -->
-		<setting type="lsep" label="30300"/>
-		<setting id="watchlist.update.enabled" label="40346" type="bool" default="false"/>
-		<setting id="watchlist.update.flavor" type="labelenum" subsetting="true" label="40347" values="MAL|Kitsu|AniList|Simkl" default="MAL" visible="eq(-1,true)"/>
-		<setting id="watchlist.update.percent" type="slider" subsetting="true" label="Set Percent to Mark as Watched" default="80" range="70,90" option="int"/>
-		<setting type="text" label="NOTE:   Next up Dialog will not begin until this percentage is met" />
-		<setting id="watchlist.sync.enabled" type="bool" label="Enable Sync Completed" default="false" />
-
-		<!-- MyAnimeList -->
-		<setting type="lsep" label="40361"/>
-		<setting id="mal.enabled" label="40362" type="bool" default="false"/>
-		<setting id="mal.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
-		<setting id="mal.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/mal?auth_dialog=true)" visible="eq(-2,true)"/>
-		<setting id="mal.listsettings" type="action" label="40353" option="close" visible="eq(-3,true)"/>
-		<setting id="mal.sort" type="enum" subsetting="true" label="40354" values="List Score|Last Updated|Anime Start Date|Anime Title" default="1" visible="eq(-4,true)"/>
-
-		<!-- Anilist -->
-		<setting type="lsep" label="40348"/>
-		<setting id="anilist.enabled" label="40349" type="bool" default="false"/>
-		<setting id="anilist.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)"/>
-		<setting id="anilist.token" type="text" subsetting="true" label="40351" default="" enable="false" visible="eq(-2,true)" />
-		<setting id="anilist.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/anilist?auth_dialog=true)" visible="eq(-3,true)"/>
-		<setting id="anilist.listsettings" type="action" label="40353" option="close" visible="eq(-4,true)"/>
-		<setting id="anilist.sort" type="enum" subsetting="true" label="40354" values="Romaji Title|English Title|Score|Progress|Last Updated|Last Added" default="3" visible="eq(-5,true)"/>
-
-		<!-- Kitsu -->
-		<setting type="lsep" label="40355"/>
-		<setting id="kitsu.enabled" label="40356" type="bool" default="false"/>
-    	<setting id="kitsu.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)" />
-		<setting id="kitsu.authvar" type="text" subsetting="true" label="40357" default="" visible="eq(-2,true)"/>
-    	<setting id="kitsu.password" type="text" subsetting="true" option="hidden" label="40358" default="" visible="eq(-3,true)" />
-		<setting id="kitsu.login" type="action" subsetting="true" label="40359" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/kitsu)" visible="eq(-4,true)" />
-		<setting id="kitsu.listsettings" type="action" label="40353" option="close" visible="eq(-5,true)" />
-		<setting id="kitsu.sort" type="labelenum" subsetting="true" label="40354" values="Date Updated|Progress|Title" default="Date Updated" visible="eq(-6,true)" />
-		<setting id="kitsu.titles" type="enum" subsetting="true" label="40360" values="Canonical|Romanized|English" default="0" visible="eq(-7,true)" />
-
-		<!--Simkl -->
-		<setting type="lsep" label="SIMKL"/>
-		<setting id="simkl.enabled" label="Enable Simkl" type="bool" default="false" />
-		<setting id="simkl.username" type="text" subsetting="true" label="40350" default="" enable="false" visible="eq(-1,true)" />
-		<setting id="simkl.login" type="action" subsetting="true" label="40352" option="close" action="RunPlugin(plugin://plugin.video.otaku/watchlist_login/simkl)" visible="eq(-2,true)" />
-		<setting id="simkl.sort" type="enum" subsetting="true" label="40354" values="Last Updated|Last Added|Anime Title|User Rating" default="0" visible="eq(-3,true)" />
-	</category>
-
-	<!-- Menus -->
-	<category label="40400">
-		<!-- Main Menu Items -->
-		<setting type="lsep" label="40400"/>
-		<setting id="anilist_airing_anime" label="30001" type="bool" default="true"/>
-		<setting id="anilist_upcoming_next_season" label="30002" type="bool" default="true"/>
-		<setting id="anilist_top_100_anime" label="30003" type="bool" default="true"/>
-		<setting id="anilist_genres" label="30004" type="bool" default="true" />
-		<setting id="menu.lastwatched" label="Last Watched" type="bool" default="true" />
-		<setting id="search_history" label="30005" type="bool" default="true" visible="true"/>
-		<setting id="tools" label="30006" type="bool" default="true"/>
-	</category>
-
-	<!-- Maintenance -->
-	<category label="40416">
-		<!-- Tools -->
-		<setting type="lsep" label="40416"/>
-		<setting id="change_log" type="action" label="30010" action="RunPlugin(plugin://plugin.video.otaku/change_log?setting=true)"/>
-		<setting id="clear_cache" type="action" label="30012" action="RunPlugin(plugin://plugin.video.otaku/clear_cache?setting=true)"/>
-		<setting id="clear_history" type="action" label="30013" action="RunPlugin(plugin://plugin.video.otaku/clear_search_history?setting=true)"/>
-		<setting id="rebuild_database" type="action" label="30014" action="RunPlugin(plugin://plugin.video.otaku/rebuild_database?setting=true)"/>
-		<setting id="completed_sync" type="action" label="30015" action="RunPlugin(plugin://plugin.video.otaku/completed_sync?setting=true)"/>
-		<setting id="download_manager" type="action" label="30016" action="RunPlugin(plugin://plugin.video.otaku/download_manager?setting=true)"/>
-		<setting id="clear_slected_fanart" type="action" label="30018" action="RunPlugin(plugin://plugin.video.otaku/clear_slected_fanart?setting=true)"/>
-
-		<!-- Language Invoker -->
-		<setting type="lsep" label="Language Invoker"/>
-		<setting id="reuselanguageinvoker.toggle" label="Toggle Re-Use Language Invoker:              Enable For Much Faster Speeds" type="action" option="close" action="RunPlugin(plugin://plugin.video.otaku/toggleLanguageInvoker)"/>
-		<setting id="reuselanguageinvoker.status" label="Re-Use Language Invoker Status: " type="text" default="Enabled" enable="false" />
-
-		<!-- Import/Export -->
-		<setting type="lsep" label="Import/Export"/>
-		<setting id="importexport_settings" type="action" label="Import/Export settings.xml" action="RunPlugin(plugin://plugin.video.otaku/importexport_settings?setting=true)"/>
-
-
-		<setting id="otaku.version" type="text" visible="false" />
-		<setting id="update.time.30" type="text" visible="false" />
-		<setting id="update.time.7" type="text" visible="false" />
-	</category>
+            <!-- Import/Export -->
+            <group id="3" label="30327" help="">
+                <setting id="importexport_settings" type="action" label="30328" help="">
+                    <level>3</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/importexport_settings?setting=true)</data>
+                    <control type="button" format="action">
+                        <close>false</close>
+                    </control>
+                </setting>
+            </group>
+        </category>
+    </section>
 </settings>

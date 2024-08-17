@@ -133,9 +133,10 @@ class Resolver(BaseWindow):
 
         if not self.return_data['linkinfo']:
             self.return_data = False
-
+        xbmc.sleep(5000)
         if self.play and isinstance(self.return_data, dict):
-            self.source_select_close()
+            if self.source_select_close:
+                self.source_select_close()
             linkInfo = self.return_data['linkinfo']
             item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
             if self.return_data['sub']:

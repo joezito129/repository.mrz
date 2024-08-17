@@ -156,7 +156,7 @@ class AnilistSyncDatabase:
         import service
 
         if not silent:
-            confirm = control.yesno_dialog(control.ADDON_NAME, control.lang(30203))
+            confirm = control.yesno_dialog(control.ADDON_NAME, control.lang(30032))
             if confirm == 0:
                 return
 

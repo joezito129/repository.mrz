@@ -88,7 +88,7 @@ def cache_clear():
             cursor.execute("DROP TABLE IF EXISTS %s" % t)
             cursor.execute("VACUUM")
             cursor.connection.commit()
-        control.notify(f'{control.ADDON_NAME}: {control.lang(30200)}', control.lang(30201), time=5000, sound=False)
+        control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
     except OperationalError:
         cursor.close()
     finally:

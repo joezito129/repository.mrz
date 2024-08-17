@@ -23,9 +23,9 @@ class Premiumize:
         control.copy2clip(token['user_code'])
         control.progressDialog.create(
             control.ADDON_NAME,
-            control.lang(30100).format(control.colorstr(token['verification_uri'])) + '[CR]'
-            + control.lang(30101).format(control.colorstr(token['user_code'])) + '[CR]'
-            + control.lang(30102)
+            control.lang(30020).format(control.colorstr(token['verification_uri'])) + '[CR]'
+            + control.lang(30021).format(control.colorstr(token['user_code'])) + '[CR]'
+            + control.lang(30022)
         )
         control.progressDialog.update(0)
 
@@ -38,7 +38,7 @@ class Premiumize:
         control.progressDialog.close()
 
         if success:
-            control.ok_dialog(control.ADDON_NAME, 'Premiumize ' + control.lang(30103))
+            control.ok_dialog(control.ADDON_NAME, 'Premiumize ' + control.lang(30023))
 
     def poll_token(self, device_code):
         data = {'client_id': self.client_id, 'code': device_code, 'grant_type': 'device_code'}

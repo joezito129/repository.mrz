@@ -1,4 +1,3 @@
-import itertools
 import time
 import requests
 
@@ -79,9 +78,8 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def __get_title_lang(self):
         title_langs = {
-            "Canonical": "canonical",
-            "English": "en",
-            "Romanized": "en_jp",
+            "english": "en",
+            "romaji": "en_jp",
         }
         return title_langs[self._title_lang]
 
@@ -139,8 +137,7 @@ class KitsuWLF(WatchlistFlavorBase):
         else:
             all_results = map(self._base_watchlist_view, _list, el)
 
-        all_results = list(itertools.chain(*all_results))
-
+        all_results = list(all_results)
         all_results += self.handle_paging(result['links'].get('next'), base_plugin_url, page)
         return all_results
 

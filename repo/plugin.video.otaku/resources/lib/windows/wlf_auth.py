@@ -61,11 +61,11 @@ class AltWatchlistFlavorAuth:
         res = {}
         dialog = xbmcgui.Dialog()
         if self.flavor == 'anilist':
-            control.textviewer_dialog(f'{control.ADDON_NAME} : AniList', '{}\n{}\n{}'.format(control.lang(40105), control.lang(40106).replace('below', 'in the input dialog that will popup once you close this'), control.lang(40110)))
+            control.textviewer_dialog(f'{control.ADDON_NAME} : AniList', '{}\n{}\n{}'.format(control.lang(30042), control.lang(30043).replace('below', 'in the input dialog that will popup once you close this'), control.lang(30044)))
             res['username'] = dialog.input('Enter AniList username', type=0)
             res['token'] = dialog.input('Enter AniList token', type=0)
         else:
-            control.textviewer_dialog(f'{control.ADDON_NAME} : MyAnimeList', '{}\n{}\n{}'.format(control.lang(40100), control.lang(40101).replace('below', 'in the input dialog that will popup once you close this'), control.lang(40110)))
+            control.textviewer_dialog(f'{control.ADDON_NAME} : MyAnimeList', '{}\n{}\n{}'.format(control.lang(30040), control.lang(30041).replace('below', 'in the input dialog that will popup once you close this'), control.lang(30044)))
             res['authvar'] = dialog.input('Enter MAL auth url', type=0)
 
         for _id, value in list(res.items()):

@@ -22,9 +22,9 @@ class AllDebrid:
         control.copy2clip(resp['pin'])
         control.progressDialog.create(
             control.ADDON_NAME + ': AllDebrid Auth',
-            control.lang(30100).format(control.colorstr(resp['base_url'])) + '[CR]'
-            + control.lang(30101).format(control.colorstr(resp['pin'])) + '[CR]'
-            + control.lang(30102)
+            control.lang(30020).format(control.colorstr(resp['base_url'])) + '[CR]'
+            + control.lang(30021).format(control.colorstr(resp['pin'])) + '[CR]'
+            + control.lang(30022)
         )
         # Seems the All Debrid servers need some time do something with the pin before polling
         # Polling too early will cause an invalid pin error
@@ -47,7 +47,7 @@ class AllDebrid:
             control.setSetting('alldebrid.username', user_information['username'])
             control.setSetting('alldebrid.auth.status', 'Premium' if user_information['isPremium'] else 'expired')
             if auth_complete:
-                control.ok_dialog(control.ADDON_NAME, f'AllDebrid {control.lang(30103)}')
+                control.ok_dialog(control.ADDON_NAME, f'AllDebrid {control.lang(30023)}')
         else:
             control.ok_dialog(control.ADDON_NAME, 'AllDebrid Failed to login')
 

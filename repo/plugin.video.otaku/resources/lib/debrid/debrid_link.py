@@ -57,9 +57,9 @@ class DebridLink:
         control.progressDialog.create('Debrid-Link Auth')
         control.progressDialog.update(
             -1,
-            control.lang(30100).format(control.colorstr(response.get('verification_url'))) + '[CR]'
-            + control.lang(30101).format(control.colorstr(response.get('user_code'))) + '[CR]'
-            + control.lang(30102)
+            control.lang(30020).format(control.colorstr(response.get('verification_url'))) + '[CR]'
+            + control.lang(30021).format(control.colorstr(response.get('user_code'))) + '[CR]'
+            + control.lang(30022)
         )
         auth_done = False
         while not auth_done:
@@ -67,14 +67,14 @@ class DebridLink:
 
         premium = self.get_info()
         if not premium:
-            control.ok_dialog(control.ADDON_NAME, control.lang(30104))
+            control.ok_dialog(control.ADDON_NAME, control.lang(30024))
 
     def get_info(self):
         url = '{0}/account/infos'.format(self.api_url[:-3])
         response = requests.get(url, headers=self.headers).json()
         username = response['value'].get('pseudo')
         control.setSetting('dl.username', username)
-        control.ok_dialog(control.ADDON_NAME, 'Debrid-Link ' + control.lang(30103))
+        control.ok_dialog(control.ADDON_NAME, 'Debrid-Link ' + control.lang(30023))
         return response['value'].get('premiumLeft') > 3600
 
     def refreshToken(self):

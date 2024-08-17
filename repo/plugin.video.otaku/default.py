@@ -444,6 +444,7 @@ if __name__ == "__main__":
         import xbmc
         if not xbmc.Player().isPlaying():
             control.playList.clear()
+
     # t1 = time.perf_counter_ns()
     # totaltime = (t1-t0)/1_000_000
     # control.print(totaltime, 'ms')

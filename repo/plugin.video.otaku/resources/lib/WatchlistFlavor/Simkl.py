@@ -36,9 +36,9 @@ class SimklWLF(WatchlistFlavorBase):
         control.copy2clip(device_code["user_code"])
         control.progressDialog.create('SIMKL Auth')
         f_string = f'''
-{control.lang(30100).format(control.colorstr('https://simkl.com/pin'))}
-{control.lang(30101).format(control.colorstr(device_code['user_code']))}
-{control.lang(30102)}
+{control.lang(30020).format(control.colorstr('https://simkl.com/pin'))}
+{control.lang(30021).format(control.colorstr(device_code['user_code']))}
+{control.lang(30022)}
 '''
         control.progressDialog.update(100, f_string)
         inter = int(device_code['expires_in'] / device_code['interval'])
@@ -59,10 +59,10 @@ class SimklWLF(WatchlistFlavorBase):
                     login_data['username'] = user['name']
                 return login_data
             f_string = f'''
-{control.lang(30100).format(control.colorstr('https://simkl.com/pin'))}
-{control.lang(30101).format(control.colorstr(device_code['user_code']))}
-{control.lang(30102)}
-Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["interval"])} Seconds d
+{control.lang(30020).format(control.colorstr('https://simkl.com/pin'))}
+{control.lang(30021).format(control.colorstr(device_code['user_code']))}
+{control.lang(30022)}
+Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["interval"])} Seconds
 '''
             control.progressDialog.update(int((inter - i) / inter * 100), f_string)
             time.sleep(device_code['interval'])

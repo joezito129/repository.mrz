@@ -56,9 +56,9 @@ class RealDebrid:
         control.progressDialog.create('Real-Debrid Auth')
         control.progressDialog.update(
             -1,
-            control.lang(30100).format(control.colorstr('https://real-debrid.com/device')) + '[CR]'
-            + control.lang(30101).format(control.colorstr(response['user_code'])) + '[CR]'
-            + control.lang(30102)
+            control.lang(30020).format(control.colorstr('https://real-debrid.com/device')) + '[CR]'
+            + control.lang(30021).format(control.colorstr(response['user_code'])) + '[CR]'
+            + control.lang(30022)
         )
         self.OauthTimeout = int(response['expires_in'])
         self.OauthTimeStep = int(response['interval'])
@@ -71,7 +71,7 @@ class RealDebrid:
 
         user_information = requests.get(f'{self.BaseUrl}/user', headers=self.__headers()).json()
         if user_information['type'] != 'premium':
-            control.ok_dialog(control.ADDON_NAME, control.lang(30104))
+            control.ok_dialog(control.ADDON_NAME, control.lang(30024))
 
     def token_request(self):
         if self.ClientSecret == '':
@@ -95,7 +95,7 @@ class RealDebrid:
         user_info = requests.get(f'{self.BaseUrl}/user', headers=self.__headers()).json()
         control.setSetting('rd.username', user_info['username'])
         control.setSetting('rd.auth.status', user_info['type'])
-        control.ok_dialog(control.ADDON_NAME, 'Real Debrid %s' % control.lang(30103))
+        control.ok_dialog(control.ADDON_NAME, 'Real Debrid %s' % control.lang(30023))
 
     def refreshToken(self):
         postData = {

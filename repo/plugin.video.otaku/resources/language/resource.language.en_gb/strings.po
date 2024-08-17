@@ -78,65 +78,61 @@ msgid "Clear Selected Fanart"
 msgstr ""
 
 ######DEBRID DIRECTORY#######
-msgctxt "#30100"
+msgctxt "#30020"
 msgid "Open this link in a browser: {}"
 msgstr ""
 
-msgctxt "#30101"
+msgctxt "#30021"
 msgid "Enter the code: {}"
 msgstr ""
 
-msgctxt "#30102"
+msgctxt "#30022"
 msgid "This code has been copied to your clipboard"
 msgstr ""
 
-msgctxt "#30103"
+msgctxt "#30023"
 msgid "Authentication is completed"
 msgstr ""
 
-msgctxt "#30104"
+msgctxt "#30024"
 msgid "Please Note\nYou appear to have authorized a non-premium account and will not be able to play items using this account"
 msgstr ""
 
-msgctxt "#30105"
-msgid "Authentication with Real-Debrid has failed, please try again"
-msgstr ""
-
 ######DATABASE.PY######
-msgctxt "#30200"
+msgctxt "#30030"
 msgid "Cache"
 msgstr ""
 
-msgctxt "#30201"
+msgctxt "#30031"
 msgid "All Cache Successfully Cleared"
 msgstr ""
 
-msgctxt "#30203"
+msgctxt "#30032"
 msgid "[COLOR red]WARNING[/COLOR]\nThis will reset all meta information, are you sure?"
 msgstr ""
 
 ######SKINS DIRECTORY######
-msgctxt "#40100"
+msgctxt "#30040"
 msgid "[B]Open this link in a browser: [COLOR deepskyblue]https://armkai.vercel.app/api/mal[/COLOR][/B]"
 msgstr ""
 
-msgctxt "#40101"
+msgctxt "#30041"
 msgid "[B]After authorizing, MAL will redirect to its homepage. Copy & paste the redirect url (e.g. url [COLOR deepskyblue]https://myanimelist.net/?code=...[/COLOR]) below.[/B]"
 msgstr ""
 
-msgctxt "#40105"
+msgctxt "#30042"
 msgid "[B]Open this link in a browser: [COLOR deepskyblue]https://armkai.vercel.app/api/anilist[/COLOR][/B]"
 msgstr ""
 
-msgctxt "#40106"
+msgctxt "#30043"
 msgid "[B]After authorizing, copy & paste the token below.[/B]"
 msgstr ""
 
-msgctxt "#40110"
+msgctxt "#30044"
 msgid "[B]*Note: If using addon on Amazon Fire TV Stick/Android TV Box, you can copy & paste text using a Kodi remote app like [COLOR limegreen]Kore[/COLOR] or [COLOR limegreen]Yatse[/COLOR][/B]"
 msgstr ""
 
-msgctxt "#40226"
+msgctxt "#30045"
 msgid "Provider"
 msgstr ""
 
@@ -222,52 +218,42 @@ msgid "Theme"
 msgstr ""
 
 msgctxt "#30320"
-msgid "Context and Widgets"
+msgid "Show Dub Release Dates"
 msgstr ""
 
 msgctxt "#30321"
-msgid "Find Recommendations"
+msgid "API to be used for getting Dub times"
 msgstr ""
 
 msgctxt "#30322"
-msgid "Find Relations"
+msgid "Show Filler Info If Found"
 msgstr ""
 
 msgctxt "#30323"
-msgid "Rescrape"
+msgid "JZ Settings"
 msgstr ""
 
 msgctxt "#30324"
-msgid "Source Select"
+msgid "Language Invoker"
 msgstr ""
 
 msgctxt "#30325"
-msgid "Logout"
+msgid "Toggle Re-Use Language Invoker:              Enable For Much Faster Speeds"
 msgstr ""
 
 msgctxt "#30326"
-msgid "Delete from Database"
+msgid "Re-Use Language Invoker Status: "
 msgstr ""
 
 msgctxt "#30327"
-msgid "WatchList manager"
+msgid "Import/Export"
 msgstr ""
 
 msgctxt "#30328"
-msgid "Marked as Watched [COLOR deepskyblue]WatchList[/COLOR]"
+msgid "Import/Export settings.xml"
 msgstr ""
 
-msgctxt "#30329"
-msgid "Select Fanart"
-msgstr ""
-
-msgctxt "#30330"
-msgid "Widgets"
-msgstr ""
-
-msgctxt "#30331"
-msgid "Hide Next up Widget"
-msgstr ""
+######29-31###
 
 msgctxt "#30332"
 msgid "Torrents"
@@ -301,360 +287,362 @@ msgctxt "#30344"
 msgid "4k"
 msgstr ""
 
-msgctxt "#40307"
+msgctxt "#30345"
 msgid "Playback"
 msgstr ""
 
-msgctxt "#40308"
+msgctxt "#30346"
 msgid "Movie Play Style"
 msgstr ""
 
-msgctxt "#40309"
+msgctxt "#30347"
 msgid "Episode Play Style"
 msgstr ""
 
-msgctxt "#40310"
+msgctxt "#30348"
 msgid "Auto Play"
 msgstr ""
 
-msgctxt "#40311"
+msgctxt "#30349"
 msgid "Source Select"
 msgstr ""
 
-msgctxt "#40312"
+msgctxt "#30350"
 msgid "Auto try next link on resolve failure (Source Select)"
 msgstr ""
 
-msgctxt "#40313"
+msgctxt "#30351"
 msgid "Terminate on cloud Sources"
 msgstr ""
 
-msgctxt "#40317"
+msgctxt "#30352"
 msgid "Playing Next Dialog"
 msgstr ""
 
-msgctxt "#40318"
+msgctxt "#30353"
 msgid "Enable Playing Next Dialog"
 msgstr ""
 
-msgctxt "#40319"
+msgctxt "#30354"
 msgid "Minimum Seconds Left Before Showing Dialog"
 msgstr ""
 
-msgctxt "#40323"
+msgctxt "#30355"
 msgid "Skip Intro Dialog"
 msgstr ""
 
-msgctxt "#40324"
+msgctxt "#30356"
 msgid "Enable Skip Intro Dialog"
 msgstr ""
 
-msgctxt "#40325"
+msgctxt "#30357"
 msgid "Seconds to skip"
 msgstr ""
 
-msgctxt "#40326"
+msgctxt "#30358"
 msgid "Sort & Filter"
 msgstr ""
 
-msgctxt "#40327"
+msgctxt "#30359"
 msgid "Source Filters"
 msgstr ""
 
-msgctxt "#40328"
+msgctxt "#30360"
 msgid "Max Resolution"
 msgstr ""
 
-msgctxt "#40329"
+msgctxt "#30361"
 msgid "Hide HEVC Items"
 msgstr ""
 
-msgctxt "#40330"
+msgctxt "#30362"
 msgid "Source Type"
 msgstr ""
 
-msgctxt "#40331"
+msgctxt "#30363"
 msgid "Sort Sourcing"
 msgstr ""
 
-msgctxt "#40332"
+msgctxt "#30364"
 msgid "Show UnCached Sources"
 msgstr ""
 
-msgctxt "#40334"
+msgctxt "#30365"
 msgid "Accounts"
 msgstr ""
 
-msgctxt "#40335"
-msgid "Real-Debrid"
+msgctxt "#30366"
+msgid "Set Percent to Mark as Watched"
 msgstr ""
 
-msgctxt "#40336"
-msgid "Enable Real-Debrid..."
+msgctxt "#30367"
+msgid "NOTE:   Next up Dialog will not begin until this percentage is met"
 msgstr ""
 
-msgctxt "#40337"
-msgid "Real-Debrid Username"
+msgctxt "#30368"
+msgid "Enable Sync Completed"
 msgstr ""
 
-msgctxt "#40338"
-msgid "Authorize Real-Debrid..."
-msgstr ""
-
-msgctxt "#40339"
-msgid "Real-Debrid Status"
-msgstr ""
-
-msgctxt "#40500"
-msgid "Refresh Debrid Token"
-msgstr ""
-
-msgctxt "#40340"
-msgid "AllDebrid"
-msgstr ""
-
-msgctxt "#40341"
-msgid "Enable AllDebrid..."
-msgstr ""
-
-msgctxt "#40342"
-msgid "AllDebrid Username"
-msgstr ""
-
-msgctxt "#40343"
-msgid "Authorize AllDebrid..."
-msgstr ""
-
-msgctxt "#40344"
-msgid "All-Debrid Status"
-msgstr ""
-
-msgctxt "#40345"
+msgctxt "#30369"
 msgid "Watchlist"
 msgstr ""
 
-msgctxt "#40346"
+msgctxt "#30370"
 msgid "Update Watchlist"
 msgstr ""
 
-msgctxt "#40347"
+msgctxt "#30371"
 msgid "Watchlist to update"
 msgstr ""
 
-msgctxt "#40348"
-msgid "AniList"
-msgstr ""
-
-msgctxt "#40349"
-msgid "Enable AniList"
-msgstr ""
-
-msgctxt "#40350"
-msgid "Username:"
-msgstr ""
-
-msgctxt "#40351"
-msgid "Token:"
-msgstr ""
-
-msgctxt "#40352"
-msgid "Click to Authorize..."
-msgstr ""
-
-msgctxt "#40353"
-msgid "List settings..."
-msgstr ""
-
-msgctxt "#40354"
-msgid "Sort by:"
-msgstr ""
-
-msgctxt "#40355"
-msgid "Kitsu"
-msgstr ""
-
-msgctxt "#40356"
-msgid "Enable Kitsu"
-msgstr ""
-
-msgctxt "#40357"
-msgid "Email:"
-msgstr ""
-
-msgctxt "#40358"
-msgid "Password:"
-msgstr ""
-
-msgctxt "#40359"
-msgid "Click to Login..."
-msgstr ""
-
-msgctxt "#40360"
-msgid "How titles will be displayed:"
-msgstr ""
-
-msgctxt "#40361"
-msgid "MyAnimeList"
-msgstr ""
-
-msgctxt "#40362"
-msgid "Enable MyAnimeList"
-msgstr ""
-
-msgctxt "#40363"
-msgid "Premiumize"
-msgstr ""
-
-msgctxt "#40364"
-msgid "Enable Premiumize..."
-msgstr ""
-
-msgctxt "#40365"
-msgid "Premiumize Username"
-msgstr ""
-
-msgctxt "#40366"
-msgid "Authorize Premiumize..."
-msgstr ""
-
-msgctxt "#40367"
-msgid "Premiumize Status"
-msgstr ""
-
-msgctxt "#40372"
-msgid "Inspect Cloud Files on Scrape"
-msgstr ""
-
-msgctxt "#40391"
+msgctxt "#30372"
 msgid "Set Content Filter"
 msgstr ""
 
-msgctxt "#40392"
+msgctxt "#30373"
 msgid "Format"
 msgstr ""
 
-msgctxt "#40393"
+msgctxt "#30374"
 msgid "TV"
 msgstr ""
 
-msgctxt "#40394"
+msgctxt "#30375"
 msgid "MOVIE"
 msgstr ""
 
-msgctxt "#40395"
+msgctxt "#30376"
 msgid "TV_SHORT"
 msgstr ""
 
-msgctxt "#40396"
+msgctxt "#30377"
 msgid "SPECIAL"
 msgstr ""
 
-msgctxt "#40397"
+msgctxt "#30378"
 msgid "OVA"
 msgstr ""
 
-msgctxt "#40398"
+msgctxt "#30379"
 msgid "ONA"
 msgstr ""
 
-msgctxt "#40399"
+msgctxt "#30380"
 msgid "MUSIC"
 msgstr ""
 
-msgctxt "#40400"
+msgctxt "#30381"
 msgid "Main Menu Items"
 msgstr ""
 
-msgctxt "#40401"
-msgid "Movie Items"
-msgstr ""
-
-msgctxt "#40402"
-msgid "TV Show Items"
-msgstr ""
-
-msgctxt "#40409"
+msgctxt "#30382"
 msgid "Search Filter"
 msgstr ""
 
-msgctxt "#40410"
+msgctxt "#30383"
 msgid "Enable searching mature titles"
 msgstr ""
 
-msgctxt "#40411"
-msgid "Debrid-Link"
-msgstr ""
-
-msgctxt "#40412"
-msgid "Enable Debrid-Link..."
-msgstr ""
-
-msgctxt "#40413"
-msgid "Debrid-Link Username"
-msgstr ""
-
-msgctxt "#40414"
-msgid "Authorize Debrid-Link..."
-msgstr ""
-
-msgctxt "#40415"
-msgid "Debrid-Link Priority"
-msgstr ""
-
-msgctxt "#40416"
+msgctxt "#30384"
 msgid "Maintenance"
 msgstr ""
 
-msgctxt "#40418"
+msgctxt "#30385"
 msgid "Set Country Filter"
 msgstr ""
 
-msgctxt "#40419"
+msgctxt "#30386"
 msgid "Country"
 msgstr ""
 
-msgctxt "#40420"
+msgctxt "#30387"
 msgid "Japan"
 msgstr ""
 
-msgctxt "#40421"
+msgctxt "#30388"
 msgid "South Korea"
 msgstr ""
 
-msgctxt "#40422"
+msgctxt "#30389"
 msgid "China"
 msgstr ""
 
-msgctxt "#40423"
+msgctxt "#30390"
 msgid "Taiwan"
 msgstr ""
 
-msgctxt "#40424"
+msgctxt "#30391"
 msgid "Set Delay in Seconds Before Showing Dialog"
 msgstr ""
 
-msgctxt "#40425"
-msgid "Timeout for finding sources (seconds)"
+msgctxt "#30392"
+msgid "Timeout for Sources (seconds)"
 msgstr ""
 
-msgctxt "#40428"
+msgctxt "#30393"
 msgid "Set Anime Filter"
 msgstr ""
 
-msgctxt "#40429"
+msgctxt "#30394"
 msgid "Filter"
 msgstr ""
 
-msgctxt "#40430"
+msgctxt "#30395"
 msgid "Duration of how long the Dialog will appear"
 msgstr ""
 
-msgctxt "#40431"
+msgctxt "#30396"
 msgid "Enable Aniskip"
 msgstr ""
 
-msgctxt "#40432"
+msgctxt "#30397"
 msgid "Offset for Aniskip (seconds)"
+msgstr ""
+
+######Debrid######
+msgctxt "#30100"
+msgid "Real-Debrid"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Enable Real-Debrid..."
+msgstr ""
+
+msgctxt "#30102"
+msgid "Real-Debrid Username"
+msgstr ""
+
+msgctxt "#30103"
+msgid "Real-Debrid Status"
+msgstr ""
+
+msgctxt "#30104"
+msgid "Authorize Real-Debrid..."
+msgstr ""
+
+msgctxt "#30105"
+msgid "Refresh Real-Debrid Token"
+msgstr ""
+
+msgctxt "#30110"
+msgid "AllDebrid"
+msgstr ""
+
+msgctxt "#30111"
+msgid "Enable AllDebrid..."
+msgstr ""
+
+msgctxt "#30112"
+msgid "AllDebrid Username"
+msgstr ""
+
+msgctxt "#30113"
+msgid "AllDebrid Status"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Authorize AllDebrid..."
+msgstr ""
+
+msgctxt "#30115"
+msgid "Refresh AllDebrid Token"
+msgstr ""
+
+msgctxt "#30120"
+msgid "Debrid-Link"
+msgstr ""
+
+msgctxt "#30121"
+msgid "Enable Debrid-Link..."
+msgstr ""
+
+msgctxt "#30122"
+msgid "Debrid-Link Username"
+msgstr ""
+
+msgctxt "#30124"
+msgid "Authorize Debrid-Link..."
+msgstr ""
+
+msgctxt "#30125"
+msgid "Refresh Debrid-Link Token"
+msgstr ""
+
+msgctxt "#30130"
+msgid "Premiumize"
+msgstr ""
+
+msgctxt "#30131"
+msgid "Enable Premiumize..."
+msgstr ""
+
+msgctxt "#30132"
+msgid "Premiumize Username"
+msgstr ""
+
+msgctxt "#30134"
+msgid "Authorize Premiumize..."
+msgstr ""
+
+msgctxt "#30190"
+msgid "Inspect Cloud Files on Scrape"
+msgstr ""
+
+######WatchLists######
+msgctxt "#30200"
+msgid "MyAnimeList"
+msgstr ""
+
+msgctxt "#30201"
+msgid "Enable MyAnimeList"
+msgstr ""
+
+msgctxt "#30210"
+msgid "AniList"
+msgstr ""
+
+msgctxt "#30211"
+msgid "Enable AniList"
+msgstr ""
+
+msgctxt "#30220"
+msgid "Kitsu"
+msgstr ""
+
+msgctxt "#30221"
+msgid "Enable Kitsu"
+msgstr ""
+
+msgctxt "#30223"
+msgid "Email:"
+msgstr "Email:"
+
+msgctxt "#30224"
+msgid "Password:"
+msgstr ""
+
+msgctxt "#30225"
+msgid "How titles will be displayed:"
+msgstr ""
+
+msgctxt "#30230"
+msgid "Simkl"
+msgstr ""
+
+msgctxt "#30231"
+msgid "Enable Simkl"
+msgstr ""
+
+msgctxt "#30290"
+msgid "Username:"
+msgstr ""
+
+msgctxt "#30291"
+msgid "Click to Authorize..."
+msgstr ""
+
+msgctxt "#30292"
+msgid "Sort by:"
 msgstr ""
 
 ######Providers######
@@ -684,4 +672,53 @@ msgstr ""
 
 msgctxt "#30410"
 msgid "Local Files"
+msgstr ""
+
+######Context & Widgets#####
+msgctxt "#30500"
+msgid "Context and Widgets"
+msgstr ""
+
+msgctxt "#30501"
+msgid "Find Recommendations"
+msgstr ""
+
+msgctxt "#30502"
+msgid "Find Relations"
+msgstr ""
+
+msgctxt "#30503"
+msgid "Rescrape"
+msgstr ""
+
+msgctxt "#30504"
+msgid "Source Select"
+msgstr ""
+
+msgctxt "#30505"
+msgid "Logout"
+msgstr ""
+
+msgctxt "#30506"
+msgid "Delete from Database"
+msgstr ""
+
+msgctxt "#30507"
+msgid "WatchList manager"
+msgstr ""
+
+msgctxt "#30508"
+msgid "Marked as Watched [COLOR deepskyblue]WatchList[/COLOR]"
+msgstr ""
+
+msgctxt "#30509"
+msgid "Select Fanart"
+msgstr ""
+
+msgctxt "#30510"
+msgid "Widgets"
+msgstr ""
+
+msgctxt "#30511"
+msgid "Hide Next up Widget"
 msgstr ""
