@@ -1,3 +1,6 @@
+import os
+import json
+
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.ui import control
 from operator import itemgetter
@@ -16,17 +19,38 @@ SORT_OPTIONS = {
 audio = [1, 2, 0, 'none']
 source_type = [['cloud'], ['torrent'], ['direct', 'embed'], ['local_files'], ['none']]
 
+default_sort_options = {
+        'sortmethod.1': 2,
+        'sortmethod.2': 1,
+        'sortmethod.3': 3,
+        'sortmethod.4': 4,
+        'sortmethod.5': 0,
+        'sortmethod.1.reverse': False,
+        'sortmethod.2.reverse': False,
+        'sortmethod.3.reverse': False,
+        'sortmethod.4.reverse': False,
+        'sortmethod.5.reverse': False,
+        'type.1': 0,
+        'type.2': 1,
+        'type.3': 2,
+        'type.4': 3,
+        'type.5': 4,
+        'audio.1': 0,
+        'audio.2': 1,
+        'audio.3': 2,
+        'audio.4': 3
+    }
+
+try:
+    with open(os.path.join(control.dataPath, 'sort_options.json')) as f:
+        sort_options = json.load(f)
+except FileNotFoundError:
+    sort_options = default_sort_options
 
 class SortSelect(BaseWindow):
     def __init__(self, xml_file, location):
         super().__init__(xml_file, location)
-        self.sort_options = {}
-        for inx, key in enumerate(SORT_OPTIONS):
-            for i, options in enumerate(SORT_OPTIONS[key], 1):
-                self.sort_options[f'{key}.{i}'] = int(control.getSetting(f"{key}.{i}"))
-        for idx, sort_method in enumerate(SORT_METHODS, 1):
-            setting_reverse = control.getSetting(f'sortmethod.{idx}.reverse') == 'True'
-            self.sort_options[f'sortmethod.{idx}.reverse'] = setting_reverse
+        self.sort_options = sort_options
 
     def onInit(self):
         self.populate_all_lists()
@@ -48,9 +72,12 @@ class SortSelect(BaseWindow):
     def handle_action(self, control_id):
         if control_id == 9001:   # close
             self.close()
-        elif control_id == 9002:
+        elif control_id == 9002: # save
             self.save_settings()
             control.ok_dialog(control.ADDON_NAME, 'Saved Sort Configuration')
+        elif control_id == 9003: # set default
+            self.sort_options = default_sort_options
+            self.save_settings()
         elif control_id in [1111, 2222, 3333, 4444, 5555]:
             self.handle_reverse(int(control_id / 1111))
         else:
@@ -67,7 +94,6 @@ class SortSelect(BaseWindow):
         setting = f"sortmethod.{level}.reverse"
         self.sort_options[setting] = not self.sort_options[setting]
         self.setProperty(setting, str(self.sort_options[setting]))
-        control.setSetting(setting, str(self.sort_options[setting]))
 
     def cycle_info(self, level, idx):
         sort_method = f"sortmethod.{level}"
@@ -97,8 +123,8 @@ class SortSelect(BaseWindow):
         self.setProperty(f"{sort_method}", method)
 
     def save_settings(self):
-        for setting in self.sort_options:
-            control.setSetting(setting, str(self.sort_options[setting]))
+        with open(os.path.join(control.dataPath, 'sort_options.json'), 'w') as file:
+            json.dump(self.sort_options, file)
 
 
 def sort_by_none(list_, reverse):
@@ -117,11 +143,11 @@ def sort_by_size(list_, reverse):
 
 def sort_by_type(list_, reverse):
     for i in range(len(SORT_OPTIONS['type']), 0, -1):
-        list_.sort(key=lambda x: x['type'] in source_type[int(control.getSetting(f'type.{i}'))], reverse=reverse)
+        list_.sort(key=lambda x: x['type'] in source_type[int(sort_options[f'type.{i}'])], reverse=reverse)
     return list_
 
 
 def sort_by_audio(list_, reverse):
     for i in range(len(SORT_OPTIONS['audio']), 0, -1):
-        list_.sort(key=lambda x: x['lang'] == audio[int(control.getSetting(f'audio.{i}'))], reverse=reverse)
+        list_.sort(key=lambda x: x['lang'] == audio[int(sort_options[f'audio.{i}'])], reverse=reverse)
     return list_

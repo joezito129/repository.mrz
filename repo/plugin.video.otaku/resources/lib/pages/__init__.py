@@ -31,7 +31,6 @@ class Sources(GetSources):
         self.threads = []
 
         self.cloud_files = []
-
         self.torrentSources = []
         self.torrentCacheSources = []
         self.torrentUnCacheSources = []
@@ -223,10 +222,11 @@ class Sources(GetSources):
             sortedList = [i for i in sortedList if i['lang'] != langs[lang]]
 
         # Sort Sources
-        SORT_METHODS = ['none', 'type', 'audio', 'resolution', 'size']
+        SORT_METHODS = sort_select.SORT_METHODS
+        sort_options = sort_select.sort_options
         for x in range(len(SORT_METHODS), 0, -1):
-            reverse = control.getSetting(f'sortmethod.{x}.reverse') == 'True'
-            method = SORT_METHODS[int(control.getSetting(f'sortmethod.{x}'))]
+            reverse = sort_options[f'sortmethod.{x}.reverse']
+            method = SORT_METHODS[int(sort_options[f'sortmethod.{x}'])]
             sortedList = getattr(sort_select, f'sort_by_{method}')(sortedList, not reverse)
         return sortedList
 

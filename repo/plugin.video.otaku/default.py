@@ -20,7 +20,7 @@ import pickle
 
 from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
-from resources.lib.ui import control, database, player, utils
+from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlist, watchlist_update_episode
 
@@ -383,17 +383,15 @@ def COMPLETED_SYNC(payload, params):
 
 
 @Route('sort_select')
-def DOWNLOAD_MANAGER(payload, params):
+def SORT_SELECT(payload, params):
     from resources.lib.windows.sort_select import SortSelect
     SortSelect(*('sort_select.xml', control.ADDON_PATH)).doModal()
-    control.exit_code()
 
 
 @Route('download_manager')
 def DOWNLOAD_MANAGER(payload, params):
     from resources.lib.windows.download_manager import DownloadManager
     DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
-    control.exit_code()
 
 
 @Route('importexport_settings')
@@ -442,8 +440,10 @@ if __name__ == "__main__":
     # t0 = time.perf_counter_ns()
 
     router_process(control.get_plugin_url(), control.get_plugin_params())
-    if len(control.playList) > 0 and not player.player().isPlaying():
-        control.playList.clear()
+    if len(control.playList) > 0:
+        import xbmc
+        if not xbmc.Player().isPlaying():
+            control.playList.clear()
     # t1 = time.perf_counter_ns()
     # totaltime = (t1-t0)/1_000_000
     # control.print(totaltime, 'ms')

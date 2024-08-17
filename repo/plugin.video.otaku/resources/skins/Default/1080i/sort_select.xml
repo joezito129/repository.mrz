@@ -971,7 +971,7 @@
 					<texturefocus></texturefocus>
 					<texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.5)][/UPPERCASE][/B]</label>
-<!--					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.5))</visible>-->
+					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.5))</visible>
 				</control>
 			</control>
 		</control>
