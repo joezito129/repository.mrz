@@ -1,3 +1,7 @@
+Changelog v5.0.50 (2024-08-17):
+- Fixed some setting typos
+- Fixed Aniwave
+
 Changelog v5.0.49 (2024-08-17):
 - Fix Sort Select
 - Re-formated Settings.xml

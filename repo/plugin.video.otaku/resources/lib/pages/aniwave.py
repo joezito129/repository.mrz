@@ -1,4 +1,3 @@
-import base64
 import json
 import pickle
 import re
@@ -7,7 +6,7 @@ import xbmc
 
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
-from resources.lib.ui import control, database
+from resources.lib.ui import control, database, embed_extractor
 from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.indexers import malsync
 
@@ -16,9 +15,9 @@ class Sources(BrowserBase):
     _BASE_URL = 'https://aniwave.to/'
     aniwave_keys = control.getSetting('keys.aniwave')
     if aniwave_keys:
-        EKEY, DKEY = json.loads(aniwave_keys)
+        keys = json.loads(aniwave_keys)
     else:
-        EKEY = DKEY = None
+        keys = None
 
     def get_sources(self, anilist_id, episode):
         show = database.get_show(anilist_id)
@@ -27,7 +26,7 @@ class Sources(BrowserBase):
         title = self._clean_title(title)
 
         all_results = []
-        srcs = ['dub', 'softsub', 'sub']
+        srcs = ['dub', 'sub', 'softsub']
         if control.getSetting('general.source') == 'Sub':
             srcs.remove('dub')
         elif control.getSetting('general.source') == 'Dub':
@@ -135,32 +134,31 @@ class Sources(BrowserBase):
         return sources
 
     @staticmethod
-    def arc4(key, data):
-        l_key = len(key)
-        S = [i for i in range(256)]
-        j = 0
-        out = bytearray()
-        app = out.append
-
-        for i in range(256):
-            j = (j + S[i] + key[i % l_key]) % 256
-            S[i], S[j] = S[j], S[i]
-
-        i = j = 0
-        for c in data:
-            i = (i + 1) % 256
-            j = (j + S[i]) % 256
-            S[i], S[j] = S[j], S[i]
-            app(c ^ S[(S[i] + S[j]) % 256])
-        return out
-
-    def generate_vrf(self, content_id, key=EKEY):
-        vrf = self.arc4(bytes(key.encode(encoding='latin-1')), bytes(parse.quote(content_id).encode(encoding='latin-1')))
-        vrf = base64.b64encode(vrf).decode()
-        vrf = vrf.replace('/', '_').replace('+', '-')
+    def generate_vrf(content_id):
+        vrf = embed_extractor.vrf_shift(content_id, "AP6GeR8H0lwUz1", "UAz8Gwl10P6ReH")
+        vrf = embed_extractor.arc4(bytes("ItFKjuWokn4ZpB".encode('latin-1')), bytes(vrf.encode('latin-1')))
+        vrf = embed_extractor.serialize_text(vrf)
+        vrf = embed_extractor.arc4(bytes("fOyt97QWFB3".encode('latin-1')), bytes(vrf.encode('latin-1')))
+        vrf = embed_extractor.serialize_text(vrf)
+        vrf = embed_extractor.vrf_shift(vrf, "1majSlPQd2M5", "da1l2jSmP5QM")
+        vrf = embed_extractor.vrf_shift(vrf, "CPYvHj09Au3", "0jHA9CPYu3v")
+        vrf = vrf[::-1]
+        vrf = embed_extractor.arc4(bytes("736y1uTJpBLUX".encode('latin-1')), bytes(vrf.encode('latin-1')))
+        vrf = embed_extractor.serialize_text(vrf)
+        vrf = embed_extractor.serialize_text(vrf)
         return vrf
 
-    def decrypt_vrf(self, text, key=DKEY):
-        data = self.arc4(bytes(key.encode(encoding='latin-1')), base64.urlsafe_b64decode(bytes(text.encode(encoding='latin-1'))))
-        data = parse.unquote(data.decode())
-        return data
+    @staticmethod
+    def decrypt_vrf(text):
+        text = embed_extractor.deserialize_text(text)
+        text = embed_extractor.deserialize_text(text.decode())
+        text = embed_extractor.arc4(bytes("736y1uTJpBLUX".encode('latin-1')), text)
+        text = text[::-1]
+        text = embed_extractor.vrf_shift(text, "0jHA9CPYu3v", "CPYvHj09Au3")
+        text = embed_extractor.vrf_shift(text, "da1l2jSmP5QM", "1majSlPQd2M5")
+        text = embed_extractor.deserialize_text(text)
+        text = embed_extractor.arc4(bytes("fOyt97QWFB3".encode('latin-1')), text)
+        text = embed_extractor.deserialize_text(text)
+        text = embed_extractor.arc4(bytes("ItFKjuWokn4ZpB".encode('latin-1')), text)
+        text = embed_extractor.vrf_shift(text, "UAz8Gwl10P6ReH", "AP6GeR8H0lwUz1")
+        return text

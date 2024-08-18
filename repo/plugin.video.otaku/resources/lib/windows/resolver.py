@@ -76,9 +76,9 @@ class Resolver(BaseWindow):
             if self.canceled:
                 break
             debrid_provider = i.get('debrid_provider', 'None').replace('_', ' ')
-            self.setProperty('release_title', str(i['release_title']))
             self.setProperty('debrid_provider', debrid_provider)
             self.setProperty('source_provider', i['provider'])
+            self.setProperty('release_title', str(i['release_title']))
             self.setProperty('source_resolution', source_utils.res[i['quality']])
             self.setProperty('source_info', " ".join(i['info']))
             self.setProperty('source_type', i['type'])
@@ -133,7 +133,6 @@ class Resolver(BaseWindow):
 
         if not self.return_data['linkinfo']:
             self.return_data = False
-        xbmc.sleep(5000)
         if self.play and isinstance(self.return_data, dict):
             if self.source_select_close:
                 self.source_select_close()

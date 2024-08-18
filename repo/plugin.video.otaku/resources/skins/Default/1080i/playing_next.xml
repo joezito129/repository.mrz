@@ -108,7 +108,6 @@
 							<textcolor>eeffffff</textcolor>
 							<shadowcolor>00000000</shadowcolor>
 							<label>[COLOR deepskyblue]$INFO[Window.Property(item.info.title)][/COLOR]</label>
-							<visible>!String.IsEmpty(Window.Property(item.info.title))</visible>
 						</control>
 					</control>
 					<!-- Buttons -->

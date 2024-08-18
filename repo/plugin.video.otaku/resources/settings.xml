@@ -267,7 +267,7 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="context.otaku.markaswatched" type="boolean" label="30508" help="">
+                <setting id="context.otaku.markedaswatched" type="boolean" label="30508" help="">
                     <level>0</level>
                     <default>true</default>
                     <control type="toggle"/>
@@ -1009,7 +1009,7 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="contentorigin.menu" type="string" label="30371" help="">
+                <setting id="watchlist.update.flavor" type="string" label="30371" help="">
                     <level>0</level>
                     <default>MAL</default>
                     <constraints>
@@ -1418,8 +1418,7 @@
                     <level>3</level>
                     <default>Disabled</default>
                     <enable>false</enable>
-                        <control type="edit" format="string">
-                    </control>
+                    <control type="edit" format="string"/>
                 </setting>
             </group>
 

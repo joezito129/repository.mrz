@@ -302,7 +302,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
     elif content_type == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, True, False, True)
-    xbmc.sleep(200)
+    xbmc.sleep(100)
     if content_type == 'episodes':
         for _ in range(20):
             if xbmc.getCondVisibility("Container.HasFiles"):

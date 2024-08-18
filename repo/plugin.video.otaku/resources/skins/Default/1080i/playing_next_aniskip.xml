@@ -84,7 +84,6 @@
 						<textcolor>eeffffff</textcolor>
 						<shadowcolor>00000000</shadowcolor>
 						<label>Playing in [COLOR deepskyblue]$INFO[Player.TimeRemaining,,][/COLOR]</label>
-						<visible>!Integer.IsGreater(Player.TimeRemaining,149)</visible>
 					</control>
 					<control type="label">
 						<width>auto</width>
@@ -94,7 +93,6 @@
 						<textcolor>eeffffff</textcolor>
 						<shadowcolor>00000000</shadowcolor>
 						<label>$ADDON[service.upnext 30008]</label>
-						<visible>Integer.IsGreater(Player.TimeRemaining,149)</visible>
 					</control>
 					<!-- Details -->
 					<control type="grouplist">
@@ -111,7 +109,6 @@
 							<textcolor>eeffffff</textcolor>
 							<shadowcolor>00000000</shadowcolor>
 							<label>[COLOR deepskyblue]$INFO[Window.Property(item.info.title)][/COLOR]</label>
-							<visible>!String.IsEmpty(Window.Property(item.info.title))</visible>
 						</control>
 					</control>
 					<!-- Buttons -->

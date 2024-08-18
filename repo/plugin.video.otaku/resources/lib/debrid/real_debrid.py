@@ -168,6 +168,7 @@ class RealDebrid:
 
     def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
         hashCheck = requests.get(f'{self.BaseUrl}/torrents/instantAvailability/{hash_}', headers=self.__headers()).json()
+        stream_link = None
         for _ in hashCheck[hash_]['rd']:
             torrent = self.addMagnet(magnet)
             self.torrentSelect(torrent['id'])
@@ -182,9 +183,7 @@ class RealDebrid:
                         link = files['links'][file_index]
                         stream_link = self.resolve_hoster(link)
                     except IndexError:
-                        stream_link = None
-                else:
-                    stream_link = None
+                        pass
             elif len(selected_files) == 1:
                 stream_link = self.resolve_hoster(files['links'][0])
             elif len(selected_files) > 1:
@@ -195,11 +194,7 @@ class RealDebrid:
                         link = files['links'][file_index]
                         stream_link = self.resolve_hoster(link)
                     except IndexError:
-                        stream_link = None
-                else:
-                    stream_link = None
-            else:
-                stream_link = None
+                        pass
             self.deleteTorrent(torrent['id'])
             return stream_link
 
@@ -221,6 +216,7 @@ class RealDebrid:
                 control.notify(heading, "The souce is downloading to your cloud")
                 return
             while torrent['status'] != 'downloaded':
+                xbmc.sleep(1000)
                 if control.progressDialog.iscanceled() or control.abort_requested():
                     break
                 torrent = self.torrentInfo(torrent['id'])
@@ -230,7 +226,6 @@ class RealDebrid:
             Speed: {source_utils.get_size(torrent.get('speed', 0))}
 '''
                 control.progressDialog.update(int(torrent.get('progress', 0)), f_body)
-                xbmc.sleep(1000)
         control.progressDialog.close()
         if torrent['status'] == 'downloaded':
             torrent_files = [selected for selected in torrent['files'] if selected['selected'] == 1]

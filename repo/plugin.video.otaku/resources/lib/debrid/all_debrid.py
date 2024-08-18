@@ -31,10 +31,10 @@ class AllDebrid:
         xbmc.sleep(5000)
         control.progressDialog.update(100)
         while not auth_complete and not expiry <= 0 and not control.progressDialog.iscanceled():
+            xbmc.sleep(1000)
             auth_complete, expiry = self.poll_auth(check=resp['check'], pin=resp['pin'])
             progress_percent = 100 - int((float(pin_ttl - expiry) / pin_ttl) * 100)
             control.progressDialog.update(progress_percent)
-            xbmc.sleep(1000)
         control.progressDialog.close()
         params = {
             'agent': self.agent_identifier,

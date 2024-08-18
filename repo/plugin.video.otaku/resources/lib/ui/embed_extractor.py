@@ -16,6 +16,73 @@ _EMBED_EXTRACTORS = {}
 _EDGE_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.62'
 
 
+def arc4(t, n):
+    u = 0
+    h = ''
+    s = list(range(256))
+    for e in range(256):
+        x = t[e % len(t)]
+        u = (u + s[e] + (x if isinstance(x, int) else ord(x))) % 256
+        s[e], s[u] = s[u], s[e]
+
+    e = u = 0
+    for c in range(len(n)):
+        e = (e + 1) % 256
+        u = (u + s[e]) % 256
+        s[e], s[u] = s[u], s[e]
+        h += chr((n[c] if isinstance(n[c], int) else ord(n[c])) ^ s[(s[e] + s[u]) % 256])
+    return h
+
+
+def serialize_text(input):
+    input = base64.b64encode(bytes(input.encode('latin-1'))).decode()
+    input = input.replace('/', '_').replace('+', '-')
+    return input
+
+
+def deserialize_text(input):
+    input = input.replace('_', '/').replace('-', '+')
+    input = base64.b64decode(input)
+    return input
+
+
+def vrf_shift(vrf, k1, k2):
+    lut = {}
+    for i in range(len(k1)):
+        lut[k1[i]] = k2[i]
+    svrf = ''
+    for c in vrf:
+        svrf += lut[c] if c in lut.keys() else c
+    return svrf
+
+def generate_vrf(content_id):
+    vrf = vrf_shift(content_id, "AP6GeR8H0lwUz1", "UAz8Gwl10P6ReH")
+    vrf = arc4(bytes("ItFKjuWokn4ZpB".encode('latin-1')), bytes(vrf.encode('latin-1')))
+    vrf = serialize_text(vrf)
+    vrf = arc4(bytes("fOyt97QWFB3".encode('latin-1')), bytes(vrf.encode('latin-1')))
+    vrf = serialize_text(vrf)
+    vrf = vrf_shift(vrf, "1majSlPQd2M5", "da1l2jSmP5QM")
+    vrf = vrf_shift(vrf, "CPYvHj09Au3", "0jHA9CPYu3v")
+    vrf = vrf[::-1]
+    vrf = arc4(bytes("736y1uTJpBLUX".encode('latin-1')), bytes(vrf.encode('latin-1')))
+    vrf = serialize_text(vrf)
+    vrf = serialize_text(vrf)
+    return vrf
+
+def decrypt_vrf(text):
+    text = deserialize_text(text)
+    text = deserialize_text(text.decode())
+    text = arc4(bytes("736y1uTJpBLUX".encode('latin-1')), text)
+    text = text[::-1]
+    text = vrf_shift(text, "0jHA9CPYu3v", "CPYvHj09Au3")
+    text = vrf_shift(text, "da1l2jSmP5QM", "1majSlPQd2M5")
+    text = deserialize_text(text)
+    text = arc4(bytes("fOyt97QWFB3".encode('latin-1')), text)
+    text = deserialize_text(text)
+    text = arc4(bytes("ItFKjuWokn4ZpB".encode('latin-1')), text)
+    text = vrf_shift(text, "UAz8Gwl10P6ReH", "AP6GeR8H0lwUz1")
+    return text
+
 def load_video_from_url(in_url):
     found_extractor = None
 
@@ -101,55 +168,61 @@ def __extract_lulu(url, page_content, referer=None):
 
 
 def __extract_vidplay(slink, page_content, referer=None):
-    def dex(key, data, encode=True):
-        x = 0
-        ct = ''
-        y = list(range(256))
-        for r_ in range(256):
-            u = key[r_ % len(key)]
-            x = (x + y[r_] + (u if isinstance(u, int) else ord(u))) % 256
-            y[r_], y[x] = y[x], y[r_]
+    def generate_mid(content_id):
+        vrf = arc4(bytes("V4pBzCPyMSwqx".encode('latin-1')), bytes(content_id.encode('latin-1')))
+        vrf = serialize_text(vrf)
+        vrf = vrf_shift(vrf, "4pjVI6otnvxW", "Ip64xWVntvoj")
+        vrf = vrf[::-1]
+        vrf = vrf_shift(vrf, "kHWPSL5RKG9Ei8Q", "REG859WSLiQkKHP")
+        vrf = arc4(bytes("eLWogkrHstP".encode('latin-1')), bytes(vrf.encode('latin-1')))
+        vrf = serialize_text(vrf)
+        vrf = vrf[::-1]
+        vrf = arc4(bytes("bpPVcKMFJXq".encode('latin-1')), bytes(vrf.encode('latin-1')))
+        vrf = serialize_text(vrf)
+        vrf = vrf_shift(vrf, "VtravPeTH34OUog", "OeaTrt4H3oVgvPU")
+        vrf = vrf[::-1]
+        vrf = serialize_text(vrf)
+        return vrf
 
-        s_ = 0
-        x = 0
-        for r_ in range(len(data)):
-            s_ = (s_ + 1) % 256
-            x = (x + y[s_]) % 256
-            y[s_], y[x] = y[x], y[s_]
-            ct += chr((data[r_] if isinstance(data[r_], int) else ord(data[r_])) ^ y[(y[s_] + y[x]) % 256])
-
-        if encode:
-            ct = base64.b64encode(bytes(ct.encode(encoding='latin-1'))).decode().replace('/', '_').replace('+', '-')
-        return ct
-
-    def encode_id(key_, id_):
-        v = dex(key_, id_)
-        return v
-
-    def decode_vurl(key, eurl):
-        eurl = eurl.replace('_', '/').replace('-', '+')
-        if len(eurl) % 4 != 0:
-            eurl = eurl + (4 - (len(eurl) % 4)) * '='
-        url = dex(key, base64.b64decode(eurl), encode=False)
-        url = parse.unquote(url)
-        return url
+    def decode_vurl(text):
+        res = deserialize_text(text)
+        res = res.decode()
+        res = res[::-1]
+        res = vrf_shift(res, "OeaTrt4H3oVgvPU", "VtravPeTH34OUog")
+        res = deserialize_text(res)
+        res = arc4("bpPVcKMFJXq", res)
+        res = res[::-1]
+        res = deserialize_text(res)
+        res = arc4("eLWogkrHstP", res)
+        res = vrf_shift(res, "REG859WSLiQkKHP", "kHWPSL5RKG9Ei8Q")
+        res = res[::-1]
+        res = vrf_shift(res, "Ip64xWVntvoj", "4pjVI6otnvxW")
+        res = deserialize_text(res)
+        res = arc4("V4pBzCPyMSwqx", res)
+        return res
 
 
     headers = {
         'User-Agent': _EDGE_UA,
         'Referer': slink
     }
-    ek1, ek2, dk = json.loads(control.getSetting('keys.vidplay'))
+
+    # keys = json.loads(control.getSetting('keys.vidplay'))
     mid = slink.split('?')[0].split('/')[-1]
-    m = encode_id(ek1, mid)
-    h = encode_id(ek2, mid)
+    m = generate_mid(mid)
+    h = serialize_text(arc4("BvxAphQAmWO9BIJ8", mid))
     murl = parse.urljoin(slink, '/mediainfo/{}?{}&h={}'.format(m, slink.split('?')[-1], h))
     s = requests.get(murl, headers=headers).json()
-    s = json.loads(decode_vurl(dk, s.get("result")))
+    s = json.loads(decode_vurl(s.get("result")))
     if isinstance(s, dict):
         uri = s.get('sources')[0].get('file')
         rurl = parse.urljoin(murl, '/')
         uri += '|Referer={0}&Origin={1}&User-Agent=iPad'.format(rurl, rurl[:-1])
+        subs = s.get('tracks')
+        if subs:
+            subs = [{'url': x.get('file'), 'lang': x.get('label')} for x in subs if x.get('kind') == 'captions']
+            if subs:
+                uri = {'url': uri, 'subs': subs}
         return uri
 
 
