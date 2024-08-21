@@ -59,8 +59,10 @@ def WATCHLIST_TO_EP(payload, params):
     if mal_id:
         show_meta = database.get_show_mal(mal_id)
         if not show_meta:
-            anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
-            show_meta = AniListBrowser().get_anilist(anilist_id)
+            show_meta = AniListBrowser().get_mal_to_anilist(mal_id)
+            if not show_meta:
+                anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
+                show_meta = AniListBrowser().get_anilist(anilist_id)
     else:
         show_meta = database.get_show(anilist_id)
     anilist_id = show_meta['anilist_id']

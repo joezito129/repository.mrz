@@ -16,6 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# import time
+# t0 = time.perf_counter_ns()
+
 import pickle
 
 from resources.lib.AniListBrowser import AniListBrowser
@@ -192,7 +195,7 @@ def PLAY_MOVIE(payload, params):
 
     sources = OtakuBrowser.get_sources(anilist_id, 1, 'movie', rescrape, source_select)
     _mock_args = {'anilist_id': anilist_id, 'episode': 1, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
-
+    control.playList.clear()
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
@@ -328,8 +331,7 @@ def TOOLS_MENU(payload, params):
 # ### Maintenance ###
 @Route('settings')
 def SETTINGS(payload, params):
-    import xbmcaddon
-    xbmcaddon.Addon().openSettings()
+    control.ADDON.openSettings()
 
 
 @Route('change_log')
@@ -438,8 +440,6 @@ def TOGGLE_LANGUAGE_INVOKER(payload, params):
 
 
 if __name__ == "__main__":
-    # import time
-    # t0 = time.perf_counter_ns()
 
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(control.playList) > 0:

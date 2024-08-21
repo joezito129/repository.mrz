@@ -25,7 +25,6 @@ class Sources(GetSources):
 
         self.torrents_qual_len = [0, 0, 0, 0]
         self.embeds_qual_len = [0, 0, 0, 0]
-        self.silent = False
         self.return_data = []
         self.progress = 1
         self.threads = []

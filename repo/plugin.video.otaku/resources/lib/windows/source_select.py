@@ -102,7 +102,7 @@ class SourceSelect(BaseWindow):
             )
             self.position = self.display_list.getSelectedPosition()
             if context == 0:  # Play
-                self.resolve_item(False)
+                self.resolve_item()
             elif context == 1:  # Download
                 if not self.sources[self.position]['debrid_provider']:
                     control.notify(control.ADDON_NAME, "Please Select A Debrid File")
@@ -121,8 +121,10 @@ class SourceSelect(BaseWindow):
                     self.resolve_item(True)
 
         if actionID in [92, 10]:
+            control.playList.clear()
             self.stream_link = False
             self.close()
+
 
     def resolve_item(self, pack_select=False):
         if control.getSetting('general.autotrynext') == 'true' and not pack_select:

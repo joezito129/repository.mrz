@@ -89,7 +89,7 @@ class WatchlistPlayer(player):
         for inx in range(30):
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
-            xbmc.sleep(500)
+            xbmc.sleep(250)
         if not self.isPlayingVideo():
             return
 

@@ -57,6 +57,7 @@ class Resolver(BaseWindow):
         self.source_select_close = actionArgs.get('close')
         self.resume_time = actionArgs.get('resume_time')
         self.context = actionArgs.get('context')
+        self.silent = actionArgs.get('silent')
 
     def onInit(self):
         self.resolve(self.sources)
@@ -162,7 +163,6 @@ class Resolver(BaseWindow):
                 xbmc.Player().play(control.playList, item)
             else:
                 xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
-
             monitor = Monitor()
             for _ in range(30):
                 monitor.waitForAbort(.5)
@@ -260,7 +260,12 @@ This source is not cached would you like to cache it now?
         self.setProperty('source_type', self.sources[0]['type'])
         self.setProperty('source_size', self.sources[0]['size'])
         self.setProperty('source_seeders', str(self.sources[0].get('seeders', '')))
-        super(Resolver, self).doModal()
+        if self.silent:
+            if self.source_select_close:
+                self.source_select_close()
+            self.resolve(sources)
+        else:
+            super(Resolver, self).doModal()
         control.setSetting('last_played', self.sources[0]['release_title'])
         return self.return_data
 
