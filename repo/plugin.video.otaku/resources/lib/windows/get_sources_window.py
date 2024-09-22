@@ -12,6 +12,7 @@ class GetSources(BaseWindow):
         self.setProperty('process_started', 'false')
         self.setProperty('progress', '0')
 
+        self.silent = actionArgs.get('silent')
         self.canceled = False
         self.return_data = []
         self.args = actionArgs
@@ -30,23 +31,27 @@ class GetSources(BaseWindow):
         threading.Thread(target=self.getSources, args=[self.args]).start()
 
     def doModal(self):
-        super(GetSources, self).doModal()
+        if self.silent:
+            self.getSources(self.args)
+        else:
+            super(GetSources, self).doModal()
         return self.return_data
 
     def getSources(self, args):
-        """
-        Entry Point for initiating scraping
-        :param args:
-        :return:
-        """
+        self.setProperty('process_started', 'true')
+        if not self.silent:
+            self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
+                control.colorstr(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
+                control.colorstr(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
+                control.colorstr(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
+                control.colorstr(self.torrents_qual_len[3] + self.embeds_qual_len[3]),
+            ))
+        self.close()
 
     def onAction(self, action):
         actionID = action.getId()
         if actionID in [92, 10]:
             self.canceled = True
-
-    def close(self):
-        control.dialogWindow.close(self)
 
     def update_properties(self, text):
         self.setProperty('notification_text', str(text))
@@ -68,3 +73,4 @@ class GetSources(BaseWindow):
         self.remaining_providers_list.addItems(self.remainingProviders)
         self.setProperty("remaining_providers_list", control.colorstr(' | ').join([i.upper() for i in self.remainingProviders]))
         self.setProperty('progress', str(self.progress))
+

@@ -303,22 +303,12 @@
             <group id="2" label="30333" help="">
                 <setting id="provider.hianime" type="boolean" label="30402" help="">
                     <level>0</level>
-                    <default>true</default>
+                    <default>false</default>
                     <control type="toggle"/>
                 </setting>
                 <setting id="provider.gogo" type="boolean" label="30403" help="">
                     <level>0</level>
                     <default>true</default>
-                    <control type="toggle"/>
-                </setting>
-                <setting id="provider.aniwave" type="boolean" label="30404" help="">
-                    <level>0</level>
-                    <default>false</default>
-                    <control type="toggle"/>
-                </setting>
-                <setting id="provider.animixplay" type="boolean" label="30405" help="">
-                    <level>0</level>
-                    <default>false</default>
                     <control type="toggle"/>
                 </setting>
             </group>

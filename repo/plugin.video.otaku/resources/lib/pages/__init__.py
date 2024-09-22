@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, animixplay, aniwave, gogoanime, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -19,7 +19,7 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
         super(Sources, self).__init__(xml_file, location, actionargs)
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['animixplay', 'aniwave', 'gogo', 'hianime']
+        self.embedProviders = ['gogo', 'hianime']
         self.otherProviders = ['Local Files']
         self.remainingProviders = self.embedProviders + self.torrentProviders + self.otherProviders
 
@@ -46,17 +46,14 @@ class Sources(GetSources):
         rescrape = args['rescrape']
         # source_select = args['source_select']
         get_backup = args['get_backup']
+
         self.setProperty('process_started', 'true')
 
         # set skipintro times to -1 before scraping
-        control.setSetting('aniwave.skipintro.start', '-1')
-        control.setSetting('aniwave.skipintro.end', '-1')
         control.setSetting('hianime.skipintro.start', '-1')
         control.setSetting('hianime.skipintro.end', '-1')
 
         # set skipoutro times to -1 before scraping
-        control.setSetting('aniwave.skipoutro.start', '-1')
-        control.setSetting('aniwave.skipoutro.end', '-1')
         control.setSetting('hianime.skipoutro.start', '-1')
         control.setSetting('hianime.skipoutro.end', '-1')
 
@@ -99,20 +96,6 @@ class Sources(GetSources):
         else:
             self.remainingProviders.remove('hianime')
 
-        if control.getBool('provider.animixplay'):
-            t = threading.Thread(target=self.animixplay_worker, args=(anilist_id, episode, rescrape))
-            t.start()
-            self.threads.append(t)
-        else:
-            self.remainingProviders.remove('animixplay')
-
-        if control.getBool('provider.aniwave'):
-            t = threading.Thread(target=self.aniwave_worker, args=(anilist_id, episode, rescrape))
-            t.start()
-            self.threads.append(t)
-        else:
-            self.remainingProviders.remove('aniwave')
-
         if control.getBool('provider.gogo'):
             t = threading.Thread(target=self.gogo_worker, args=(anilist_id, episode, rescrape, get_backup))
             t.start()
@@ -125,13 +108,14 @@ class Sources(GetSources):
         runtime = 0
 
         while runtime < timeout:
-            self.updateProgress()
-            self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
-                control.colorstr(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
-                control.colorstr(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
-                control.colorstr(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
-                control.colorstr(self.torrents_qual_len[3] + self.embeds_qual_len[3])
-            ))
+            if not self.silent:
+                self.updateProgress()
+                self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
+                    control.colorstr(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
+                    control.colorstr(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
+                    control.colorstr(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
+                    control.colorstr(self.torrents_qual_len[3] + self.embeds_qual_len[3])
+                ))
             xbmc.sleep(500)
 
             if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.settingids.terminateoncloud and len(self.cloud_files) > 0:
@@ -173,22 +157,6 @@ class Sources(GetSources):
                 control.setSetting('hianime.skipoutro.end', str(x['skip']['outro']['end']))
         self.remainingProviders.remove('hianime')
 
-    def animixplay_worker(self, anilist_id, episode, rescrape):
-        self.embedSources += database.get_(animixplay.Sources().get_sources, 8, anilist_id, episode, key='animixplay')
-        self.remainingProviders.remove('animixplay')
-
-    def aniwave_worker(self, anilist_id, episode, rescrape):
-        aniwave_sources = database.get_(aniwave.Sources().get_sources, 8, anilist_id, episode, key='aniwave')
-        self.embedSources += aniwave_sources
-        for x in aniwave_sources:
-            if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
-                control.setSetting('aniwave.skipintro.start', str(x['skip']['intro']['start']))
-                control.setSetting('aniwave.skipintro.end', str(x['skip']['intro']['end']))
-            if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
-                control.setSetting('aniwave.skipoutro.start', str(x['skip']['outro']['start']))
-                control.setSetting('aniwave.skipoutro.end', str(x['skip']['outro']['end']))
-        self.remainingProviders.remove('aniwave')
-
     def gogo_worker(self, anilist_id, episode, rescrape, get_backup):
         self.embedSources += database.get_(gogoanime.Sources().get_sources, 8, anilist_id, episode, get_backup, key='gogoanime')
         self.remainingProviders.remove('gogo')
@@ -208,7 +176,8 @@ class Sources(GetSources):
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
-    def sortSources(self, torrent_list, embed_list, cloud_files, other_list):
+    @staticmethod
+    def sortSources(torrent_list, embed_list, cloud_files, other_list):
         all_list = torrent_list + embed_list + cloud_files + other_list
         sortedList = [x for x in all_list if x['quality'] <= int(control.getSetting('general.maxResolution'))]
 

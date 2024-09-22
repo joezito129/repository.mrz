@@ -161,6 +161,7 @@ def PLAY(payload, params):
             return control.exit_code()
         elif context == 1:
             resume_time = None
+
     sources = OtakuBrowser.get_sources(anilist_id, episode, 'show', rescrape, source_select)
     _mock_args = {"anilist_id": anilist_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:

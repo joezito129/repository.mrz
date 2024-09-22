@@ -15,7 +15,6 @@ def search_history(search_array):
     result = [utils.allocate_item("New Search", "search//1", True, False, 'new_search.png')]
     result += list(map(parse_history_view, search_array))
     result.append(utils.allocate_item("Clear Search History...", "clear_search_history", False, False, 'clear_search_history.png'))
-
     return result
 
 
@@ -97,7 +96,7 @@ def get_anime_init(anilist_id):
     return data
 
 
-def get_sources(anilist_id, episode, media_type, rescrape=False, source_select=False):
+def get_sources(anilist_id, episode, media_type, rescrape=False, source_select=False, silent=False):
     if not (show := database.get_show(anilist_id)):
         from resources.lib.AniListBrowser import AniListBrowser
         show = AniListBrowser().get_anilist(anilist_id)
@@ -110,7 +109,8 @@ def get_sources(anilist_id, episode, media_type, rescrape=False, source_select=F
         'media_type': media_type,
         'rescrape': rescrape,
         'get_backup': get_backup,
-        'source_select': source_select
+        'source_select': source_select,
+        'silent': silent
     }
     sources = pages.getSourcesHelper(actionArgs)
     return sources

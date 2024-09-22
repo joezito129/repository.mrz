@@ -7,6 +7,8 @@ from resources.lib.indexers import aniskip
 playList = control.playList
 player = xbmc.Player
 
+# from resources.lib import OtakuBrowser
+
 
 class WatchlistPlayer(player):
     def __init__(self):
@@ -45,7 +47,6 @@ class WatchlistPlayer(player):
 
         # process skip times
         self.process_hianime()
-        self.process_aniwave()
         self.process_aniskip()
 
         self.keepAlive()
@@ -113,7 +114,7 @@ class WatchlistPlayer(player):
                     break
                 xbmc.sleep(1000)
         self.onWatchedPercent()
-
+        # OtakuBrowser.get_sources(self.anilist_id, str(self.episode), self.media_type, silent=True)
         endpoint = int(control.getSetting('playingnext.time')) if control.getBool('smartplay.playingnextdialog') else 0
         if endpoint != 0:
             while self.isPlaying():
@@ -122,6 +123,7 @@ class WatchlistPlayer(player):
                     PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
                     break
                 xbmc.sleep(5000)
+
 
     def process_aniskip(self):
         if self.skipintro_aniskip_enable:
@@ -140,21 +142,6 @@ class WatchlistPlayer(player):
                 skip_times = skipoutro_aniskip_res['results'][0]['interval']
                 self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset
                 self.skipoutro_end = int(skip_times['endTime']) + self.skipoutro_offset
-                self.skipoutro_aniskip = True
-
-    def process_aniwave(self):
-        if self.skipintro_aniskip_enable:
-            aniwave_skipintro_start = int(control.getSetting('aniwave.skipintro.start'))
-            if aniwave_skipintro_start != -1:
-                self.skipintro_start = aniwave_skipintro_start + self.skipintro_offset
-                self.skipintro_end = int(control.getSetting('aniwave.skipintro.end')) + self.skipintro_offset
-                self.skipintro_aniskip = True
-
-        if self.skipoutro_aniskip_enable:
-            aniwave_skipoutro_start = int(control.getSetting('aniwave.skipoutro.start'))
-            if aniwave_skipoutro_start != -1:
-                self.skipoutro_start = aniwave_skipoutro_start + self.skipoutro_offset
-                self.skipoutro_end = int(control.getSetting('aniwave.skipoutro.end')) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
 
     def process_hianime(self):
