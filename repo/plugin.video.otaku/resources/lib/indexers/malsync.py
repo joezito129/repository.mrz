@@ -5,7 +5,7 @@ baseUrl = 'https://api.malsync.moe'
 
 def get_slugs(anilist_id, site=''):
     slugs = []
-    if site in ['9anime', 'Gogoanime', 'Zoro']:
+    if site in ['Gogoanime', 'Zoro']:
         r = requests.get(f'{baseUrl}/mal/anime/anilist:{anilist_id}')
         resp = r.json()['Sites'].get(site)
         if resp:

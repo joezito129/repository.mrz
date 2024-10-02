@@ -338,7 +338,6 @@ def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
 
 
 def get_view_type(viewtype):
-    # viewtypes = [50, 51, 53, 54, 55, 500, 501, 502]
     viewTypes = {
         'Default': 50,
         'Poster': 51,

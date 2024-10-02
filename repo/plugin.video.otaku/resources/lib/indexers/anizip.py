@@ -59,11 +59,12 @@ class ANIZIPAPI:
         if not code and control.settingids.filler:
             filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
         info['code'] = code
-        parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
 
+        parsed = utils.allocate_item(title, f"play/{url}", False, True, image, info, fanart, poster)
         kodi_meta = pickle.dumps(parsed)
-        if not episodes or not any(x['kodi_meta'] == kodi_meta for x in episodes):
-            database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler=filler)
+
+        if not episodes or kodi_meta != episodes[episode - 1]:
+            database.update_episode(anilist_id, season, episode, update_time, kodi_meta, filler)
 
         if control.settingids.clean_titles and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {episode}'
