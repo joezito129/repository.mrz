@@ -20,10 +20,10 @@
 
         <!-- Side Info -->
         <control type="group">
-            <top>100</top>
+            <top>120</top>
             <left>1400</left>
             <control type="label">
-                <top>-920</top>
+                <top>-900</top>
                 <width>400</width>
                 <font>font12</font>
                 <textcolor>AAFFFFFF</textcolor>
@@ -33,19 +33,17 @@
                 <label>Season: [COLOR deepskyblue]$INFO[Window().Property(item.info.season)] [/COLOR] | Episode: [COLOR deepskyblue]$INFO[Window().Property(item.info.episode)][/COLOR]</label>
             </control>
             <control type="image">
-                <width>500</width>
-                <height>500</height>
+                <width>400</width>
+                <height>600</height>
                 <top>50</top>
-                <left>-50</left>
-                <texture background="true">$INFO[Window().Property(item.art.thumb)]</texture>
+                <texture background="true">$INFO[Window().Property(item.art.poster)]</texture>
             </control>
 
             <control type="group">
-                <top>320</top>
+                <top>420</top>
                 <control type="label">
-                    <top>-100</top>
-                    <left>-50</left>
-                    <width>500</width>
+                    <top>20</top>
+                    <width>400</width>
                     <font>font14</font>
                     <textcolor>AAFFFFFF</textcolor>
                     <align>center</align>
@@ -55,7 +53,7 @@
                     <label>[COLOR deepskyblue]$INFO[Window().Property(item.info.title)] [/COLOR]</label>
                 </control>
                 <control type="label">
-                    <top>30</top>
+                    <top>120</top>
                     <width>400</width>
                     <font>font12</font>
                     <textcolor>AAFFFFFF</textcolor>
@@ -65,7 +63,7 @@
                     <label>Year: [COLOR deepskyblue]$INFO[Window().Property(item.info.year)] [/COLOR] | Rating: [COLOR deepskyblue]$INFO[Window().Property(item.info.rating)][/COLOR]</label>
                 </control>
                 <control type="label">
-                    <top>0</top>
+                    <top>120</top>
                     <width>400</width>
                     <font>font12</font>
                     <textcolor>AAFFFFFF</textcolor>
@@ -77,18 +75,17 @@
 
                 <control type="textbox">
                     <wrapmultiline>true</wrapmultiline>
-                    <top>365</top>
+                    <top>360</top>
                     <left>-70</left>
-                    <height min="20" max="275">auto</height>
+                    <height min="20" max="130">auto</height>
                     <width>550</width>
                     <font>font12</font>
                     <textcolor>AAFFFFFF</textcolor>
                     <align>center</align>
-                    <autoscroll>true</autoscroll>
+                    <autoscroll delay="3000" time="2500" repeat="10000">true</autoscroll>
                     <label>$INFO[Window().Property(item.info.plot)]</label>
                 </control>
             </control>
-
         </control>
 
         <!-- Top Logo/picture  -->

@@ -13,13 +13,13 @@ from resources.lib.indexers import malsync
 class Sources(BrowserBase):
     _BASE_URL = 'https://gogoanime3.co/'
 
-    def get_sources(self, anilist_id, episode, get_backup):
-        show = database.get_show(anilist_id)
+    def get_sources(self, mal_id, episode, get_backup):
+        show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta.get('name')
         title = self._clean_title(title)
 
-        slugs = database.get_(malsync.get_slugs, 168, anilist_id=anilist_id, site='Gogoanime')
+        slugs = database.get_(malsync.get_slugs, 168, mal_id=mal_id, site='Gogoanime')
         if not slugs:
             headers = {'Referer': self._BASE_URL}
             params = {
@@ -52,7 +52,7 @@ class Sources(BrowserBase):
                     or (item.a.text.strip().replace(':', ' ') + '   ').startswith(title + '   ')
                 ]
             if not slugs:
-                slugs = database.get_(get_backup, 168, anilist_id, 'Gogoanime')
+                slugs = database.get_(get_backup, 168, mal_id, 'Gogoanime')
                 if not slugs:
                     return []
         slugs = list(slugs.keys()) if isinstance(slugs, dict) else slugs

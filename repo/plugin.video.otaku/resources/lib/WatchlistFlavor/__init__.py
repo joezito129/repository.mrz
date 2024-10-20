@@ -59,8 +59,8 @@ class WatchlistFlavor:
         return WatchlistFlavor.__instance_flavor(name).get_watchlist_status(status, next_up, offset, page)
 
     @staticmethod
-    def watchlist_anime_entry_request(anilist_id):
-        return WatchlistFlavor.get_update_flavor().get_watchlist_anime_entry(anilist_id)
+    def watchlist_anime_entry_request(mal_id):
+        return WatchlistFlavor.get_update_flavor().get_watchlist_anime_entry(mal_id)
 
     @staticmethod
     def login_request(flavor):
@@ -120,17 +120,17 @@ class WatchlistFlavor:
         return WatchlistFlavor.get_update_flavor().action_statuses()
 
     @staticmethod
-    def watchlist_update_episode(anilist_id, episode):
-        return WatchlistFlavor.get_update_flavor().update_num_episodes(anilist_id, episode)
+    def watchlist_update_episode(mal_id, episode):
+        return WatchlistFlavor.get_update_flavor().update_num_episodes(mal_id, episode)
 
     @staticmethod
-    def watchlist_set_status(anilist_id, status):
-        return WatchlistFlavor.get_update_flavor().update_list_status(anilist_id, status)
+    def watchlist_set_status(mal_id, status):
+        return WatchlistFlavor.get_update_flavor().update_list_status(mal_id, status)
 
     @staticmethod
-    def watchlist_set_score(anilist_id, score):
-        return WatchlistFlavor.get_update_flavor().update_score(anilist_id, score)
+    def watchlist_set_score(mal_id, score):
+        return WatchlistFlavor.get_update_flavor().update_score(mal_id, score)
 
     @staticmethod
-    def watchlist_delete_anime(anilist_id):
-        return WatchlistFlavor.get_update_flavor().delete_anime(anilist_id)
+    def watchlist_delete_anime(mal_id):
+        return WatchlistFlavor.get_update_flavor().delete_anime(mal_id)

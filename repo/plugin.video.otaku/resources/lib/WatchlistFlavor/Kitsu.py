@@ -6,6 +6,8 @@ from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBas
 from resources.lib.indexers.simkl import SIMKLAPI
 from urllib import parse
 
+from resources.lib.ui.divide_flavors import div_flavor
+
 
 class KitsuWLF(WatchlistFlavorBase):
     _URL = "https://kitsu.io/api"
@@ -119,9 +121,9 @@ class KitsuWLF(WatchlistFlavorBase):
             "page[offset]": offset,
             "sort": self.__get_sort(),
         }
-        return self._process_watchlist_view(url, params, next_up, f'watchlist_status_type_pages/kitsu/{status}', page)
+        return self.process_watchlist_view(url, params, next_up, f'watchlist_status_type_pages/kitsu/{status}', page)
 
-    def _process_watchlist_view(self, url, params, next_up, base_plugin_url, page):
+    def process_watchlist_view(self, url, params, next_up, base_plugin_url, page):
         result = requests.get(url, headers=self.__headers(), params=params)
         result = result.json()
         _list = result["data"]
@@ -141,10 +143,11 @@ class KitsuWLF(WatchlistFlavorBase):
         all_results += self.handle_paging(result['links'].get('next'), base_plugin_url, page)
         return all_results
 
-    def _base_watchlist_view(self, res, eres):
+    @div_flavor
+    def _base_watchlist_view(self, res, eres, mal_dub=None):
         kitsu_id = eres['id']
-        anilist_id = ''
-        mal_id = self._mapping_mal(kitsu_id)
+        mal_id = self.mapping_mal(kitsu_id)
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         info = {
             'plot': eres['attributes'].get('synopsis'),
@@ -163,7 +166,7 @@ class KitsuWLF(WatchlistFlavorBase):
             pass
 
         try:
-            info['rating'] = float(eres['attributes']['averageRating']) / 10
+            info['rating'] = {'score': float(eres['attributes']['averageRating']) / 10}
         except TypeError:
             pass
 
@@ -172,21 +175,23 @@ class KitsuWLF(WatchlistFlavorBase):
             "name": '%s - %d/%d' % (eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle']),
                                     res["attributes"]['progress'],
                                     eres["attributes"].get('episodeCount', 0) if eres["attributes"]['episodeCount'] else 0),
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["attributes"]["progress"]}',
+            "url": f'watchlist_to_ep/{mal_id}/{res["attributes"]["progress"]}',
             "image": poster_image.get('large', poster_image['original']),
             "info": info
         }
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
+            base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, True)
+            return utils.parse_view(base, False, True, dub)
 
-        return utils.parse_view(base, True, False)
+        return utils.parse_view(base, True, False, dub)
 
-    def _base_next_up_view(self, res, eres):
+    @div_flavor
+    def _base_next_up_view(self, res, eres, mal_dub=None):
         kitsu_id = eres['id']
-        mal_id = self._mapping_mal(kitsu_id)
+        mal_id = self.mapping_mal(kitsu_id)
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         progress = res["attributes"]['progress']
         next_up = progress + 1
@@ -196,7 +201,7 @@ class KitsuWLF(WatchlistFlavorBase):
         poster = image = eres["attributes"]['posterImage'].get('large', eres["attributes"]['posterImage']['original'])
         plot = aired = None
 
-        anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
+        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
             if next_up_meta.get('title'):
                 title = '%s - %s' % (title, next_up_meta['title'])
@@ -216,7 +221,7 @@ class KitsuWLF(WatchlistFlavorBase):
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["attributes"]["progress"]}',
+            "url": f'watchlist_to_ep/{mal_id}/{res["attributes"]["progress"]}',
             "image": image,
             "info": info,
             "fanart": image,
@@ -224,17 +229,17 @@ class KitsuWLF(WatchlistFlavorBase):
         }
 
         if next_up_meta:
-            base['url'] = 'play/%d/%d/' % (anilist_id, next_up)
-            return utils.parse_view(base, False, True)
+            base['url'] = 'play/%d/%d/' % (mal_id, next_up)
+            return utils.parse_view(base, False, True, dub)
 
         if eres['attributes']['subtype'] == 'movie' and eres['attributes']['episodeCount'] == 1:
-            base['url'] = f"play_movie/{anilist_id}/{mal_id}/"
+            base['url'] = f"play_movie/{mal_id}/"
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, True)
+            return utils.parse_view(base, False, True, dub)
 
-        return utils.parse_view(base, True, False)
+        return utils.parse_view(base, True, False, dub)
 
-    def _mapping_mal(self, kitsu_id):
+    def mapping_mal(self, kitsu_id):
         mal_id = ''
         for i in self._mapping:
             if i['attributes']['externalSite'] == 'myanimelist/anime':
@@ -244,7 +249,7 @@ class KitsuWLF(WatchlistFlavorBase):
         if not mal_id:
             ids = SIMKLAPI().get_mapping_ids('kitsu', kitsu_id)
             mal_id = ids['mal']
-            database.add_mapping_id(ids['anilist'], 'mal_id', mal_id)
+            database.add_mapping_id(mal_id, 'mal_id', mal_id)
         return mal_id
 
     def get_library_entries(self, kitsu_id):
@@ -256,8 +261,8 @@ class KitsuWLF(WatchlistFlavorBase):
         r = r.json()
         return r
 
-    def get_watchlist_anime_entry(self, anilist_id):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+    def get_watchlist_anime_entry(self, mal_id):
+        kitsu_id = self._get_mapping_id(mal_id, 'kitsu_id')
         if not kitsu_id:
             return {}
 
@@ -275,12 +280,11 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def save_completed(self):
         import json
-        from resources.lib.ui import database
         data = self.get_user_anime_list('completed')
         completed = {}
         for dat in data:
-            anilist_id = database.get_mappings(dat['relationships']['anime']['data']['id'], 'kitsu_id')['anilist_id']
-            completed[str(anilist_id)] = dat['attributes']['progress']
+            mal_id = self.mapping_mal(dat['relationships']['anime']['data']['id'])
+            completed[str(mal_id)] = dat['attributes']['progress']
 
         with open(control.completed_json, 'w') as file:
             json.dump(completed, file)
@@ -305,8 +309,8 @@ class KitsuWLF(WatchlistFlavorBase):
             data += res['data']
         return data
 
-    def update_list_status(self, anilist_id, status):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+    def update_list_status(self, mal_id, status):
+        kitsu_id = self._get_mapping_id(mal_id, 'kitsu_id')
         if not kitsu_id:
             return False
 
@@ -349,8 +353,8 @@ class KitsuWLF(WatchlistFlavorBase):
         r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
         return r.ok
 
-    def update_num_episodes(self, anilist_id, episode):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+    def update_num_episodes(self, mal_id, episode):
+        kitsu_id = self._get_mapping_id(mal_id, 'kitsu_id')
         if not kitsu_id:
             return False
 
@@ -396,8 +400,8 @@ class KitsuWLF(WatchlistFlavorBase):
         r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
         return r.ok
 
-    def update_score(self, anilist_id, score):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+    def update_score(self, mal_id, score):
+        kitsu_id = self._get_mapping_id(mal_id, 'kitsu_id')
         if not kitsu_id:
             return False
 
@@ -444,8 +448,8 @@ class KitsuWLF(WatchlistFlavorBase):
         r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
         return r.ok
 
-    def delete_anime(self, anilist_id):
-        kitsu_id = self._get_mapping_id(anilist_id, 'kitsu_id')
+    def delete_anime(self, mal_id):
+        kitsu_id = self._get_mapping_id(mal_id, 'kitsu_id')
         if not kitsu_id:
             return False
 

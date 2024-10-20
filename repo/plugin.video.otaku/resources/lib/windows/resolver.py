@@ -37,7 +37,6 @@ class Resolver(BaseWindow):
         self.return_data = {
             'link': None,
             'linkinfo': None,
-            'sub': None,
             'source': None
         }
         self.canceled = False
@@ -51,8 +50,8 @@ class Resolver(BaseWindow):
         }
         self.source_select = source_select
         self.pack_select = False
-        self.anilist_id = actionArgs['anilist_id']
-        self.episode = int(actionArgs['episode'])
+        self.mal_id = actionArgs['mal_id']
+        self.episode = int(actionArgs.get('episode', 1))
         self.play = actionArgs.get('play')
         self.source_select_close = actionArgs.get('close')
         self.resume_time = actionArgs.get('resume_time')
@@ -123,7 +122,8 @@ class Resolver(BaseWindow):
                 stream_link = i['hash']
                 self.return_data = {
                     'url': stream_link,
-                    'local': True
+                    'local': True,
+                    'headers': {}
                 }
                 break
 
@@ -139,7 +139,7 @@ class Resolver(BaseWindow):
                 self.source_select_close()
             linkInfo = self.return_data['linkinfo']
             item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
-            if self.return_data['sub']:
+            if self.return_data.get('sub'):
                 from resources.lib.ui import embed_extractor
                 embed_extractor.del_subs()
                 subtitles = []
@@ -156,7 +156,7 @@ class Resolver(BaseWindow):
 
             if self.context:
                 control.playList.add(linkInfo['url'], item)
-                playlist_info = OtakuBrowser.get_episodeList(self.anilist_id, self.episode)
+                playlist_info = OtakuBrowser.get_episodeList(self.mal_id, self.episode)
                 episode_info = playlist_info[self.episode - 1]
                 control.set_videotags(item, episode_info['info'])
                 item.setArt(episode_info['image'])
@@ -169,7 +169,7 @@ class Resolver(BaseWindow):
                 if monitor.abortRequested() or monitor.playbackerror or monitor.playing:
                     break
             self.close()
-            player.WatchlistPlayer().handle_player(self.anilist_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
+            player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
         else:
             self.close()
 
@@ -250,23 +250,24 @@ This source is not cached would you like to cache it now?
 
     def doModal(self, sources, args, pack_select):
         self.sources = sources
-        self.args = args
-        self.pack_select = pack_select
-        self.setProperty('release_title', str(self.sources[0]['release_title']))
-        self.setProperty('debrid_provider', self.sources[0].get('debrid_provider', 'None').replace('_', ' '))
-        self.setProperty('source_provider', self.sources[0]['provider'])
-        self.setProperty('source_resolution', source_utils.res[self.sources[0]['quality']])
-        self.setProperty('source_info', " ".join(self.sources[0]['info']))
-        self.setProperty('source_type', self.sources[0]['type'])
-        self.setProperty('source_size', self.sources[0]['size'])
-        self.setProperty('source_seeders', str(self.sources[0].get('seeders', '')))
-        if self.silent:
-            if self.source_select_close:
-                self.source_select_close()
-            self.resolve(sources)
-        else:
-            super(Resolver, self).doModal()
-        control.setSetting('last_played', self.sources[0]['release_title'])
+        if self.sources:
+            self.args = args
+            self.pack_select = pack_select
+            self.setProperty('release_title', str(self.sources[0]['release_title']))
+            self.setProperty('debrid_provider', self.sources[0].get('debrid_provider', 'None').replace('_', ' '))
+            self.setProperty('source_provider', self.sources[0]['provider'])
+            self.setProperty('source_resolution', source_utils.res[self.sources[0]['quality']])
+            self.setProperty('source_info', " ".join(self.sources[0]['info']))
+            self.setProperty('source_type', self.sources[0]['type'])
+            self.setProperty('source_size', self.sources[0]['size'])
+            self.setProperty('source_seeders', str(self.sources[0].get('seeders', '')))
+            if self.silent:
+                if self.source_select_close:
+                    self.source_select_close()
+                self.resolve(sources)
+            else:
+                super(Resolver, self).doModal()
+            control.setSetting('last_played', self.sources[0]['release_title'])
         return self.return_data
 
     def onAction(self, action):

@@ -30,21 +30,22 @@ kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
 
 cacheFile = os.path.join(dataPath, 'cache.db')
 searchHistoryDB = os.path.join(dataPath, 'search.db')
-anilistSyncDB = os.path.join(dataPath, 'anilistSync.db')
+malSyncDB = os.path.join(dataPath, 'malSync.db')
 mappingDB = os.path.join(dataPath, 'mappings.db')
 
 maldubFile = os.path.join(dataPath, 'mal_dub.json')
 downloads_json = os.path.join(dataPath, 'downloads.json')
 completed_json = os.path.join(dataPath, 'completed.json')
 
-OTAKU_LOGO2_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common', 'trans-goku-small.png')
+OTAKU_COMMON_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common')
+OTAKU_LOGO_SMALL = os.path.join(OTAKU_COMMON_PATH, 'trans-goku-small.png')
+OTAKU_LOGO_MEDIUM = os.path.join(OTAKU_COMMON_PATH, 'trans-goku.png')
 OTAKU_ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
 execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-
 
 def closeBusyDialog():
     if xbmc.getCondVisibility('Window.IsActive(busydialog)'):
@@ -58,7 +59,6 @@ def log(msg, level="info"):
         level = xbmc.LOGINFO
     elif level == 'warning':
         level = xbmc.LOGWARNING
-        print(msg)
     elif level == 'error':
         level = xbmc.LOGERROR
     else:
@@ -131,6 +131,13 @@ def getBool(key):
     return settings.getBool(key)
 
 
+def getInt(key):
+    return settings.getInt(key)
+
+def getString(key):
+    return settings.getString(key)
+
+
 def getSetting(key):
     return ADDON.getSetting(key)
 
@@ -188,7 +195,7 @@ def yesnocustom_dialog(title, text, customlabel='', nolabel='', yeslabel='', aut
     return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
-def notify(title, text, icon=OTAKU_LOGO2_PATH, time=5000, sound=True):
+def notify(title, text, icon=OTAKU_LOGO_MEDIUM, time=5000, sound=True):
     return xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -229,7 +236,7 @@ def set_videotags(li, info):
     if mpaa := info.get('mpaa'):
         vinfo.setMpaa(mpaa)
     if rating := info.get('rating'):
-        vinfo.setRating(rating)
+        vinfo.setRating(rating.get('score', 0), rating.get('votes', 0))
     if season := info.get('season'):
         vinfo.setSeason(season)
     if episode := info.get('episode'):
@@ -238,8 +245,12 @@ def set_videotags(li, info):
         vinfo.setFirstAired(aired)
     if playcount := info.get('playcount'):
         vinfo.setPlaycount(playcount)
+    if duration := info.get('duration'):
+        vinfo.setDuration(duration)
     if code := info.get('code'):
         vinfo.setProductionCode(code)
+    if studio := info.get('studio'):
+        vinfo.setStudios(studio)
     if cast := info.get('cast'):
         vinfo.setCast([xbmc.Actor(c['name'], c['role'], c['index'], c['thumbnail']) for c in cast])
     if originaltitle := info.get('OriginalTitle'):
@@ -265,8 +276,8 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     else:
         if isinstance(art['fanart'], list):
             if settingids.fanart_select:
-                if info.get('UniqueIDs', {}).get('anilist_id'):
-                    fanart_select = getSetting(f'fanart.select.anilist.{info["UniqueIDs"]["anilist_id"]}')
+                if info.get('UniqueIDs', {}).get('mal_id'):
+                    fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
                     art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
                 else:
                     art['fanart'] = OTAKU_FANART
@@ -283,7 +294,7 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
 
 
 def bulk_draw_items(video_data, draw_cm):
-    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable']) for vid in video_data]
+    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
     xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
@@ -294,7 +305,8 @@ def draw_items(video_data, content_type=None, draw_cm=None):
         bulk_draw_items(video_data, draw_cm)
     else:
         for vid in video_data:
-            xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
+            if vid:
+                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
     if content_type == 'episodes':
@@ -334,7 +346,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
 
 
 def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
-    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data]
+    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
 
 
 def get_view_type(viewtype):
@@ -408,15 +420,15 @@ class SettingIDs:
         self.watchlist_sync = getBool('watchlist.sync.enabled')
         self.filler = getBool('jz.filler')
         self.clean_titles = getBool('interface.cleantitles')
-        self.show_empty_eps = getBool('interface.showemptyeps')
         self.terminateoncloud = getBool('general.terminate.oncloud')
-        self.div_flavor = getBool("divflavors.bool")
+        self.dubonly = getBool("divflavors.dubonly")
+        self.showdub = getBool("divflavors.showdub")
         self.watchlist_data = getBool('interface.watchlist.data')
         self.fanart_select = getBool('context.otaku.fanartselect')
 
         # Ints
 
         # Str
-
+        self.browser_api = getString('browser.api')
 
 settingids = SettingIDs()

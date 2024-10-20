@@ -141,20 +141,20 @@ class Sources(BrowserBase):
         all_results = list(map(mapfunc, cache_list))
         return all_results
 
-    def get_sources(self, query, anilist_id, episode, status, media_type, rescrape):
+    def get_sources(self, query, mal_id, episode, status, media_type, rescrape):
         query = self._clean_title(query).replace('-', ' ')
         if media_type == 'movie':
-            return self.get_movie_sources(query, anilist_id)
+            return self.get_movie_sources(query, mal_id)
 
-        self.sources = self.get_episode_sources(query, anilist_id, episode, status, rescrape)
+        self.sources = self.get_episode_sources(query, mal_id, episode, status, rescrape)
         if not self.sources and ':' in query:
             q1, q2 = query.split('|', 2)
             q1 = q1[1:-1].split(':')[0]
             q2 = q2[1:-1].split(':')[0]
             query2 = '({0})|({1})'.format(q1, q2)
-            self.sources = self.get_episode_sources(query2, anilist_id, episode, status, rescrape)
+            self.sources = self.get_episode_sources(query2, mal_id, episode, status, rescrape)
         if not self.sources:
-            self.sources = self.get_episode_sources_backup(query, anilist_id, episode)
+            self.sources = self.get_episode_sources_backup(query, mal_id, episode)
 
         # make sure no duplicate sources
         for source in self.sources:
@@ -166,10 +166,10 @@ class Sources(BrowserBase):
                     self.uncached.append(source)
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def get_episode_sources(self, show, anilist_id, episode, status, rescrape):
+    def get_episode_sources(self, show, mal_id, episode, status, rescrape):
         nyaa_sources = []
         if rescrape:
-            return self.get_episode_sources_pack(show, anilist_id, episode)
+            return self.get_episode_sources_pack(show, mal_id, episode)
 
         if 'part' in show.lower():
             part = re.search(r'part ?(\d+)', show.lower())
@@ -178,7 +178,7 @@ class Sources(BrowserBase):
         else:
             part = None
 
-        season = database.get_episode(anilist_id)['season']
+        season = database.get_episode(mal_id)['season']
         season_zfill = str(season).zfill(2)
         episode_zfill = episode.zfill(2)
         query = f'{show} "- {episode_zfill}"'
@@ -194,7 +194,7 @@ class Sources(BrowserBase):
         nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         if status == 'FINISHED':
             query = '%s "Batch"|"Complete Series"' % show
-            episodes = pickle.loads(database.get_show(anilist_id)['kodi_meta'])['episodes']
+            episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
             if episodes:
                 query += f'|"01-{episode_zfill}"|"01~{episode_zfill}"|"01 - {episode_zfill}"|"01 ~ {episode_zfill}"'
 
@@ -229,8 +229,8 @@ class Sources(BrowserBase):
         nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         return nyaa_sources
 
-    def get_episode_sources_backup(self, db_query, anilist_id, episode):
-        r = requests.get('https://kaito-title.firebaseio.com/%s.json' % anilist_id)
+    def get_episode_sources_backup(self, db_query, mal_id, episode):
+        r = requests.get('https://kaito-title.firebaseio.com/%s.json' % mal_id)
         show = r.json()
         if not show:
             return []
@@ -251,11 +251,11 @@ class Sources(BrowserBase):
             }
             return self.process_nyaa_backup(self._BASE_URL, params, episode)
 
-        kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
+        kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
         kodi_meta['query'] = f'{db_query}|{show["general_title"]}'
-        database.update_kodi_meta(anilist_id, kodi_meta)
+        database.update_kodi_meta(mal_id, kodi_meta)
 
-        season = database.get_episode(anilist_id)['season']
+        season = database.get_episode(mal_id)['season']
         episode_zfill = episode.zfill(2)
 
         query = f'{show} "- {episode_zfill}"'
@@ -273,14 +273,14 @@ class Sources(BrowserBase):
         }
         return self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill)
 
-    def get_episode_sources_pack(self, show, anilist_id, episode):
+    def get_episode_sources_pack(self, show, mal_id, episode):
         query = '%s "Batch"|"Complete Series"' % show
 
-        episodes = pickle.loads(database.get_show(anilist_id)['kodi_meta'])['episodes']
+        episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
         if episodes:
             query += '|"01-{0}"|"01~{0}"|"01 - {0}"|"01 ~ {0}"'.format(episodes)
 
-        season = database.get_episode(anilist_id)['season']
+        season = database.get_episode(mal_id)['season']
         season_zfill = str(season).zfill(2)
         query += '|"S{0}"|"Season {0}"'.format(season_zfill)
 
@@ -293,7 +293,7 @@ class Sources(BrowserBase):
         }
         return self.process_nyaa_backup(self._BASE_URL, params, episode.zfill(2))
 
-    def get_movie_sources(self, query, anilist_id):
+    def get_movie_sources(self, query, mal_id):
         params = {
             'f': '0',
             'c': '1_2',
@@ -304,7 +304,7 @@ class Sources(BrowserBase):
 
         self.sources = self.process_nyaa_movie(self._BASE_URL, params)
         if not self.sources:
-            self.sources = self.get_movie_sources_backup(anilist_id)
+            self.sources = self.get_movie_sources_backup(mal_id)
 
         # make sure no duplicate sources
         for source in self.sources:
@@ -316,8 +316,8 @@ class Sources(BrowserBase):
                     self.uncached.append(source)
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def get_movie_sources_backup(self, anilist_id):
-        r = requests.get("https://kimetsu-title.firebaseio.com/%s.json" % anilist_id)
+    def get_movie_sources_backup(self, mal_id):
+        r = requests.get("https://kimetsu-title.firebaseio.com/%s.json" % mal_id)
         show = r.json()
         if not show:
             return []

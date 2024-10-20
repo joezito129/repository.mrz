@@ -1,4 +1,4 @@
-import time
+import xbmc
 import requests
 import pickle
 
@@ -65,16 +65,11 @@ class SimklWLF(WatchlistFlavorBase):
 Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["interval"])} Seconds
 '''
             control.progressDialog.update(int((inter - i) / inter * 100), f_string)
-            time.sleep(device_code['interval'])
+            xbmc.sleep(device_code['interval'])
 
     def __get_sort(self):
-        sort_types = {
-            "Anime Title": "anime_title",
-            "Last Updated": "list_updated_at",
-            'Last Added': "last_added",
-            "User Rating": "user_rating"
-        }
-        return sort_types[self._sort]
+        sort_types = ['anime_title', 'list_updated_at', 'last_added', 'user_rating']
+        return sort_types[int(self._sort)]
 
     def watchlist(self):
         statuses = [
@@ -112,10 +107,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         if not results:
             return []
 
-        if next_up:
-            all_results = list(filter(lambda x: True if x else False, map(self._base_next_up_view, results['anime'])))
-        else:
-            all_results = list(map(self._base_watchlist_status_view, results['anime']))
+        all_results = list(map(self._base_next_up_view, results['anime'])) if next_up else list(map(self._base_watchlist_status_view, results['anime']))
 
         sort_pref = self.__get_sort()
 
@@ -130,14 +122,13 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         return all_results
 
     @div_flavor
-    def _base_watchlist_status_view(self, res, mal_dub=None, dubsub_filter=None):
+    def _base_watchlist_status_view(self, res, mal_dub=None):
         show_ids = res['show']['ids']
 
-        mal_id = show_ids.get('mal', '')
-        anilist_id = show_ids.get('anilist', '')
-
+        mal_id = show_ids.get('mal')
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
-        show = database.get_show(anilist_id)
+
+        show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta']) if show else {}
 
         if self._title_lang == 'english':
@@ -156,24 +147,28 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         if res["total_episodes_count"] != 0 and res["watched_episodes_count"] == res["total_episodes_count"]:
             info['playcount'] = 1
 
+        image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg'
+
         base = {
             "name": '%s - %d/%d' % (title, res["watched_episodes_count"], res["total_episodes_count"]),
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["watched_episodes_count"]}',
-            "image": f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg',
+            "url": f'watchlist_to_ep/{mal_id}/{res["watched_episodes_count"]}',
+            "image": image,
+            "fanart": image,
             "info": info
         }
 
         if res["total_episodes_count"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
+            base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, True, dub=dub, dubsub_filter=dubsub_filter)
-        return utils.parse_view(base, True, False, dub=dub, dubsub_filter=dubsub_filter)
+            return utils.parse_view(base, False, True, dub)
+        return utils.parse_view(base, True, False, dub)
 
-    def _base_next_up_view(self, res):
+    @div_flavor
+    def _base_next_up_view(self, res, mal_dub=None):
         show_ids = res['show']['ids']
 
-        mal_id = show_ids.get('mal', '')
-        # anilist_id = show_ids.get('anilist', '')
+        mal_id = show_ids.get('mal')
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         progress = res['watched_episodes_count']
         next_up = progress + 1
@@ -186,7 +181,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
 
         title = '%s - %s/%s' % (base_title, next_up, episode_count)
         poster = image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg'
-        anilist_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
+        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
             kodi_meta = pickle.loads(show['kodi_meta'])
             if self._title_lang == 'english':
@@ -214,7 +209,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{anilist_id}/{mal_id}/{res["watched_episodes_count"]}',
+            "url": f'watchlist_to_ep/{mal_id}/{res["watched_episodes_count"]}',
             "image": image,
             "info": info,
             "fanart": image,
@@ -222,19 +217,19 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         }
 
         if res["total_episodes_count"] == 1:
-            base['url'] = f'play_movie/{anilist_id}/{mal_id}/'
+            base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
-            return utils.parse_view(base, False, True)
+            return utils.parse_view(base, False, True, dub)
 
         if next_up_meta:
-            base['url'] = 'play/%d/%d' % (anilist_id, next_up)
-            return utils.parse_view(base, False, True)
+            base['url'] = 'play/%d/%d' % (mal_id, next_up)
+            return utils.parse_view(base, False, True, dub)
 
-        return utils.parse_view(base, True, False)
+        return utils.parse_view(base, True, False, dub)
 
     @staticmethod
-    def get_watchlist_anime_entry(anilist_id):
-        # mal_id = self._get_mapping_id(anilist_id, 'mal_id')
+    def get_watchlist_anime_entry(mal_id):
+        # mal_id = self._get_mapping_id(mal_id, 'mal_id')
         # if not mal_id:
         #     return
         #
@@ -255,7 +250,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         data = self.get_all_items('completed')
         completed = {}
         for dat in data['anime']:
-            completed[str(dat['show']['ids']['anilist'])] = dat['total_episodes_count']
+            completed[str(dat['show']['ids']['mal'])] = dat['total_episodes_count']
         with open(control.completed_json, 'w') as file:
             json.dump(completed, file)
 
@@ -268,12 +263,12 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params)
         return r.json()
 
-    def update_list_status(self, anilist_id, status):
+    def update_list_status(self, mal_id, status):
         data = {
             "shows": [{
                 "to": status,
                 "ids": {
-                    "anilist": anilist_id
+                    "mal": mal_id
                 }
             }]
         }
@@ -286,11 +281,11 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
                 return True
         return False
 
-    def update_num_episodes(self, anilist_id, episode):
+    def update_num_episodes(self, mal_id, episode):
         data = {
             "shows": [{
                 "ids": {
-                    "anilist": anilist_id
+                    "mal": mal_id
                 },
                 "episodes": [{'number': i} for i in range(1, int(episode) + 1)]
             }]
@@ -302,12 +297,12 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
                 return True
         return False
 
-    def update_score(self, anilist_id, score):
+    def update_score(self, mal_id, score):
         data = {
             "shows": [{
                 'rating': score,
                 "ids": {
-                    "anilist": anilist_id,
+                    "mal": mal_id,
                 }
             }]
         }
@@ -322,11 +317,11 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
                 return True
         return False
 
-    def delete_anime(self, anilist_id):
+    def delete_anime(self, mal_id):
         data = {
             "shows": [{
                 "ids": {
-                    "anilist": anilist_id
+                    "mal": mal_id
                 }
             }]
         }

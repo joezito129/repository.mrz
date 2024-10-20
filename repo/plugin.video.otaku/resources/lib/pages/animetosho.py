@@ -6,7 +6,7 @@ import pickle
 from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.ui import database, source_utils, control
+from resources.lib.ui import database, source_utils
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
 from resources.lib.ui.control import settingids
@@ -21,7 +21,7 @@ class Sources(BrowserBase):
         self.cached = []
         self.uncached = []
 
-    def get_sources(self, show, anilist_id, episode, status, media_type, rescrape):
+    def get_sources(self, show, mal_id, episode, status, media_type, rescrape):
         show = self._clean_title(show)
         query = self._sphinx_clean(show)
 
@@ -29,7 +29,7 @@ class Sources(BrowserBase):
             # todo add re-scape stuff here
             pass
         if media_type != "movie":
-            season = database.get_episode(anilist_id)['season']
+            season = database.get_episode(mal_id)['season']
             season = str(season).zfill(2)
             episode = episode.zfill(2)
             query = f'{query} "\\- {episode}"'
@@ -37,7 +37,7 @@ class Sources(BrowserBase):
         else:
             season = None
 
-        show_meta = database.get_show_meta(anilist_id)
+        show_meta = database.get_show_meta(mal_id)
         params = {
             'q': query,
             'qx': 1
@@ -46,15 +46,15 @@ class Sources(BrowserBase):
             meta_ids = pickle.loads(show_meta['meta_ids'])
             params['aids'] = meta_ids.get('anidb_id')
             if not params['aids']:
-                ids = SIMKLAPI().get_mapping_ids('anilist', anilist_id)
+                ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
                 params['aids'] = meta_ids['anidb_id'] = ids['anidb']
-                database.update_show_meta(anilist_id, meta_ids, pickle.loads(show_meta['art']))
+                database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
 
         self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
 
         if status == 'FINISHED':
             query = f'{show} "Batch"|"Complete Series"'
-            episodes = pickle.loads(database.get_show(anilist_id)['kodi_meta'])['episodes']
+            episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
             if episodes:
                 query += f'|"01-{episode}"|"01~{episode}"|"01 - {episode}"|"01 ~ {episode}"'
 

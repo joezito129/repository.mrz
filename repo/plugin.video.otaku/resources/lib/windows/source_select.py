@@ -21,7 +21,7 @@ class SourceSelect(BaseWindow):
 
         episode = actionArgs.get('episode')
         if episode:
-            anime_init = OtakuBrowser.get_anime_init(actionArgs.get('anilist_id'))
+            anime_init = OtakuBrowser.get_anime_init(actionArgs.get('mal_id'))
             episode = int(episode)
             try:
                 self.setProperty('item.info.season', str(anime_init[0][episode - 1]['info']['season']))
@@ -41,12 +41,13 @@ class SourceSelect(BaseWindow):
                 pass
 
         else:
-            show = database.get_show(actionArgs.get('anilist_id'))
+            show = database.get_show(actionArgs.get('mal_id'))
             if show:
                 kodi_meta = pickle.loads(show.get('kodi_meta'))
                 self.setProperty('item.info.plot', kodi_meta.get('plot'))
-                self.setProperty('item.info.rating', str(kodi_meta.get('rating')))
+                self.setProperty('item.info.rating', str(kodi_meta.get('rating', {}).get('score')))
                 self.setProperty('item.info.aired', kodi_meta.get('start_date'))
+                self.setProperty('item.art.poster', kodi_meta.get('poster'))
                 try:
                     self.setProperty('item.info.year', kodi_meta.get('start_date').split('-')[0])
                 except AttributeError:

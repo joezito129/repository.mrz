@@ -1,7 +1,7 @@
 import xbmc
 import xbmcgui
 
-from resources.lib.ui import control, database
+from resources.lib.ui import control
 from resources.lib.indexers import aniskip
 
 playList = control.playList
@@ -17,7 +17,7 @@ class WatchlistPlayer(player):
         self.resume_time = None
         self.episode = None
         self._build_playlist = None
-        self.anilist_id = None
+        self.mal_id = None
         self._watchlist_update = None
         self.current_time = 0
         self.updated = False
@@ -38,8 +38,8 @@ class WatchlistPlayer(player):
         self.skipintro_offset = int(control.getSetting('skipintro.aniskip.offset'))
         self.skipoutro_offset = int(control.getSetting('skipoutro.aniskip.offset'))
 
-    def handle_player(self, anilist_id, watchlist_update, build_playlist, episode, resume_time):
-        self.anilist_id = anilist_id
+    def handle_player(self, mal_id, watchlist_update, build_playlist, episode, resume_time):
+        self.mal_id = mal_id
         self._watchlist_update = watchlist_update
         self._build_playlist = build_playlist
         self.episode = episode
@@ -51,11 +51,9 @@ class WatchlistPlayer(player):
 
         self.keepAlive()
 
-    def onPlayBackStarted(self):
-        current_ = playList.getposition()
-        self.vtag = playList[current_].getVideoInfoTag()
-        self.media_type = self.vtag.getMediaType()
-        control.setSetting('addon.last_watched', self.anilist_id)
+    # def onPlayBackStarted(self):
+    #     pass
+
 
     def onPlayBackStopped(self):
         control.closeAllDialogs()
@@ -81,7 +79,7 @@ class WatchlistPlayer(player):
             watched_percentage = self.getWatchedPercent()
             self.current_time = self.getTime()
             if watched_percentage > self.update_percent:
-                self._watchlist_update(self.anilist_id, self.episode)
+                self._watchlist_update(self.mal_id, self.episode)
                 self.updated = True
                 break
             xbmc.sleep(5000)
@@ -91,8 +89,14 @@ class WatchlistPlayer(player):
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
             xbmc.sleep(250)
+
         if not self.isPlayingVideo():
             return
+
+        current_ = playList.getposition()
+        self.vtag = playList[current_].getVideoInfoTag()
+        self.media_type = self.vtag.getMediaType()
+        control.setSetting('addon.last_watched', self.mal_id)
 
         self.total_time = int(self.getTotalTime())
         control.closeAllDialogs()
@@ -114,7 +118,7 @@ class WatchlistPlayer(player):
                     break
                 xbmc.sleep(1000)
         self.onWatchedPercent()
-        # OtakuBrowser.get_sources(self.anilist_id, str(self.episode), self.media_type, silent=True)
+        # OtakuBrowser.get_sources(self.mal_id, str(self.episode), self.media_type, silent=True)
         endpoint = int(control.getSetting('playingnext.time')) if control.getBool('smartplay.playingnextdialog') else 0
         if endpoint != 0:
             while self.isPlaying():
@@ -127,8 +131,7 @@ class WatchlistPlayer(player):
 
     def process_aniskip(self):
         if self.skipintro_aniskip_enable:
-            mal_id = database.get_show(self.anilist_id)['mal_id']
-            skipintro_aniskip_res = aniskip.get_skip_times(mal_id, self.episode, 'op')
+            skipintro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'op')
             if skipintro_aniskip_res:
                 skip_times = skipintro_aniskip_res['results'][0]['interval']
                 self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
@@ -136,8 +139,7 @@ class WatchlistPlayer(player):
                 self.skipintro_aniskip = True
 
         if self.skipoutro_aniskip_enable:
-            mal_id = database.get_show(self.anilist_id)['mal_id']
-            skipoutro_aniskip_res = aniskip.get_skip_times(mal_id, self.episode, 'ed')
+            skipoutro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'ed')
             if skipoutro_aniskip_res:
                 skip_times = skipoutro_aniskip_res['results'][0]['interval']
                 self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset

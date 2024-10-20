@@ -4,7 +4,8 @@ from resources.lib.ui import control, database
 from resources.lib.ui.router import Route
 from resources.lib.WatchlistFlavor import WatchlistFlavor
 from resources.lib import OtakuBrowser
-from resources.lib.AniListBrowser import AniListBrowser
+
+BROWSER = OtakuBrowser.BROWSER
 
 
 def get_auth_dialog(flavor):
@@ -55,22 +56,15 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
 @Route('watchlist_to_ep/*')
 def WATCHLIST_TO_EP(payload, params):
     payload_list = payload.rsplit("/")
-    anilist_id, mal_id, eps_watched = payload_list
-    if mal_id:
-        show_meta = database.get_show_mal(mal_id)
-        if not show_meta:
-            show_meta = AniListBrowser().get_mal_to_anilist(mal_id)
-            if not show_meta:
-                anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
-                show_meta = AniListBrowser().get_anilist(anilist_id)
-    else:
-        show_meta = database.get_show(anilist_id)
-    anilist_id = show_meta['anilist_id']
+    mal_id, eps_watched = payload_list
+    show_meta = database.get_show(mal_id)
+    if not show_meta:
+        show_meta = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show_meta['kodi_meta'])
     kodi_meta['eps_watched'] = eps_watched
-    database.update_kodi_meta(anilist_id, kodi_meta)
+    database.update_kodi_meta(mal_id, kodi_meta)
 
-    anime_general, content_type = OtakuBrowser.get_anime_init(anilist_id)
+    anime_general, content_type = OtakuBrowser.get_anime_init(mal_id)
     control.draw_items(anime_general, content_type)
 
 
@@ -80,21 +74,16 @@ def CONTEXT_MENU(payload, params):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
         return control.exit_code()
     payload_list = payload.rsplit('/')
-    if len(payload_list) == 3:
-        path, anilist_id, eps_watched = payload_list
-    else:
-        path, anilist_id, mal_id, eps_watched = payload_list
-    if not anilist_id:
-        if not (show := database.get_show_mal(mal_id)):
-            show = AniListBrowser().get_mal_to_anilist(mal_id)
-        anilist_id = show['anilist_id']
-    else:
-        if not (show := database.get_show(anilist_id)):
-            show = AniListBrowser().get_anilist(anilist_id)
+    path, mal_id, eps_watched = payload_list
+
+    if not (show := database.get_show(mal_id)):
+        show = BROWSER.get_anime(mal_id)
+
     if not (flavor := WatchlistFlavor.get_update_flavor()):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
         return control.exit_code()
     actions = WatchlistFlavor.context_statuses()
+
     kodi_meta = pickle.loads(show['kodi_meta'])
     title = kodi_meta['title_userPreferred']
 
@@ -105,7 +94,7 @@ def CONTEXT_MENU(payload, params):
         if status == 'DELETE':
             yesno = control.yesno_dialog(heading, f'Are you sure you want to delete [I]{title}[/I] from [B]{flavor.flavor_name}[/B]\n\nPress YES to Continue:')
             if yesno:
-                delete = delete_watchlist_anime(anilist_id)
+                delete = delete_watchlist_anime(mal_id)
                 if delete:
                     control.ok_dialog(heading, f'[I]{title}[/I] was deleted from [B]{flavor.flavor_name}[/B]')
                 else:
@@ -127,13 +116,13 @@ def CONTEXT_MENU(payload, params):
             score = control.select_dialog(f'{title}: ({str(flavor.flavor_name).capitalize()})', score_list)
             if score != -1:
                 score = 10 - score
-                set_score = set_watchlist_score(anilist_id, score)
+                set_score = set_watchlist_score(mal_id, score)
                 if set_score:
                     control.ok_dialog(heading, f'[I]{title}[/I]   was set to [B]{score}[/B]')
                 else:
                     control.ok_dialog(heading, 'Unable to Set Score')
         else:
-            set_status = set_watchlist_status(anilist_id, status)
+            set_status = set_watchlist_status(mal_id, status)
             if set_status == 'watching':
                 control.ok_dialog(heading, 'This show is still airing, so we\'re keeping it in your "Watching" list and marked all aired episodes as watched.')
             elif set_status:
@@ -151,25 +140,25 @@ def add_watchlist(items):
     return items
 
 
-def watchlist_update_episode(anilist_id, episode):
+def watchlist_update_episode(mal_id, episode):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
-        return WatchlistFlavor.watchlist_update_episode(anilist_id, episode)
+        return WatchlistFlavor.watchlist_update_episode(mal_id, episode)
 
 
-def set_watchlist_status(anilist_id, status):
+def set_watchlist_status(mal_id, status):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
-        return WatchlistFlavor.watchlist_set_status(anilist_id, status)
+        return WatchlistFlavor.watchlist_set_status(mal_id, status)
 
 
-def set_watchlist_score(anilist_id, score):
+def set_watchlist_score(mal_id, score):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
-        return WatchlistFlavor.watchlist_set_score(anilist_id, score)
+        return WatchlistFlavor.watchlist_set_score(mal_id, score)
 
 
-def delete_watchlist_anime(anilist_id):
+def delete_watchlist_anime(mal_id):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
-        return WatchlistFlavor.watchlist_delete_anime(anilist_id)
+        return WatchlistFlavor.watchlist_delete_anime(mal_id)

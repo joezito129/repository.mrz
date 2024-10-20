@@ -1,6 +1,7 @@
 import time
 import requests
 import threading
+import xbmc
 
 from resources.lib.ui import control, source_utils
 
@@ -25,7 +26,7 @@ class DebridLink:
         if control.progressDialog.iscanceled():
             control.progressDialog.close()
             return
-        time.sleep(self.OauthTimeStep)
+        xbmc.sleep(self.OauthTimeStep)
         url = '{0}/oauth/token'.format(self.api_url[:-3])
         data = {
             'client_id': self.ClientID,

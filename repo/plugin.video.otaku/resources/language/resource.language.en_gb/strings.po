@@ -158,7 +158,7 @@ msgid "Download Location"
 msgstr ""
 
 msgctxt "#30305"
-msgid "Meta API"
+msgid "Meta Episode API"
 msgstr ""
 
 msgctxt "#30306"
@@ -250,10 +250,18 @@ msgid "Import/Export"
 msgstr ""
 
 msgctxt "#30328"
-msgid "Import/Export settings.xml"
+msgid "Import Settings"
 msgstr ""
 
-######29-31###
+msgctxt "#30329"
+msgid "Meta API"
+msgstr ""
+
+msgctxt "#30330"
+msgid "Export Settings"
+msgstr ""
+
+######31###
 
 msgctxt "#30332"
 msgid "Torrents"
@@ -480,11 +488,11 @@ msgid "Timeout for Sources (seconds)"
 msgstr ""
 
 msgctxt "#30393"
-msgid "Set Anime Filter"
+msgid "Show Dub Only"
 msgstr ""
 
 msgctxt "#30394"
-msgid "Filter"
+msgid "Append [COLOR blue](DUB)[/COLOR] in title if has dub"
 msgstr ""
 
 msgctxt "#30395"
@@ -714,3 +722,12 @@ msgstr ""
 msgctxt "#30511"
 msgid "Hide Next up Widget"
 msgstr ""
+
+msgctxt "#30512"
+msgid "Context"
+msgstr ""
+
+msgctxt "#30513"
+msgid "Min Resolution"
+msgstr ""
+

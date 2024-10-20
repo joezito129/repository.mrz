@@ -105,6 +105,8 @@
 					<align>left</align>
 					<aligny>center</aligny>
 					<onright>1002</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.1.label.0)][/UPPERCASE][/B]</label>
 				</control>
 
@@ -126,6 +128,8 @@
 					<aligny>center</aligny>
 					<onleft>1001</onleft>
 					<onright>1003</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.1.label.1)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.1.label.1))</visible>
 				</control>
@@ -149,6 +153,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.1.label.2)][/UPPERCASE][/B]</label>
 				</control>
 
@@ -171,6 +177,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.1.label.3)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.1.label.3))</visible>
 				</control>
@@ -194,6 +202,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.1.label.4)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.1.label.4))</visible>
 				</control>
@@ -216,6 +226,8 @@
 					<aligny>center</aligny>
 					<onleft>1005</onleft>
 					<onright>1111</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.1.label.5)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.1.label.5))</visible>
 				</control>
@@ -283,6 +295,8 @@
 					<align>left</align>
 					<aligny>center</aligny>
 					<onright>2002</onright>
+					<texturefocus></texturefocus>
+					<texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.2.label.0)][/UPPERCASE][/B]</label>
 				</control>
 
@@ -304,6 +318,8 @@
 					<aligny>center</aligny>
 					<onleft>2001</onleft>
 					<onright>2003</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.2.label.1)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.2.label.1))</visible>
 				</control>
@@ -327,6 +343,8 @@
 					<aligny>center</aligny>
 					<onleft>2002</onleft>
 					<onright>2004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.2.label.2)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.2.label.2))</visible>
 				</control>
@@ -350,6 +368,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.2.label.3)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.2.label.3))</visible>
 				</control>
@@ -373,6 +393,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.2.label.4)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.2.label.4))</visible>
 				</control>
@@ -395,6 +417,8 @@
 					<aligny>center</aligny>
 					<onleft>2005</onleft>
 					<onright>2222</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.2.label.5)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.2.label.5))</visible>
 				</control>
@@ -450,6 +474,8 @@
 				<onup>2000</onup>
 				<ondown>4000</ondown>
 				<onright>3333</onright>
+				<texturefocus></texturefocus>
+				<texturenofocus></texturenofocus>
 				<orientation>horizontal</orientation>
 				<focusposition>1</focusposition>
 				<itemgap>10</itemgap>
@@ -462,6 +488,8 @@
 					<align>left</align>
 					<aligny>center</aligny>
 					<onright>3002</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.3.label.0)][/UPPERCASE][/B]</label>
 				</control>
 
@@ -483,6 +511,8 @@
 					<aligny>center</aligny>
 					<onleft>3001</onleft>
 					<onright>3003</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.3.label.1)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.3.label.1))</visible>
 				</control>
@@ -506,6 +536,8 @@
 					<aligny>center</aligny>
 					<onleft>3002</onleft>
 					<onright>3004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.3.label.2)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.3.label.2))</visible>
 				</control>
@@ -529,6 +561,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.3.label.3)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.3.label.3))</visible>
 				</control>
@@ -552,6 +586,8 @@
 					<aligny>center</aligny>
 					<onleft>1002</onleft>
 					<onright>1004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.3.label.4)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.3.label.4))</visible>
 				</control>
@@ -575,6 +611,8 @@
 					<aligny>center</aligny>
 					<onleft>3005</onleft>
 					<onright>3333</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.3.label.5)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.3.label.5))</visible>
 				</control>
@@ -642,6 +680,8 @@
 					<align>left</align>
 					<aligny>center</aligny>
 					<onright>4002</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.4.label.0)][/UPPERCASE][/B]</label>
 				</control>
 
@@ -663,6 +703,8 @@
 					<aligny>center</aligny>
 					<onleft>4001</onleft>
 					<onright>4003</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.4.label.1)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.4.label.1))</visible>
 				</control>
@@ -686,6 +728,8 @@
 					<aligny>center</aligny>
 					<onleft>4002</onleft>
 					<onright>4004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.4.label.2)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.4.label.2))</visible>
 				</control>
@@ -709,6 +753,8 @@
 					<aligny>center</aligny>
 					<onleft>4003</onleft>
 					<onright>4005</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.4.label.3)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.4.label.3))</visible>
 				</control>
@@ -732,6 +778,8 @@
 					<aligny>center</aligny>
 					<onleft>4004</onleft>
 					<onright>4006</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.4.label.4)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.4.label.4))</visible>
 				</control>
@@ -755,6 +803,8 @@
 					<aligny>center</aligny>
 					<onleft>4005</onleft>
 					<onright>4006</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.4.label.5)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.4.label.5))</visible>
 				</control>
@@ -822,6 +872,8 @@
 					<align>left</align>
 					<aligny>center</aligny>
 					<onright>5002</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.0)][/UPPERCASE][/B]</label>
 				</control>
 
@@ -843,6 +895,8 @@
 					<aligny>center</aligny>
 					<onleft>5001</onleft>
 					<onright>5003</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.1)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.1))</visible>
 				</control>
@@ -866,6 +920,8 @@
 					<aligny>center</aligny>
 					<onleft>5002</onleft>
 					<onright>5004</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.2)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.2))</visible>
 				</control>
@@ -889,6 +945,8 @@
 					<aligny>center</aligny>
 					<onleft>5003</onleft>
 					<onright>5005</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.3)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.3))</visible>
 				</control>
@@ -912,6 +970,8 @@
 					<aligny>center</aligny>
 					<onleft>5004</onleft>
 					<onright>5006</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.4)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.4))</visible>
 				</control>
@@ -935,6 +995,8 @@
 					<aligny>center</aligny>
 					<onleft>5005</onleft>
 					<onright>5555</onright>
+					<texturefocus></texturefocus>
+                    <texturenofocus></texturenofocus>
 					<label>[B][UPPERCASE]$INFO[Window().Property(sortmethod.5.label.5)][/UPPERCASE][/B]</label>
 					<visible>!String.IsEmpty(Window().Property(sortmethod.5.label.5))</visible>
 				</control>

@@ -46,16 +46,15 @@ class WatchlistFlavorBase:
         return self._username
 
     @staticmethod
-    def _get_next_up_meta(mal_id, next_up, anilist_id=''):
+    def _get_next_up_meta(mal_id, next_up):
         next_up_meta = {}
-        show = database.get_show(anilist_id) if anilist_id else database.get_show_mal(mal_id)
+        show = database.get_show(mal_id)
         if show:
-            anilist_id = show['anilist_id']
-            if show_meta := database.get_show_meta(anilist_id):
+            if show_meta := database.get_show_meta(mal_id):
                 art = pickle.loads(show_meta['art'])
                 if art.get('fanart'):
                     next_up_meta['image'] = random.choice(art['fanart'])
-            if episodes := database.get_episode_list(show['anilist_id']):
+            if episodes := database.get_episode_list(mal_id):
                 try:
                     if episode_meta := pickle.loads(episodes[next_up]['kodi_meta']):
                         if control.getBool('interface.cleantitles'):
@@ -67,21 +66,21 @@ class WatchlistFlavorBase:
                         next_up_meta['aired'] = episode_meta['info'].get('aired')
                 except IndexError:
                     pass
-        return anilist_id, next_up_meta, show
+        return mal_id, next_up_meta, show
 
-    def _get_mapping_id(self, anilist_id, flavor):
-        show = database.get_show(anilist_id)
-        mapping_id = show[flavor] if show and show.get(flavor) else self._get_flavor_id(anilist_id, flavor)
+    def _get_mapping_id(self, mal_id, flavor):
+        show = database.get_show(mal_id)
+        mapping_id = show[flavor] if show and show.get(flavor) else self._get_flavor_id(mal_id, flavor)
         return mapping_id
 
     @staticmethod
-    def _get_flavor_id(anilist_id, flavor):
+    def _get_flavor_id(mal_id, flavor):
         params = {
-            'type': "anilist",
-            "id": anilist_id
+            'type': "mal",
+            "id": mal_id
         }
         r = requests.get('https://armkai.vercel.app/api/search', params=params)
         res = r.json()
         flavor_id = res.get(flavor[:-3])
-        database.add_mapping_id(anilist_id, flavor, flavor_id)
+        database.add_mapping_id(mal_id, flavor, flavor_id)
         return flavor_id

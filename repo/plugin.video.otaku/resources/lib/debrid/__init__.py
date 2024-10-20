@@ -1,5 +1,4 @@
 import threading
-import copy
 
 from resources.lib.debrid import real_debrid, premiumize, all_debrid, debrid_link
 from resources.lib.ui import control
@@ -20,22 +19,22 @@ class TorrentCacheCheck:
 
     def torrentCacheCheck(self, torrent_list):
         if control.real_debrid_enabled():
-            t = threading.Thread(target=self.real_debrid_worker, args=[copy.deepcopy(torrent_list)])
+            t = threading.Thread(target=self.real_debrid_worker, args=[torrent_list])
             t.start()
             self.threads.append(t)
 
         if control.debrid_link_enabled():
-            t = threading.Thread(target=self.debrid_link_worker, args=[copy.deepcopy(torrent_list)])
+            t = threading.Thread(target=self.debrid_link_worker, args=[torrent_list])
             self.threads.append(t)
             t.start()
 
         if control.premiumize_enabled():
-            t = threading.Thread(target=self.premiumize_worker, args=[copy.deepcopy(torrent_list)])
+            t = threading.Thread(target=self.premiumize_worker, args=[torrent_list])
             t.start()
             self.threads.append(t)
 
         if control.all_debrid_enabled():
-            t = threading.Thread(target=self.all_debrid_worker, args=[copy.deepcopy(torrent_list)])
+            t = threading.Thread(target=self.all_debrid_worker, args=[torrent_list])
             t.start()
             self.threads.append(t)
 

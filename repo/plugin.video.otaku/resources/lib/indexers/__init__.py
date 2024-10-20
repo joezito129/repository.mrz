@@ -24,19 +24,19 @@ def process_episodes(episodes, eps_watched, dub_data=None):
     return all_results
 
 
-def process_dub(anilist_id, ename):
+def process_dub(mal_id, ename):
     update_time = date.today().isoformat()
-    if not (show_data := database.get_show_data(anilist_id)) or show_data['last_updated'] != update_time:
+    if not (show_data := database.get_show_data(mal_id)) or show_data['last_updated'] != update_time:
         if int(control.getSetting('jz.dub.api')) == 0:
             from resources.jz import teamup
             dub_data = teamup.get_dub_data(ename)
             data = {"dub_data": dub_data}
-            database.update_show_data(anilist_id, data, update_time)
+            database.update_show_data(mal_id, data, update_time)
         else:
             from resources.jz import animeschedule
-            dub_data = animeschedule.get_dub_time(anilist_id)
+            dub_data = animeschedule.get_dub_time(mal_id)
             data = {"dub_data": dub_data}
-            database.update_show_data(anilist_id, data, update_time)
+            database.update_show_data(mal_id, data, update_time)
     else:
         dub_data = pickle.loads(show_data['data'])['dub_data']
     return dub_data

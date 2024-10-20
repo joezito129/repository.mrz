@@ -10,20 +10,20 @@ base_url = "https://animeschedule.net/api/v3"
 dub_list = []
 
 
-def get_route(anilist_id):
+def get_route(mal_id):
     params = {
-        "anilist-ids": anilist_id
+        "mal-ids": mal_id
     }
     r = requests.get(f"{base_url}/anime", params=params)
     return r.json()['anime'][0]['route'] if r.ok else ''
 
 
-def get_dub_time(anilist_id):
-    show = database.get_show(anilist_id)
+def get_dub_time(mal_id):
+    show = database.get_show(mal_id)
     route = show['anime_schedule_route']
     if not route:
-        route = get_route(anilist_id)
-        database.update_show(anilist_id, show['mal_id'], show['kodi_meta'], route)
+        route = get_route(mal_id)
+        database.update_show(mal_id, show['kodi_meta'], route)
     r = requests.get(f'https://animeschedule.net/anime/{route}')
     soup = BeautifulSoup(r.text, 'html.parser')
     soup_all = soup.find_all('div', class_='release-time-wrapper')

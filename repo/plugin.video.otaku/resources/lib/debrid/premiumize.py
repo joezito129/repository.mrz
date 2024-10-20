@@ -1,4 +1,4 @@
-import time
+import xbmc
 import requests
 
 from urllib import parse
@@ -33,7 +33,7 @@ class Premiumize:
             poll_again, success = self.poll_token(token['device_code'])
             progress_percent = 100 - int((float((expiry - token_ttl) / expiry) * 100))
             control.progressDialog.update(progress_percent)
-            time.sleep(token['interval'])
+            xbmc.sleep(token['interval'])
             token_ttl -= int(token['interval'])
         control.progressDialog.close()
 

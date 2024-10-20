@@ -4,24 +4,26 @@ from resources.lib.ui import database
 from resources.lib.indexers import tmdb, fanart
 
 
-def collect_meta_(anime_list):
+def collect_meta(anime_list):
     threads = []
     for anime in anime_list:
-        anilist_id = anime['id']
-        if not database.get_show_meta(anilist_id):
-            if anime.get('format') in ['MOVIE', 'ONA', 'SPECIAL'] and anime.get('episodes') == 1:
+        mal_id = anime.get('idMal') or anime.get('mal_id')
+        if not mal_id:
+            continue
+        if not database.get_show_meta(mal_id):
+            if (anime.get('format') or anime.get('type')) in ['MOVIE', 'ONA', 'SPECIAL', 'Movie', 'Special'] and anime.get('episodes') == 1:
                 mtype = 'movies'
             else:
                 mtype = 'tv'
-            t = threading.Thread(target=update_meta, args=(anilist_id, mtype))
+            t = threading.Thread(target=update_meta, args=(mal_id, mtype))
             t.start()
             threads.append(t)
     for thread in threads:
         thread.join()
 
 
-def update_meta(anilist_id, mtype='tv'):
-    meta_ids = database.get_mappings(anilist_id, 'anilist_id')
+def update_meta(mal_id, mtype='tv'):
+    meta_ids = database.get_mappings(mal_id, 'mal_id')
     art = fanart.getArt(meta_ids, mtype)
     if not art:
         art = tmdb.getArt(meta_ids, mtype)
@@ -29,4 +31,4 @@ def update_meta(anilist_id, mtype='tv'):
         art2 = tmdb.getArt(meta_ids, mtype)
         if art2.get('fanart'):
             art['fanart'] = art['fanart']
-    database.update_show_meta(anilist_id, meta_ids, art)
+    database.update_show_meta(mal_id, meta_ids, art)

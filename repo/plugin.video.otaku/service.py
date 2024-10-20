@@ -73,8 +73,8 @@ def sync_watchlist(silent=False):
 def update_dub_json():
     control.log("### Updating Dub json")
     with open(control.maldubFile, 'w') as file:
-        mal_dub_raw = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
-        mal_dub_list = mal_dub_raw.json()["dubbed"]
+        r = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
+        mal_dub_list = r.json()["dubbed"]
         mal_dub = {str(item): {'dub': True} for item in mal_dub_list}
         json.dump(mal_dub, file)
 
@@ -131,7 +131,7 @@ def version_check():
 if __name__ == "__main__":
     control.log('##################  RUNNING MAINTENANCE  ######################')
     version_check()
-    database_sync.AnilistSyncDatabase()
+    database_sync.SyncDatabase()
     refresh_apis()
     if control.getSetting('update.time.30') == '' or control.getSetting('update.time.7') == '':
         update_mappings_db()

@@ -13,9 +13,9 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
         if actionArgs is None or (item_type := actionArgs.get('item_type')) == 'skip_intro':
             return
 
-        if anilist_id := actionArgs.get('anilist_id'):
-            self.item_information = pickle.loads(database.get_show(actionArgs['anilist_id'])['kodi_meta'])
-            show_meta = database.get_show_meta(actionArgs['anilist_id'])
+        if mal_id := actionArgs.get('mal_id'):
+            self.item_information = pickle.loads(database.get_show(actionArgs['mal_id'])['kodi_meta'])
+            show_meta = database.get_show_meta(actionArgs['mal_id'])
             if show_meta:
                 self.item_information.update(pickle.loads(show_meta.get('art')))
         elif item_type == 'playing_next':
@@ -28,19 +28,19 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
             self.setProperty('item.art.thumb', thumb)
 
         fanart = self.item_information.get('fanart')
-        clearlogo = self.item_information.get('clearlogo', control.OTAKU_LOGO2_PATH)
+        clearlogo = self.item_information.get('clearlogo', control.OTAKU_LOGO_SMALL)
 
         if not fanart or control.settingids.fanart_disable:
             fanart = control.OTAKU_FANART
         else:
             if isinstance(fanart, list):
                 if control.settingids.fanart_select:
-                    fanart_select = control.getSetting(f'fanart.select.anilist.{anilist_id}')
+                    fanart_select = control.getSetting(f'fanart.select.{mal_id}')
                     fanart = fanart_select if fanart_select else random.choice(fanart)
                 else:
                     fanart = random.choice(fanart)
         if isinstance(clearlogo, list):
-            clearlogo = control.OTAKU_LOGO2_PATH if control.settingids.clearlogo_disable else random.choice(clearlogo)
+            clearlogo = control.OTAKU_LOGO_SMALL if control.settingids.clearlogo_disable else random.choice(clearlogo)
 
         if item_type != 'playing_next':
             self.setProperty('item.art.fanart', fanart)
@@ -49,7 +49,7 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
         self.setProperty('item.art.clearlogo', clearlogo)
         self.setProperty('item.info.title', self.item_information.get('name'))
 
-        if self.item_information.get('format') == 'MOVIE':
+        if self.item_information.get('format', '').lower() == 'movie':
             self.setProperty('item.info.plot', self.item_information.get('plot'))
             self.setProperty('item.info.rating', str(self.item_information.get('rating')))
             self.setProperty('item.info.title', self.item_information.get('title_userPreferred'))

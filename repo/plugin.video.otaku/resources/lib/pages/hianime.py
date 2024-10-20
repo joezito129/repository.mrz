@@ -12,11 +12,11 @@ from resources.lib.indexers import malsync
 
 
 class Sources(BrowserBase):
-    _BASE_URL = 'https://hianime.to/'
+    _BASE_URL = 'https://hianime.sx/'
     js_file = 'https://megacloud.tv/js/player/a/prod/e1-player.min.js'
 
-    def get_sources(self, anilist_id, episode):
-        show = database.get_show(anilist_id)
+    def get_sources(self, mal_id, episode):
+        show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta['name']
         title = self._clean_title(title)
@@ -29,7 +29,7 @@ class Sources(BrowserBase):
         elif control.getSetting('general.source') == 'Dub':
             srcs.remove('sub')
 
-        items = malsync.get_slugs(anilist_id=anilist_id, site='Zoro')
+        items = malsync.get_slugs(mal_id=mal_id, site='Zoro')
         if not items:
             if kodi_meta.get('start_date'):
                 year = kodi_meta.get('start_date').split('-')[0]
@@ -171,17 +171,16 @@ class Sources(BrowserBase):
         js = requests.get(self.js_file).text
         cases = re.findall(r'switch\(\w+\){([^}]+?)partKey', js)[0]
         vars_ = re.findall(r"\w+=(\w+)", cases)
-        consts = re.findall(r"([,;\s]\w+=0x\w{1,2}{%s,})" % len(vars_), js)[0]
+        consts = re.findall(r"((?:[,;\s]\w+=0x\w{1,2}){%s,})" % len(vars_), js)[0]
         indexes = []
         for var in vars_:
             var_value = re.search(r',{0}=(\w+)'.format(var), consts)
             if var_value:
                 indexes.append(to_int(var_value.group(1)))
-
         return chunked(indexes, 2)
 
     def _process_link(self, sources):
-        keyhints = database.get_(self.get_keyhints, 1)
+        keyhints = database.get_(self.get_keyhints, 24)
         try:
             key = ''
             orig_src = sources

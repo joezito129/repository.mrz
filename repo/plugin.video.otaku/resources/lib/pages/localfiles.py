@@ -10,7 +10,7 @@ PATH = control.getSetting('download.location')
 
 
 class Sources(BrowserBase):
-    def get_sources(self, query, anilist_id, episode):
+    def get_sources(self, query, mal_id, episode):
         filenames = []
         for root, dirs, files in os.walk(PATH):
             for file in files:

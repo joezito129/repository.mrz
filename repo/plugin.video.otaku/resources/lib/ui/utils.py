@@ -31,19 +31,13 @@ def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=N
     return new_res
 
 
-def parse_view(base, isfolder, isplayable, dub=False, dubsub_filter=None):
-    if dubsub_filter == 'Dub':
-        if dub:
-            parsed_view = allocate_item(base["name"], base["url"] + '0', isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
-        else:
-            parsed_view = None
-    elif dubsub_filter == 'Both':
-        if dub:
-            base['name'] += ' [COLOR blue](Dub)[/COLOR]'
-            base['info']['title'] = base['name']
-        parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
-    else:
-        parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
+def parse_view(base, isfolder, isplayable, dub=False):
+    if control.settingids.showdub and dub:
+        base['name'] += ' [COLOR blue](Dub)[/COLOR]'
+        base['info']['title'] = base['name']
+    parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
+    if control.settingids.dubonly and not dub:
+        parsed_view = None
     return parsed_view
 
 
@@ -87,3 +81,5 @@ def format_time(seconds):
     hours, minutes = divmod(minutes, 60)
 
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+

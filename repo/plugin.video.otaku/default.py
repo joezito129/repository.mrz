@@ -21,21 +21,19 @@
 
 import pickle
 
-from resources.lib.AniListBrowser import AniListBrowser
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
-from resources.lib.WatchlistIntegration import add_watchlist, watchlist_update_episode
-
-_ANILIST_BROWSER = AniListBrowser()
+from resources.lib.WatchlistIntegration import add_watchlist
+from resources.lib.OtakuBrowser import BROWSER
 
 
 def add_last_watched(items):
-    anilist_id = control.getSetting("addon.last_watched")
+    mal_id = control.getSetting("addon.last_watched")
     try:
-        kodi_meta = pickle.loads(database.get_show(anilist_id)['kodi_meta'])
+        kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
         last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta.get('title_userPreferred'))
-        items.insert(0, (last_watched, f'animes/{anilist_id}//', kodi_meta['poster']))
+        items.insert(0, (last_watched, f'animes/{mal_id}/', kodi_meta['poster']))
     except TypeError:
         pass
     return items
@@ -43,61 +41,46 @@ def add_last_watched(items):
 
 @Route('animes/*')
 def ANIMES_PAGE(payload, params):
-    anilist_id, mal_id, eps_watched = payload.rsplit("/")
-    anime_general, content = OtakuBrowser.get_anime_init(anilist_id)
+    mal_id, eps_watched = payload.rsplit("/")
+    anime_general, content = OtakuBrowser.get_anime_init(mal_id)
     control.draw_items(anime_general, content)
 
 
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
-    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
+    path, mal_id, eps_watched = payload.rsplit("/")
     page = params.get('page', 1)
-    if not anilist_id:
-        try:
-            anilist_id = database.get_show_mal(mal_id)['anilist_id']
-        except TypeError:
-            from resources.lib.AniListBrowser import AniListBrowser
-            show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
-            anilist_id = show_meta['anilist_id']
-    control.draw_items(_ANILIST_BROWSER.get_recommendations(anilist_id, int(page)), 'tvshows')
+    control.draw_items(BROWSER.get_recommendations(mal_id, int(page)), 'tvshows')
 
 
 @Route('find_relations/*')
 def FIND_RELATIONS(payload, params):
-    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
-    if not anilist_id:
-        try:
-            anilist_id = database.get_show_mal(mal_id)['anilist_id']
-        except TypeError:
-            from resources.lib.AniListBrowser import AniListBrowser
-            show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
-            anilist_id = show_meta['anilist_id']
-    control.draw_items(_ANILIST_BROWSER.get_relations(anilist_id), 'tvshows')
+    path, mal_id, eps_watched = payload.rsplit("/")
+    control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
-@Route('anilist_airing_anime/*')
+@Route('airing_anime/*')
 def ANILIST_AIRING_ANIME(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_airing_anime(int(payload)), 'tvshows')
+    control.draw_items(BROWSER.get_airing_anime(int(payload)), 'tvshows')
 
 
-@Route('anilist_upcoming_next_season/*')
+@Route('upcoming_next_season/*')
 def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_upcoming_next_season(int(payload)), 'tvshows')
+    control.draw_items(BROWSER.get_upcoming_next_season(int(payload)), 'tvshows')
 
 
-@Route('anilist_top_100_anime/*')
+@Route('top_100_anime/*')
 def ANILIST_TOP_100_ANIME_PAGES(payload, params):
-    control.draw_items(_ANILIST_BROWSER.get_top_100_anime(int(payload)), 'tvshows')
+    control.draw_items(BROWSER.get_top_100_anime(int(payload)), 'tvshows')
 
 
-@Route('anilist_genres/*')
+@Route('genres/*')
 def ANILIST_GENRES_PAGES(payload, params):
     genres, tags, page = payload.rsplit("/")
     if genres or tags:
-        control.draw_items(_ANILIST_BROWSER.genres_payload(genres, tags, int(page)), 'tvshows')
+        control.draw_items(BROWSER.genres_payload(genres, tags, int(page)), 'tvshows')
     else:
-        genre = _ANILIST_BROWSER.get_genres(lambda g: control.multiselect_dialog(control.lang(30004), g))
-        control.draw_items(genre, 'tvshows')
+        control.draw_items(BROWSER.get_genres(), 'tvshows')
 
 
 @Route('search_history')
@@ -119,9 +102,9 @@ def SEARCH(payload, params):
             return control.draw_items([], 'tvshows')
         if int(control.getSetting('searchhistory')) == 0:
             database.addSearchHistory(query, 'show')
-        control.draw_items(_ANILIST_BROWSER.get_search(query), 'tvshows')
+        control.draw_items(BROWSER.get_search(query), 'tvshows')
     else:
-        control.draw_items(_ANILIST_BROWSER.get_search(query, int(page)), 'tvshows')
+        control.draw_items(BROWSER.get_search(query, int(page)), 'tvshows')
 
 
 @Route('remove_search_item/*')
@@ -150,7 +133,7 @@ def EDIT_SEARCH_ITEM(payload, params):
 
 @Route('play/*')
 def PLAY(payload, params):
-    anilist_id, episode = payload.rsplit("/")
+    mal_id, episode = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume_time = params.get('resume')
@@ -162,8 +145,8 @@ def PLAY(payload, params):
         elif context == 1:
             resume_time = None
 
-    sources = OtakuBrowser.get_sources(anilist_id, episode, 'show', rescrape, source_select)
-    _mock_args = {"anilist_id": anilist_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
+    sources = OtakuBrowser.get_sources(mal_id, episode, 'show', rescrape, source_select)
+    _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
@@ -175,7 +158,7 @@ def PLAY(payload, params):
 
 @Route('play_movie/*')
 def PLAY_MOVIE(payload, params):
-    anilist_id, mal_id, eps_watched = payload.rsplit("/")
+    mal_id, eps_watched = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume_time = params.get('resume')
@@ -186,16 +169,9 @@ def PLAY_MOVIE(payload, params):
             return
         elif context == 1:
             resume_time = None
-    if not anilist_id:
-        try:
-            anilist_id = database.get_show_mal(mal_id)['anilist_id']
-        except TypeError:
-            from resources.lib.AniListBrowser import AniListBrowser
-            show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
-            anilist_id = show_meta['anilist_id']
 
-    sources = OtakuBrowser.get_sources(anilist_id, 1, 'movie', rescrape, source_select)
-    _mock_args = {'anilist_id': anilist_id, 'episode': 1, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
+    sources = OtakuBrowser.get_sources(mal_id, 1, 'movie', rescrape, source_select)
+    _mock_args = {'mal_id': mal_id, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     control.playList.clear()
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
@@ -209,23 +185,23 @@ def PLAY_MOVIE(payload, params):
 @Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload, params):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
-    anilist_id, episode = payload.rsplit("/")
+    from resources.lib.WatchlistIntegration import watchlist_update_episode
+
+    mal_id, episode = payload.rsplit("/")
     flavor = WatchlistFlavor.get_update_flavor()
-    watchlist_update_episode(anilist_id, episode)
+    watchlist_update_episode(mal_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
-    show = database.get_show(anilist_id)
-    mal_id = show['mal_id']
-    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{anilist_id}/{mal_id}/{episode})')
+    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{mal_id}/{episode})')
     control.exit_code()
 
 
 @Route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload, params):
-    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
-    if not anilist_id:
-        anilist_id = database.get_mappings(mal_id, 'mal_id')['anilist_id']
-    database.remove_episodes(anilist_id)
-    database.remove_show_data(anilist_id)
+    path, mal_id, eps_watched = payload.rsplit("/")
+    database.remove_from_database('shows', mal_id)
+    database.remove_from_database('episodes', mal_id)
+    database.remove_from_database('show_data', mal_id)
+    database.remove_from_database('shows_meta', mal_id)
     control.notify(control.ADDON_NAME, 'Removed from database')
     control.exit_code()
 
@@ -258,35 +234,28 @@ def REFRESH(payload, params):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload, params):
-    path, anilist_id, mal_id, eps_watched = payload.rsplit("/")
-    if not anilist_id:
-        try:
-            anilist_id = database.get_show_mal(mal_id)['anilist_id']
-        except TypeError:
-            from resources.lib.AniListBrowser import AniListBrowser
-            show_meta = _ANILIST_BROWSER.get_mal_to_anilist(mal_id)
-            anilist_id = show_meta['anilist_id']
-    if not (episode := database.get_episode(anilist_id)):
-        OtakuBrowser.get_anime_init(anilist_id)
-        episode = database.get_episode(anilist_id)
+    path, mal_id, eps_watched = payload.rsplit("/")
+    if not (episode := database.get_episode(mal_id)):
+        OtakuBrowser.get_anime_init(mal_id)
+        episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random (Defualt)"]
     fanart += ["None", ""]
-    control.draw_items([utils.allocate_item(f, f'fanart/{anilist_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
+    control.draw_items([utils.allocate_item(f, f'fanart/{mal_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
 
 
 @Route('fanart/*')
 def FANART(payload, params):
-    anilist_id, select = payload.rsplit('/', 2)
-    episode = database.get_episode(anilist_id)
+    mal_id, select = payload.rsplit('/', 2)
+    episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random"]
     fanart += ["None", ""]
     fanart_all = control.getSetting(f'fanart.all').split(',')
     if '' in fanart_all:
         fanart_all.remove('')
-    fanart_all += [str(anilist_id)]
-    control.setSetting(f'fanart.select.anilist.{anilist_id}', fanart[int(select)])
+    fanart_all += [str(mal_id)]
+    control.setSetting(f'fanart.select.{mal_id}', fanart[int(select)])
     control.setSetting(f'fanart.all', ",".join(fanart_all))
     control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[int(select)]}")
 
@@ -295,10 +264,10 @@ def FANART(payload, params):
 @Route('')
 def LIST_MENU(payload, params):
     MENU_ITEMS = [
-        (control.lang(30001), "anilist_airing_anime/1", 'airing_anime.png'),
-        (control.lang(30002), "anilist_upcoming_next_season/1", 'upcoming.png'),
-        (control.lang(30003), "anilist_top_100_anime/1", 'top_100_anime.png'),
-        (control.lang(30004), "anilist_genres///1", 'genres_&_tags.png'),
+        (control.lang(30001), "airing_anime/1", 'airing_anime.png'),
+        (control.lang(30002), "upcoming_next_season/1", 'upcoming.png'),
+        (control.lang(30003), "top_100_anime/1", 'top_100_anime.png'),
+        (control.lang(30004), "genres///1", 'genres_&_tags.png'),
         (control.lang(30005), "search_history", 'search.png'),
         (control.lang(30006), "tools", 'tools.png')
     ]
@@ -319,14 +288,14 @@ def TOOLS_MENU(payload, params):
         (control.lang(30010), "change_log", {'plot': "View Changelog"}, 'changelog.png'),
         (control.lang(30011), "settings", {'plot': "Open Settings"}, 'open_settings_menu.png'),
         (control.lang(30012), "clear_cache", {'plot': "Clear Cache"}, 'clear_cache.png'),
-        (control.lang(30013), "clear_history", {'plot': "Clear Search History"}, 'clear_search_history.png'),
+        (control.lang(30013), "clear_search_history", {'plot': "Clear Search History"}, 'clear_search_history.png'),
         (control.lang(30014), "rebuild_database", {'plot': "Rebuild Database"}, 'rebuild_database.png'),
         (control.lang(30015), "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
         (control.lang(30016), 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
         (control.lang(30017), 'sort_select', {'plot': "Choose Sorting..."}, ''),
         (control.lang(30018), 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
-    control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'files')
+    control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
 
 
 # ### Maintenance ###
@@ -362,7 +331,7 @@ def CLEAR_SEARCH_HISTORY(payload, params):
 def CLEAR_SELECTED_FANART(payload, params):
     fanart_all = control.getSetting(f'fanart.all').split(',')
     for i in fanart_all:
-        control.setSetting(f'fanart.select.anilist.{i}', '')
+        control.setSetting(f'fanart.select.{i}', '')
     control.setSetting('fanart.all', '')
     control.ok_dialog(control.ADDON_NAME, "Completed")
     if params.get('setting'):
@@ -371,8 +340,8 @@ def CLEAR_SELECTED_FANART(payload, params):
 
 @Route('rebuild_database')
 def REBUILD_DATABASE(payload, params):
-    from resources.lib.ui.database_sync import AnilistSyncDatabase
-    AnilistSyncDatabase().re_build_database()
+    from resources.lib.ui.database_sync import SyncDatabase
+    SyncDatabase().re_build_database()
     if params.get('setting'):
         control.exit_code()
 
@@ -397,41 +366,43 @@ def DOWNLOAD_MANAGER(payload, params):
     DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
 
 
-@Route('importexport_settings')
-def IMPORTEXPORT_SETTINGS(payload, params):
+@Route('import_settings')
+def IMPORT_SETTINGS(payload, params):
+    import os
+    import xbmcvfs
+    setting_xml = os.path.join(control.dataPath, 'settings.xml')
+
+    import_location = control.browse(1, f"{control.ADDON_NAME}:  Import Setting", 'files', 'settings.xml')
+    if not import_location:
+        return control.exit_code()
+    if not import_location.endswith('settings.xml'):
+        control.ok_dialog(control.ADDON_NAME, "Invalid File!")
+    else:
+        yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
+        if yesno:
+            if xbmcvfs.delete(setting_xml) and xbmcvfs.copy(import_location, setting_xml):
+                control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
+            else:
+                control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
+    return control.exit_code()
+
+@Route('export_settings')
+def IMPORT_SETTINGS(payload, params):
     import os
     import xbmcvfs
 
-    context = control.context_menu(["Import", "Export"])
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
+    export_location = control.browse(3, f"{control.ADDON_NAME}: Export Location", 'files')
 
-    # Import
-    if context == 0:
-        import_location = control.browse(1, f"{control.ADDON_NAME}:  Import Setting", 'files', 'settings.xml')
-        if not import_location:
-            return control.exit_code()
-        if not import_location.endswith('settings.xml'):
-            control.ok_dialog(control.ADDON_NAME, "Invalid File!")
-        else:
-            yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
-            if yesno:
-                if xbmcvfs.delete(setting_xml) and xbmcvfs.copy(import_location, setting_xml):
-                    control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
-                else:
-                    control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
-
-    # Export
-    elif context == 1:
-        export_location = control.browse(3, control.ADDON_NAME, 'files')
-        if not export_location:
-            control.ok_dialog(control.ADDON_NAME, "Please Select Export Location!")
-        else:
-            yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to save settings.xml?")
-            if yesno:
-                if xbmcvfs.copy(setting_xml, os.path.join(export_location, 'settings.xml')):
-                    control.ok_dialog(control.ADDON_NAME, "Saved settings.xml")
-                else:
-                    control.ok_dialog(control.ADDON_NAME, "Could Not Export File!")
+    if not export_location:
+        control.ok_dialog(control.ADDON_NAME, "Please Select Export Location!")
+    else:
+        yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to save settings.xml?")
+        if yesno:
+            if xbmcvfs.copy(setting_xml, os.path.join(export_location, 'settings.xml')):
+                control.ok_dialog(control.ADDON_NAME, "Saved settings.xml")
+            else:
+                control.ok_dialog(control.ADDON_NAME, "Could Not Export File!")
     return control.exit_code()
 
 @Route('toggleLanguageInvoker')
@@ -441,13 +412,12 @@ def TOGGLE_LANGUAGE_INVOKER(payload, params):
 
 
 if __name__ == "__main__":
-
     router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():
             control.playList.clear()
 
-    # t1 = time.perf_counter_ns()
-    # totaltime = (t1-t0)/1_000_000
-    # control.print(totaltime, 'ms')
+# t1 = time.perf_counter_ns()
+# totaltime = (t1-t0)/1_000_000
+# control.print(totaltime, 'ms')

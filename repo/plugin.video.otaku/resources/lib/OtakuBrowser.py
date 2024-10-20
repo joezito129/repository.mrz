@@ -6,6 +6,12 @@ from resources.lib import indexers
 from resources.lib.indexers import simkl, anizip, jikanmoe
 from resources.lib.ui import control, database, utils
 
+if control.settingids.browser_api == 'mal':
+    from resources.lib.MalBrowser import MalBrowser
+    BROWSER = MalBrowser()
+else:
+    from resources.lib.AniListBrowser import AniListBrowser
+    BROWSER = AniListBrowser()
 
 def parse_history_view(res):
     return utils.allocate_item(res, f'search/{res}/1', True, False)
@@ -18,10 +24,10 @@ def search_history(search_array):
     return result
 
 
-def get_episodeList(anilist_id, pass_idx):
-    show = database.get_show(anilist_id)
+def get_episodeList(mal_id, pass_idx):
+    show = database.get_show(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
-    if kodi_meta['format'] in ['MOVIE', 'ONA', 'SPECIAL'] and kodi_meta['episodes'] == 1:
+    if kodi_meta['format'] in ['MOVIE', 'ONA', 'SPECIAL', 'Movie', 'Special'] and kodi_meta['episodes'] == 1:
         title = kodi_meta['title_userPreferred'] or kodi_meta['name']
         info = {
             "title": title,
@@ -34,7 +40,7 @@ def get_episodeList(anilist_id, pass_idx):
         items = [utils.allocate_item(title, 'null', False, True, info=info, poster=kodi_meta['poster'])]
 
     else:
-        episodes = database.get_episode_list(anilist_id)
+        episodes = database.get_episode_list(mal_id)
         items = indexers.process_episodes(episodes, '') if episodes else []
         playlist = control.bulk_player_list(items)[pass_idx:]
         for i in playlist:
@@ -42,23 +48,7 @@ def get_episodeList(anilist_id, pass_idx):
     return items
 
 
-def get_meta_ids(anilist_id):
-    params = {
-        "type": "anilist",
-        "id": anilist_id
-    }
-    r = requests.get('https://armkai.vercel.app/api/search', params=params)
-    return r.json()
-
-
-def get_backup(anilist_id, source):
-    show_meta = database.get_show_meta(anilist_id)
-    meta_ids = pickle.loads(show_meta['meta_ids'])
-    mal_id = meta_ids['mal_id']
-
-    if not mal_id:
-        mal_id = get_meta_ids(anilist_id)['mal']
-        database.add_mapping_id_meta(anilist_id, mal_id, 'mal_id')
+def get_backup(mal_id, source):
     params = {
         "type": "myanimelist",
         "id": mal_id
@@ -67,43 +57,41 @@ def get_backup(anilist_id, source):
     return r.json().get('Pages', {}).get(source, {}) if r.ok else {}
 
 
-def get_anime_init(anilist_id):
-    show_meta = database.get_show_meta(anilist_id)
+def get_anime_init(mal_id):
+    show_meta = database.get_show_meta(mal_id)
     if not show_meta:
-        from resources.lib.AniListBrowser import AniListBrowser
-        AniListBrowser().get_anilist(anilist_id)
-        show_meta = database.get_show_meta(anilist_id)
+        BROWSER.get_anime(mal_id)
+        show_meta = database.get_show_meta(mal_id)
         if not show_meta:
             return [], 'episodes'
 
-    if control.getBool('overide.meta.api'):
+    if control.getBool('override.meta.api'):
         meta_api = control.getSetting('meta.api')
         if meta_api == 'simkl':
-            data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+            data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)
         elif meta_api == 'anizip':
-            data = anizip.ANIZIPAPI().get_episodes(anilist_id, show_meta)
+            data = anizip.ANIZIPAPI().get_episodes(mal_id, show_meta)
         else:    # elif meta_api == 'jikanmoa':
-            data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
+            data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
 
     else:
-        data = simkl.SIMKLAPI().get_episodes(anilist_id, show_meta)
+        data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)
         if not data[0]:
-            data = anizip.ANIZIPAPI().get_episodes(anilist_id, show_meta)
+            data = anizip.ANIZIPAPI().get_episodes(mal_id, show_meta)
         if not data[0]:
-            data = jikanmoe.JikanAPI().get_episodes(anilist_id, show_meta)
+            data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
         if not data[0]:
             data = [], 'episodes'
     return data
 
 
-def get_sources(anilist_id, episode, media_type, rescrape=False, source_select=False, silent=False):
-    if not (show := database.get_show(anilist_id)):
-        from resources.lib.AniListBrowser import AniListBrowser
-        show = AniListBrowser().get_anilist(anilist_id)
+def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
+    if not (show := database.get_show(mal_id)):
+        show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
     actionArgs = {
         'query': kodi_meta['query'],
-        'anilist_id': anilist_id,
+        'mal_id': mal_id,
         'episode': episode,
         'status': kodi_meta['status'],
         'media_type': media_type,
