@@ -115,6 +115,7 @@ def copy2clip(txt):
     if platform == 'win32':
         command = 'echo %s|clip' % txt
         os.system(command)
+        return True
 
 
 def colorstr(text, color=None):
@@ -127,9 +128,11 @@ def refresh():
     return execute('Container.Refresh')
 
 
+def getSetting(key):
+    return ADDON.getSetting(key)
+
 def getBool(key):
     return settings.getBool(key)
-
 
 def getInt(key):
     return settings.getInt(key)
@@ -138,12 +141,14 @@ def getString(key):
     return settings.getString(key)
 
 
-def getSetting(key):
-    return ADDON.getSetting(key)
-
-
 def setSetting(settingid, value):
     return ADDON.setSetting(settingid, value)
+
+def setBool(settingid, value):
+    return ADDON.setSettingBool(settingid, value)
+
+def setInt(settingid, value):
+    return ADDON.setSettingInt(settingid, value)
 
 
 def lang(x):

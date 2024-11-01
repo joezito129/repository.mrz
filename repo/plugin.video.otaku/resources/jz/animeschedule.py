@@ -3,8 +3,8 @@ import datetime
 import re
 import time
 
-from bs4 import BeautifulSoup
 from resources.lib.ui import database
+from bs4 import BeautifulSoup
 
 base_url = "https://animeschedule.net/api/v3"
 dub_list = []

@@ -103,13 +103,13 @@ def toggle_reuselanguageinvoker(forced_state=None):
     for i in range(len(file_lines)):
         line_string = file_lines[i]
         if "reuselanguageinvoker" in file_lines[i]:
-            if "false" in line_string or forced_state == 'Enabled':
-                file_lines[i] = file_lines[i].replace("false", "true")
-                control.setSetting("reuselanguageinvoker.status", "Enabled")
-                _store_and_reload(file_lines)
-            elif "true" in line_string or forced_state == 'Disabled':
+            if forced_state == 'Disabled' or ("true" in line_string and forced_state is None):
                 file_lines[i] = file_lines[i].replace("true", "false")
                 control.setSetting("reuselanguageinvoker.status", "Disabled")
+                _store_and_reload(file_lines)
+            elif forced_state == 'Enabled' or ("false" in line_string and forced_state is None):
+                file_lines[i] = file_lines[i].replace("false", "true")
+                control.setSetting("reuselanguageinvoker.status", "Enabled")
                 _store_and_reload(file_lines)
             break
 
@@ -133,18 +133,11 @@ if __name__ == "__main__":
     version_check()
     database_sync.SyncDatabase()
     refresh_apis()
-    if control.getSetting('update.time.30') == '' or control.getSetting('update.time.7') == '':
+    if time.time() > control.getInt('update.time.30') + 2_592_000:   # 30 days
         update_mappings_db()
+        control.setInt('update.time.30', int(time.time()))
+    if time.time() > control.getInt('update.time.7') + 604_800:   # 7 days
         update_dub_json()
         sync_watchlist(True)
-        control.setSetting('update.time.30', str(int(time.time())))
-        control.setSetting('update.time.7', str(int(time.time())))
-    else:
-        if time.time() > int(control.getSetting('update.time.30')) + 2_592_000:   # 30 days
-            update_mappings_db()
-            control.setSetting('update.time.30', str(int(time.time())))
-        if time.time() > int(control.getSetting('update.time.7')) + 604_800:   # 7 days
-            update_dub_json()
-            sync_watchlist(True)
-            control.setSetting('update.time.7', str(int(time.time())))
+        control.setInt('update.time.7', int(time.time()))
     control.log('##################  MAINTENANCE COMPLETE ######################')

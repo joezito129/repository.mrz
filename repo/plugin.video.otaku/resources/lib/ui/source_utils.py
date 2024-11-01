@@ -124,6 +124,7 @@ def get_cache_check_reg(episode):
     #     season = str(info.getSeason()).zfill(2)
     # else:
     #     season = ''
+    episode = str(episode)
     season = ''
     # if control.getSetting('regex.question') == 'true':
     #     reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
@@ -233,3 +234,7 @@ def user_select(files, dict_key):
     else:
         file = [files[idx]]
     return file
+
+def get_embedhost(url):
+    s = re.search(r'(?://|\.)([^\.]+)\.', url)
+    return s.group(1)

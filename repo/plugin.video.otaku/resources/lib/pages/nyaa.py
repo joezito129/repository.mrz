@@ -332,7 +332,6 @@ class Sources(BrowserBase):
             params['q'] = query.replace(' ', '+')
             return self.process_nyaa_backup(self._BASE_URL, params, 1)
         params['q'] = show.replace(' ', '+')
-
         return self.process_nyaa_movie(self._BASE_URL, params)
 
     @staticmethod

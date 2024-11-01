@@ -150,10 +150,7 @@ class Generator:
         self._remove_binaries()
 
         if self._generate_addons_file(addons_xml_path):
-            print(
-                "Successfully updated {}".format(color_text(addons_xml_path, 'yellow'))
-            )
-
+            print("Successfully updated {}".format(color_text(addons_xml_path, 'yellow')))
             if self._generate_md5_file(addons_xml_path, md5_path):
                 print("Successfully updated {}".format(color_text(md5_path, 'yellow')))
 

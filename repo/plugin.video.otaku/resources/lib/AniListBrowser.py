@@ -1,4 +1,3 @@
-import ast
 import json
 import pickle
 import random
@@ -13,10 +12,10 @@ class AniListBrowser:
     _URL = "https://graphql.anilist.co"
 
     def __init__(self):
-        self._TITLE_LANG = ["romaji", 'english'][int(control.getSetting("titlelanguage"))]
-        self.perpage = int(control.getSetting('interface.perpage.general.anilist'))
-        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][int(control.getSetting('contentformat.menu'))] if control.getBool('contentformat.bool') else ''
-        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][int(control.getSetting('contentorigin.menu'))] if control.getBool('contentorigin.bool') else ''
+        self._TITLE_LANG = ["romaji", 'english'][control.getInt("titlelanguage")]
+        self.perpage = control.getInt('interface.perpage.general.anilist')
+        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
+        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else ''
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):
@@ -59,7 +58,7 @@ class AniListBrowser:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
         airing = database.get_(self.get_base_res, 24, variables)
-        return self.process_anilist_view(airing, "airing_anime/%d", page)
+        return self.process_anilist_view(airing, "airing_anime?page=%d", page)
 
     def get_upcoming_next_season(self, page):
         season, year = self.get_season_year('next')
@@ -78,7 +77,7 @@ class AniListBrowser:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
         upcoming = database.get_(self.get_base_res, 24, variables)
-        return self.process_anilist_view(upcoming, "upcoming_next_season/%d", page)
+        return self.process_anilist_view(upcoming, "upcoming_next_season?page=%d", page)
 
     def get_top_100_anime(self, page):
         variables = {
@@ -94,7 +93,7 @@ class AniListBrowser:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
         top_100_anime = database.get_(self.get_base_res, 24, variables)
-        return self.process_anilist_view(top_100_anime, "top_100_anime/%d", page)
+        return self.process_anilist_view(top_100_anime, "top_100_anime?page=%d", page)
 
     def get_search(self, query, page=1):
         variables = {
@@ -105,13 +104,13 @@ class AniListBrowser:
             'type': "ANIME"
         }
         search = self.get_search_res(variables)
-        if control.getSetting('search.adult') == "true":
+        if control.getBool('search.adult'):
             variables['isAdult'] = True
             search_adult = self.get_search_res(variables)
             for i in search_adult["ANIME"]:
                 i['title']['english'] = f'{i["title"]["english"]} - {control.colorstr("Adult", "red")}'
             search['ANIME'] += search_adult['ANIME']
-        return self.process_anilist_view(search, f"search/{query}/%d", page)
+        return self.process_anilist_view(search, f"search/{query}?page=%d", page)
 
     def get_recommendations(self, mal_id, page):
         variables = {
@@ -120,7 +119,7 @@ class AniListBrowser:
             'idMal': mal_id
         }
         recommendations = database.get_(self.get_recommendations_res, 24, variables)
-        return self.process_recommendations_view(recommendations, f'find_recommendations/{mal_id}/?page=%d', page)
+        return self.process_recommendations_view(recommendations, f'find_recommendations/{mal_id}?page=%d', page)
 
     def get_relations(self, mal_id):
         variables = {
@@ -763,6 +762,7 @@ class AniListBrowser:
         return self.genres_payload(genre_display_list, tag_display_list, 1)
 
     def genres_payload(self, genre_list, tag_list, page):
+        import ast
         query = '''
         query (
             $page: Int,
@@ -858,7 +858,7 @@ class AniListBrowser:
             variables['tag_in'] = tag_list
         if 'Hentai' in genre_list:
             variables['isAdult'] = True
-        return self.process_genre_view(query, variables, f"anilist_genres/{genre_list}/{tag_list}/%d", page)
+        return self.process_genre_view(query, variables, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
     def process_genre_view(self, query, variables, base_plugin_url, page):
         r = requests.post(self._URL, json={'query': query, 'variables': variables})

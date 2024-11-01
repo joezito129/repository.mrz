@@ -3,7 +3,6 @@ import requests
 import json
 import random
 import pickle
-import ast
 import re
 
 from functools import partial
@@ -15,9 +14,9 @@ class MalBrowser:
     _URL = "https://api.jikan.moe/v4"
 
     def __init__(self):
-        self._TITLE_LANG = ['title', 'title_english'][int(control.getSetting("titlelanguage"))]
+        self._TITLE_LANG = ['title', 'title_english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.mal')
-        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][int(control.getSetting('contentformat.menu'))] if control.getBool('contentformat.bool') else ''
+        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
         self.adult = 'true' if control.getSetting('search.adult') == "false" else 'false'
 
     @staticmethod
@@ -111,7 +110,7 @@ class MalBrowser:
             params['type'] = self.format_in_type
 
         search = database.get_(self.get_base_res, 24, f"{self._URL}/anime", params)
-        return self.process_mal_view(search, f"search/{query}/%d", page)
+        return self.process_mal_view(search, f"search/{query}?page=%d", page)
 
     def get_airing_anime(self, page):
         params = {
@@ -123,7 +122,7 @@ class MalBrowser:
             params['filter'] = self.format_in_type
 
         airing = database.get_(self.get_base_res, 24, f"{self._URL}/seasons/now", params)
-        return self.process_mal_view(airing, "airing_anime/%d", page)
+        return self.process_mal_view(airing, "airing_anime?page=%d", page)
 
     def get_upcoming_next_season(self, page):
         season, year = self.get_season_year('next')
@@ -136,7 +135,7 @@ class MalBrowser:
             params['filter'] = self.format_in_type
 
         upcoming = database.get_(self.get_base_res, 24, f"{self._URL}/seasons/{year}/{season}", params)
-        return self.process_mal_view(upcoming, "upcoming_next_season/%d", page)
+        return self.process_mal_view(upcoming, "upcoming_next_season?page=%d", page)
 
     def get_top_100_anime(self, page):
         params = {
@@ -148,7 +147,7 @@ class MalBrowser:
             params['type'] = self.format_in_type
 
         top_100_anime = database.get_(self.get_base_res, 24, f"{self._URL}/top/anime", params)
-        return self.process_mal_view(top_100_anime, "top_100_anime/%d", page)
+        return self.process_mal_view(top_100_anime, "top_100_anime?page=%d", page)
 
     @staticmethod
     def get_base_res(url, params=None):
@@ -210,6 +209,7 @@ class MalBrowser:
         return self.genres_payload(genre_display_list, [], 1)
 
     def genres_payload(self, genre_list, tag_list, page):
+        import ast
         if not isinstance(genre_list, list):
             genre_list = ast.literal_eval(genre_list)
 
@@ -226,7 +226,7 @@ class MalBrowser:
             params['type'] = self.format_in_type
 
         genres = database.get_(self.get_base_res, 24, f'{self._URL}/anime', params)
-        return self.process_mal_view(genres, f"genres/{genre_list}/{tag_list}/%d", page)
+        return self.process_mal_view(genres, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
 
     @div_flavor
@@ -300,7 +300,7 @@ class MalBrowser:
         if kodi_meta.get('clearlogo'):
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
 
-        if res.get('type') in ['Movie', 'ONA', 'Special'] and res['episodes'] == 1:
+        if res.get('type') in ['Movie', 'ONA', 'Special', 'TV Special'] and res['episodes'] == 1:
             base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)

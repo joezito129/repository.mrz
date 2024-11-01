@@ -110,5 +110,4 @@ class Sources(BrowserBase):
                     'lang': source_utils.getAudio_lang(title)
                 }
                 sources.append(source)
-
         return sources

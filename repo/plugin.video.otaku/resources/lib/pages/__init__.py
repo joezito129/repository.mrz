@@ -1,8 +1,8 @@
 import threading
 import time
 import xbmc
+from . import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, animepahe, localfiles
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -19,9 +19,10 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
         super(Sources, self).__init__(xml_file, location, actionargs)
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['gogo', 'hianime']
+        self.embedProviders = ['gogoanime', 'hianime', 'animepahe']
+        self.embed_func = [gogoanime, hianime, animepahe]
         self.otherProviders = ['Local Files']
-        self.remainingProviders = self.embedProviders + self.torrentProviders + self.otherProviders
+        self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
         self.embeds_qual_len = [0, 0, 0, 0]
@@ -89,21 +90,15 @@ class Sources(GetSources):
             self.remainingProviders.remove('Local Files')
 
 #       ### embeds ###
-        if control.getBool('provider.hianime'):
-            t = threading.Thread(target=self.hianime_worker, args=(mal_id, episode, rescrape))
-            t.start()
-            self.threads.append(t)
-        else:
-            self.remainingProviders.remove('hianime')
+        for inx, embed_provider in enumerate(self.embedProviders):
+            if control.getBool(f'provider.{embed_provider}'):
+                t = threading.Thread(target=self.embed_worker, args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape, get_backup))
+                t.start()
+                self.threads.append(t)
+            else:
+                self.remainingProviders.remove(embed_provider)
 
-        if control.getBool('provider.gogo'):
-            t = threading.Thread(target=self.gogo_worker, args=(mal_id, episode, rescrape, get_backup))
-            t.start()
-            self.threads.append(t)
-        else:
-            self.remainingProviders.remove('gogo')
-
-        timeout = 60 if rescrape else int(control.getSetting('general.timeout'))
+        timeout = 60 if rescrape else control.getInt('general.timeout')
         start_time = time.perf_counter()
         runtime = 0
 
@@ -145,21 +140,18 @@ class Sources(GetSources):
         self.remainingProviders.remove('animetosho')
 
 #   ### embeds ###
-    def hianime_worker(self, mal_id, episode, rescrape):
-        hianime_sources = database.get_(hianime.Sources().get_sources, 8, mal_id, episode, key='hianime')
-        self.embedSources += hianime_sources
-        for x in hianime_sources:
-            if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
-                control.setSetting('hianime.skipintro.start', str(x['skip']['intro']['start']))
-                control.setSetting('hianime.skipintro.end', str(x['skip']['intro']['end']))
-            if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
-                control.setSetting('hianime.skipoutro.start', str(x['skip']['outro']['start']))
-                control.setSetting('hianime.skipoutro.end', str(x['skip']['outro']['end']))
-        self.remainingProviders.remove('hianime')
-
-    def gogo_worker(self, mal_id, episode, rescrape, get_backup):
-        self.embedSources += database.get_(gogoanime.Sources().get_sources, 8, mal_id, episode, get_backup, key='gogoanime')
-        self.remainingProviders.remove('gogo')
+    def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape, get_backup):
+        embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, get_backup, key=embed_name)
+        self.embedSources += embed_sources
+        if embed_name == 'hianime':
+            for x in embed_sources:
+                if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
+                    control.setInt('hianime.skipintro.start', int(x['skip']['intro']['start']))
+                    control.setInt('hianime.skipintro.end', int(x['skip']['intro']['end']))
+                if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
+                    control.setInt('hianime.skipoutro.start', int(x['skip']['outro']['start']))
+                    control.setInt('hianime.skipoutro.end', int(x['skip']['outro']['end']))
+        self.remainingProviders.remove(embed_name)
 
     def localfiles_worker(self, query, mal_id, episode, rescrape):
         self.local_files += localfiles.Sources().get_sources(query, mal_id, episode)
@@ -167,11 +159,11 @@ class Sources(GetSources):
 
     def user_cloud_inspection(self, query, mal_id, episode):
         debrid = {}
-        if control.real_debrid_enabled() and control.getSetting('rd.cloudInspection') == 'true':
+        if control.real_debrid_enabled() and control.getBool('rd.cloudInspection'):
             debrid['real_debrid'] = True
-        if control.premiumize_enabled() and control.getSetting('premiumize.cloudInspection') == 'true':
+        if control.premiumize_enabled() and control.getBool('premiumize.cloudInspection'):
             debrid['premiumize'] = True
-        if control.all_debrid_enabled() and control.getSetting('alldebrid.cloudInspection') == 'true':
+        if control.all_debrid_enabled() and control.getBool('alldebrid.cloudInspection'):
             debrid['all_debrid'] = True
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
@@ -183,9 +175,9 @@ class Sources(GetSources):
         sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt('general.maxResolution')]
 
         # Filter out sources
-        if control.getSetting('general.disable265') == 'true':
+        if control.getBool('general.disable265'):
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
-        lang = int(control.getSetting("general.source"))
+        lang = control.getInt("general.source")
         if lang != 1:
             langs = [0, 1, 2]
             sortedList = [i for i in sortedList if i['lang'] != langs[lang]]

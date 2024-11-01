@@ -105,7 +105,6 @@ def load_video_from_url(in_url):
             return found_extractor['parser'](in_url, data)
 
         control.log("Probing source: %s" % in_url)
-        # reqObj = client.request(in_url, output='extended')
         r = requests.get(in_url, stream=True)
         if r.ok:
             return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))

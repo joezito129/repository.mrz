@@ -135,7 +135,7 @@ class AllDebrid:
         folder_details = [{'link': x['link'], 'path': x['filename']} for x in folder_details]
 
         if episode:
-            selected_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
+            selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select)
             self.delete_magnet(magnet_id)
             if selected_file is not None:
                 return self.resolve_hoster(selected_file['link'])

@@ -14,7 +14,7 @@ from resources.lib.ui.control import settingids
 
 class Sources(BrowserBase):
     _BASE_URL = 'https://animetosho.org'
-    
+
     def __init__(self):
         self.all_sources = []
         self.sources = []
@@ -49,7 +49,6 @@ class Sources(BrowserBase):
                 ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
                 params['aids'] = meta_ids['anidb_id'] = ids['anidb']
                 database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
-
         self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
 
         if status == 'FINISHED':
@@ -176,6 +175,7 @@ def parse_animetosho_view(res, episode, cached=True):
         'cached': cached,
         'seeders': res['seeders'],
     }
+
     match = re.match(r'(\d+).(\d+) (\w+)', res['size'])
     if match:
         source['byte_size'] = source_utils.convert_to_bytes(float(f'{match.group(1)}.{match.group(2)}'), match.group(3))

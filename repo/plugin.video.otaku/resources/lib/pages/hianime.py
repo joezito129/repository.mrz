@@ -15,7 +15,7 @@ class Sources(BrowserBase):
     _BASE_URL = 'https://hianime.sx/'
     js_file = 'https://megacloud.tv/js/player/a/prod/e1-player.min.js'
 
-    def get_sources(self, mal_id, episode):
+    def get_sources(self, mal_id, episode, get_backup=None):
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta['name']

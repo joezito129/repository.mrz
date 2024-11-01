@@ -1,9 +1,6 @@
 import pickle
 import requests
 
-from resources.lib import pages
-from resources.lib import indexers
-from resources.lib.indexers import simkl, anizip, jikanmoe
 from resources.lib.ui import control, database, utils
 
 if control.settingids.browser_api == 'mal':
@@ -14,17 +11,18 @@ else:
     BROWSER = AniListBrowser()
 
 def parse_history_view(res):
-    return utils.allocate_item(res, f'search/{res}/1', True, False)
+    return utils.allocate_item(res, f'search/{res}', True, False)
 
 
 def search_history(search_array):
-    result = [utils.allocate_item("New Search", "search//1", True, False, 'new_search.png')]
+    result = [utils.allocate_item("New Search", "search/", True, False, 'new_search.png')]
     result += list(map(parse_history_view, search_array))
     result.append(utils.allocate_item("Clear Search History...", "clear_search_history", False, False, 'clear_search_history.png'))
     return result
 
 
 def get_episodeList(mal_id, pass_idx):
+    from resources.lib import indexers
     show = database.get_show(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
     if kodi_meta['format'] in ['MOVIE', 'ONA', 'SPECIAL', 'Movie', 'Special'] and kodi_meta['episodes'] == 1:
@@ -68,17 +66,23 @@ def get_anime_init(mal_id):
     if control.getBool('override.meta.api'):
         meta_api = control.getSetting('meta.api')
         if meta_api == 'simkl':
+            from resources.lib.indexers import simkl
             data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)
         elif meta_api == 'anizip':
+            from resources.lib.indexers import anizip
             data = anizip.ANIZIPAPI().get_episodes(mal_id, show_meta)
         else:    # elif meta_api == 'jikanmoa':
+            from resources.lib.indexers import jikanmoe
             data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
 
     else:
+        from resources.lib.indexers import simkl
         data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)
         if not data[0]:
+            from resources.lib.indexers import anizip
             data = anizip.ANIZIPAPI().get_episodes(mal_id, show_meta)
         if not data[0]:
+            from resources.lib.indexers import jikanmoe
             data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
         if not data[0]:
             data = [], 'episodes'
@@ -86,6 +90,8 @@ def get_anime_init(mal_id):
 
 
 def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
+    from resources.lib import pages
+
     if not (show := database.get_show(mal_id)):
         show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])

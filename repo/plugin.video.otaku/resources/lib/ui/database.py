@@ -50,7 +50,7 @@ def cache_get(key):
     lock.acquire()
     cursor = get_connection_cursor(control.cacheFile)
     try:
-        cursor.execute(f'SELECT * FROM cache WHERE key=?', (key,))
+        cursor.execute('SELECT * FROM cache WHERE key=?', (key,))
         results = cursor.fetchone()
         cursor.close()
         return results
@@ -64,16 +64,12 @@ def cache_insert(key, value):
     lock.acquire()
     cursor = get_connection_cursor(control.cacheFile)
     now = int(time.time())
-    try:
-        cursor.execute(f'CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
-        cursor.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS ix_cache ON cache (key)')
-        cursor.execute(f'REPLACE INTO cache (key, value, date) VALUES (?, ?, ?)', (key, value, now))
-        cursor.connection.commit()
-        cursor.close()
-    except OperationalError:
-        cursor.close()
-    finally:
-        control.try_release_lock(lock)
+    cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
+    cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_cache ON cache (key)')
+    cursor.execute('REPLACE INTO cache (key, value, date) VALUES (?, ?, ?)', (key, value, now))
+    cursor.connection.commit()
+    cursor.close()
+    control.try_release_lock(lock)
 
 
 def cache_clear():

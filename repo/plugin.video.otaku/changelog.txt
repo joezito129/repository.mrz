@@ -1,3 +1,7 @@
+Changelog v5.1.1 (2024-10-31):
+- Changed some defaults
+- Fixed Bugs
+
 Changelog v5.1.0 (2024-10-19):
 - Updated viewtype settings
 - Added MAl_Browser

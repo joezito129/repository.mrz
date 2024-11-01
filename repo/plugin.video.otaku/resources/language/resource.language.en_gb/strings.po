@@ -670,8 +670,16 @@ msgctxt "#30403"
 msgid "Gogo"
 msgstr ""
 
+msgctxt "#30404"
+msgid "Animepahe"
+msgstr ""
+
 msgctxt "#30410"
 msgid "Local Files"
+msgstr ""
+
+msgctxt "#30411"
+msgid "Enable InputSteamAdaptive"
 msgstr ""
 
 ######Context & Widgets#####

@@ -19,21 +19,21 @@
 # import time
 # t0 = time.perf_counter_ns()
 
-import pickle
-
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlist
-from resources.lib.OtakuBrowser import BROWSER
+
+BROWSER = OtakuBrowser.BROWSER
 
 
 def add_last_watched(items):
+    import pickle
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
         last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta.get('title_userPreferred'))
-        items.insert(0, (last_watched, f'animes/{mal_id}/', kodi_meta['poster']))
+        items.append((last_watched, f'animes/{mal_id}/', kodi_meta['poster']))
     except TypeError:
         pass
     return items
@@ -49,8 +49,8 @@ def ANIMES_PAGE(payload, params):
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload, params):
     path, mal_id, eps_watched = payload.rsplit("/")
-    page = params.get('page', 1)
-    control.draw_items(BROWSER.get_recommendations(mal_id, int(page)), 'tvshows')
+    page = int(params.get('page', 1))
+    control.draw_items(BROWSER.get_recommendations(mal_id, page), 'tvshows')
 
 
 @Route('find_relations/*')
@@ -59,26 +59,30 @@ def FIND_RELATIONS(payload, params):
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
-@Route('airing_anime/*')
-def ANILIST_AIRING_ANIME(payload, params):
-    control.draw_items(BROWSER.get_airing_anime(int(payload)), 'tvshows')
+@Route('airing_anime')
+def AIRING_ANIME(payload, params):
+    page = int(params.get('page', 1))
+    control.draw_items(BROWSER.get_airing_anime(page), 'tvshows')
 
 
-@Route('upcoming_next_season/*')
-def ANILIST_UPCOMING_NEXT_SEASON(payload, params):
-    control.draw_items(BROWSER.get_upcoming_next_season(int(payload)), 'tvshows')
+@Route('upcoming_next_season')
+def UPCOMING_NEXT_SEASON(payload, params):
+    page = int(params.get('page', 1))
+    control.draw_items(BROWSER.get_upcoming_next_season(page), 'tvshows')
 
 
-@Route('top_100_anime/*')
-def ANILIST_TOP_100_ANIME_PAGES(payload, params):
-    control.draw_items(BROWSER.get_top_100_anime(int(payload)), 'tvshows')
+@Route('top_100_anime')
+def TOP_100_ANIME_PAGES(payload, params):
+    page = int(params.get('page', 1))
+    control.draw_items(BROWSER.get_top_100_anime(page), 'tvshows')
 
 
 @Route('genres/*')
-def ANILIST_GENRES_PAGES(payload, params):
-    genres, tags, page = payload.rsplit("/")
+def GENRES_PAGES(payload, params):
+    genres, tags = payload.rsplit("/")
+    page = int(params.get('page', 1))
     if genres or tags:
-        control.draw_items(BROWSER.genres_payload(genres, tags, int(page)), 'tvshows')
+        control.draw_items(BROWSER.genres_payload(genres, tags, page), 'tvshows')
     else:
         control.draw_items(BROWSER.get_genres(), 'tvshows')
 
@@ -86,7 +90,7 @@ def ANILIST_GENRES_PAGES(payload, params):
 @Route('search_history')
 def SEARCH_HISTORY(payload, params):
     history = database.getSearchHistory('show')
-    if int(control.getSetting('searchhistory')) == 0:
+    if control.getInt('searchhistory') == 0:
         draw_cm = [('Remove from Item', 'remove_search_item'), ("Edit Search Item...", "edit_search_item")]
         control.draw_items(OtakuBrowser.search_history(history), 'addons', draw_cm)
     else:
@@ -95,41 +99,36 @@ def SEARCH_HISTORY(payload, params):
 
 @Route('search/*')
 def SEARCH(payload, params):
-    query, page = payload.rsplit("/", 1)
+    query = payload
+    page = int(params.get('page', 1))
     if not query:
         query = control.keyboard(control.lang(30005))
         if not query:
             return control.draw_items([], 'tvshows')
-        if int(control.getSetting('searchhistory')) == 0:
+        if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
         control.draw_items(BROWSER.get_search(query), 'tvshows')
     else:
-        control.draw_items(BROWSER.get_search(query, int(page)), 'tvshows')
+        control.draw_items(BROWSER.get_search(query, page), 'tvshows')
 
 
 @Route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload, params):
     if 'search/' in payload:
-        payload_list = payload.rsplit('search/')[1].rsplit('/', 1)
-        if len(payload_list) == 2 and payload_list[0]:
-            search_item, page = payload_list
-            return database.remove_search(table='show', value=search_item)
-    control.notify(control.ADDON_NAME, "Invalid Search Item")
-
+        search_item = payload.rsplit('search/')[1]
+        database.remove_search(table='show', value=search_item)
+    control.exit_code()
 
 @Route('edit_search_item/*')
 def EDIT_SEARCH_ITEM(payload, params):
     if 'search/' in payload:
-        payload_list = payload.rsplit('search/')[1].rsplit('/', 1)
-        if len(payload_list) == 2 and payload_list[0]:
-            search_item, page = payload_list
+        search_item = payload.rsplit('search/')[1]
+        if search_item:
             query = control.keyboard(control.lang(30005), search_item)
-            if query != search_item:
+            if query and query != search_item:
                 database.remove_search(table='show', value=search_item)
                 database.addSearchHistory(query, 'show')
-            return
-    control.notify(control.ADDON_NAME, "Invalid Search Item")
-
+    control.exit_code()
 
 @Route('play/*')
 def PLAY(payload, params):
@@ -234,6 +233,7 @@ def REFRESH(payload, params):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload, params):
+    import pickle
     path, mal_id, eps_watched = payload.rsplit("/")
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
@@ -246,6 +246,7 @@ def FANART_SELECT(payload, params):
 
 @Route('fanart/*')
 def FANART(payload, params):
+    import pickle
     mal_id, select = payload.rsplit('/', 2)
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
@@ -264,22 +265,21 @@ def FANART(payload, params):
 @Route('')
 def LIST_MENU(payload, params):
     MENU_ITEMS = [
-        (control.lang(30001), "airing_anime/1", 'airing_anime.png'),
-        (control.lang(30002), "upcoming_next_season/1", 'upcoming.png'),
-        (control.lang(30003), "top_100_anime/1", 'top_100_anime.png'),
-        (control.lang(30004), "genres///1", 'genres_&_tags.png'),
+        (control.lang(30001), "airing_anime", 'airing_anime.png'),
+        (control.lang(30002), "upcoming_next_season", 'upcoming.png'),
+        (control.lang(30003), "top_100_anime", 'top_100_anime.png'),
+        (control.lang(30004), "genres//", 'genres_&_tags.png'),
         (control.lang(30005), "search_history", 'search.png'),
         (control.lang(30006), "tools", 'tools.png')
     ]
-
+    NEW_MENU_ITEMS = []
+    NEW_MENU_ITEMS = add_watchlist(NEW_MENU_ITEMS)
     if control.getBool('menu.lastwatched'):
-        MENU_ITEMS = add_last_watched(MENU_ITEMS)
-    MENU_ITEMS = add_watchlist(MENU_ITEMS)
-    MENU_ITEMS_ = MENU_ITEMS[:]
+        NEW_MENU_ITEMS = add_last_watched(NEW_MENU_ITEMS)
     for i in MENU_ITEMS:
-        if control.getSetting(i[1]) == 'false':
-            MENU_ITEMS_.remove(i)
-    control.draw_items([utils.allocate_item(name, url, True, False, image) for name, url, image in MENU_ITEMS_], 'addons')
+        if control.getBool(i[1]):
+            NEW_MENU_ITEMS.append(i)
+    control.draw_items([utils.allocate_item(name, url, True, False, image) for name, url, image in NEW_MENU_ITEMS], 'addons')
 
 
 @Route('tools')
@@ -327,7 +327,7 @@ def CLEAR_SEARCH_HISTORY(payload, params):
         control.exit_code()
 
 
-@Route('clear_slected_fanart')
+@Route('clear_selected_fanart')
 def CLEAR_SELECTED_FANART(payload, params):
     fanart_all = control.getSetting(f'fanart.all').split(',')
     for i in fanart_all:
@@ -384,7 +384,7 @@ def IMPORT_SETTINGS(payload, params):
                 control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
             else:
                 control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
-    return control.exit_code()
+    control.exit_code()
 
 @Route('export_settings')
 def IMPORT_SETTINGS(payload, params):
@@ -403,7 +403,7 @@ def IMPORT_SETTINGS(payload, params):
                 control.ok_dialog(control.ADDON_NAME, "Saved settings.xml")
             else:
                 control.ok_dialog(control.ADDON_NAME, "Could Not Export File!")
-    return control.exit_code()
+    control.exit_code()
 
 @Route('toggleLanguageInvoker')
 def TOGGLE_LANGUAGE_INVOKER(payload, params):
