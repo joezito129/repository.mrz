@@ -16,7 +16,8 @@ class MalBrowser:
     def __init__(self):
         self._TITLE_LANG = ['title', 'title_english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.mal')
-        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
+        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][
+            control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
         self.adult = 'true' if control.getSetting('search.adult') == "false" else 'false'
 
     @staticmethod
@@ -154,7 +155,6 @@ class MalBrowser:
         r = requests.get(url, params=params)
         return r.json()
 
-
     @div_flavor
     def recommendation_relation_view(self, res, completed=None, mal_dub=None):
         if res.get('entry'):
@@ -228,7 +228,6 @@ class MalBrowser:
         genres = database.get_(self.get_base_res, 24, f'{self._URL}/anime', params)
         return self.process_mal_view(genres, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
-
     @div_flavor
     def base_mal_view(self, res, completed=None, mal_dub=None):
         if not completed:
@@ -279,7 +278,6 @@ class MalBrowser:
         if res.get('trailer'):
             info['trailer'] = f"plugin://plugin.video.youtube/play/?video_id={res['trailer']['youtube_id']}"
 
-
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         image = res['images']['webp']['large_image_url']
@@ -305,7 +303,6 @@ class MalBrowser:
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
-
 
     def database_update_show(self, res):
         mal_id = res['mal_id']

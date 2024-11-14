@@ -1,7 +1,7 @@
 import re
 import requests
 
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
 url = "https://www.animefillerlist.com/shows"
 

@@ -119,6 +119,7 @@ def REMOVE_SEARCH_ITEM(payload, params):
         database.remove_search(table='show', value=search_item)
     control.exit_code()
 
+
 @Route('edit_search_item/*')
 def EDIT_SEARCH_ITEM(payload, params):
     if 'search/' in payload:
@@ -129,6 +130,7 @@ def EDIT_SEARCH_ITEM(payload, params):
                 database.remove_search(table='show', value=search_item)
                 database.addSearchHistory(query, 'show')
     control.exit_code()
+
 
 @Route('play/*')
 def PLAY(payload, params):
@@ -174,7 +176,8 @@ def PLAY_MOVIE(payload, params):
     control.playList.clear()
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources,
+                     rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
         Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
@@ -295,7 +298,8 @@ def TOOLS_MENU(payload, params):
         (control.lang(30017), 'sort_select', {'plot': "Choose Sorting..."}, ''),
         (control.lang(30018), 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
-    control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
+    control.draw_items(
+        [utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
 
 
 # ### Maintenance ###
@@ -386,6 +390,7 @@ def IMPORT_SETTINGS(payload, params):
                 control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
     control.exit_code()
 
+
 @Route('export_settings')
 def IMPORT_SETTINGS(payload, params):
     import os
@@ -404,6 +409,7 @@ def IMPORT_SETTINGS(payload, params):
             else:
                 control.ok_dialog(control.ADDON_NAME, "Could Not Export File!")
     control.exit_code()
+
 
 @Route('toggleLanguageInvoker')
 def TOGGLE_LANGUAGE_INVOKER(payload, params):

@@ -15,7 +15,7 @@ class SimklWLF(WatchlistFlavorBase):
 
     # client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'    # Swag
     # client_id = "503b6b37476926a7a17ac86b95a81b245879955a7531e3e7d8913c0624796ea0"    # JZ
-    client_id = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8"      # Otaku
+    client_id = "59dfdc579d244e1edf6f89874d521d37a69a95a1abd349910cb056a1872ba2c8"  # Otaku
 
     def __headers(self):
         headers = {
@@ -82,7 +82,8 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
             ("Plan to Watch", "plantowatch", 'plantowatch.png'),
             ("All Anime", "ALL", 'allanime.png')
         ]
-        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res in statuses]
+        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res
+                in statuses]
 
     @staticmethod
     def action_statuses():
@@ -107,17 +108,18 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         if not results:
             return []
 
-        all_results = list(map(self._base_next_up_view, results['anime'])) if next_up else list(map(self._base_watchlist_status_view, results['anime']))
+        all_results = list(map(self._base_next_up_view, results['anime'])) if next_up else list(
+            map(self._base_watchlist_status_view, results['anime']))
 
         sort_pref = self.__get_sort()
 
         if sort_pref == '2':  # anime_title
             all_results = sorted(all_results, key=lambda x: x['info']['title'])
-        elif sort_pref == '0':    # list_updated_at
+        elif sort_pref == '0':  # list_updated_at
             all_results = sorted(all_results, key=lambda x: x['info']['last_watched'] or "0", reverse=True)
-        elif sort_pref == '3':    # user_rating
+        elif sort_pref == '3':  # user_rating
             all_results = sorted(all_results, key=lambda x: x['info']['user_rating'] or 0, reverse=True)
-        elif sort_pref == '1': # last_added
+        elif sort_pref == '1':  # last_added
             all_results.reverse()
         return all_results
 

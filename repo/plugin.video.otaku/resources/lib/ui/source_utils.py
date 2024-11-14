@@ -103,7 +103,9 @@ def getInfo(release_title):
         info.append('HDTV')
     if any(i in release_title for i in ['pdtv']):
         info.append('PDTV')
-    if any(i in release_title for i in [' cam ', 'camrip', 'hdcam', 'hd cam', ' ts ', 'hd ts', 'hdts', 'telesync', ' tc ', 'hd tc', 'hdtc', 'telecine', 'xbet']):
+    if any(i in release_title for i in
+           [' cam ', 'camrip', 'hdcam', 'hd cam', ' ts ', 'hd ts', 'hdts', 'telesync', ' tc ', 'hd tc', 'hdtc',
+            'telecine', 'xbet']):
         info.append('CAM')
     if any(i in release_title for i in ['dvdscr', ' scr ', 'screener']):
         info.append('SCR')
@@ -137,7 +139,7 @@ def get_cache_check_reg(episode):
     #                    )?                                   # end non-grouping pattern
     #                  \s*                                    # 0-or-more whitespaces
     #                  (?<![\d])
-    #                  ({}|{})                                # episode num format: xx or xxx
+    #                  ({}|{}|{})                             # episode num format: xx or xxx or xxxx
     #                  (?![\d])
     #                  '''.format(season, episode.zfill(2), episode.zfill(3))
     # else:
@@ -151,22 +153,22 @@ def get_cache_check_reg(episode):
                    )                                    # end non-grouping pattern
                  \s*                                    # 0-or-more whitespaces
                  (?<![\d])
-                 ({}|{})                                # episode num format: xx or xxx
+                 ({}|{}|{})                             # episode num format: xx or xxx or xxxx
                  (?![\d])
-                 '''.format(season, episode.zfill(2), episode.zfill(3))
+                 '''.format(season, episode.zfill(2), episode.zfill(3), episode.zfill(4))
     return re.compile(reg_string)
 
 
 def convert_to_bytes(size, units):
     unit = units.upper()
     if unit == 'KB':
-        byte_size = size * 2**10
+        byte_size = size * 2 ** 10
     elif unit == 'MB':
-        byte_size = size * 2**20
+        byte_size = size * 2 ** 20
     elif unit == 'GB':
-        byte_size = size * 2**30
+        byte_size = size * 2 ** 30
     elif unit == 'TB':
-        byte_size = size * 2**40
+        byte_size = size * 2 ** 40
     else:
         raise ValueError("Unit must be 'KB', 'MB', 'GB', 'TB' ")
     return byte_size
@@ -234,6 +236,7 @@ def user_select(files, dict_key):
     else:
         file = [files[idx]]
     return file
+
 
 def get_embedhost(url):
     s = re.search(r'(?://|\.)([^\.]+)\.', url)

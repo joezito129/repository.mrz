@@ -41,14 +41,15 @@ def refresh_apis():
 
 def update_mappings_db():
     control.log("### Updating Mappings")
-    url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
+    # url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
+    url = 'https://github.com/Goldenfreddy0703/Otaku-Mappings/blob/main/anime_mappings.db'
     r = requests.get(url)
     with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
         file.write(r.content)
 
 
 def sync_watchlist(silent=False):
-    if control.settingids.watchlist_sync:
+    if control.getBool('watchlist.sync.enabled'):
         control.log('### Updating Completed Sync')
         from resources.lib.WatchlistFlavor import WatchlistFlavor
 

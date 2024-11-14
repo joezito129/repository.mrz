@@ -339,17 +339,15 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
-            </group>
-            <group id="3" label="30334" help="">
-                <setting id="provider.localfiles" type="boolean" label="30410" help="">
+                <setting id="provider.animix" type="boolean" label="30405" help="">
                     <level>0</level>
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
             </group>
-            <group id="4" label="" help="">
-                <setting id="inputstreamadaptive.enabled" type="boolean" label="30411" help="">
-                    <level>3</level>
+            <group id="3" label="30334" help="">
+                <setting id="provider.localfiles" type="boolean" label="30410" help="">
+                    <level>0</level>
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>

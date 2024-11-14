@@ -17,7 +17,6 @@ except IndexError:
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_ID = addonInfo('id')
 ADDON = xbmcaddon.Addon(ADDON_ID)
-settings = ADDON.getSettings()
 language = ADDON.getLocalizedString
 addonInfo = ADDON.getAddonInfo
 ADDON_NAME = addonInfo('name')
@@ -46,6 +45,7 @@ dialogWindow = xbmcgui.WindowDialog
 execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+
 
 def closeBusyDialog():
     if xbmc.getCondVisibility('Window.IsActive(busydialog)'):
@@ -131,21 +131,26 @@ def refresh():
 def getSetting(key):
     return ADDON.getSetting(key)
 
+
 def getBool(key):
-    return settings.getBool(key)
+    return ADDON.getSettingBool(key)
+
 
 def getInt(key):
-    return settings.getInt(key)
+    return ADDON.getSettingInt(key)
+
 
 def getString(key):
-    return settings.getString(key)
+    return ADDON.getSettingString(key)
 
 
 def setSetting(settingid, value):
     return ADDON.setSetting(settingid, value)
 
+
 def setBool(settingid, value):
     return ADDON.setSettingBool(settingid, value)
+
 
 def setInt(settingid, value):
     return ADDON.setSettingInt(settingid, value)
@@ -325,7 +330,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             if xbmc.getCondVisibility("Container.HasFiles"):
                 break
             xbmc.sleep(100)
-    if settingids.viewtypes:
+    if getBool('interface.viewtypes.bool'):
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
         elif content_type == 'episodes':
@@ -334,7 +339,7 @@ def draw_items(video_data, content_type=None, draw_cm=None):
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
 
     # move to episode position currently watching
-    if content_type == "episodes" and settingids.smart_scroll:
+    if content_type == "episodes" and getBool('general.smart.scroll.enable'):
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
             total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
@@ -418,14 +423,10 @@ class SettingIDs:
     def __init__(self):
         # Bools
         self.showuncached = getBool('show.uncached')
-        self.smart_scroll = getBool('general.smart.scroll.enable')
-        self.viewtypes = getBool('interface.viewtypes.bool')
         self.clearlogo_disable = getBool('interface.clearlogo.disable')
         self.fanart_disable = getBool('interface.fanart.disable')
-        self.watchlist_sync = getBool('watchlist.sync.enabled')
         self.filler = getBool('jz.filler')
         self.clean_titles = getBool('interface.cleantitles')
-        self.terminateoncloud = getBool('general.terminate.oncloud')
         self.dubonly = getBool("divflavors.dubonly")
         self.showdub = getBool("divflavors.showdub")
         self.watchlist_data = getBool('interface.watchlist.data')
@@ -434,6 +435,6 @@ class SettingIDs:
         # Ints
 
         # Str
-        self.browser_api = getString('browser.api')
+
 
 settingids = SettingIDs()

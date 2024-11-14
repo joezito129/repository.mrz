@@ -169,10 +169,10 @@ class Resolver(BaseWindow):
                 if monitor.abortRequested() or monitor.playbackerror or monitor.playing:
                     break
             self.close()
-            player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
+            player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList,
+                                                   self.episode, self.resume_time)
         else:
             self.close()
-
 
     def resolve_source(self, api, source):
         api = api()
@@ -182,7 +182,8 @@ class Resolver(BaseWindow):
             stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select)
         elif source['type'] == 'cloud' or source['type'] == 'hoster':
             if source['torrent_files']:
-                best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'], self.pack_select)
+                best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'],
+                                                         self.pack_select)
                 if not best_match or not best_match['path']:
                     return
                 for f_index, torrent_file in enumerate(source['torrent_files']):
@@ -223,7 +224,6 @@ class Resolver(BaseWindow):
             "url": link if '|' in link else r.url,
             "headers": r.headers
         }
-
 
     def resolve_uncache(self, source):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
@@ -292,28 +292,26 @@ class Monitor(xbmc.Monitor):
 
 @HookMimetype('application/dash+xml')
 def _DASH_HOOK(item):
-    if control.getBool('inputstreamadaptive.enabled'):
-        import inputstreamhelper
-        is_helper = inputstreamhelper.Helper('mpd')
-        if is_helper.check_inputstream():
-            item.setProperty('inputstream', is_helper.inputstream_addon)
-            item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-            item.setContentLookup(False)
-        else:
-            raise Exception("InputStream Adaptive is not supported.")
+    import inputstreamhelper
+    is_helper = inputstreamhelper.Helper('mpd')
+    if is_helper.check_inputstream():
+        item.setProperty('inputstream', is_helper.inputstream_addon)
+        item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
+        item.setContentLookup(False)
+    else:
+        raise Exception("InputStream Adaptive is not supported.")
     return item
 
 
 @HookMimetype('application/vnd.apple.mpegurl')
 def _HLS_HOOK(item):
-    if control.getBool('inputstreamadaptive.enabled'):
-        stream_url = item.getPath()
-        import inputstreamhelper
-        is_helper = inputstreamhelper.Helper('hls')
-        if '|' not in stream_url and is_helper.check_inputstream():
-            item.setProperty('inputstream', is_helper.inputstream_addon)
-            item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-        item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
-        item.setMimeType('application/vnd.apple.mpegstream_url')
-        item.setContentLookup(False)
+    stream_url = item.getPath()
+    import inputstreamhelper
+    is_helper = inputstreamhelper.Helper('hls')
+    if '|' not in stream_url and is_helper.check_inputstream():
+        item.setProperty('inputstream', is_helper.inputstream_addon)
+        item.setProperty('inputstream.adaptive.manifest_type', 'hls')
+    item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
+    item.setMimeType('application/vnd.apple.mpegstream_url')
+    item.setContentLookup(False)
     return item

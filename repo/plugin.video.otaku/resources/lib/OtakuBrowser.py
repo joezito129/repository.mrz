@@ -3,12 +3,13 @@ import requests
 
 from resources.lib.ui import control, database, utils
 
-if control.settingids.browser_api == 'mal':
+if control.getSetting('browser.api') == 'mal':
     from resources.lib.MalBrowser import MalBrowser
     BROWSER = MalBrowser()
 else:
     from resources.lib.AniListBrowser import AniListBrowser
     BROWSER = AniListBrowser()
+
 
 def parse_history_view(res):
     return utils.allocate_item(res, f'search/{res}', True, False)
@@ -71,7 +72,7 @@ def get_anime_init(mal_id):
         elif meta_api == 'anizip':
             from resources.lib.indexers import anizip
             data = anizip.ANIZIPAPI().get_episodes(mal_id, show_meta)
-        else:    # elif meta_api == 'jikanmoa':
+        else:  # elif meta_api == 'jikanmoa':
             from resources.lib.indexers import jikanmoe
             data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
 
@@ -91,7 +92,6 @@ def get_anime_init(mal_id):
 
 def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
     from resources.lib import pages
-
     if not (show := database.get_show(mal_id)):
         show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])

@@ -1,8 +1,8 @@
 import threading
 import time
 import xbmc
-from . import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, animepahe, localfiles
 
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, animepahe, animix, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -19,8 +19,8 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
         super(Sources, self).__init__(xml_file, location, actionargs)
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['gogoanime', 'hianime', 'animepahe']
-        self.embed_func = [gogoanime, hianime, animepahe]
+        self.embedProviders = ['gogoanime', 'hianime', 'animepahe', 'animix']
+        self.embed_func = [gogoanime, hianime, animepahe, animix]
         self.otherProviders = ['Local Files']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
 
@@ -51,12 +51,12 @@ class Sources(GetSources):
         self.setProperty('process_started', 'true')
 
         # set skipintro times to -1 before scraping
-        control.setSetting('hianime.skipintro.start', '-1')
-        control.setSetting('hianime.skipintro.end', '-1')
+        control.setInt('hianime.skipintro.start', -1)
+        control.setInt('hianime.skipintro.end', -1)
 
         # set skipoutro times to -1 before scraping
-        control.setSetting('hianime.skipoutro.start', '-1')
-        control.setSetting('hianime.skipoutro.end', '-1')
+        control.setInt('hianime.skipoutro.start', -1)
+        control.setInt('hianime.skipoutro.end', -1)
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
@@ -92,7 +92,8 @@ class Sources(GetSources):
 #       ### embeds ###
         for inx, embed_provider in enumerate(self.embedProviders):
             if control.getBool(f'provider.{embed_provider}'):
-                t = threading.Thread(target=self.embed_worker, args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape, get_backup))
+                t = threading.Thread(target=self.embed_worker,
+                                     args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape, get_backup))
                 t.start()
                 self.threads.append(t)
             else:
@@ -113,7 +114,7 @@ class Sources(GetSources):
                 ))
             xbmc.sleep(500)
 
-            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.settingids.terminateoncloud and len(self.cloud_files) > 0:
+            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.getBool('general.terminate.oncloud') and len(self.cloud_files) > 0:
                 break
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100
@@ -121,7 +122,8 @@ class Sources(GetSources):
         if len(self.torrentSources) + len(self.embedSources) + len(self.cloud_files) + len(self.local_files) == 0:
             self.return_data = []
         else:
-            self.return_data = self.sortSources(self.torrentSources, self.embedSources, self.cloud_files, self.local_files)
+            self.return_data = self.sortSources(self.torrentSources, self.embedSources, self.cloud_files,
+                                                self.local_files)
         self.close()
         return self.return_data
 
@@ -168,11 +170,11 @@ class Sources(GetSources):
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
-
     @staticmethod
     def sortSources(torrent_list, embed_list, cloud_files, other_list):
         all_list = torrent_list + embed_list + cloud_files + other_list
-        sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt('general.maxResolution')]
+        sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt(
+            'general.maxResolution')]
 
         # Filter out sources
         if control.getBool('general.disable265'):
@@ -205,4 +207,3 @@ class Sources(GetSources):
             len([i for i in self.embedSources if i['quality'] == 2]),
             len([i for i in self.embedSources if i['quality'] == 0])
         ]
-

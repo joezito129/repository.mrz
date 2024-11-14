@@ -674,12 +674,12 @@ msgctxt "#30404"
 msgid "Animepahe"
 msgstr ""
 
-msgctxt "#30410"
-msgid "Local Files"
+msgctxt "#30405"
+msgid "Animix"
 msgstr ""
 
-msgctxt "#30411"
-msgid "Enable InputSteamAdaptive"
+msgctxt "#30410"
+msgid "Local Files"
 msgstr ""
 
 ######Context & Widgets#####

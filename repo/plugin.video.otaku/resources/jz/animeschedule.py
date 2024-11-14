@@ -4,7 +4,7 @@ import re
 import time
 
 from resources.lib.ui import database
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
 base_url = "https://animeschedule.net/api/v3"
 dub_list = []
@@ -25,6 +25,7 @@ def get_dub_time(mal_id):
         route = get_route(mal_id)
         database.update_show(mal_id, show['kodi_meta'], route)
     r = requests.get(f'https://animeschedule.net/anime/{route}')
+
     soup = BeautifulSoup(r.text, 'html.parser')
     soup_all = soup.find_all('div', class_='release-time-wrapper')
     for soup in soup_all:

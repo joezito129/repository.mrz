@@ -101,8 +101,8 @@ class WatchlistFlavorBase:
             'id': mal_id,
             'providor': 'MyAnimeList'
         }
-        r = requests.get('https://find-my-anime.dtimur.de/api', params=params)
-        flavor_id = r.json()[0]['providerMapping'][mapping]
+        r = requests.get('https://find-my-anime.dtimur.de/api', params=params).json()
+        flavor_id = r[0]['providerMapping'][mapping]
         database.add_mapping_id(mal_id, flavor, flavor_id)
         return flavor_id
 

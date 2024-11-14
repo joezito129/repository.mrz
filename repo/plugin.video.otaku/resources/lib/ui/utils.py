@@ -80,5 +80,3 @@ def format_time(seconds):
     hours, minutes = divmod(minutes, 60)
 
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
-
-

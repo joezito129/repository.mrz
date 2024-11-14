@@ -4,11 +4,10 @@ import pickle
 
 from resources.lib.ui import control, database
 from resources.lib.indexers import aniskip, anime_skip
+# from resources.lib import OtakuBrowser
 
 playList = control.playList
 player = xbmc.Player
-
-# from resources.lib import OtakuBrowser
 
 
 class WatchlistPlayer(player):
@@ -57,7 +56,6 @@ class WatchlistPlayer(player):
 
     # def onPlayBackStarted(self):
     #     pass
-
 
     def onPlayBackStopped(self):
         control.closeAllDialogs()
@@ -126,11 +124,11 @@ class WatchlistPlayer(player):
         if endpoint != 0:
             while self.isPlaying():
                 self.current_time = int(self.getTime())
-                if (not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
+                if (
+                        not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
                     PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
                     break
                 xbmc.sleep(5000)
-
 
     def process_aniskip(self):
         if self.skipintro_aniskip_enable:
@@ -169,7 +167,8 @@ class WatchlistPlayer(player):
                     if self.skipoutro_aniskip_enable:
                         if outro_start is None and skip['type']['name'] in ['Credits', 'New Credits']:
                             outro_start = int(skip['at'])
-                        elif outro_end is None and outro_start is not None and skip['type']['name'] in ['Canon', 'Preview']:
+                        elif outro_end is None and outro_start is not None and skip['type']['name'] in ['Canon',
+                                                                                                        'Preview']:
                             outro_end = int(skip['at'])
 
             if intro_start is not None and intro_end is not None:

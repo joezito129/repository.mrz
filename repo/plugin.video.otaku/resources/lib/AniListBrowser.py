@@ -14,8 +14,10 @@ class AniListBrowser:
     def __init__(self):
         self._TITLE_LANG = ["romaji", 'english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.anilist')
-        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
-        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else ''
+        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][
+            control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
+        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool(
+            'contentorigin.bool') else ''
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):
@@ -703,7 +705,6 @@ class AniListBrowser:
             desc = desc.replace('<br>', '[CR]')
             desc = desc.replace('\n', '')
 
-
         kodi_meta = {
             'name': name,
             'ename': ename,
@@ -723,7 +724,6 @@ class AniListBrowser:
             pass
 
         database.update_show(mal_id, pickle.dumps(kodi_meta))
-
 
     def get_genres(self):
         query = '''
@@ -879,4 +879,3 @@ class AniListBrowser:
         except FileNotFoundError:
             completed = {}
         return completed
-    

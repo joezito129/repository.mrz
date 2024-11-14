@@ -24,7 +24,10 @@ def get_(function, duration, *args, **kwargs):
         key += kwargs.pop('key')
     cache_result = cache_get(key)
     if cache_result and is_cache_valid(cache_result['date'], duration):
-        return_data = ast.literal_eval(cache_result['value'])
+        try:
+            return_data = ast.literal_eval(cache_result['value'])
+        except SystemError:
+            return_data = None
         return return_data
 
     fresh_result = repr(function(*args, **kwargs))
@@ -123,7 +126,8 @@ def update_show(mal_id, kodi_meta, anime_schedule_route=''):
     cursor = get_cursor()
     try:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute('REPLACE INTO shows (mal_id, kodi_meta, anime_schedule_route) VALUES (?, ?, ?)', (mal_id, kodi_meta, anime_schedule_route))
+        cursor.execute('REPLACE INTO shows (mal_id, kodi_meta, anime_schedule_route) VALUES (?, ?, ?)',
+                       (mal_id, kodi_meta, anime_schedule_route))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
@@ -177,7 +181,8 @@ def update_show_data(mal_id, data, last_updated=''):
     data = pickle.dumps(data)
     try:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute("REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)", (mal_id, data, last_updated))
+        cursor.execute("REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)",
+                       (mal_id, data, last_updated))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
         cursor.close()
@@ -191,7 +196,9 @@ def update_episode(mal_id, season, number, update_time, kodi_meta, filler=''):
     lock.acquire()
     cursor = get_cursor()
     try:
-        cursor.execute('REPLACE INTO episodes (mal_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (mal_id, season, kodi_meta, update_time, number, filler))
+        cursor.execute(
+            'REPLACE INTO episodes (mal_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)',
+            (mal_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()
         cursor.close()
     except OperationalError:
@@ -251,6 +258,7 @@ def get_show_meta(mal_id):
     cursor.close()
     control.try_release_lock(lock)
     return shows
+
 
 def remove_from_database(table, mal_id):
     lock.acquire()

@@ -8,7 +8,7 @@ import requests
 import xbmcvfs
 import os
 
-from resources.lib.ui import control, jsunpack
+from resources.lib.ui import control, jsunpack, client
 from resources.lib.ui.pyaes import AESModeOfOperationCBC, Decrypter, Encrypter
 from urllib import error, parse
 
@@ -55,6 +55,7 @@ def vrf_shift(vrf, k1, k2):
         svrf += lut[c] if c in lut.keys() else c
     return svrf
 
+
 def generate_vrf(content_id):
     vrf = vrf_shift(content_id, "AP6GeR8H0lwUz1", "UAz8Gwl10P6ReH")
     vrf = arc4(bytes("ItFKjuWokn4ZpB".encode('latin-1')), bytes(vrf.encode('latin-1')))
@@ -69,6 +70,7 @@ def generate_vrf(content_id):
     vrf = serialize_text(vrf)
     return vrf
 
+
 def decrypt_vrf(text):
     text = deserialize_text(text)
     text = deserialize_text(text.decode())
@@ -82,6 +84,7 @@ def decrypt_vrf(text):
     text = arc4(bytes("ItFKjuWokn4ZpB".encode('latin-1')), text)
     text = vrf_shift(text, "UAz8Gwl10P6ReH", "AP6GeR8H0lwUz1")
     return text
+
 
 def load_video_from_url(in_url):
     found_extractor = None
@@ -105,9 +108,11 @@ def load_video_from_url(in_url):
             return found_extractor['parser'](in_url, data)
 
         control.log("Probing source: %s" % in_url)
-        r = requests.get(in_url, stream=True)
-        if r.ok:
-            return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
+        r = client.request(in_url, headers=None, output='extended')
+        return found_extractor['parser'](r[5], r[0], r[2].get('Referer'))
+        # r = requests.get(in_url, stream=True)
+        # if r.ok:
+        #     return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
     except error.URLError:
         return  # Dead link, Skip result
 
@@ -199,7 +204,6 @@ def __extract_vidplay(slink, page_content, referer=None):
         res = deserialize_text(res)
         res = arc4("V4pBzCPyMSwqx", res)
         return res
-
 
     headers = {
         'User-Agent': _EDGE_UA,
@@ -307,7 +311,8 @@ def __extract_dood(url, page_content, referer=None):
         return pdata + ''.join([random.choice(t) for _ in range(10)])
 
     pattern = r'(?://|\.)((?:do*ds?(?:tream)?|ds2(?:play|video))\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream|pro))/(?:d|e)/([0-9a-zA-Z]+)'
-    match = re.search(r'''dsplayer\.hotkeys[^']+'([^']+).+?function\s*makePlay.+?return[^?]+([^"]+)''', page_content, re.DOTALL)
+    match = re.search(r'''dsplayer\.hotkeys[^']+'([^']+).+?function\s*makePlay.+?return[^?]+([^"]+)''', page_content,
+                      re.DOTALL)
     if match:
         host, media_id = re.findall(pattern, url)[0]
         token = match.group(2)
