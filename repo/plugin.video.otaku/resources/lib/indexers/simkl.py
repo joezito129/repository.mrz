@@ -120,9 +120,8 @@ class SIMKLAPI:
                 return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data), 'episodes'
             return indexers.process_episodes(episodes, eps_watched, dub_data), 'episodes'
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
-            filler_data = None
-            # from resources.jz import anime_filler
-            # filler_data = anime_filler.get_data(kodi_meta['ename'])
+            from resources.jz import anime_filler
+            filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:
             filler_data = None
         return self.process_episode_view(mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data), 'episodes'

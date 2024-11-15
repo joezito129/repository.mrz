@@ -344,6 +344,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="provider.aniwave" type="boolean" label="30406" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
             </group>
             <group id="3" label="30334" help="">
                 <setting id="provider.localfiles" type="boolean" label="30410" help="">
@@ -697,13 +702,10 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="rd.expiry" type="string" label="" help="">
+                <setting id="rd.expiry" type="integer" label="" help="">
                     <level>4</level>
-                    <default/>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-                    <control type="edit" format="string"/>
+                    <default>0</default>
+                    <control type="edit" format="integer"/>
                 </setting>
                 <setting id="rd.refresh" type="string" label="" help="">
                     <level>4</level>
@@ -866,13 +868,10 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="dl.expiry" type="string" label="" help="">
+                <setting id="dl.expiry" type="integer" label="" help="">
                     <level>4</level>
-                    <default/>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-                    <control type="edit" format="string"/>
+                    <default>0</default>
+                    <control type="edit" format="integer"/>
                 </setting>
 <!--                <setting id="dl.auth.status" type="string" label="30123" help="">-->
 <!--                    <level>0</level>-->
@@ -1102,13 +1101,10 @@
                     </constraints>
 					<control type="edit" format="string"/>
                 </setting>
-                <setting id="mal.expiry" type="string" label="" parent="mal.enabled" help="">
+                <setting id="mal.expiry" type="integer" label="" parent="mal.enabled" help="">
                     <level>4</level>
-                    <default/>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-					<control type="edit" format="string"/>
+                    <default>0</default>
+					<control type="edit" format="integer"/>
                 </setting>
                 <setting id="mal.refresh" type="string" label="" parent="mal.enabled" help="">
                     <level>4</level>
@@ -1231,13 +1227,10 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="kitsu.expiry" type="string" label=""  parent="kitsu.enabled" help="">
+                <setting id="kitsu.expiry" type="integer" label=""  parent="kitsu.enabled" help="">
                     <level>4</level>
-                    <default/>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-                    <control type="edit" format="string"/>
+                    <default>0</default>
+                    <control type="edit" format="integer"/>
                 </setting>
                 <setting id="kitsu.userid" type="string" label="" parent="kitsu.enabled" help="">
                     <level>4</level>
@@ -1593,22 +1586,43 @@
 
                 <setting id="hianime.skipintro.start" type="integer" label="" help="">
                     <level>4</level>
-                    <default>0</default>
+                    <default>-1</default>
                     <control type="edit" format="integer" />
                 </setting>
                 <setting id="hianime.skipintro.end" type="integer" label="" help="">
                     <level>4</level>
-                    <default>0</default>
+                    <default>-1</default>
                     <control type="edit" format="integer" />
                 </setting>
                 <setting id="hianime.skipoutro.start" type="integer" label="" help="">
                     <level>4</level>
-                    <default>0</default>
+                    <default>-1</default>
                     <control type="edit" format="integer" />
                 </setting>
                 <setting id="hianime.skipoutro.end" type="integer" label="" help="">
                     <level>4</level>
-                    <default>0</default>
+                    <default>-1</default>
+                    <control type="edit" format="integer" />
+                </setting>
+
+              <setting id="aniwave.skipintro.start" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                    <control type="edit" format="integer" />
+                </setting>
+                <setting id="aniwave.skipintro.end" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                    <control type="edit" format="integer" />
+                </setting>
+                <setting id="aniwave.skipoutro.start" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                    <control type="edit" format="integer" />
+                </setting>
+                <setting id="aniwave.skipoutro.end" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
                     <control type="edit" format="integer" />
                 </setting>
             </group>

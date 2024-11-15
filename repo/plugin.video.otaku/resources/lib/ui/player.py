@@ -4,6 +4,7 @@ import pickle
 
 from resources.lib.ui import control, database
 from resources.lib.indexers import aniskip, anime_skip
+
 # from resources.lib import OtakuBrowser
 
 playList = control.playList
@@ -46,12 +47,13 @@ class WatchlistPlayer(player):
         self.resume_time = resume_time
 
         # process skip times
-        self.process_hianime()
+        self.process_embed('aniwave')
+        if not self.skipintro_aniskip or not self.skipoutro_aniskip:
+            self.process_embed('hianime')
         if not self.skipintro_aniskip or not self.skipoutro_aniskip:
             self.process_aniskip()
         if not self.skipintro_aniskip or not self.skipoutro_aniskip:
             self.process_animeskip()
-
         self.keepAlive()
 
     # def onPlayBackStarted(self):
@@ -87,7 +89,7 @@ class WatchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
-        for inx in range(30):
+        for inx in range(40):
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
             xbmc.sleep(250)
@@ -180,18 +182,18 @@ class WatchlistPlayer(player):
                 self.skipoutro_end = int(outro_end) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
 
-    def process_hianime(self):
+    def process_embed(self, embed):
         if self.skipintro_aniskip_enable:
-            hianime_skipintro_start = control.getInt('hianime.skipintro.start')
-            if hianime_skipintro_start != -1:
-                self.skipintro_start = hianime_skipintro_start + self.skipintro_offset
-                self.skipintro_end = control.getInt('hianime.skipintro.end') + self.skipintro_offset
+            embed_skipintro_start = control.getInt(f'{embed}.skipintro.start')
+            if embed_skipintro_start != -1:
+                self.skipintro_start = embed_skipintro_start + self.skipintro_offset
+                self.skipintro_end = control.getInt(f'{embed}.skipintro.end') + self.skipintro_offset
                 self.skipintro_aniskip = True
         if self.skipoutro_aniskip_enable:
-            hianime_skipoutro_start = control.getInt('hianime.skipoutro.start')
-            if hianime_skipoutro_start != -1:
-                self.skipoutro_start = hianime_skipoutro_start + self.skipoutro_offset
-                self.skipoutro_end = control.getInt('hianime.skipoutro.end') + self.skipoutro_offset
+            embed_skipoutro_start = control.getInt(f'{embed}.skipoutro.start')
+            if embed_skipoutro_start != -1:
+                self.skipoutro_start = embed_skipoutro_start + self.skipoutro_offset
+                self.skipoutro_end = control.getInt(f'{embed}.skipoutro.end') + self.skipoutro_offset
                 self.skipoutro_aniskip = True
 
 

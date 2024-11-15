@@ -46,7 +46,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         login_data = {
             'token': res['access_token'],
             'refresh': res['refresh_token'],
-            'expiry': str(int(time.time()) + int(res['expires_in'])),
+            'expiry': int(time.time()) + int(res['expires_in']),
             'username': user['name']
         }
         return login_data
@@ -63,7 +63,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         res = r.json()
         control.setSetting('mal.token', res['access_token'])
         control.setSetting('mal.refresh', res['refresh_token'])
-        control.setSetting('mal.expiry', str(int(time.time()) + int(res['expires_in'])))
+        control.setInt('mal.expiry', int(time.time()) + int(res['expires_in']))
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):

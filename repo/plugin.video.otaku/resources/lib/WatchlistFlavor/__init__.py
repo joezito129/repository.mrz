@@ -107,7 +107,10 @@ class WatchlistFlavor:
         if not res:
             return control.ok_dialog('Login', 'Incorrect username or password')
         for _id, value in list(res.items()):
-            control.setSetting('%s.%s' % (flavor, _id), value)
+            if isinstance(value, int):
+                control.setInt('%s.%s' % (flavor, _id), value)
+            else:
+                control.setSetting('%s.%s' % (flavor, _id), value)
         control.refresh()
         return control.ok_dialog('Login', 'Success')
 

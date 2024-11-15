@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, animepahe, animix, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, animepahe, animix, aniwave, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -19,8 +19,8 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
         super(Sources, self).__init__(xml_file, location, actionargs)
         self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['gogoanime', 'hianime', 'animepahe', 'animix']
-        self.embed_func = [gogoanime, hianime, animepahe, animix]
+        self.embedProviders = ['gogoanime', 'hianime', 'animepahe', 'animix', 'aniwave']
+        self.embed_func = [gogoanime, hianime, animepahe, animix, aniwave]
         self.otherProviders = ['Local Files']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
 
@@ -53,10 +53,14 @@ class Sources(GetSources):
         # set skipintro times to -1 before scraping
         control.setInt('hianime.skipintro.start', -1)
         control.setInt('hianime.skipintro.end', -1)
+        control.setInt('aniwave.skipintro.start', -1)
+        control.setInt('aniwave.skipintro.end', -1)
 
         # set skipoutro times to -1 before scraping
         control.setInt('hianime.skipoutro.start', -1)
         control.setInt('hianime.skipoutro.end', -1)
+        control.setInt('aniwave.skipoutro.start', -1)
+        control.setInt('aniwave.skipoutro.end', -1)
 
         if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
@@ -92,8 +96,7 @@ class Sources(GetSources):
 #       ### embeds ###
         for inx, embed_provider in enumerate(self.embedProviders):
             if control.getBool(f'provider.{embed_provider}'):
-                t = threading.Thread(target=self.embed_worker,
-                                     args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape, get_backup))
+                t = threading.Thread(target=self.embed_worker, args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape, get_backup))
                 t.start()
                 self.threads.append(t)
             else:
@@ -145,14 +148,14 @@ class Sources(GetSources):
     def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape, get_backup):
         embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, get_backup, key=embed_name)
         self.embedSources += embed_sources
-        if embed_name == 'hianime':
+        if embed_name in ['hianime', 'aniwave']:
             for x in embed_sources:
                 if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
-                    control.setInt('hianime.skipintro.start', int(x['skip']['intro']['start']))
-                    control.setInt('hianime.skipintro.end', int(x['skip']['intro']['end']))
+                    control.setInt(f'{embed_name}.skipintro.start', int(x['skip']['intro']['start']))
+                    control.setInt(f'{embed_name}.skipintro.end', int(x['skip']['intro']['end']))
                 if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
-                    control.setInt('hianime.skipoutro.start', int(x['skip']['outro']['start']))
-                    control.setInt('hianime.skipoutro.end', int(x['skip']['outro']['end']))
+                    control.setInt(f'{embed_name}.skipoutro.start', int(x['skip']['outro']['start']))
+                    control.setInt(f'{embed_name}.skipoutro.end', int(x['skip']['outro']['end']))
         self.remainingProviders.remove(embed_name)
 
     def localfiles_worker(self, query, mal_id, episode, rescrape):

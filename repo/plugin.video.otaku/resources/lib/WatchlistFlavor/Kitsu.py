@@ -45,7 +45,7 @@ class KitsuWLF(WatchlistFlavorBase):
             'userid': data2['id'],
             'token': data['access_token'],
             'refresh': data['refresh_token'],
-            'expiry': str(int(time.time()) + int(data['expires_in']))
+            'expiry': int(time.time()) + int(data['expires_in'])
         }
         return login_data
 
@@ -62,7 +62,7 @@ class KitsuWLF(WatchlistFlavorBase):
         data = resp.json()
         control.setSetting('kitsu.token', data['access_token'])
         control.setSetting('kitsu.refresh', data['refresh_token'])
-        control.setSetting('kitsu.expiry', str(int(time.time() + int(data['expires_in']))))
+        control.setInt('kitsu.expiry', int(time.time() + int(data['expires_in'])))
 
     @staticmethod
     def handle_paging(hasnextpage, base_url, page):

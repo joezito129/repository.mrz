@@ -109,7 +109,8 @@ def load_video_from_url(in_url):
 
         control.log("Probing source: %s" % in_url)
         r = client.request(in_url, headers=None, output='extended')
-        return found_extractor['parser'](r[5], r[0], r[2].get('Referer'))
+        if r:
+            return found_extractor['parser'](r[5], r[0], r[2].get('Referer'))
         # r = requests.get(in_url, stream=True)
         # if r.ok:
         #     return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
@@ -373,6 +374,12 @@ def __extract_voe(url, page_content, referer=None):
         return stream_url
 
 
+def __extract_aniwave(url, page_content, referer=None):
+    r = re.search(r'''sources\s*[:=]\s*\[{["']?file["']?:\s*["']([^"']+)''', page_content)
+    if r:
+        return r.group(1)
+
+
 def __extract_goload(url, page_content, referer=None):
     def _encrypt(msg, key, iv_):
         key = key.encode()
@@ -473,6 +480,9 @@ __register_extractor(["https://kwik.cx/",
 
 __register_extractor(["https://www.yourupload.com/"],
                      __extract_yourupload)
+
+__register_extractor(["https://aniwave.se/"],
+                     __extract_aniwave)
 
 __register_extractor(["https://mixdrop.co/",
                       "https://mixdrop.to/",
