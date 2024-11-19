@@ -23,7 +23,7 @@ def request(
         verify=True,
         proxy=None,
         post=None,
-        headers={},
+        headers=None,
         mobile=False,
         XHR=False,
         limit=None,
@@ -36,6 +36,8 @@ def request(
         params=None,
         method=''
 ):
+    if headers is None:
+        headers = {}
     try:
         if not url:
             return
@@ -49,8 +51,7 @@ def request(
         handlers = []
 
         if proxy is not None:
-            handlers += [urllib_request.ProxyHandler(
-                {'http': '%s' % proxy}), urllib_request.HTTPHandler]
+            handlers += [urllib_request.ProxyHandler({'http': '%s' % proxy}), urllib_request.HTTPHandler]
             opener = urllib_request.build_opener(*handlers)
             opener = urllib_request.install_opener(opener)
 
@@ -61,9 +62,7 @@ def request(
 
         if output == 'cookie' or output == 'extended' or not close:
             cookies = http_cookiejar.LWPCookieJar()
-            handlers += [urllib_request.HTTPHandler(),
-                         urllib_request.HTTPSHandler(),
-                         urllib_request.HTTPCookieProcessor(cookies)]
+            handlers += [urllib_request.HTTPHandler(), urllib_request.HTTPSHandler(), urllib_request.HTTPCookieProcessor(cookies)]
             opener = urllib_request.build_opener(*handlers)
             opener = urllib_request.install_opener(opener)
 
@@ -162,7 +161,7 @@ def request(
         if redirect is False:
             class NoRedirectHandler(urllib_request.HTTPRedirectHandler):
                 def http_error_302(self, req, fp, code, msg, headers):
-                    infourl = urllib_response.addinfourl(fp, headers, req.get_full_url() if six.PY2 else req.full_url)
+                    infourl = urllib_response.addinfourl(fp, headers, req.full_url)
                     if sys.version_info < (3, 9, 0):
                         infourl.status = code
                         infourl.code = code
@@ -181,7 +180,7 @@ def request(
         if post is not None:
             if jpost:
                 post = json.dumps(post)
-                post = post.encode('utf8') if six.PY3 else post
+                post = post.encode('utf8')
                 req = urllib_request.Request(url, post)
                 req.add_header('Content-Type', 'application/json')
             else:
@@ -189,14 +188,11 @@ def request(
                     post = byteify(post)
                     post = urllib_parse.urlencode(post)
                 if len(post) > 0:
-                    post = post.encode('utf8') if six.PY3 else post
+                    post = post.encode('utf8')
                     req = urllib_request.Request(url, data=post)
                 else:
                     req.get_method = lambda: 'POST'
-                    req.has_header = lambda header_name: (
-                        header_name == 'Content-type'
-                        or urllib_request.Request.has_header(req, header_name)
-                    )
+                    req.has_header = lambda header_name: (header_name == 'Content-type' or urllib_request.Request.has_header(req, header_name))
 
         if limit == '0':
             req.get_method = lambda: 'HEAD'
@@ -266,7 +262,7 @@ def request(
                 if control.getSetting('fs_enable') == 'true':
                     ddg_cookie, ddg_ua = ddgcookie().get(netloc, timeout)
                     if ddg_cookie is None:
-                        control.log('%s has an unsolvable DDos-Guard challenge.' % (netloc))
+                        control.log('%s has an unsolvable DDos-Guard challenge.' % netloc)
                         if not error:
                             return '{}'
                     _headers['Cookie'] = ddg_cookie
@@ -275,7 +271,7 @@ def request(
                     _add_request_header(req, _headers)
                     response = urllib_request.urlopen(req, timeout=int(timeout))
                 else:
-                    control.log('%s has a DDoS-Guard challenge.' % (netloc))
+                    control.log('%s has a DDoS-Guard challenge.' % netloc)
                     if not error:
                         return '{}'
             elif output == '':
@@ -291,8 +287,7 @@ def request(
 
         if output == 'cookie':
             try:
-                result = '; '.join(['%s=%s' % (i.name, i.value)
-                                    for i in cookies])
+                result = '; '.join(['%s=%s' % (i.name, i.value) for i in cookies])
             except BaseException:
                 pass
             if close:
@@ -351,7 +346,6 @@ def request(
             result = response.read(5242880)
 
         encoding = None
-        text_content = False
 
         if response.headers.get('content-encoding', '').lower() == 'gzip':
             result = gzip.GzipFile(fileobj=six.BytesIO(result)).read()
@@ -367,13 +361,12 @@ def request(
             encoding = 'utf8'
 
         if encoding is None:
-            epatterns = [r'<meta\s+http-equiv="Content-Type"\s+content="(?:.+?);\s+charset=(.+?)"',
-                         r'xml\s*version.+encoding="([^"]+)']
+            epatterns = [r'<meta\s+http-equiv="Content-Type"\s+content="(?:.+?);\s+charset=(.+?)"', r'xml\s*version.+encoding="([^"]+)']
             for epattern in epatterns:
                 epattern = epattern.encode('utf8') if six.PY3 else epattern
                 r = re.search(epattern, result, re.IGNORECASE)
                 if r:
-                    encoding = r.group(1).decode('utf8') if six.PY3 else r.group(1)
+                    encoding = r.group(1).decode('utf8')
                     break
 
         if encoding is None:
@@ -383,9 +376,8 @@ def request(
 
         if encoding is not None:
             result = result.decode(encoding, errors='ignore')
-            text_content = True
         elif text_content and encoding is None:
-            result = result.decode('latin-1', errors='ignore') if six.PY3 else result
+            result = result.decode('latin-1', errors='ignore')
         else:
             control.log('Unknown Page Encoding')
 
@@ -398,14 +390,13 @@ def request(
             response_url = response.url
             response_code = str(response.code)
             try:
-                cookie = '; '.join(['%s=%s' % (i.name, i.value)
-                                    for i in cookies])
+                cookie = '; '.join(['%s=%s' % (i.name, i.value) for i in cookies])
             except BaseException:
                 pass
 
             if close:
                 response.close()
-            return (result, response_code, response_headers, _headers, cookie, response_url)
+            return result, response_code, response_headers, _headers, cookie, response_url
         else:
             if close:
                 response.close()
@@ -447,12 +438,8 @@ def _basic_request(url, headers=None, post=None, timeout=60, jpost=False, limit=
 
 def _add_request_header(_request, headers):
     try:
-        if six.PY2:
-            scheme = _request.get_type()
-            host = _request.get_host()
-        else:
-            scheme = urllib_parse.urlparse(_request.get_full_url()).scheme
-            host = _request.host
+        scheme = urllib_parse.urlparse(_request.get_full_url()).scheme
+        host = _request.host
 
         referer = headers.get('Referer', '') or '%s://%s/' % (scheme, host)
 
@@ -512,10 +499,6 @@ def randommobileagent():
     return random.choice(_mobagents)
 
 
-def agent():
-    return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
-
-
 def store(ftext, fname):
     fpath = control.dataPath + fname
     if six.PY2:
@@ -528,16 +511,10 @@ def store(ftext, fname):
 
 def retrieve(fname):
     fpath = control.dataPath + fname
-    if control.pathExists(fpath):
-        if six.PY2:
-            with open(fpath) as f:
-                ftext = f.readlines()
-        else:
-            with open(fpath, encoding='utf-8') as f:
-                ftext = f.readlines()
+    if xbmcvfs.exists(fpath):
+        with open(fpath, encoding='utf-8') as f:
+            ftext = f.readlines()
         return '\n'.join(ftext)
-    else:
-        return None
 
 
 class cfcookie:
@@ -553,10 +530,10 @@ class cfcookie:
             if self.cookie is not None:
                 cfdata = json.dumps({'Cookie': self.cookie, 'User-Agent': self.ua})
                 store(cfdata, urllib_parse.urlparse(netloc).netloc + '.json')
-            return (self.cookie, self.ua)
+            return self.cookie, self.ua
         except Exception as e:
             control.log('%s returned an error. Could not collect tokens - Error: %s.' % (netloc, str(e)))
-            return (self.cookie, self.ua)
+            return self.cookie, self.ua
 
     def _get_cookie(self, netloc, timeout):
         fs_url = control.getSetting('fs_url')
@@ -596,10 +573,10 @@ class ddgcookie:
             if self.cookie is not None:
                 cfdata = json.dumps({'Cookie': self.cookie, 'User-Agent': self.ua})
                 store(cfdata, urllib_parse.urlparse(netloc).netloc + '.json')
-            return (self.cookie, self.ua)
+            return self.cookie, self.ua
         except Exception as e:
             control.log('%s returned an error. Could not collect tokens - Error: %s.' % (netloc, str(e)))
-            return (self.cookie, self.ua)
+            return self.cookie, self.ua
 
     def _get_cookie(self, netloc, timeout):
         fs_url = control.getSetting('fs_url')
@@ -627,46 +604,9 @@ class ddgcookie:
 
 
 def byteify(data, ignore_dicts=False):
-    if isinstance(data, six.text_type) and six.PY2:
-        return data.encode('utf-8')
     if isinstance(data, list):
         return [byteify(item, ignore_dicts=True) for item in data]
     if isinstance(data, dict) and not ignore_dicts:
         return dict([(byteify(key, ignore_dicts=True), byteify(
             value, ignore_dicts=True)) for key, value in six.iteritems(data)])
     return data
-
-
-def strip_cookie_url(url):
-    url, headers = _strip_url(url)
-    if _COOKIE_HEADER in headers.keys():
-        del headers[_COOKIE_HEADER]
-
-    return _url_with_headers(url, headers)
-
-
-def _url_with_headers(url, headers):
-    if not len(headers.keys()):
-        return url
-
-    headers_arr = ["%s=%s" % (key, urllib_parse.quote_plus(value)) for key, value in
-                   six.iteritems(headers)]
-
-    return "|".join([url] + headers_arr)
-
-
-def _strip_url(url):
-    if url.find('|') == -1:
-        return (url, {})
-
-    headers = url.split('|')
-    target_url = headers.pop(0)
-    out_headers = {}
-    for h in headers:
-        m = _HEADER_RE.findall(h)
-        if not len(m):
-            continue
-
-        out_headers[m[0][0]] = urllib_parse.unquote_plus(m[0][1])
-
-    return (target_url, out_headers)

@@ -18,6 +18,7 @@
 
 # import time
 # t0 = time.perf_counter_ns()
+import pickle
 
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
@@ -28,7 +29,6 @@ BROWSER = OtakuBrowser.BROWSER
 
 
 def add_last_watched(items):
-    import pickle
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
@@ -236,7 +236,6 @@ def REFRESH(payload, params):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload, params):
-    import pickle
     path, mal_id, eps_watched = payload.rsplit("/")
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
@@ -249,7 +248,6 @@ def FANART_SELECT(payload, params):
 
 @Route('fanart/*')
 def FANART(payload, params):
-    import pickle
     mal_id, select = payload.rsplit('/', 2)
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
@@ -418,7 +416,10 @@ def TOGGLE_LANGUAGE_INVOKER(payload, params):
 
 
 if __name__ == "__main__":
-    router_process(control.get_plugin_url(), control.get_plugin_params())
+    try:
+        router_process(control.get_plugin_url(), control.get_plugin_params())
+    except Exception as e:
+        control.log(e, level='error')
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():

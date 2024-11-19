@@ -1,6 +1,6 @@
-Changelog v5.1.3 (2024-11-14):
-- Added Aniwave
-- Fixed Bugs
+Changelog v5.1.4 (2024-11-14):
+- Fixed bugs
+- Added ContextManager Handling to database
 
 Changelog v5.1.2 (2024-11-13):
 - Fixed H!anime

@@ -66,11 +66,6 @@ def log(msg, level="info"):
     xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
 
 
-def try_release_lock(lock):
-    if lock.locked():
-        lock.release()
-
-
 def real_debrid_enabled():
     return True if getSetting('rd.auth') != '' and getBool('rd.enabled') else False
 

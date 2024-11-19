@@ -53,6 +53,8 @@ class Sources(BrowserBase):
         if eurl:
             eurl = eurl.group(1)
             resp = client.request(eurl, referer=self._BASE_URL, output='extended')
+            if not resp:
+                return
             s = resp[0]
             cookie = resp[4]
             referer = parse.urljoin(eurl, '/')
