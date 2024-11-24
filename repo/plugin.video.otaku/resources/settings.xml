@@ -763,6 +763,14 @@
                         <dependency type="visible" setting="rd.enabled">true</dependency>
                     </dependencies>
                 </setting>
+                <setting id="uncached.runinforground" type="boolean" label="30106" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="rd.cloudInspection" type="boolean" label="30190" help="">
                     <level>0</level>
                     <default>false</default>

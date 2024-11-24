@@ -86,7 +86,6 @@ class Sources(BrowserBase):
                     self.cached.append(source)
                 else:
                     self.uncached.append(source)
-
         return {'cached': self.cached, 'uncached': self.uncached}
 
     @staticmethod

@@ -25,6 +25,8 @@ class Sources(BrowserBase):
         }
 
         r = client.request(self._BASE_URL + 'api/lsearch', XHR=True, post={'qfast': title}, headers=headers)
+        if not r:
+            return []
         soup = BeautifulSoup(json.loads(r).get('result'), 'html.parser')
         items = soup.find_all('a')
         slugs = []
@@ -123,6 +125,8 @@ class Sources(BrowserBase):
                     subs = ''
                     slink = ''
                     s = client.request(embed_url, referer=eurl)
+                    if not s:
+                        continue
                     sdiv = re.search(r'<source.+?src="([^"]+)', s)
                     if sdiv:
                         slink = sdiv.group(1)

@@ -25,7 +25,7 @@ class Sources(BrowserBase):
 
         all_results = []
         items = []
-        srcs = ['dub', 'sub', 'softsub']
+        srcs = ['dub', 'sub']
         if control.getSetting('general.source') == 'Sub':
             srcs.remove('dub')
         elif control.getSetting('general.source') == 'Dub':
@@ -34,27 +34,17 @@ class Sources(BrowserBase):
 
         headers = {'Referer': self._BASE_URL}
         params = {'keyword': title}
-        res = requests.get(f'{self._BASE_URL}ajax/anime/search', headers=headers, params=params)
-        r = res.text
-        if not r and ':' in title:
-            title = title.split(':')[0]
-            params['keyword'] = title
-            if not r and ':' in title:
-                title = title.split(':')[0]
-                params['keyword'] = title
-                r = requests.get(f'{self._BASE_URL}ajax/anime/search', headers=headers, params=params)
-            if not r:
-                return all_results
-        if not r:
+        res = requests.get(f'{self._BASE_URL}filter', headers=headers, params=params)
+        if not res.ok:
             return all_results
-
-        if 'NOT FOUND' not in r:
-            r = res.json()
-            r = BeautifulSoup(r.get('html') or r.get('result', {}).get('html'), "html.parser")
-            sitems = r.find_all('a', {'class': 'item'})
-            if sitems:
-                items = [parse.urljoin(self._BASE_URL, x.get('href')) for x in sitems if self.clean_title(title) in self.clean_title(x.find('div', {'class': 'name'}).text)]
-
+        r = res.text
+        mlink = SoupStrainer('div', {'class': 'ani items'})
+        soup = BeautifulSoup(r, "html.parser", parse_only=mlink)
+        sitems = soup.find_all('div', {'class': 'item'})
+        if sitems:
+            items = [parse.urljoin(self._BASE_URL, x.find('a', {'class': 'name'}).get('href')) for x in sitems if self.clean_title(title) == self.clean_title(x.find('a', {'class': 'name'}).get('data-jp'))]
+            if not items:
+                items = [parse.urljoin(self._BASE_URL, x.find('a', {'class': 'name'}).get('href')) for x in sitems if self.clean_title(title + 'dub') == self.clean_title(x.find('a', {'class': 'name'}).get('data-jp'))]
         if items:
             slug = items[0]
             all_results = self._process_aw(slug, title=title, episode=episode, langs=srcs)

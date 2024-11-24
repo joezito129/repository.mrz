@@ -226,24 +226,29 @@ class Resolver(BaseWindow):
         }
 
     def resolve_uncache(self, source):
+        silent = False
         heading = f'{control.ADDON_NAME}: Cache Resolver'
         f_string = f'''
 [I]{source['release_title']}[/I]
 
 This source is not cached would you like to cache it now?        
         '''
-        yesnocustom = control.yesnocustom_dialog(heading, f_string, "Cancel", "Run in Background", "Run in Forground")
-        if yesnocustom == -1 or yesnocustom == 2:
-            self.canceled = True
-            return
-        if yesnocustom == 0:
-            runbackground = True
-        elif yesnocustom == 1:
-            runbackground = False
+        if not control.getBool('uncached.runinforground'):
+            yesnocustom = control.yesnocustom_dialog(heading, f_string, "Cancel", "Run in Background", "Run in Forground")
+            if yesnocustom == -1 or yesnocustom == 2:
+                self.canceled = True
+                return
+            if yesnocustom == 0:
+                runbackground = True
+            elif yesnocustom == 1:
+                runbackground = False
+            else:
+                return
         else:
-            return
+            runbackground = False
+            silent = True
         api = self.resolvers[source['debrid_provider']]()
-        resolved_cache = api.resolve_uncached_source(source, runbackground)
+        resolved_cache = api.resolve_uncached_source(source, runbackground, silent)
         if not resolved_cache:
             self.canceled = True
         return resolved_cache

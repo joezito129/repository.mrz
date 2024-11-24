@@ -18,10 +18,11 @@ def getSourcesHelper(actionargs):
 class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
         super(Sources, self).__init__(xml_file, location, actionargs)
-        self.torrentProviders = ['nyaa', 'animetosho', 'Cloud Inspection']
-        self.embedProviders = ['gogoanime', 'hianime', 'animepahe', 'animix', 'aniwave']
+        self.torrent_func = [nyaa, animetosho]
+        self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
         self.embed_func = [gogoanime, hianime, animepahe, animix, aniwave]
-        self.otherProviders = ['Local Files']
+        self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
+        self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
@@ -67,31 +68,13 @@ class Sources(GetSources):
             t.start()
             self.threads.append(t)
 
-            if control.getBool('provider.nyaa'):
-                t = threading.Thread(target=self.nyaa_worker, args=(query, mal_id, episode, status, media_type, rescrape))
-                t.start()
-                self.threads.append(t)
-            else:
-                self.remainingProviders.remove('nyaa')
-
-            if control.getBool('provider.animetosho'):
-                t = threading.Thread(target=self.animetosho_worker, args=(query, mal_id, episode, status, media_type, rescrape))
-                t.start()
-                self.threads.append(t)
-            else:
-                self.remainingProviders.remove('animetosho')
-
-        else:
-            for provider in self.torrentProviders:
-                self.remainingProviders.remove(provider)
-
-#       ###  Other ###
-        if control.getBool('provider.localfiles'):
-            t = threading.Thread(target=self.localfiles_worker, args=(query, mal_id, episode, rescrape))
-            t.start()
-            self.threads.append(t)
-        else:
-            self.remainingProviders.remove('Local Files')
+            for inx, torrent_provider in enumerate(self.torrentProviders):
+                if control.getBool(f'provider.{torrent_provider}'):
+                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, query, mal_id, episode, status, media_type, rescrape))
+                    t.start()
+                    self.threads.append(t)
+                else:
+                    self.remainingProviders.remove(torrent_provider)
 
 #       ### embeds ###
         for inx, embed_provider in enumerate(self.embedProviders):
@@ -101,6 +84,14 @@ class Sources(GetSources):
                 self.threads.append(t)
             else:
                 self.remainingProviders.remove(embed_provider)
+
+#       ###  Other ###
+        if control.getBool('provider.localfiles'):
+            t = threading.Thread(target=self.localfiles_worker, args=(query, mal_id, episode, rescrape))
+            t.start()
+            self.threads.append(t)
+        else:
+            self.remainingProviders.remove('Local Files')
 
         timeout = 60 if rescrape else control.getInt('general.timeout')
         start_time = time.perf_counter()
@@ -125,24 +116,18 @@ class Sources(GetSources):
         if len(self.torrentSources) + len(self.embedSources) + len(self.cloud_files) + len(self.local_files) == 0:
             self.return_data = []
         else:
-            self.return_data = self.sortSources(self.torrentSources, self.embedSources, self.cloud_files,
-                                                self.local_files)
+            self.return_data = self.sortSources()
         self.close()
         return self.return_data
 
-    def nyaa_worker(self, query, mal_id, episode, status, media_type, rescrape):
-        all_sources = database.get_(nyaa.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key='nyaa')
-        self.torrentUnCacheSources += all_sources['uncached']
-        self.torrentCacheSources += all_sources['cached']
-        self.torrentSources += all_sources['cached'] + all_sources['uncached']
-        self.remainingProviders.remove('nyaa')
-
-    def animetosho_worker(self, query, mal_id, episode, status, media_type, rescrape):
-        all_sources = database.get_(animetosho.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key='animetosho')
-        self.torrentUnCacheSources += all_sources['uncached']
-        self.torrentCacheSources += all_sources['cached']
-        self.torrentSources += all_sources['cached'] + all_sources['uncached']
-        self.remainingProviders.remove('animetosho')
+#   ### Torrents ###
+    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
+        all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key=torrent_name)
+        if all_sources:
+            self.torrentUnCacheSources += all_sources['uncached']
+            self.torrentCacheSources += all_sources['cached']
+            self.torrentSources += all_sources['cached'] + all_sources['uncached']
+        self.remainingProviders.remove(torrent_name)
 
 #   ### embeds ###
     def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape, get_backup):
@@ -173,11 +158,9 @@ class Sources(GetSources):
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
-    @staticmethod
-    def sortSources(torrent_list, embed_list, cloud_files, other_list):
-        all_list = torrent_list + embed_list + cloud_files + other_list
-        sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt(
-            'general.maxResolution')]
+    def sortSources(self):
+        all_list = self.torrentSources + self.embedSources + self.cloud_files + self.local_files
+        sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt('general.maxResolution')]
 
         # Filter out sources
         if control.getBool('general.disable265'):

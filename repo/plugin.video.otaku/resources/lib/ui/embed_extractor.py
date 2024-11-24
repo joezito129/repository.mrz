@@ -377,7 +377,10 @@ def __extract_voe(url, page_content, referer=None):
 def __extract_aniwave(url, page_content, referer=None):
     r = re.search(r'''sources\s*[:=]\s*\[{["']?file["']?:\s*["']([^"']+)''', page_content)
     if r:
-        return r.group(1)
+        surl = r.group(1)
+        if 'vipanicdn.net' in surl:
+            surl = surl.replace('vipanicdn.net', 'anzeat.pro')
+        return surl
 
 
 def __extract_goload(url, page_content, referer=None):
@@ -397,7 +400,7 @@ def __extract_goload(url, page_content, referer=None):
         decrypted += decrypter.feed()
         return decrypted.decode()
 
-    pattern = r'(?://|\.)((?:gogo-(?:play|stream)|streamani|go(?:load|one|gohd)|vidstreaming|gembedhd|playgo1|anihdplay|(?:play|emb|go)taku1?)\.' \
+    pattern = r'(?://|\.)((?:gogo-(?:play|stream)|streamani|go(?:load|one|gohd)|vidstreaming|gembedhd|playgo1|anihdplay|(?:play|emb|go|s3|s3emb)taku1?)\.' \
               r'(?:io|pro|net|com|cc|online))/(?:streaming|embed(?:plus)?|ajax|load)(?:\.php)?\?id=([a-zA-Z0-9-]+)'
     r = re.search(r'crypto-js\.js.+?data-value="([^"]+)', page_content)
     if r:
@@ -507,6 +510,7 @@ __register_extractor(["https://dood.wf/",
                       "https://dood.pm/",
                       "https://dood.cx/",
                       "https://dood.la/",
+                      "https://dood.li/",
                       "https://dood.ws/",
                       "https://dood.so/",
                       "https://dood.to/",
@@ -520,7 +524,8 @@ __register_extractor(["https://dood.wf/",
                       "https://doodstream.com/",
                       "https://ds2play.com/",
                       "https://ds2video.com/"],
-                     __extract_dood)
+                     __extract_dood,
+                     lambda x: x.replace('.wf/', '.li/'))
 
 __register_extractor(["https://gogo-stream.com/",
                       "https://gogo-play.net/",
@@ -538,7 +543,9 @@ __register_extractor(["https://gogo-stream.com/",
                       "https://gotaku1.com/",
                       "https://goone.pro/",
                       "https://embtaku.pro/",
-                      "https://embtaku.com/"],
+                      "https://s3taku.com/",
+                      "https://embtaku.com/",
+                      "https://s3embtaku.pro/"],
                      __extract_goload)
 
 __register_extractor(["https://streamtape.com/e/"],
@@ -579,8 +586,10 @@ __register_extractor(["https://fusevideo.net/e/",
 __register_extractor(["https://voe.sx/e/",
                       "https://brookethoughi.com/e/",
                       "https://rebeccaneverbase.com/e/",
-                      "https://loriwithinfamily.com/e/"],
-                     __extract_voe)
+                      "https://loriwithinfamily.com/e/",
+                      "https://donaldlineelse.com/e/"],
+                     __extract_voe,
+                     lambda x: x.replace('/voe.sx/', '/donaldlineelse.com/'))
 
 __register_extractor(["https://lulustream.com",
                       "https://luluvdo.com",

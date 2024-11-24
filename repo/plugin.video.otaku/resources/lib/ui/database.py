@@ -24,7 +24,8 @@ def get_(function, duration, *args, **kwargs):
     if cache_result and is_cache_valid(cache_result['date'], duration):
         try:
             return_data = ast.literal_eval(cache_result['value'])
-        except SystemError:
+        except Exception as e:
+            control.log(e, 'warning')
             return_data = None
         return return_data
 
@@ -68,7 +69,7 @@ def cache_clear():
         cursor.execute("DROP TABLE IF EXISTS cache")
         cursor.execute("VACUUM")
         cursor.connection.commit()
-    control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
+        control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
 
 
 def is_cache_valid(cached_time, cache_timeout):
@@ -210,15 +211,15 @@ def clearSearchHistory():
         cursor.execute("DROP TABLE IF EXISTS show")
         cursor.execute("VACCUM")
         cursor.connection.commit()
-    control.refresh()
-    control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
+        control.refresh()
+        control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
 
 
 def remove_search(table, value):
     with Cursor(control.searchHistoryDB) as cursor:
         cursor.execute(f'DELETE FROM {table} WHERE value=?', (value,))
         cursor.connection.commit()
-    control.refresh()
+        control.refresh()
 
 
 def dict_factory(cursor, row):

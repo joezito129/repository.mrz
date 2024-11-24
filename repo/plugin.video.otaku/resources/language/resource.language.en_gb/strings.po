@@ -532,6 +532,10 @@ msgctxt "#30105"
 msgid "Refresh Real-Debrid Token"
 msgstr ""
 
+msgctxt "#30106"
+msgid "Run All UnCached Sources in Forground"
+msgstr ""
+
 msgctxt "#30110"
 msgid "AllDebrid"
 msgstr ""

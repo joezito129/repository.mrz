@@ -1,4 +1,8 @@
-Changelog v5.1.4 (2024-11-14):
+Changelog v5.1.5 (2024-11-24):
+- Fixed real-debrid
+- Some embed updates
+
+Changelog v5.1.4 (2024-11-19):
 - Fixed bugs
 - Added ContextManager Handling to database
 
