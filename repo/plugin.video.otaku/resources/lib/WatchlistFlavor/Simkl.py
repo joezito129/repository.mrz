@@ -108,9 +108,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         if not results:
             return []
 
-        all_results = list(map(self._base_next_up_view, results['anime'])) if next_up else list(
-            map(self._base_watchlist_status_view, results['anime']))
-
+        all_results = list(map(self._base_next_up_view, results['anime'])) if next_up else list(map(self._base_watchlist_status_view, results['anime']))
         sort_pref = self.__get_sort()
 
         if sort_pref == '2':  # anime_title
@@ -124,10 +122,12 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         return all_results
 
     @div_flavor
-    def _base_watchlist_status_view(self, res, mal_dub=None):
+    def _base_watchlist_status_view(self, res: dict, mal_dub=None):
         show_ids = res['show']['ids']
 
         mal_id = show_ids.get('mal')
+        if not mal_id:
+            control.log(f"mal_id not found for anilist_id={show_ids['simkl']}", 'warning')
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         show = database.get_show(mal_id)
@@ -149,7 +149,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         if res["total_episodes_count"] != 0 and res["watched_episodes_count"] == res["total_episodes_count"]:
             info['playcount'] = 1
 
-        image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg'
+        image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_.jpg'
 
         base = {
             "name": '%s - %d/%d' % (title, res["watched_episodes_count"], res["total_episodes_count"]),
@@ -166,10 +166,11 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         return utils.parse_view(base, True, False, dub)
 
     @div_flavor
-    def _base_next_up_view(self, res, mal_dub=None):
+    def _base_next_up_view(self, res: dict, mal_dub=None):
         show_ids = res['show']['ids']
 
         mal_id = show_ids.get('mal')
+
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         progress = res['watched_episodes_count']

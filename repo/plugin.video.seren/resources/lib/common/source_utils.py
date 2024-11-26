@@ -104,6 +104,7 @@ INFO_STRUCT = {
         "HC",
         "SCR",
         "3D",
+        "60-FPS"
     },
 }
 
@@ -206,7 +207,8 @@ INFO_TYPES = {
         "vostfr",
         "vo stfr",
     ],
-    "3D": [" 3d"],
+    "3D": [" 3d", " half ou", " half sbs"],
+    "60-FPS": [" 60 fps", " 60fps"]
 }
 
 
@@ -853,4 +855,4 @@ def get_accepted_resolution_set():
     max_res = g.get_int_setting("general.maxResolution")
     min_res = g.get_int_setting("general.minResolution")
 
-    return set(resolutions[max_res : min_res + 1])
+    return set(resolutions[max_res: min_res + 1])

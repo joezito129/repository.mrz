@@ -25,7 +25,7 @@ def get_(function, duration, *args, **kwargs):
         try:
             return_data = ast.literal_eval(cache_result['value'])
         except Exception as e:
-            control.log(e, 'warning')
+            control.log(str(e), 'warning')
             return_data = None
         return return_data
 
@@ -37,97 +37,95 @@ def get_(function, duration, *args, **kwargs):
     return data
 
 
-def hash_function(function_instance, *args):
+def hash_function(function_instance, *args) -> str:
     function_name = re.sub(r'.+\smethod\s|.+function\s|\sat\s.+|\sof\s.+', '', repr(function_instance))
     return function_name + generate_md5(args)
 
 
-def generate_md5(*args):
+def generate_md5(*args) -> str:
     md5_hash = hashlib.md5()
     [md5_hash.update(str(arg).encode()) for arg in args]
     return str(md5_hash.hexdigest())
 
 
 def cache_get(key):
-    with Cursor(control.cacheFile) as cursor:
+    with SQL(control.cacheFile) as cursor:
         cursor.execute('SELECT * FROM cache WHERE key=?', (key,))
         results = cursor.fetchone()
         return results
 
 
-def cache_insert(key, value):
+def cache_insert(key: str, value: str) -> None:
     now = int(time.time())
-    with Cursor(control.cacheFile) as cursor:
+    with SQL(control.cacheFile) as cursor:
         cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_cache ON cache (key)')
         cursor.execute('REPLACE INTO cache (key, value, date) VALUES (?, ?, ?)', (key, value, now))
         cursor.connection.commit()
 
 
-def cache_clear():
-    with Cursor(control.cacheFile) as cursor:
+def cache_clear() -> None:
+    with SQL(control.cacheFile) as cursor:
         cursor.execute("DROP TABLE IF EXISTS cache")
         cursor.execute("VACUUM")
         cursor.connection.commit()
         control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
 
 
-def is_cache_valid(cached_time, cache_timeout):
+def is_cache_valid(cached_time: int, cache_timeout: int) -> bool:
     now = int(time.time())
     diff = now - cached_time
     return (cache_timeout * 3600) > diff
 
 
-def update_show(mal_id, kodi_meta, anime_schedule_route=''):
-    with Cursor(control.malSyncDB) as cursor:
+def update_show(mal_id, kodi_meta, anime_schedule_route: str = '') -> None:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
         cursor.execute('REPLACE INTO shows (mal_id, kodi_meta, anime_schedule_route) VALUES (?, ?, ?)', (mal_id, kodi_meta, anime_schedule_route))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
 
 
-def update_show_meta(mal_id, meta_ids, art):
-    if isinstance(meta_ids, dict):
-        meta_ids = pickle.dumps(meta_ids)
-    if isinstance(art, dict):
-        art = pickle.dumps(art)
-    with Cursor(control.malSyncDB) as cursor:
+def update_show_meta(mal_id, meta_ids: dict, art: dict) -> None:
+    meta_ids = pickle.dumps(meta_ids)
+    art = pickle.dumps(art)
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
         cursor.execute("REPLACE INTO shows_meta (mal_id, meta_ids, art) VALUES (?, ?, ?)", (mal_id, meta_ids, art))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
 
 
-def add_mapping_id(mal_id, column, value):
-    with Cursor(control.malSyncDB) as cursor:
+def add_mapping_id(mal_id, column: str, value: str):
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('UPDATE shows SET %s=? WHERE mal_id=?' % column, (value, mal_id))
         cursor.connection.commit()
 
 
-def update_kodi_meta(mal_id, kodi_meta):
+def update_kodi_meta(mal_id, kodi_meta: dict):
     kodi_meta = pickle.dumps(kodi_meta)
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('UPDATE shows SET kodi_meta=? WHERE mal_id=?', (kodi_meta, mal_id))
         cursor.connection.commit()
 
 
-def update_show_data(mal_id, data, last_updated=''):
+def update_show_data(mal_id, data: dict, last_updated: str = ''):
     data = pickle.dumps(data)
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
         cursor.execute("REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)", (mal_id, data, last_updated))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
 
 
-def update_episode(mal_id, season, number, update_time, kodi_meta, filler=''):
-    with Cursor(control.malSyncDB) as cursor:
+def update_episode(mal_id, season: int, number: int, update_time: int, kodi_meta, filler: str = '') -> None:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('REPLACE INTO episodes (mal_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (mal_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()
 
 
 def get_show_data(mal_id):
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         db_query = 'SELECT * FROM show_data WHERE mal_id IN (%s)' % mal_id
         cursor.execute(db_query)
         show_data = cursor.fetchone()
@@ -135,48 +133,48 @@ def get_show_data(mal_id):
 
 
 def get_episode_list(mal_id):
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT* FROM episodes WHERE mal_id=?', (mal_id,))
         episodes = cursor.fetchall()
         return episodes
 
 
 def get_episode(mal_id):
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT* FROM episodes WHERE mal_id=?', (mal_id,))
         episode = cursor.fetchone()
         return episode
 
 
 def get_show(mal_id):
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()
         return shows
 
 
 def get_show_meta(mal_id):
-    with Cursor(control.malSyncDB) as cursor:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows_meta WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()
         return shows
 
 
-def remove_from_database(table, mal_id):
-    with Cursor(control.malSyncDB) as cursor:
+def remove_from_database(table: str, mal_id) -> None:
+    with SQL(control.malSyncDB) as cursor:
         cursor.execute(f"DELETE FROM {table} WHERE mal_id=?", (mal_id,))
         cursor.connection.commit()
 
 
 def get_mappings(anime_id, send_id):
-    with Cursor(control.mappingDB) as cursor:
+    with SQL(control.mappingDB) as cursor:
         cursor.execute(f'SELECT * FROM anime WHERE {send_id}=?', (anime_id,))
         mappings = cursor.fetchall()
         return mappings[0] if mappings else {}
 
 
-def getSearchHistory(media_type='show'):
-    with Cursor(control.searchHistoryDB) as cursor:
+def getSearchHistory(media_type: str = 'show'):
+    with SQL(control.searchHistoryDB) as cursor:
         cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
         cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
@@ -192,8 +190,8 @@ def getSearchHistory(media_type='show'):
         return filter_
 
 
-def addSearchHistory(search_string, media_type):
-    with Cursor(control.searchHistoryDB) as cursor:
+def addSearchHistory(search_string: str, media_type: str) -> None:
+    with SQL(control.searchHistoryDB) as cursor:
         cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
         cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
@@ -202,11 +200,11 @@ def addSearchHistory(search_string, media_type):
         cursor.connection.commit()
 
 
-def clearSearchHistory():
+def clearSearchHistory() -> None:
     confirmation = control.yesno_dialog(control.ADDON_NAME, "Clear search history?")
     if not confirmation:
         return
-    with Cursor(control.searchHistoryDB) as cursor:
+    with SQL(control.searchHistoryDB) as cursor:
         cursor.execute("DROP TABLE IF EXISTS movie")
         cursor.execute("DROP TABLE IF EXISTS show")
         cursor.execute("VACCUM")
@@ -215,8 +213,8 @@ def clearSearchHistory():
         control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
 
 
-def remove_search(table, value):
-    with Cursor(control.searchHistoryDB) as cursor:
+def remove_search(table: str, value: str) -> None:
+    with SQL(control.searchHistoryDB) as cursor:
         cursor.execute(f'DELETE FROM {table} WHERE value=?', (value,))
         cursor.connection.commit()
         control.refresh()
@@ -229,8 +227,8 @@ def dict_factory(cursor, row):
     return d
 
 
-class Cursor:
-    def __init__(self, path, timeout=60):
+class SQL:
+    def __init__(self, path: str, timeout: int = 60):
         self.lock = threading.Lock()
         self.path = path
         self.timeout = timeout

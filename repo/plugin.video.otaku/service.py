@@ -6,7 +6,7 @@ import json
 from resources.lib.ui import control, database_sync
 
 
-def refresh_apis():
+def refresh_apis() -> None:
     control.log("### Refreshing API's")
     rd_token = control.getSetting('rd.auth')
     dl_token = control.getSetting('dl.auth')
@@ -39,7 +39,7 @@ def refresh_apis():
             MyAnimeList.MyAnimeListWLF().refresh_token()
 
 
-def update_mappings_db():
+def update_mappings_db() -> None:
     control.log("### Updating Mappings")
     # url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
     url = 'https://github.com/Goldenfreddy0703/Otaku-Mappings/raw/main/anime_mappings.db'
@@ -48,7 +48,7 @@ def update_mappings_db():
         file.write(r.content)
 
 
-def sync_watchlist(silent=False):
+def sync_watchlist(silent: bool = False) -> None:
     if control.getBool('watchlist.sync.enabled'):
         control.log('### Updating Completed Sync')
         from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -59,7 +59,8 @@ def sync_watchlist(silent=False):
                 flavor.save_completed()
                 if not silent:
                     notify_string = f'Completed Sync [B]{flavor.flavor_name.capitalize()}[/B]'
-                    return control.notify(control.ADDON_NAME, notify_string)
+                    control.notify(control.ADDON_NAME, notify_string)
+                    return
             else:
                 if not silent:
                     control.ok_dialog(control.ADDON_NAME, "No Watchlist Enabled or Not Logged In")
@@ -71,7 +72,7 @@ def sync_watchlist(silent=False):
             control.ok_dialog(control.ADDON_NAME, "Watchilst Sync is Disabled")
 
 
-def update_dub_json():
+def update_dub_json() -> None:
     control.log("### Updating Dub json")
     with open(control.maldubFile, 'w') as file:
         r = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
@@ -80,7 +81,7 @@ def update_dub_json():
         json.dump(mal_dub, file)
 
 
-def getChangeLog():
+def getChangeLog() -> None:
     with open(os.path.join(control.ADDON_PATH, 'changelog.txt')) as f:
         changelog_text = f.read()
 
@@ -91,7 +92,7 @@ def getChangeLog():
     del windows
 
 
-def toggle_reuselanguageinvoker(forced_state=None):
+def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
     def _store_and_reload(output):
         with open(file_path, "w+") as addon_xml_:
             addon_xml_.writelines(output)
@@ -115,7 +116,7 @@ def toggle_reuselanguageinvoker(forced_state=None):
             break
 
 
-def version_check():
+def version_check() -> None:
     control.log(f'### {control.ADDON_ID} {control.ADDON_VERSION}')
     control.log(f'### Platform: {control.sys.platform}')
     control.log(f'### Python: {control.sys.version}')

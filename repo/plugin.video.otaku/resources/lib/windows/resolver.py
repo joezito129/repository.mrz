@@ -253,7 +253,7 @@ This source is not cached would you like to cache it now?
             self.canceled = True
         return resolved_cache
 
-    def doModal(self, sources, args, pack_select):
+    def doModal(self, sources, args, pack_select) -> object:
         self.sources = sources
         if self.sources:
             self.args = args

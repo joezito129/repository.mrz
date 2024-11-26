@@ -210,8 +210,11 @@ class RealDebrid:
         control.progressDialog.close()
         if torrent['status'] == 'downloaded':
             torrent_files = [selected for selected in torrent['files'] if selected['selected'] == 1]
-            best_match = source_utils.get_best_match('path', torrent_files, source['episode_re'])
-            if not best_match['path']:
+            if len(torrent['files']) == 1:
+                best_match = torrent_files[0]
+            else:
+                best_match = source_utils.get_best_match('path', torrent_files, source['episode_re'])
+            if not best_match or not best_match['path']:
                 return
             for f_index, torrent_file in enumerate(torrent_files):
                 if torrent_file['path'] == best_match['path']:
@@ -221,5 +224,7 @@ class RealDebrid:
             if not silent:
                 control.ok_dialog(heading, f'Finished Caching Source\nThe source has been added to your cloud')
         else:
+            self.deleteTorrent(torrent['id'])
+        if silent:
             self.deleteTorrent(torrent['id'])
         return stream_link

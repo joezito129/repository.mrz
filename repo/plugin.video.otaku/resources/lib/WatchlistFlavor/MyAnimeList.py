@@ -133,7 +133,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         r = requests.get(url, headers=self.__headers(), params=params)
         results = r.json()
         all_results = list(map(self._base_next_up_view, results['data'])) if next_up else list(map(self._base_watchlist_status_view, results['data']))
-
         all_results += self.handle_paging(results['paging'].get('next'), base_plugin_url, page)
         return all_results
 

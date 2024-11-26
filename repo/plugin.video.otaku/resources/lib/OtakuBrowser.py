@@ -11,17 +11,6 @@ else:
     BROWSER = AniListBrowser()
 
 
-def parse_history_view(res):
-    return utils.allocate_item(res, f'search/{res}', True, False)
-
-
-def search_history(search_array):
-    result = [utils.allocate_item("New Search", "search/", True, False, 'new_search.png')]
-    result += list(map(parse_history_view, search_array))
-    result.append(utils.allocate_item("Clear Search History...", "clear_search_history", False, False, 'clear_search_history.png'))
-    return result
-
-
 def get_episodeList(mal_id, pass_idx):
     from resources.lib import indexers
     show = database.get_show(mal_id)

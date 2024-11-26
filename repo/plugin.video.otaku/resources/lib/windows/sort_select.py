@@ -10,14 +10,14 @@ SORT_METHODS = ['none', 'type', 'audio', 'resolution', 'size']
 SORT_OPTIONS = {
     'sortmethod': SORT_METHODS,
     "none": [],
-    "type": ['cloud', 'torrent', 'embeds', 'files', "none"],
+    "type": ['cloud', 'torrent', 'uncached', 'embeds', 'files'],
     "audio": ['dualaudio', 'dub', 'sub', 'none'],
     "resolution": [],
     "size": []
 }
 
 audio = [1, 2, 0, 'none']
-source_type = [['cloud'], ['torrent', 'torrent (uncached)'], ['direct', 'embed'], ['local_files'], ['none']]
+source_type = [['cloud'], ['torrent'], ['torrent (uncached)'], ['direct', 'embed'], ['local_files']]
 
 default_sort_options = {
         'sortmethod.1': 2,

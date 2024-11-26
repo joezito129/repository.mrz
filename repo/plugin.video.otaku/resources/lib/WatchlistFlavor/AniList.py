@@ -180,7 +180,6 @@ class AniListWLF(WatchlistFlavorBase):
             for entrie in mlist['entries']:
                 if entrie not in entries:
                     entries.append(entrie)
-
         all_results = map(self._base_next_up_view, reversed(entries)) if next_up else map(self.base_watchlist_status_view, reversed(entries))
         all_results = list(all_results)
         return all_results
@@ -191,6 +190,8 @@ class AniListWLF(WatchlistFlavorBase):
         res = res['media']
 
         mal_id = res.get('idMal')
+        if not mal_id:
+            control.log(f"mal_id not found for anilist_id={res['id']}", 'warning')
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         title = res['title'].get(self._title_lang) or res['title'].get('userPreferred')

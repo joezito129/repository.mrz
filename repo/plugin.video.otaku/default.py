@@ -29,7 +29,7 @@ from resources.lib.WatchlistIntegration import add_watchlist
 BROWSER = OtakuBrowser.BROWSER
 
 
-def add_last_watched(items):
+def add_last_watched(items: list[tuple]):
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
@@ -41,45 +41,50 @@ def add_last_watched(items):
 
 
 @Route('animes/*')
-def ANIMES_PAGE(payload, params):
+def ANIMES_PAGE(payload: str, params: dict):
     mal_id, eps_watched = payload.rsplit("/")
     anime_general, content = OtakuBrowser.get_anime_init(mal_id)
     control.draw_items(anime_general, content)
 
 
 @Route('find_recommendations/*')
-def FIND_RECOMMENDATIONS(payload, params):
+def FIND_RECOMMENDATIONS(payload: str, params: dict):
     path, mal_id, eps_watched = payload.rsplit("/")
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_recommendations(mal_id, page), 'tvshows')
 
 
 @Route('find_relations/*')
-def FIND_RELATIONS(payload, params):
+def FIND_RELATIONS(payload: str, params: dict):
     path, mal_id, eps_watched = payload.rsplit("/")
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
 @Route('airing_anime')
-def AIRING_ANIME(payload, params):
+def AIRING_ANIME(payload: str, params: dict):
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_airing_anime(page), 'tvshows')
 
 
 @Route('upcoming_next_season')
-def UPCOMING_NEXT_SEASON(payload, params):
+def UPCOMING_NEXT_SEASON(payload: str, params: dict):
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_upcoming_next_season(page), 'tvshows')
 
 
 @Route('top_100_anime')
-def TOP_100_ANIME_PAGES(payload, params):
+def TOP_100_ANIME_PAGES(payload: str, params: dict):
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_top_100_anime(page), 'tvshows')
 
 
+@Route('airing_calendar')
+def CALENDAR(payload: str, params: dict):
+    pass
+
+
 @Route('genres/*')
-def GENRES_PAGES(payload, params):
+def GENRES_PAGES(payload: str, params: dict):
     genres, tags = payload.rsplit("/")
     page = int(params.get('page', 1))
     if genres or tags:
@@ -89,17 +94,17 @@ def GENRES_PAGES(payload, params):
 
 
 @Route('search_history')
-def SEARCH_HISTORY(payload, params):
+def SEARCH_HISTORY(payload: str, params: dict):
     history = database.getSearchHistory('show')
     if control.getInt('searchhistory') == 0:
         draw_cm = [('Remove from Item', 'remove_search_item'), ("Edit Search Item...", "edit_search_item")]
-        control.draw_items(OtakuBrowser.search_history(history), 'addons', draw_cm)
+        control.draw_items(utils.search_history(history), 'addons', draw_cm)
     else:
         SEARCH(payload, params)
 
 
 @Route('search/*')
-def SEARCH(payload, params):
+def SEARCH(payload: str, params: dict):
     query = payload
     page = int(params.get('page', 1))
     if not query:
@@ -114,7 +119,7 @@ def SEARCH(payload, params):
 
 
 @Route('remove_search_item/*')
-def REMOVE_SEARCH_ITEM(payload, params):
+def REMOVE_SEARCH_ITEM(payload: str, params: dict):
     if 'search/' in payload:
         search_item = payload.rsplit('search/')[1]
         database.remove_search(table='show', value=search_item)
@@ -122,7 +127,7 @@ def REMOVE_SEARCH_ITEM(payload, params):
 
 
 @Route('edit_search_item/*')
-def EDIT_SEARCH_ITEM(payload, params):
+def EDIT_SEARCH_ITEM(payload: str, params: dict):
     if 'search/' in payload:
         search_item = payload.rsplit('search/')[1]
         if search_item:
@@ -134,7 +139,7 @@ def EDIT_SEARCH_ITEM(payload, params):
 
 
 @Route('play/*')
-def PLAY(payload, params):
+def PLAY(payload: str, params: dict):
     mal_id, episode = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
@@ -159,7 +164,7 @@ def PLAY(payload, params):
 
 
 @Route('play_movie/*')
-def PLAY_MOVIE(payload, params):
+def PLAY_MOVIE(payload: str, params: dict):
     mal_id, eps_watched = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
@@ -186,7 +191,7 @@ def PLAY_MOVIE(payload, params):
 
 
 @Route('marked_as_watched/*')
-def MARKED_AS_WATCHED(payload, params):
+def MARKED_AS_WATCHED(payload: str, params: dict):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
     from resources.lib.WatchlistIntegration import watchlist_update_episode
 
@@ -199,7 +204,7 @@ def MARKED_AS_WATCHED(payload, params):
 
 
 @Route('delete_anime_database/*')
-def DELETE_ANIME_DATABASE(payload, params):
+def DELETE_ANIME_DATABASE(payload: str, params: dict):
     path, mal_id, eps_watched = payload.rsplit("/")
     database.remove_from_database('shows', mal_id)
     database.remove_from_database('episodes', mal_id)
@@ -210,7 +215,7 @@ def DELETE_ANIME_DATABASE(payload, params):
 
 
 @Route('auth/*')
-def AUTH(payload, params):
+def AUTH(payload: str, params: dict):
     if payload == 'realdebrid':
         from resources.lib.debrid.real_debrid import RealDebrid
         RealDebrid().auth()
@@ -226,7 +231,7 @@ def AUTH(payload, params):
 
 
 @Route('refresh/*')
-def REFRESH(payload, params):
+def REFRESH(payload: str, params: dict):
     if payload == 'realdebrid':
         from resources.lib.debrid.real_debrid import RealDebrid
         RealDebrid().refreshToken()
@@ -236,7 +241,7 @@ def REFRESH(payload, params):
 
 
 @Route('fanart_select/*')
-def FANART_SELECT(payload, params):
+def FANART_SELECT(payload: str, params: dict):
     path, mal_id, eps_watched = payload.rsplit("/")
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
@@ -248,7 +253,7 @@ def FANART_SELECT(payload, params):
 
 
 @Route('fanart/*')
-def FANART(payload, params):
+def FANART(payload: str, params: dict):
     mal_id, select = payload.rsplit('/', 2)
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
@@ -265,9 +270,10 @@ def FANART(payload, params):
 
 # ### Menu Items ###
 @Route('')
-def LIST_MENU(payload, params):
+def LIST_MENU(payload: str, params: dict):
     MENU_ITEMS = [
         (control.lang(30001), "airing_anime", 'airing_anime.png'),
+        # ("Airing Calendar", 'airing_calendar', ''),
         (control.lang(30002), "upcoming_next_season", 'upcoming.png'),
         (control.lang(30003), "top_100_anime", 'top_100_anime.png'),
         (control.lang(30004), "genres//", 'genres_&_tags.png'),
@@ -285,7 +291,7 @@ def LIST_MENU(payload, params):
 
 
 @Route('tools')
-def TOOLS_MENU(payload, params):
+def TOOLS_MENU(payload: str, params: dict):
     TOOLS_ITEMS = [
         (control.lang(30010), "change_log", {'plot': "View Changelog"}, 'changelog.png'),
         (control.lang(30011), "settings", {'plot': "Open Settings"}, 'open_settings_menu.png'),
@@ -303,12 +309,12 @@ def TOOLS_MENU(payload, params):
 
 # ### Maintenance ###
 @Route('settings')
-def SETTINGS(payload, params):
+def SETTINGS(payload: str, params: dict):
     control.ADDON.openSettings()
 
 
 @Route('change_log')
-def CHANGE_LOG(payload, params):
+def CHANGE_LOG(payload: str, params: dict):
     import service
     service.getChangeLog()
     if params.get('setting'):
@@ -316,14 +322,14 @@ def CHANGE_LOG(payload, params):
 
 
 @Route('clear_cache')
-def CLEAR_CACHE(payload, params):
+def CLEAR_CACHE(payload: str, params: dict):
     database.cache_clear()
     if params.get('setting'):
         control.exit_code()
 
 
 @Route('clear_search_history')
-def CLEAR_SEARCH_HISTORY(payload, params):
+def CLEAR_SEARCH_HISTORY(payload: str, params: dict):
     database.clearSearchHistory()
     control.refresh()
     if params.get('setting'):
@@ -331,7 +337,7 @@ def CLEAR_SEARCH_HISTORY(payload, params):
 
 
 @Route('clear_selected_fanart')
-def CLEAR_SELECTED_FANART(payload, params):
+def CLEAR_SELECTED_FANART(payload: str, params: dict):
     fanart_all = control.getSetting(f'fanart.all').split(',')
     for i in fanart_all:
         control.setSetting(f'fanart.select.{i}', '')
@@ -342,7 +348,7 @@ def CLEAR_SELECTED_FANART(payload, params):
 
 
 @Route('rebuild_database')
-def REBUILD_DATABASE(payload, params):
+def REBUILD_DATABASE(payload: str, params: dict):
     from resources.lib.ui.database_sync import SyncDatabase
     SyncDatabase().re_build_database()
     if params.get('setting'):
@@ -350,7 +356,7 @@ def REBUILD_DATABASE(payload, params):
 
 
 @Route('completed_sync')
-def COMPLETED_SYNC(payload, params):
+def COMPLETED_SYNC(payload: str, params: dict):
     import service
     service.sync_watchlist()
     if params.get('setting'):
@@ -358,19 +364,19 @@ def COMPLETED_SYNC(payload, params):
 
 
 @Route('sort_select')
-def SORT_SELECT(payload, params):
+def SORT_SELECT(payload: str, params: dict):
     from resources.lib.windows.sort_select import SortSelect
     SortSelect(*('sort_select.xml', control.ADDON_PATH)).doModal()
 
 
 @Route('download_manager')
-def DOWNLOAD_MANAGER(payload, params):
+def DOWNLOAD_MANAGER(payload: str, params: dict):
     from resources.lib.windows.download_manager import DownloadManager
     DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
 
 
 @Route('import_settings')
-def IMPORT_SETTINGS(payload, params):
+def IMPORT_SETTINGS(payload: str, params: dict):
     import os
     import xbmcvfs
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
@@ -391,7 +397,7 @@ def IMPORT_SETTINGS(payload, params):
 
 
 @Route('export_settings')
-def IMPORT_SETTINGS(payload, params):
+def IMPORT_SETTINGS(payload: str, params: dict):
     import os
     import xbmcvfs
 
@@ -411,7 +417,7 @@ def IMPORT_SETTINGS(payload, params):
 
 
 @Route('toggleLanguageInvoker')
-def TOGGLE_LANGUAGE_INVOKER(payload, params):
+def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict):
     import service
     service.toggle_reuselanguageinvoker()
 
@@ -420,7 +426,7 @@ if __name__ == "__main__":
     try:
         router_process(control.get_plugin_url(), control.get_plugin_params())
     except Exception as e:
-        control.log(e, level='error')
+        control.log(str(e), level='error')
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():

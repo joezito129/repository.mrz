@@ -126,7 +126,6 @@ class SourceSelect(BaseWindow):
             self.stream_link = False
             self.close()
 
-
     def resolve_item(self, pack_select=False):
         if control.getBool('general.autotrynext') and not pack_select:
             sources = self.sources[self.position:]

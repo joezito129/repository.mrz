@@ -1,6 +1,6 @@
 from resources.lib.ui import control
 from sqlite3 import version
-from resources.lib.ui.database import Cursor
+from resources.lib.ui.database import SQL
 
 sqlite_version = version
 
@@ -24,12 +24,12 @@ class SyncDatabase:
         self.check_database_version()
 
     def refresh_activites(self):
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('SELECT * FROM activities WHERE sync_id=1')
             self.activites = cursor.fetchone()
 
     def set_base_activites(self):
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('INSERT INTO activities(sync_id, otaku_version) VALUES(1, ?)', (self.last_meta_update,))
             cursor.connection.commit()
 
@@ -39,7 +39,7 @@ class SyncDatabase:
 
     @staticmethod
     def build_show_table():
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('CREATE TABLE IF NOT EXISTS shows (mal_id INTEGER PRIMARY KEY, '
                            'anilist_id INTEGER,'
                            'simkl_id INTEGER,'
@@ -52,7 +52,7 @@ class SyncDatabase:
 
     @staticmethod
     def build_showmeta_table():
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('CREATE TABLE IF NOT EXISTS shows_meta (mal_id INTEGER PRIMARY KEY, '
                            'meta_ids BLOB,'
                            'art BLOB, '
@@ -62,7 +62,7 @@ class SyncDatabase:
 
     @staticmethod
     def build_show_data_table():
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('CREATE TABLE IF NOT EXISTS show_data (mal_id INTEGER PRIMARY KEY, '
                            'data BLOB NOT NULL, '
                            'last_updated TEXT NOT NULL, '
@@ -72,7 +72,7 @@ class SyncDatabase:
 
     @staticmethod
     def build_episode_table():
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('CREATE TABLE IF NOT EXISTS episodes (mal_id INTEGER NOT NULL, '
                            'season INTEGER NOT NULL, '
                            'kodi_meta BLOB NOT NULL, '
@@ -85,7 +85,7 @@ class SyncDatabase:
 
     @staticmethod
     def build_sync_activities():
-        with Cursor(control.malSyncDB) as cursor:
+        with SQL(control.malSyncDB) as cursor:
             cursor.execute('CREATE TABLE IF NOT EXISTS activities (sync_id INTEGER PRIMARY KEY, otaku_version TEXT NOT NULL)')
             cursor.connection.commit()
 

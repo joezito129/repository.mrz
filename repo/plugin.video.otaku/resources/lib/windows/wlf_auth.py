@@ -14,7 +14,7 @@ class WatchlistFlavorAuth(BaseWindow):
     def onInit(self):
         self.setFocusId(1000)
 
-    def doModal(self):
+    def doModal(self) -> object:
         super(WatchlistFlavorAuth, self).doModal()
         return self.authorized
 

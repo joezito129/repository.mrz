@@ -40,10 +40,7 @@ class PackageConfiguration(BaseWindow):
     def _set_setting_item_properties(menu_item, setting):
         menu_item.setProperty("label", str(setting["label"]))
         menu_item.setProperty("type", str(setting["type"]))
-        menu_item.setProperty(
-            "value",
-            "*******" if setting["definition"].get("sensitive") else str(setting["value"]),
-        )
+        menu_item.setProperty("value", "*******" if setting["definition"].get("sensitive") else str(setting["value"]),)
         menu_item.setProperty("has_action", "True" if setting["definition"].get("action") else "False")
         menu_item.setProperty("hide_value", "True" if setting.get("hide_value") else "False")
 

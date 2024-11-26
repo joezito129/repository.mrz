@@ -102,6 +102,8 @@ class SerenPlayer(xbmc.Player):
         self._handle_bookmark()
         self._add_support_for_external_trakt_scrobbling()
 
+        self.playing_next_time = max(self.playing_next_time, self.item_information["info"]["duration"] * (1 - (g.get_int_setting("playingnext.percent") / 100)))
+
         xbmcplugin.setResolvedUrl(g.PLUGIN_HANDLE, True, self._create_list_item(stream_link))
 
         self._keep_alive()
@@ -138,6 +140,20 @@ class SerenPlayer(xbmc.Player):
         :rtype: bool
         """
         return super().isPlayingVideo()
+
+    def seekTime(self, time):
+        """
+        Seeks the specified amount of time as fractional seconds if playing a file. The time specified is relative to
+        the beginning of the currently. playing media file.
+        :param time: Time to seek as fractional seconds
+        :type time: float
+        :return: None
+        :rtype: None
+        """
+        try:
+            super().seekTime(time)
+        except RuntimeError:
+            g.log("Trying to seek player when not playing a file", "warning")
 
     def getSubtitles(self):
         """
@@ -329,20 +345,20 @@ class SerenPlayer(xbmc.Player):
             if not hasattr(provider_module, "get_listitem") and hasattr(provider_module, "sources"):
                 provider_module = provider_module.sources()
             item = provider_module.get_listitem(stream_link)
+            item.setInfo("video", info)
         else:
             item = xbmcgui.ListItem(path=stream_link)
             info["FileNameAndPath"] = parse.unquote(self.playing_file)
+            item.setInfo("video", info)
             item.setProperty("IsPlayable", "true")
 
-        vinfo = item.getVideoInfoTag()
-        g.set_info(vinfo, info)
         art = self.item_information.get("art", {})
         item.setArt(art if isinstance(art, dict) else {})
         cast = self.item_information.get("cast", [])
-        if isinstance(cast, list):
-            vinfo.setCast([xbmc.Actor(p['name'], p['role'], p['order'], p['thumbnail']) for p in cast])
-
-        vinfo.setUniqueIDs({i.split("_")[0]: info[i] for i in info if i.endswith("id")})
+        item.setCast(cast if isinstance(cast, list) else [])
+        item.setUniqueIDs(
+            {i.split("_")[0]: info[i] for i in info if i.endswith("id")},
+        )
         return item
 
     def _add_support_for_external_trakt_scrobbling(self):
@@ -352,7 +368,7 @@ class SerenPlayer(xbmc.Player):
             "imdb_id": "imdb",
             "trakt_slug": "slug",
             "tvdb_id": "tvdb",
-            "trakt_id": "trakt"
+            "trakt_id": "trakt",
         }
 
         info = self.item_information.get("info", {})
@@ -360,6 +376,7 @@ class SerenPlayer(xbmc.Player):
             meta_id = info.get(f"tvshow.{id}" if info.get("mediatype") == "episode" else id)
             if meta_id:
                 trakt_meta[keys[id]] = meta_id
+
         g.HOME_WINDOW.setProperty("script.trakt.ids", json.dumps(trakt_meta, sort_keys=True))
 
     def _update_progress(self, offset=None):
@@ -410,7 +427,12 @@ class SerenPlayer(xbmc.Player):
         self.scrobble_started = True
 
     def _trakt_stop_watching(self):
-        if not self.trakt_enabled or not self.scrobbling_enabled or self.scrobbled or self.current_time < self.ignoreSecondsAtStart:
+        if (
+            not self.trakt_enabled
+            or not self.scrobbling_enabled
+            or self.scrobbled
+            or self.current_time < self.ignoreSecondsAtStart
+        ):
             return
 
         post_data = self._build_trakt_object()
@@ -491,11 +513,11 @@ class SerenPlayer(xbmc.Player):
             if self._is_file_playing() or self._playback_has_stopped() or g.wait_for_abort(0.25):
                 break
 
-        self.total_time = xbmc.Player().getTotalTime()
+        self.total_time = self.getTotalTime()
         self.min_time_before_scrape = max(self.total_time * 0.2, self.min_time_before_scrape)
 
         if self.offset and not self.resumed:
-            xbmc.Player().seekTime(self.offset)
+            self.seekTime(self.offset)
             self.resumed = True
 
         self._log_debug_information()

@@ -1,3 +1,7 @@
+Changelog v5.1.6 (2024-11-26):
+- Updated Types
+- Some bug fixes
+
 Changelog v5.1.5 (2024-11-24):
 - Fixed real-debrid
 - Some embed updates

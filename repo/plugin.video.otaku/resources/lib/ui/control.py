@@ -22,7 +22,7 @@ addonInfo = ADDON.getAddonInfo
 ADDON_NAME = addonInfo('name')
 ADDON_VERSION = addonInfo('version')
 ADDON_ICON = addonInfo('icon')
-OTAKU_FANART = addonInfo('fanart')
+FANART = addonInfo('fanart')
 ADDON_PATH = ADDON.getAddonInfo('path')
 dataPath = xbmcvfs.translatePath(addonInfo('profile'))
 kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
@@ -36,10 +36,10 @@ maldubFile = os.path.join(dataPath, 'mal_dub.json')
 downloads_json = os.path.join(dataPath, 'downloads.json')
 completed_json = os.path.join(dataPath, 'completed.json')
 
-OTAKU_COMMON_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common')
-OTAKU_LOGO_SMALL = os.path.join(OTAKU_COMMON_PATH, 'trans-goku-small.png')
-OTAKU_LOGO_MEDIUM = os.path.join(OTAKU_COMMON_PATH, 'trans-goku.png')
-OTAKU_ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
+COMMON_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common')
+LOGO_SMALL = os.path.join(COMMON_PATH, 'trans-goku-small.png')
+LOGO_MEDIUM = os.path.join(COMMON_PATH, 'trans-goku.png')
+ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
 
 dialogWindow = xbmcgui.WindowDialog
 execute = xbmc.executebuiltin
@@ -47,14 +47,14 @@ progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
 
 
-def closeBusyDialog():
+def closeBusyDialog() -> None:
     if xbmc.getCondVisibility('Window.IsActive(busydialog)'):
         execute('Dialog.Close(busydialog)')
     if xbmc.getCondVisibility('Window.IsActive(busydialognocancel)'):
         execute('Dialog.Close(busydialognocancel)')
 
 
-def log(msg, level="info"):
+def log(msg: str, level: str = "info") -> None:
     if level == 'info':
         level = xbmc.LOGINFO
     elif level == 'warning':
@@ -66,161 +66,161 @@ def log(msg, level="info"):
     xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
 
 
-def real_debrid_enabled():
+def real_debrid_enabled() -> bool:
     return True if getSetting('rd.auth') != '' and getBool('rd.enabled') else False
 
 
-def debrid_link_enabled():
+def debrid_link_enabled() -> bool:
     return True if getSetting('dl.auth') != '' and getBool('dl.enabled') else False
 
 
-def all_debrid_enabled():
+def all_debrid_enabled() -> bool:
     return True if getSetting('alldebrid.apikey') != '' and getBool('alldebrid.enabled') else False
 
 
-def premiumize_enabled():
+def premiumize_enabled() -> bool:
     return True if getSetting('premiumize.token') != '' and getBool('premiumize.enabled') else False
 
 
-def myanimelist_enabled():
+def myanimelist_enabled() -> bool:
     return True if getSetting('mal.token') != '' and getBool('mal.enabled') else False
 
 
-def kitsu_enabled():
+def kitsu_enabled() -> bool:
     return True if getSetting('kitsu.token') != '' and getBool('kitsu.enabled') else False
 
 
-def anilist_enabled():
+def anilist_enabled() -> bool:
     return True if getSetting('anilist.token') != '' and getBool('anilist.enabled') else False
 
 
-def simkl_enabled():
+def simkl_enabled() -> bool:
     return True if getSetting('simkl.token') != '' and getBool('simkl.enabled') else False
 
 
-def watchlist_to_update():
+def watchlist_to_update() -> str:
     if getBool('watchlist.update.enabled'):
         flavor = getSetting('watchlist.update.flavor').lower()
         if getBool('%s.enabled' % flavor):
             return flavor
 
 
-def copy2clip(txt):
+def copy2clip(txt: str) -> bool:
     platform = sys.platform
     if platform == 'win32':
-        command = 'echo %s|clip' % txt
-        os.system(command)
-        return True
+        try:
+            os.system('echo %s|clip' % txt)
+            return True
+        except AttributeError:
+            pass
+    return False
 
 
-def colorstr(text, color=None):
-    if color == 'default' or color == '' or color is None:
-        color = 'deepskyblue'
+def colorstr(text: str, color: str = 'deepskyblue') -> str:
     return f"[COLOR {color}]{text}[/COLOR]"
 
 
-def refresh():
-    return execute('Container.Refresh')
+def refresh() -> None:
+    execute('Container.Refresh')
 
 
-def getSetting(key):
+def getSetting(key: str) -> str:
     return ADDON.getSetting(key)
 
 
-def getBool(key):
+def getBool(key: str) -> bool:
     return ADDON.getSettingBool(key)
 
 
-def getInt(key):
+def getInt(key: str) -> int:
     return ADDON.getSettingInt(key)
 
 
-def getString(key):
+def getString(key: str) -> str:
     return ADDON.getSettingString(key)
 
 
-def setSetting(settingid, value):
-    return ADDON.setSetting(settingid, value)
+def setSetting(settingid: str, value: str) -> None:
+    ADDON.setSetting(settingid, value)
 
 
-def setBool(settingid, value):
+def setBool(settingid: str, value: bool) -> bool:
     return ADDON.setSettingBool(settingid, value)
 
 
-def setInt(settingid, value):
+def setInt(settingid: str, value: int) -> bool:
     return ADDON.setSettingInt(settingid, value)
 
 
-def lang(x):
+def lang(x: int) -> str:
     return language(x)
 
 
-def addon_url(url):
+def addon_url(url: str) -> str:
     return f'plugin://{ADDON_ID}/{url}'
 
 
-def get_plugin_url():
+def get_plugin_url() -> str:
     addon_base = addon_url('')
     return sys.argv[0][len(addon_base):]
 
 
-def get_plugin_params():
+def get_plugin_params() -> dict:
     return dict(parse.parse_qsl(sys.argv[2].replace('?', '')))
 
 
-def exit_code():
+def exit_code() -> None:
     if getSetting('reuselanguageinvoker.status') == 'Enabled':
         exit_(1)
 
 
-def keyboard(title, text=''):
+def keyboard(title: str, text: str = '') -> str:
     keyboard_ = xbmc.Keyboard(text, title, False)
     keyboard_.doModal()
-    if keyboard_.isConfirmed():
-        return keyboard_.getText()
+    return keyboard_.getText() if keyboard_.isConfirmed() else ""
 
 
-def closeAllDialogs():
+def closeAllDialogs() -> None:
     execute('Dialog.Close(all,true)')
 
 
-def ok_dialog(title, text):
+def ok_dialog(title: str, text: str) -> bool:
     return xbmcgui.Dialog().ok(title, text)
 
 
-def textviewer_dialog(title, text):
-    return xbmcgui.Dialog().textviewer(title, text)
+def textviewer_dialog(title: str, text: str) -> None:
+    xbmcgui.Dialog().textviewer(title, text)
 
 
-def yesno_dialog(title, text, nolabel=None, yeslabel=None):
+def yesno_dialog(title: str, text: str, nolabel: str = '', yeslabel: str = '') -> bool:
     return xbmcgui.Dialog().yesno(title, text, nolabel, yeslabel)
 
 
-def yesnocustom_dialog(title, text, customlabel='', nolabel='', yeslabel='', autoclose=0, defaultbutton=0):
+def yesnocustom_dialog(title: str, text: str, customlabel: str = '', nolabel: str = '', yeslabel: str = '', autoclose: int = 0, defaultbutton: int = 0) -> int:
     return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
-def notify(title, text, icon=OTAKU_LOGO_MEDIUM, time=5000, sound=True):
-    return xbmcgui.Dialog().notification(title, text, icon, time, sound)
+def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 5000, sound: bool = True) -> None:
+    xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
-def multiselect_dialog(title, dialog_list):
+def multiselect_dialog(title: str, dialog_list: list) -> list[int]:
     return xbmcgui.Dialog().multiselect(title, dialog_list)
 
 
-def select_dialog(title, dialog_list):
+def select_dialog(title: str, dialog_list: list) -> int:
     return xbmcgui.Dialog().select(title, dialog_list)
 
 
-def context_menu(context_list):
+def context_menu(context_list: list) -> int:
     return xbmcgui.Dialog().contextmenu(context_list)
 
 
-def browse(type_, heading, shares, mask=''):
+def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
     return xbmcgui.Dialog().browse(type_, heading, shares, mask)
 
 
-def set_videotags(li, info):
+def set_videotags(li, info: dict) -> None:
     vinfo = li.getVideoInfoTag()
     if title := info.get('title'):
         vinfo.setTitle(title)
@@ -268,7 +268,7 @@ def set_videotags(li, info):
     #     vinfo.setResumePoint(info['resume'], 0)
 
 
-def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
+def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: bool, isfolder: bool, isplayable: bool):
     u = addon_url(url)
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
@@ -277,7 +277,7 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
     if not art.get('fanart') or settingids.fanart_disable:
-        art['fanart'] = OTAKU_FANART
+        art['fanart'] = FANART
     else:
         if isinstance(art['fanart'], list):
             if settingids.fanart_select:
@@ -285,12 +285,12 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
                     fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
                     art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
                 else:
-                    art['fanart'] = OTAKU_FANART
+                    art['fanart'] = FANART
             else:
                 art['fanart'] = random.choice(art['fanart'])
 
     if settingids.clearlogo_disable:
-        art['clearlogo'] = OTAKU_ICONS_PATH
+        art['clearlogo'] = ICONS_PATH
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
@@ -298,12 +298,12 @@ def xbmc_add_dir(name, url, art, info, draw_cm, bulk_add, isfolder, isplayable):
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
-def bulk_draw_items(video_data, draw_cm):
+def bulk_draw_items(video_data: list, draw_cm: list) -> bool:
     list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
-    xbmcplugin.addDirectoryItems(HANDLE, list_items)
+    return xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
-def draw_items(video_data, content_type=None, draw_cm=None):
+def draw_items(video_data: list, content_type: str = '', draw_cm: list = None) -> None:
     if not draw_cm:
         draw_cm = []
     if len(video_data) > 99:
@@ -350,11 +350,11 @@ def draw_items(video_data, content_type=None, draw_cm=None):
                 xbmc.executebuiltin('Action(Down)')
 
 
-def bulk_player_list(video_data, draw_cm=None, bulk_add=True):
+def bulk_player_list(video_data: list, draw_cm: list = None, bulk_add: bool = True) -> list:
     return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
 
 
-def get_view_type(viewtype):
+def get_view_type(viewtype: str) -> int:
     viewTypes = {
         'Default': 50,
         'Poster': 51,
@@ -370,48 +370,33 @@ def get_view_type(viewtype):
     return viewTypes[viewtype]
 
 
-def title_lang(title_key):
-    title_lang_dict = ["romaji", 'english']
-    return title_lang_dict[title_key]
-
-
-def exit_(code):
+def exit_(code: int) -> None:
     sys.exit(code)
 
 
-def is_addon_visible():
+def is_addon_visible() -> bool:
     return xbmc.getInfoLabel('Container.PluginName') == 'plugin.video.otaku'
 
 
-def abort_requested():
+def abort_requested() -> bool:
     monitor = xbmc.Monitor()
     abort_requested_ = monitor.abortRequested()
     del monitor
     return abort_requested_
 
 
-def wait_for_abort(timeout=1.0):
+def wait_for_abort(timeout: float = 1.0) -> bool:
     monitor = xbmc.Monitor()
     abort_requested_ = monitor.waitForAbort(timeout)
     del monitor
     return abort_requested_
 
 
-def print(string, *args):
+def print(string, *args) -> None:
     for i in list(args):
         string = f'{string} {i}'
     textviewer_dialog('print', f'{string}')
     del args, string
-
-
-# def print_(string, *args):
-#     for i in list(args):
-#         string = f'{string} {i}'
-#
-#     from resources.lib.windows.textviewer import TextViewerXML
-#     windows = TextViewerXML('textviewer.xml', ADDON_PATH, heading=ADDON_NAME, text=f'{string}')
-#     windows.run()
-#     del windows
 
 
 class SettingIDs:

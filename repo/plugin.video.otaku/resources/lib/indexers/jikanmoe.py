@@ -57,9 +57,16 @@ class JikanAPI:
             'season': season,
             'episode': episode,
             'plot': '',
+            'rating': {'score': float(res.get('score', 0))},
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode'
         }
+
+        try:
+            info['aired'] = res['aired'][:10]
+        except (KeyError, TypeError):
+            pass
+
         if eps_watched and int(eps_watched) >= episode:
             info['playcount'] = 1
 

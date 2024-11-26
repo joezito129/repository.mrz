@@ -147,6 +147,10 @@ class KitsuWLF(WatchlistFlavorBase):
     def _base_watchlist_view(self, res, eres, mal_dub=None):
         kitsu_id = eres['id']
         mal_id = self.mapping_mal(kitsu_id)
+
+        if not mal_id:
+            control.log(f"mal_id not found for kitsu_id={kitsu_id}", 'warning')
+
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         info = {
@@ -184,7 +188,6 @@ class KitsuWLF(WatchlistFlavorBase):
             base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
-
         return utils.parse_view(base, True, False, dub)
 
     @div_flavor

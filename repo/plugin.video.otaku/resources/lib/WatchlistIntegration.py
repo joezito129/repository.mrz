@@ -19,26 +19,26 @@ def get_auth_dialog(flavor):
 
 
 @Route('watchlist_login/*')
-def WL_LOGIN(payload, params):
+def WL_LOGIN(payload: str, params: dict):
     auth_dialog = bool(params.get('auth_dialog'))
     get_auth_dialog(payload) if auth_dialog else WatchlistFlavor.login_request(payload)
     control.exit_code()
 
 
 @Route('watchlist_logout/*')
-def WL_LOGOUT(payload, params):
+def WL_LOGOUT(payload: str, params: dict):
     WatchlistFlavor.logout_request(payload)
     control.refresh()
     control.exit_code()
 
 
 @Route('watchlist/*')
-def WATCHLIST(payload, params):
+def WATCHLIST(payload: str, params: dict):
     control.draw_items(WatchlistFlavor.watchlist_request(payload), 'addons')
 
 
 @Route('watchlist_status_type/*')
-def WATCHLIST_STATUS_TYPE(payload, params):
+def WATCHLIST_STATUS_TYPE(payload: str, params: dict):
     flavor, status = payload.rsplit("/")
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
@@ -46,7 +46,7 @@ def WATCHLIST_STATUS_TYPE(payload, params):
 
 
 @Route('watchlist_status_type_pages/*')
-def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
+def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict):
     flavor, status, offset = payload.rsplit("/")
     page = int(params.get('page', 1))
     next_up = bool(params.get('next_up'))
@@ -55,7 +55,7 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload, params):
 
 
 @Route('watchlist_to_ep/*')
-def WATCHLIST_TO_EP(payload, params):
+def WATCHLIST_TO_EP(payload: str, params: dict):
     payload_list = payload.rsplit("/")
     mal_id, eps_watched = payload_list
     show_meta = database.get_show(mal_id)
@@ -70,7 +70,7 @@ def WATCHLIST_TO_EP(payload, params):
 
 
 @Route('watchlist_manager/*')
-def CONTEXT_MENU(payload, params):
+def CONTEXT_MENU(payload: str, params: dict):
     if not control.getBool('watchlist.update.enabled'):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
         return control.exit_code()
@@ -133,7 +133,7 @@ def CONTEXT_MENU(payload, params):
     return control.exit_code()
 
 
-def add_watchlist(items):
+def add_watchlist(items: list[tuple]):
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:
@@ -141,7 +141,7 @@ def add_watchlist(items):
     return items
 
 
-def watchlist_update_episode(mal_id, episode):
+def watchlist_update_episode(mal_id, episode: int):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
         return WatchlistFlavor.watchlist_update_episode(mal_id, episode)

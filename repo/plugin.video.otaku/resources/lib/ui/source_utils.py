@@ -200,7 +200,6 @@ def get_best_match(dict_key, dictionary_list, episode, pack_select=False):
         files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
         if len(files) != 1:
             files = user_select(files, dict_key)
-
     return files[0]
 
 

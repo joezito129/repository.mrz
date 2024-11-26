@@ -5,11 +5,11 @@ from resources.lib.ui import control
 
 def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None):
     if image and '/' not in image:
-        image = os.path.join(control.OTAKU_ICONS_PATH, image)
+        image = os.path.join(control.ICONS_PATH, image)
     if fanart and not isinstance(fanart, list) and '/' not in fanart:
-        fanart = os.path.join(control.OTAKU_ICONS_PATH, fanart)
+        fanart = os.path.join(control.ICONS_PATH, fanart)
     if poster and '/' not in poster:
-        poster = os.path.join(control.OTAKU_ICONS_PATH, poster)
+        poster = os.path.join(control.ICONS_PATH, poster)
     new_res = {
         'isfolder': isfolder,
         'isplayable': isplayable,
@@ -28,6 +28,17 @@ def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=N
         }
     }
     return new_res
+
+
+def parse_history_view(res):
+    return allocate_item(res, f'search/{res}', True, False)
+
+
+def search_history(search_array):
+    result = [allocate_item("New Search", "search/", True, False, 'new_search.png')]
+    result += list(map(parse_history_view, search_array))
+    result.append(allocate_item("Clear Search History...", "clear_search_history", False, False, 'clear_search_history.png'))
+    return result
 
 
 def parse_view(base, isfolder, isplayable, dub=False):
