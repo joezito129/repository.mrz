@@ -215,7 +215,7 @@
 
     </assets>
   </extension>
-</addon><addon id="plugin.video.seren" version="3.0.4" name="Seren" provider-name="Nixgates">
+</addon><addon id="plugin.video.seren" version="3.0.5" name="Seren" provider-name="Nixgates">
     <requires>
         <import addon="xbmc.addon" version="17.9.910" />
         <import addon="xbmc.python" version="3.0.0" />
