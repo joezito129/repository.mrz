@@ -21,10 +21,9 @@ class Sources(BrowserBase):
         self.cached = []
         self.uncached = []
 
-    def get_sources(self, show, mal_id, episode, status, media_type, rescrape):
+    def get_sources(self, show, mal_id, episode, status, media_type, rescrape) -> dict[str: list]:
         show = self._clean_title(show)
         query = self._sphinx_clean(show)
-
         if rescrape:
             # todo add re-scape stuff here
             pass

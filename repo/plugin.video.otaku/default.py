@@ -29,7 +29,7 @@ from resources.lib.WatchlistIntegration import add_watchlist
 BROWSER = OtakuBrowser.BROWSER
 
 
-def add_last_watched(items: list[tuple]):
+def add_last_watched(items: list[tuple]) -> list[tuple]:
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
@@ -113,9 +113,7 @@ def SEARCH(payload: str, params: dict):
             return control.draw_items([], 'tvshows')
         if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
-        control.draw_items(BROWSER.get_search(query), 'tvshows')
-    else:
-        control.draw_items(BROWSER.get_search(query, page), 'tvshows')
+    control.draw_items(BROWSER.get_search(query, page), 'tvshows')
 
 
 @Route('remove_search_item/*')
@@ -303,8 +301,7 @@ def TOOLS_MENU(payload: str, params: dict):
         (control.lang(30017), 'sort_select', {'plot': "Choose Sorting..."}, ''),
         (control.lang(30018), 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
-    control.draw_items(
-        [utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
+    control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
 
 
 # ### Maintenance ###
@@ -426,7 +423,7 @@ if __name__ == "__main__":
     try:
         router_process(control.get_plugin_url(), control.get_plugin_params())
     except Exception as e:
-        control.log(str(e), level='error')
+        control.log(repr(e), level='error')
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():

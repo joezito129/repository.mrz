@@ -64,9 +64,7 @@ def WATCHLIST_TO_EP(payload: str, params: dict):
     kodi_meta = pickle.loads(show_meta['kodi_meta'])
     kodi_meta['eps_watched'] = eps_watched
     database.update_kodi_meta(mal_id, kodi_meta)
-
-    anime_general, content_type = OtakuBrowser.get_anime_init(mal_id)
-    control.draw_items(anime_general, content_type)
+    control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
 
 
 @Route('watchlist_manager/*')
@@ -133,7 +131,7 @@ def CONTEXT_MENU(payload: str, params: dict):
     return control.exit_code()
 
 
-def add_watchlist(items: list[tuple]):
+def add_watchlist(items: list[tuple]) -> list[tuple]:
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:
@@ -141,7 +139,7 @@ def add_watchlist(items: list[tuple]):
     return items
 
 
-def watchlist_update_episode(mal_id, episode: int):
+def watchlist_update_episode(mal_id, episode):
     flavor = WatchlistFlavor.get_update_flavor()
     if flavor:
         return WatchlistFlavor.watchlist_update_episode(mal_id, episode)

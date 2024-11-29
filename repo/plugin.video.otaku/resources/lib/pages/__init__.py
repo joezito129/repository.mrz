@@ -75,6 +75,9 @@ class Sources(GetSources):
                     self.threads.append(t)
                 else:
                     self.remainingProviders.remove(torrent_provider)
+        else:
+            for torrent_provider in self.torrentProviders:
+                self.remainingProviders.remove(torrent_provider)
 
 #       ### embeds ###
         for inx, embed_provider in enumerate(self.embedProviders):
@@ -122,7 +125,11 @@ class Sources(GetSources):
 
 #   ### Torrents ###
     def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
-        all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key=torrent_name)
+        try:
+            all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key=torrent_name)
+        except Exception as e:
+            control.log(repr(e), 'error')
+            all_sources = {}
         if all_sources:
             self.torrentUnCacheSources += all_sources['uncached']
             self.torrentCacheSources += all_sources['cached']
@@ -131,7 +138,11 @@ class Sources(GetSources):
 
 #   ### embeds ###
     def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape, get_backup):
-        embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, get_backup, key=embed_name)
+        try:
+            embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, get_backup, key=embed_name)
+        except Exception as e:
+            control.log(repr(e), 'error')
+            embed_sources = []
         self.embedSources += embed_sources
         if embed_name in ['hianime', 'aniwave']:
             for x in embed_sources:

@@ -3,14 +3,15 @@ import os
 from resources.lib.ui import control
 
 
-def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None):
+def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, image: str = '', info: dict = None,
+                  fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None) -> dict:
     if image and '/' not in image:
         image = os.path.join(control.ICONS_PATH, image)
     if fanart and not isinstance(fanart, list) and '/' not in fanart:
         fanart = os.path.join(control.ICONS_PATH, fanart)
     if poster and '/' not in poster:
         poster = os.path.join(control.ICONS_PATH, poster)
-    new_res = {
+    return {
         'isfolder': isfolder,
         'isplayable': isplayable,
         'name': name,
@@ -27,10 +28,9 @@ def allocate_item(name, url, isfolder, isplayable, image='', info=None, fanart=N
                 'clearlogo': clearlogo
         }
     }
-    return new_res
 
 
-def parse_history_view(res):
+def parse_history_view(res: str) -> dict:
     return allocate_item(res, f'search/{res}', True, False)
 
 
@@ -41,7 +41,7 @@ def search_history(search_array):
     return result
 
 
-def parse_view(base, isfolder, isplayable, dub=False):
+def parse_view(base: dict, isfolder: bool, isplayable: bool, dub: bool = False) -> dict:
     if control.settingids.showdub and dub:
         base['name'] += ' [COLOR blue](Dub)[/COLOR]'
         base['info']['title'] = base['name']
@@ -51,7 +51,7 @@ def parse_view(base, isfolder, isplayable, dub=False):
     return parsed_view
 
 
-def get_season(titles_list):
+def get_season(titles_list: list) -> int:
     import re
     regexes = [r'season\s(\d+)', r'\s(\d+)st\sseason\s', r'\s(\d+)nd\sseason\s', r'\s(\d+)rd\sseason\s', r'\s(\d+)th\sseason\s']
     s_ids = []
@@ -86,7 +86,7 @@ def get_season(titles_list):
     return season
 
 
-def format_time(seconds):
+def format_time(seconds: float) -> str:
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
 

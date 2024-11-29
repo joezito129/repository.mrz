@@ -402,7 +402,7 @@ def request(
                 response.close()
             return result
     except Exception as e:
-        control.log('Request-Error: (%s) => %s' % (str(e), url), 'info')
+        control.log('Request-Error: (%s) => %s' % (repr(e), url), 'info')
         return
 
 
@@ -532,7 +532,7 @@ class cfcookie:
                 store(cfdata, urllib_parse.urlparse(netloc).netloc + '.json')
             return self.cookie, self.ua
         except Exception as e:
-            control.log('%s returned an error. Could not collect tokens - Error: %s.' % (netloc, str(e)))
+            control.log('%s returned an error. Could not collect tokens - Error: %s.' % (netloc, repr(e)))
             return self.cookie, self.ua
 
     def _get_cookie(self, netloc, timeout):
@@ -575,7 +575,7 @@ class ddgcookie:
                 store(cfdata, urllib_parse.urlparse(netloc).netloc + '.json')
             return self.cookie, self.ua
         except Exception as e:
-            control.log('%s returned an error. Could not collect tokens - Error: %s.' % (netloc, str(e)))
+            control.log('%s returned an error. Could not collect tokens - Error: %s.' % (netloc, repr(e)))
             return self.cookie, self.ua
 
     def _get_cookie(self, netloc, timeout):

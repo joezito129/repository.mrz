@@ -13,9 +13,11 @@ from resources.lib.ui import control
 def get_(function, duration, *args, **kwargs):
     """
     Gets cached value for provided function with optional arguments, or executes and stores the result
+
     :param function: Function to be executed
     :param duration: Duration of validity of cache in hours
     :param args: Optional arguments for the provided function
+    :param kwargs: Optional keyword arguments for the provided function
     """
     key = hash_function(function, args, kwargs)
     if 'key' in kwargs:
@@ -25,7 +27,7 @@ def get_(function, duration, *args, **kwargs):
         try:
             return_data = ast.literal_eval(cache_result['value'])
         except Exception as e:
-            control.log(str(e), 'warning')
+            control.log(repr(e), 'warning')
             return_data = None
         return return_data
 
@@ -118,7 +120,7 @@ def update_show_data(mal_id, data: dict, last_updated: str = ''):
         cursor.connection.commit()
 
 
-def update_episode(mal_id, season: int, number: int, update_time: int, kodi_meta, filler: str = '') -> None:
+def update_episode(mal_id, season: int, number: int, update_time: str, kodi_meta, filler: str = '') -> None:
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('REPLACE INTO episodes (mal_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (mal_id, season, kodi_meta, update_time, number, filler))
         cursor.connection.commit()
@@ -247,6 +249,8 @@ class SQL:
         if self.lock.locked():
             self.lock.release()
         if exc_type is OperationalError:
+            control.log(f'{exc_type} | {exc_val}', 'error')
             return True
         elif exc_type is not None:
             control.log(f'{exc_type} | {exc_val}', 'error')
+            return False

@@ -123,7 +123,7 @@ class Manager:
         self.download_ids = []
         self.download = {}
         if not xbmcvfs.exists(control.downloads_json):
-            with open(control.downloads_json, 'w') as file:
+            with open(control.downloads_json, 'w') as file:     # type: [str]
                 json.dump({}, file)
         self.storage_location = control.getSetting('download.location')
 

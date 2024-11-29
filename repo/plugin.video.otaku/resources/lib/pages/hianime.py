@@ -194,4 +194,4 @@ class Sources(BrowserBase):
             sources = json.loads(jscrypto.decode(sources, key))
             return sources[0].get('file')
         except Exception as e:
-            control.log(str(e), level='warning')
+            control.log(repr(e), level='warning')

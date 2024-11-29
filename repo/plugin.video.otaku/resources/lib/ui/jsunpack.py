@@ -145,9 +145,7 @@ class Unbaser:
                 self.ALPHABET[base] = self.ALPHABET[95][0:base]
             # Build conversion dictionary cache
             try:
-                self.dictionary = dict(
-                    (cipher, index) for index, cipher in enumerate(
-                        self.ALPHABET[base]))
+                self.dictionary = dict((cipher, index) for index, cipher in enumerate(self.ALPHABET[base]))
             except KeyError:
                 raise TypeError('Unsupported base encoding.')
 

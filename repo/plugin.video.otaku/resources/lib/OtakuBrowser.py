@@ -36,7 +36,7 @@ def get_episodeList(mal_id, pass_idx):
     return items
 
 
-def get_backup(mal_id, source):
+def get_backup(mal_id, source) -> dict:
     params = {
         "type": "myanimelist",
         "id": mal_id
@@ -45,7 +45,7 @@ def get_backup(mal_id, source):
     return r.json().get('Pages', {}).get(source, {}) if r.ok else {}
 
 
-def get_anime_init(mal_id):
+def get_anime_init(mal_id) -> tuple[list, str]:
     show_meta = database.get_show_meta(mal_id)
     if not show_meta:
         BROWSER.get_anime(mal_id)

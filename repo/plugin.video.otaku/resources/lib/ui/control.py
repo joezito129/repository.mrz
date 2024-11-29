@@ -116,7 +116,7 @@ def copy2clip(txt: str) -> bool:
     return False
 
 
-def colorstr(text: str, color: str = 'deepskyblue') -> str:
+def colorstr(text, color: str = 'deepskyblue') -> str:
     return f"[COLOR {color}]{text}[/COLOR]"
 
 

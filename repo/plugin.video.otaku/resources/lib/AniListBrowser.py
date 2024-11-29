@@ -81,7 +81,7 @@ class AniListBrowser:
         upcoming = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(upcoming, "upcoming_next_season?page=%d", page)
 
-    def get_top_100_anime(self, page):
+    def get_top_100_anime(self, page: int):
         variables = {
             'page': page,
             'perpage': self.perpage,
@@ -97,7 +97,7 @@ class AniListBrowser:
         top_100_anime = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(top_100_anime, "top_100_anime?page=%d", page)
 
-    def get_search(self, query, page=1):
+    def get_search(self, query: str, page: int):
         variables = {
             'page': page,
             'perpage': self.perpage,

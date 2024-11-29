@@ -13,7 +13,7 @@ class Sources(BrowserBase):
         'Cookie': '__ddg1_=PZYJSmACHBBQGP6auJU9; __ddg2_=hxAe1bBqtlUhMFik'
     }
 
-    def get_sources(self, mal_id, episode, get_backup):
+    def get_sources(self, mal_id, episode, get_backup) -> list:
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = self._clean_title(kodi_meta['name'])

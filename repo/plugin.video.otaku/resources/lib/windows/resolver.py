@@ -217,7 +217,7 @@ class Resolver(BaseWindow):
             else:
                 return
         except Exception as e:
-            control.log(str(e), level='warning')
+            control.log(repr(e), level='warning')
             return
 
         return {

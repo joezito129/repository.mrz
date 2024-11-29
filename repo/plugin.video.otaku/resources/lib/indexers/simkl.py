@@ -1,7 +1,6 @@
 import requests
 import pickle
 import datetime
-import time
 
 from functools import partial
 from resources.lib.ui import database, utils, control
@@ -83,7 +82,8 @@ class SIMKLAPI:
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
         update_time = datetime.date.today().isoformat()
-        last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
+        # last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
+        last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")
         diff = (datetime.datetime.today() - last_updated).days
 
         if diff >= int(control.getSetting('interface.check.updates')):
@@ -99,7 +99,7 @@ class SIMKLAPI:
             all_results = list(map(mapfunc1, episodes))
         return all_results
 
-    def get_episodes(self, mal_id, show_meta):
+    def get_episodes(self, mal_id, show_meta) -> tuple[list, str]:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
