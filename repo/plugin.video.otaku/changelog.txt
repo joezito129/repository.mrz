@@ -1,6 +1,3 @@
-Changelog v5.1.7 (2024-11-28):
-- Some bug fixes
-
 Changelog v5.1.6 (2024-11-26):
 - Updated Types
 - Some bug fixes

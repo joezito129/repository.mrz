@@ -17,7 +17,7 @@ class Sources(BrowserBase):
     DKEY = "hlPeNwkncH0fq9so"
     CHAR_SUBST_OFFSETS = (-3, 3, -4, 2, -2, 5, 4, 5)
 
-    def get_sources(self, mal_id, episode, get_backup=None):
+    def get_sources(self, mal_id, episode):
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta['name']

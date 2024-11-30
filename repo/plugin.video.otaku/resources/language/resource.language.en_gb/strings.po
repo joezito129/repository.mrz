@@ -572,6 +572,10 @@ msgctxt "#30122"
 msgid "Debrid-Link Username"
 msgstr ""
 
+msgctxt "#30123"
+msgid "Debrid-Link Status"
+msgstr ""
+
 msgctxt "#30124"
 msgid "Authorize Debrid-Link..."
 msgstr ""
@@ -592,8 +596,36 @@ msgctxt "#30132"
 msgid "Premiumize Username"
 msgstr ""
 
+msgctxt "#30133"
+msgid "Premiumize Status"
+msgstr ""
+
 msgctxt "#30134"
 msgid "Authorize Premiumize..."
+msgstr ""
+
+msgctxt "#30140"
+msgid "TorBox"
+msgstr ""
+
+msgctxt "#30141"
+msgid "Enable TorBox..."
+msgstr ""
+
+msgctxt "#30142"
+msgid "TorBox Username"
+msgstr ""
+
+msgctxt "#30143"
+msgid "TorBox Status"
+msgstr ""
+
+msgctxt "#30144"
+msgid "Authorize TorBox..."
+msgstr ""
+
+msgctxt "#30145"
+msgid "Refresh TorBox Token"
 msgstr ""
 
 msgctxt "#30190"

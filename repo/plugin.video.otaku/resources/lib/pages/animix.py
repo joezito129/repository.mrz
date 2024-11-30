@@ -13,7 +13,7 @@ from resources.lib.ui.BrowserBase import BrowserBase
 class Sources(BrowserBase):
     _BASE_URL = 'https://animixplay.fun/'
 
-    def get_sources(self, mal_id, episode, get_backup=None):
+    def get_sources(self, mal_id, episode):
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta['name']

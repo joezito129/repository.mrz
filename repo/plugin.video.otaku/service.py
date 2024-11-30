@@ -8,8 +8,8 @@ from resources.lib.ui import control, database_sync
 
 def refresh_apis() -> None:
     control.log("### Refreshing API's")
-    rd_token = control.getSetting('rd.auth')
-    dl_token = control.getSetting('dl.auth')
+    rd_token = control.getSetting('rd.token')
+    dl_token = control.getSetting('dl.token')
 
     kitsu_token = control.getSetting('kitsu.token')
     mal_token = control.getSetting('mal.token')

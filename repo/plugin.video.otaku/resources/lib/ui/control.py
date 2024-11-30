@@ -66,20 +66,12 @@ def log(msg: str, level: str = "info") -> None:
     xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
 
 
-def real_debrid_enabled() -> bool:
-    return True if getSetting('rd.auth') != '' and getBool('rd.enabled') else False
-
-
-def debrid_link_enabled() -> bool:
-    return True if getSetting('dl.auth') != '' and getBool('dl.enabled') else False
-
-
-def all_debrid_enabled() -> bool:
-    return True if getSetting('alldebrid.apikey') != '' and getBool('alldebrid.enabled') else False
-
-
-def premiumize_enabled() -> bool:
-    return True if getSetting('premiumize.token') != '' and getBool('premiumize.enabled') else False
+def enabled_debrid() -> dict[str: bool]:
+    debrids = ['rd', 'dl', 'alldebrid', 'premiumize', 'torbox']
+    enabled_debrids = {}
+    for debrid in debrids:
+        enabled_debrids[debrid] = getSetting(f'{debrid}.token') != '' and getBool(f'{debrid}.enabled')
+    return enabled_debrids
 
 
 def myanimelist_enabled() -> bool:
@@ -220,7 +212,7 @@ def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
     return xbmcgui.Dialog().browse(type_, heading, shares, mask)
 
 
-def set_videotags(li, info: dict) -> None:
+def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     vinfo = li.getVideoInfoTag()
     if title := info.get('title'):
         vinfo.setTitle(title)

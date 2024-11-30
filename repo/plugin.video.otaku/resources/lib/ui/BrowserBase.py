@@ -1,12 +1,57 @@
+import re
+
+from resources.lib.ui import control, utils
+
+
 class BrowserBase:
     _BASE_URL = None
 
     @staticmethod
-    def _clean_title(text):
+    def handle_paging(hasnextpage: bool, base_url: str, page: int) -> list:
+        if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
+            return []
+        next_page = page + 1
+        name = "Next Page (%d)" % next_page
+        return [utils.allocate_item(name, base_url % next_page, True, False, 'next.png', {'plot': name}, 'next.png')]
+
+    @staticmethod
+    def open_completed() -> dict:
+        import json
+        try:
+            with open(control.completed_json) as file:
+                completed = json.load(file)
+        except FileNotFoundError:
+            completed = {}
+        return completed
+
+    @staticmethod
+    def duration_to_seconds(duration_str: str) -> int:
+        # Regular expressions to match hours, minutes, and seconds
+        hours_pattern = re.compile(r'(\d+)\s*hr')
+        minutes_pattern = re.compile(r'(\d+)\s*min')
+        seconds_pattern = re.compile(r'(\d+)\s*sec')
+
+        # Extract hours, minutes, and seconds
+        hours_match = hours_pattern.search(duration_str)
+        minutes_match = minutes_pattern.search(duration_str)
+        seconds_match = seconds_pattern.search(duration_str)
+
+        # Convert to integers, default to 0 if not found
+        hours = int(hours_match.group(1)) if hours_match else 0
+        minutes = int(minutes_match.group(1)) if minutes_match else 0
+        seconds = int(seconds_match.group(1)) if seconds_match else 0
+
+        # Calculate total duration in seconds
+        total_seconds = hours * 3600 + minutes * 60 + seconds
+
+        return total_seconds
+
+    @staticmethod
+    def _clean_title(text: str) -> str:
         return text.replace(u'×', ' x ')
 
     @staticmethod
-    def _sphinx_clean(text):
+    def _sphinx_clean(text: str) -> str:
         text = text.replace('+', r'\+')
         text = text.replace('-', r'\-')
         text = text.replace('!', r'\!')
@@ -19,7 +64,7 @@ class BrowserBase:
         return text
 
     @staticmethod
-    def embeds():
+    def embeds() -> list[str]:
         return [
             'doodstream', 'filelions', 'filemoon', 'hd-2', 'iga', 'kwik',
             'megaf', 'moonf', 'mp4upload', 'mp4u', 'mycloud', 'noads', 'noadsalt',

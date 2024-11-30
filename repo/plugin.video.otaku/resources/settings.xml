@@ -696,7 +696,7 @@
                         <dependency type="visible" setting="rd.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="rd.auth" type="string" label="" help="">
+                <setting id="rd.token" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -802,7 +802,7 @@
                         <dependency type="visible" setting="alldebrid.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="alldebrid.apikey" type="string" label="" help="">
+                <setting id="alldebrid.token" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -998,6 +998,104 @@
                     <control type="toggle"/>
                     <dependencies>
                         <dependency type="visible" setting="premiumize.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+
+            <!-- TorBox -->
+            <group id="5" label="30140" help="">
+                <setting id="torbox.enabled" type="boolean" label="30141" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="torbox.username" type="string" label="30142" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="torbox.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="torbox.token" type="string" label="" help="">
+                    <level>4</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="torbox.expiry" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>0</default>
+                    <control type="edit" format="integer"/>
+                </setting>
+                <setting id="torbox.refresh" type="string" label="" help="">
+                    <level>4</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="torbox.secret" type="string" label="" help="">
+                    <level>4</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="torbox.client_id" type="string" label="" help="">
+                    <level>4</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="torbox.auth.status" type="string" label="30143" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="torbox.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="torbox.auth_start" type="action" label="30144" help="">
+                    <level>0</level>
+                    <data>RunPlugin(plugin://plugin.video.otaku/auth/torbox)</data>
+                    <control type="button" format="action">
+                        <close>true</close>
+                    </control>
+                    <dependencies>
+                        <dependency type="visible" setting="torbox.enabled">true</dependency>
+                    </dependencies>
+                </setting>
+<!--                <setting id="torbox.refresh.token" type="action" label="30145" help="">-->
+<!--                    <level>0</level>-->
+<!--                    <data>RunPlugin(plugin://plugin.video.otaku/refresh/torbox)</data>-->
+<!--                    <control type="button" format="action">-->
+<!--                        <close>true</close>-->
+<!--                    </control>-->
+<!--                    <dependencies>-->
+<!--                        <dependency type="visible" setting="torbox.enabled">true</dependency>-->
+<!--                    </dependencies>-->
+<!--                </setting>-->
+                <setting id="torbox.cloudInspection" type="boolean" label="30190" help="">
+                    <level>0</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="torbox.enabled">true</dependency>
                     </dependencies>
                 </setting>
             </group>

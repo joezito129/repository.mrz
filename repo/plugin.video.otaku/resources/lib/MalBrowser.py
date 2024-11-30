@@ -1,41 +1,22 @@
 import time
 import requests
-import json
 import random
 import pickle
-import re
 
 from functools import partial
 from resources.lib.ui import database, control, utils, get_meta
+from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.ui.divide_flavors import div_flavor
 
 
-class MalBrowser:
-    _URL = "https://api.jikan.moe/v4"
+class MalBrowser(BrowserBase):
+    _BASE_URL = "https://api.jikan.moe/v4"
 
     def __init__(self):
         self._TITLE_LANG = ['title', 'title_english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.mal')
-        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][
-            control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
+        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
         self.adult = 'true' if control.getSetting('search.adult') == "false" else 'false'
-
-    @staticmethod
-    def open_completed():
-        try:
-            with open(control.completed_json) as file:
-                completed = json.load(file)
-        except FileNotFoundError:
-            completed = {}
-        return completed
-
-    @staticmethod
-    def handle_paging(hasnextpage, base_url, page):
-        if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
-            return []
-        next_page = page + 1
-        name = "Next Page (%d)" % next_page
-        return [utils.allocate_item(name, base_url % next_page, True, False, 'next.png', {'plot': name}, 'next.png')]
 
     def process_mal_view(self, res, base_plugin_url, page):
         get_meta.collect_meta(res['data'])
@@ -66,7 +47,7 @@ class MalBrowser:
         return season, year
 
     def get_anime(self, mal_id):
-        res = database.get_(self.get_base_res, 24, f"{self._URL}/anime/{mal_id}")
+        res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")
         return self.process_res(res['data'])
 
     def get_recommendations(self, mal_id, page):
@@ -75,20 +56,20 @@ class MalBrowser:
             'limit': self.perpage,
             'sfw': self.adult
         }
-        recommendations = database.get_(self.get_base_res, 24, f'{self._URL}/anime/{mal_id}/recommendations', params)
+        recommendations = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime/{mal_id}/recommendations', params)
         mapfunc = partial(self.recommendation_relation_view, completed=self.open_completed())
         all_results = list(map(mapfunc, recommendations['data']))
         return all_results
 
     def get_relations(self, mal_id):
-        relations = database.get_(self.get_base_res, 24, f'{self._URL}/anime/{mal_id}/relations')
+        relations = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime/{mal_id}/relations')
 
         relation_res = []
         count = 0
         for relation in relations['data']:
             for entry in relation['entry']:
                 if entry['type'] == 'anime':
-                    res_data = database.get_(self.get_base_res, 24, f"{self._URL}/anime/{mal_id}")['data']
+                    res_data = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")['data']
                     res_data['relation'] = relation['relation']
                     res_data['relation'] = relation['relation']
                     relation_res.append(res_data)
@@ -110,7 +91,7 @@ class MalBrowser:
         if self.format_in_type:
             params['type'] = self.format_in_type
 
-        search = database.get_(self.get_base_res, 24, f"{self._URL}/anime", params)
+        search = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime", params)
         return self.process_mal_view(search, f"search/{query}?page=%d", page)
 
     def get_airing_anime(self, page):
@@ -122,7 +103,7 @@ class MalBrowser:
         if self.format_in_type:
             params['filter'] = self.format_in_type
 
-        airing = database.get_(self.get_base_res, 24, f"{self._URL}/seasons/now", params)
+        airing = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/now", params)
         return self.process_mal_view(airing, "airing_anime?page=%d", page)
 
     def get_upcoming_next_season(self, page):
@@ -135,7 +116,7 @@ class MalBrowser:
         if self.format_in_type:
             params['filter'] = self.format_in_type
 
-        upcoming = database.get_(self.get_base_res, 24, f"{self._URL}/seasons/{year}/{season}", params)
+        upcoming = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/{year}/{season}", params)
         return self.process_mal_view(upcoming, "upcoming_next_season?page=%d", page)
 
     def get_top_100_anime(self, page):
@@ -147,7 +128,7 @@ class MalBrowser:
         if self.format_in_type:
             params['type'] = self.format_in_type
 
-        top_100_anime = database.get_(self.get_base_res, 24, f"{self._URL}/top/anime", params)
+        top_100_anime = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/top/anime", params)
         return self.process_mal_view(top_100_anime, "top_100_anime?page=%d", page)
 
     @staticmethod
@@ -193,7 +174,7 @@ class MalBrowser:
         return utils.parse_view(base, True, False, dub)
 
     def get_genres(self):
-        res = database.get_(self.get_base_res, 24, f'{self._URL}/genres/anime')
+        res = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/genres/anime')
 
         genre = res['data']
         genres_list = []
@@ -225,7 +206,7 @@ class MalBrowser:
         if self.format_in_type:
             params['type'] = self.format_in_type
 
-        genres = database.get_(self.get_base_res, 24, f'{self._URL}/anime', params)
+        genres = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime', params)
         return self.process_mal_view(genres, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
     @div_flavor
@@ -337,25 +318,3 @@ class MalBrowser:
                 kodi_meta['rating']['votes'] = res['scored_by']
 
         database.update_show(mal_id, pickle.dumps(kodi_meta))
-
-    @staticmethod
-    def duration_to_seconds(duration_str):
-        # Regular expressions to match hours, minutes, and seconds
-        hours_pattern = re.compile(r'(\d+)\s*hr')
-        minutes_pattern = re.compile(r'(\d+)\s*min')
-        seconds_pattern = re.compile(r'(\d+)\s*sec')
-
-        # Extract hours, minutes, and seconds
-        hours_match = hours_pattern.search(duration_str)
-        minutes_match = minutes_pattern.search(duration_str)
-        seconds_match = seconds_pattern.search(duration_str)
-
-        # Convert to integers, default to 0 if not found
-        hours = int(hours_match.group(1)) if hours_match else 0
-        minutes = int(minutes_match.group(1)) if minutes_match else 0
-        seconds = int(seconds_match.group(1)) if seconds_match else 0
-
-        # Calculate total duration in seconds
-        total_seconds = hours * 3600 + minutes * 60 + seconds
-
-        return total_seconds

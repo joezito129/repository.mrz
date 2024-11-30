@@ -10,10 +10,19 @@ from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.indexers import malsync
 
 
+def get_backup(mal_id, source) -> dict:
+    params = {
+        "type": "myanimelist",
+        "id": mal_id
+    }
+    r = requests.get("https://arm2.vercel.app/api/kaito-b", params=params)
+    return r.json().get('Pages', {}).get(source, {}) if r.ok else {}
+
+
 class Sources(BrowserBase):
     _BASE_URL = 'https://gogoanime3.cc/'
 
-    def get_sources(self, mal_id, episode, get_backup):
+    def get_sources(self, mal_id, episode):
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = kodi_meta.get('name')

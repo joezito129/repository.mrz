@@ -8,16 +8,30 @@ from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
 
 
-def getSourcesHelper(actionargs):
-    sources_window = Sources('get_sources.xml', control.ADDON_PATH, actionargs=actionargs)
+def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
+    import pickle
+    from resources.lib.OtakuBrowser import BROWSER
+    if not (show := database.get_show(mal_id)):
+        show = BROWSER.get_anime(mal_id)
+    kodi_meta = pickle.loads(show['kodi_meta'])
+    actionArgs = {
+        'query': kodi_meta['query'],
+        'mal_id': mal_id,
+        'episode': episode,
+        'status': kodi_meta['status'],
+        'media_type': media_type,
+        'rescrape': rescrape,
+        'source_select': source_select,
+        'silent': silent
+    }
+    sources_window = Sources('get_sources.xml', control.ADDON_PATH, actionargs=actionArgs)
     sources = sources_window.doModal()
-    del sources_window
     return sources
 
 
 class Sources(GetSources):
     def __init__(self, xml_file, location, actionargs=None):
-        super(Sources, self).__init__(xml_file, location, actionargs)
+        super().__init__(xml_file, location, actionargs)
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
         self.embed_func = [gogoanime, hianime, animepahe, animix, aniwave]
@@ -47,8 +61,6 @@ class Sources(GetSources):
         media_type = args['media_type']
         rescrape = args['rescrape']
         # source_select = args['source_select']
-        get_backup = args['get_backup']
-
         self.setProperty('process_started', 'true')
 
         # set skipintro times to -1 before scraping
@@ -63,7 +75,7 @@ class Sources(GetSources):
         control.setInt('aniwave.skipoutro.start', -1)
         control.setInt('aniwave.skipoutro.end', -1)
 
-        if control.real_debrid_enabled() or control.all_debrid_enabled() or control.debrid_link_enabled() or control.premiumize_enabled():
+        if any(control.enabled_debrid().values()):
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
             t.start()
             self.threads.append(t)
@@ -76,13 +88,15 @@ class Sources(GetSources):
                 else:
                     self.remainingProviders.remove(torrent_provider)
         else:
+            self.remainingProviders.remove('Cloud Inspection')
             for torrent_provider in self.torrentProviders:
                 self.remainingProviders.remove(torrent_provider)
+
 
 #       ### embeds ###
         for inx, embed_provider in enumerate(self.embedProviders):
             if control.getBool(f'provider.{embed_provider}'):
-                t = threading.Thread(target=self.embed_worker, args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape, get_backup))
+                t = threading.Thread(target=self.embed_worker, args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape))
                 t.start()
                 self.threads.append(t)
             else:
@@ -137,11 +151,13 @@ class Sources(GetSources):
         self.remainingProviders.remove(torrent_name)
 
 #   ### embeds ###
-    def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape, get_backup):
+    def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape):
         try:
-            embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, get_backup, key=embed_name)
+            embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, key=embed_name)
         except Exception as e:
             control.log(repr(e), 'error')
+            embed_sources = []
+        if not isinstance(embed_sources, list):
             embed_sources = []
         self.embedSources += embed_sources
         if embed_name in ['hianime', 'aniwave']:
@@ -160,12 +176,14 @@ class Sources(GetSources):
 
     def user_cloud_inspection(self, query, mal_id, episode):
         debrid = {}
-        if control.real_debrid_enabled() and control.getBool('rd.cloudInspection'):
+        if control.enabled_debrid()['rd'] and control.getBool('rd.cloudInspection'):
             debrid['real_debrid'] = True
-        if control.premiumize_enabled() and control.getBool('premiumize.cloudInspection'):
+        if control.enabled_debrid()['premiumize'] and control.getBool('premiumize.cloudInspection'):
             debrid['premiumize'] = True
-        if control.all_debrid_enabled() and control.getBool('alldebrid.cloudInspection'):
+        if control.enabled_debrid()['alldebrid'] and control.getBool('alldebrid.cloudInspection'):
             debrid['all_debrid'] = True
+        if control.enabled_debrid()['torbox'] and control.getBool('torbox.cloudInspection'):
+            debrid['torbox'] = True
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 

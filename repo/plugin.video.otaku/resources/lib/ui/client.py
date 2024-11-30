@@ -121,9 +121,7 @@ def request(
         else:
             _headers['User-Agent'] = randomagent()
 
-        if 'Referer' in _headers:
-            pass
-        elif referer:
+        if 'Referer' not in _headers:
             _headers['Referer'] = referer
 
         if 'Accept-Language' not in _headers:
@@ -132,9 +130,7 @@ def request(
         if 'Accept' not in _headers:
             _headers['Accept'] = '*/*'
 
-        if 'X-Requested-With' in _headers:
-            pass
-        elif XHR:
+        if 'X-Requested-With' not in _headers and XHR:
             _headers['X-Requested-With'] = 'XMLHttpRequest'
 
         if 'Cookie' in _headers:
@@ -383,8 +379,7 @@ def request(
 
         if output == 'extended':
             try:
-                response_headers = dict(
-                    [(item[0].title(), item[1]) for item in list(response.info().items())])
+                response_headers = dict([(item[0].title(), item[1]) for item in list(response.info().items())])
             except BaseException:
                 response_headers = response.headers
             response_url = response.url

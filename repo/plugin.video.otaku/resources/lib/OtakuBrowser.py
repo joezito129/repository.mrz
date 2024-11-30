@@ -1,5 +1,4 @@
 import pickle
-import requests
 
 from resources.lib.ui import control, database, utils
 
@@ -36,15 +35,6 @@ def get_episodeList(mal_id, pass_idx):
     return items
 
 
-def get_backup(mal_id, source) -> dict:
-    params = {
-        "type": "myanimelist",
-        "id": mal_id
-    }
-    r = requests.get("https://arm2.vercel.app/api/kaito-b", params=params)
-    return r.json().get('Pages', {}).get(source, {}) if r.ok else {}
-
-
 def get_anime_init(mal_id) -> tuple[list, str]:
     show_meta = database.get_show_meta(mal_id)
     if not show_meta:
@@ -77,23 +67,3 @@ def get_anime_init(mal_id) -> tuple[list, str]:
         if not data[0]:
             data = [], 'episodes'
     return data
-
-
-def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
-    from resources.lib import pages
-    if not (show := database.get_show(mal_id)):
-        show = BROWSER.get_anime(mal_id)
-    kodi_meta = pickle.loads(show['kodi_meta'])
-    actionArgs = {
-        'query': kodi_meta['query'],
-        'mal_id': mal_id,
-        'episode': episode,
-        'status': kodi_meta['status'],
-        'media_type': media_type,
-        'rescrape': rescrape,
-        'get_backup': get_backup,
-        'source_select': source_select,
-        'silent': silent
-    }
-    sources = pages.getSourcesHelper(actionArgs)
-    return sources

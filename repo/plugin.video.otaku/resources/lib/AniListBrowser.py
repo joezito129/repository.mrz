@@ -1,31 +1,21 @@
-import json
 import pickle
 import random
 import requests
 
 from functools import partial
 from resources.lib.ui import database, get_meta, utils, control
+from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.ui.divide_flavors import div_flavor
 
 
-class AniListBrowser:
-    _URL = "https://graphql.anilist.co"
+class AniListBrowser(BrowserBase):
+    _BASE_URL = "https://graphql.anilist.co"
 
     def __init__(self):
         self._TITLE_LANG = ["romaji", 'english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.anilist')
-        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][
-            control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
-        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool(
-            'contentorigin.bool') else ''
-
-    @staticmethod
-    def handle_paging(hasnextpage, base_url, page):
-        if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
-            return []
-        next_page = page + 1
-        name = "Next Page (%d)" % next_page
-        return [utils.allocate_item(name, base_url % next_page, True, False, 'next.png', {'plot': name}, 'next.png')]
+        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
+        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else ''
 
     @staticmethod
     def get_season_year(period='current'):
@@ -226,7 +216,7 @@ class AniListBrowser:
             }
         }
         '''
-        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -312,7 +302,7 @@ class AniListBrowser:
         }
         '''
 
-        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -394,7 +384,7 @@ class AniListBrowser:
         }
         '''
 
-        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         json_res = results['data']['Media']['recommendations']
         return json_res
@@ -469,7 +459,7 @@ class AniListBrowser:
         }
         '''
 
-        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         json_res = results['data']['Media']['relations']
         return json_res
@@ -538,7 +528,7 @@ class AniListBrowser:
         }
         '''
 
-        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         if "errors" in results.keys():
             return
@@ -736,7 +726,7 @@ class AniListBrowser:
         }
         '''
 
-        r = requests.post(self._URL, json={'query': query})
+        r = requests.post(self._BASE_URL, json={'query': query})
         results = r.json()
         if not results:
             # genres_list = ['Action', 'Adventure', 'Comedy', 'Drama', 'Ecchi', 'Fantasy', 'Hentai', "Horror", 'Mahou Shoujo', 'Mecha', 'Music', 'Mystery', 'Psychological', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller']
@@ -861,7 +851,7 @@ class AniListBrowser:
         return self.process_genre_view(query, variables, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
     def process_genre_view(self, query, variables, base_plugin_url, page):
-        r = requests.post(self._URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
         hasNextPage = results['data']['Page']['pageInfo']['hasNextPage']
@@ -870,12 +860,3 @@ class AniListBrowser:
         all_results = list(map(mapfunc, anime_res))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
-
-    @staticmethod
-    def open_completed():
-        try:
-            with open(control.completed_json) as file:
-                completed = json.load(file)
-        except FileNotFoundError:
-            completed = {}
-        return completed

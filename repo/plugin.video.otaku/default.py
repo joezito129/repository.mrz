@@ -138,6 +138,7 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict):
 
 @Route('play/*')
 def PLAY(payload: str, params: dict):
+    from resources.lib import pages
     mal_id, episode = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
@@ -150,7 +151,7 @@ def PLAY(payload: str, params: dict):
         elif context == 1:
             resume_time = None
 
-    sources = OtakuBrowser.get_sources(mal_id, episode, 'show', rescrape, source_select)
+    sources = pages.get_sources(mal_id, episode, 'show', rescrape, source_select)
     _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
@@ -163,6 +164,7 @@ def PLAY(payload: str, params: dict):
 
 @Route('play_movie/*')
 def PLAY_MOVIE(payload: str, params: dict):
+    from resources.lib import pages
     mal_id, eps_watched = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
@@ -175,7 +177,7 @@ def PLAY_MOVIE(payload: str, params: dict):
         elif context == 1:
             resume_time = None
 
-    sources = OtakuBrowser.get_sources(mal_id, 1, 'movie', rescrape, source_select)
+    sources = pages.get_sources(mal_id, 1, 'movie', rescrape, source_select)
     _mock_args = {'mal_id': mal_id, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     control.playList.clear()
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
@@ -226,6 +228,9 @@ def AUTH(payload: str, params: dict):
     elif payload == 'debridlink':
         from resources.lib.debrid.debrid_link import DebridLink
         DebridLink().auth()
+    elif payload == 'torbox':
+        from resources.lib.debrid.torbox import Torbox
+        Torbox().auth()
 
 
 @Route('refresh/*')
@@ -236,6 +241,9 @@ def REFRESH(payload: str, params: dict):
     elif payload == 'debridlink':
         from resources.lib.debrid.debrid_link import DebridLink
         DebridLink().refreshToken()
+    elif payload == 'torbox':
+        from resources.lib.debrid.torbox import Torbox
+        Torbox().refreshToken()
 
 
 @Route('fanart_select/*')
@@ -424,6 +432,8 @@ if __name__ == "__main__":
         router_process(control.get_plugin_url(), control.get_plugin_params())
     except Exception as e:
         control.log(repr(e), level='error')
+
+    # router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():

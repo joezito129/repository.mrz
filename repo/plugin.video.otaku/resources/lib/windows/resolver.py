@@ -6,7 +6,7 @@ import xbmc
 from urllib import parse
 from resources.lib import OtakuBrowser
 from resources.lib.WatchlistIntegration import watchlist_update_episode
-from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid
+from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid, torbox
 from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
 
@@ -46,7 +46,8 @@ class Resolver(BaseWindow):
             'all_debrid': all_debrid.AllDebrid,
             'debrid_link': debrid_link.DebridLink,
             'premiumize': premiumize.Premiumize,
-            'real_debrid': real_debrid.RealDebrid
+            'real_debrid': real_debrid.RealDebrid,
+            'torbox': torbox.Torbox
         }
         self.source_select = source_select
         self.pack_select = False
@@ -138,7 +139,8 @@ class Resolver(BaseWindow):
             if self.source_select_close:
                 self.source_select_close()
             linkInfo = self.return_data['linkinfo']
-            item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
+
+            item = xbmcgui.ListItem(path=linkInfo['url'])
             if self.return_data.get('sub'):
                 from resources.lib.ui import embed_extractor
                 embed_extractor.del_subs()
@@ -166,11 +168,13 @@ class Resolver(BaseWindow):
             monitor = Monitor()
             for _ in range(30):
                 monitor.waitForAbort(.5)
-                if monitor.abortRequested() or monitor.playbackerror or monitor.playing:
+                if monitor.abortRequested() or monitor.playing:
+                    break
+                if monitor.playbackerror:
+                    xbmcplugin.setResolvedUrl(control.HANDLE, False, item)
                     break
             self.close()
-            player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList,
-                                                   self.episode, self.resume_time)
+            player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
         else:
             self.close()
 
@@ -178,21 +182,13 @@ class Resolver(BaseWindow):
         api = api()
         hash_ = source['hash']
         magnet = 'magnet:?xt=urn:btih:%s' % hash_
+        stream_link = {}
         if source['type'] == 'torrent':
             stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select)
         elif source['type'] == 'cloud' or source['type'] == 'hoster':
-            if source['torrent_files']:
-                best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'],
-                                                         self.pack_select)
-                if not best_match or not best_match['path']:
-                    return
-                for f_index, torrent_file in enumerate(source['torrent_files']):
-                    if torrent_file['path'] == best_match['path']:
-                        hash_ = source['torrent_info']['links'][f_index]
-                        break
-            stream_link = api.resolve_hoster(hash_)
-        else:
-            stream_link = None
+            hash_ = api.resolve_cloud()
+            if hash_:
+                stream_link = api.resolve_hoster(hash_)
         return stream_link
 
     @staticmethod
@@ -293,6 +289,8 @@ class Monitor(xbmc.Monitor):
             self.playing = True
         elif method == 'Player.OnStop':
             self.playbackerror = True
+        else:
+            control.log(f'{sender} | {method} | {data}')
 
 
 @HookMimetype('application/dash+xml')
