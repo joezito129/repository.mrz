@@ -33,8 +33,20 @@ def add_last_watched(items: list[tuple]) -> list[tuple]:
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
-        last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta.get('title_userPreferred'))
-        items.append((last_watched, f'animes/{mal_id}/', kodi_meta['poster']))
+        last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta['title_userPreferred'])
+        info = {
+            'UniqueIDs': {'mal_id': mal_id},
+            'title': kodi_meta['title_userPreferred'],
+            'plot': kodi_meta['plot'],
+            # 'mpaa': kodi_meta[''],
+            # 'duration': self.duration_to_seconds(res.get('duration')),
+            # 'genre': [x['name'] for x in res.get('genres', [])],
+            # 'studio': [x['name'] for x in res.get('studios', [])],
+            # 'status': res.get('status'),
+            'mediatype': 'tvshow',
+            'rating': kodi_meta['rating']
+        }
+        items.append((last_watched, f'animes/{mal_id}/', kodi_meta['poster'], info))
     except TypeError:
         pass
     return items
@@ -97,8 +109,7 @@ def GENRES_PAGES(payload: str, params: dict):
 def SEARCH_HISTORY(payload: str, params: dict):
     history = database.getSearchHistory('show')
     if control.getInt('searchhistory') == 0:
-        draw_cm = [('Remove from Item', 'remove_search_item'), ("Edit Search Item...", "edit_search_item")]
-        control.draw_items(utils.search_history(history), 'addons', draw_cm)
+        control.draw_items(utils.search_history(history), 'addons')
     else:
         SEARCH(payload, params)
 
@@ -255,7 +266,7 @@ def FANART_SELECT(payload: str, params: dict):
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random (Defualt)"]
     fanart += ["None", ""]
-    control.draw_items([utils.allocate_item(f, f'fanart/{mal_id}/{i}', False, False, f, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
+    control.draw_items([utils.allocate_item(f, f'fanart/{mal_id}/{i}', False, False, [], f, {}, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
 
 
 @Route('fanart/*')
@@ -278,22 +289,23 @@ def FANART(payload: str, params: dict):
 @Route('')
 def LIST_MENU(payload: str, params: dict):
     MENU_ITEMS = [
-        (control.lang(30001), "airing_anime", 'airing_anime.png'),
-        # ("Airing Calendar", 'airing_calendar', ''),
-        (control.lang(30002), "upcoming_next_season", 'upcoming.png'),
-        (control.lang(30003), "top_100_anime", 'top_100_anime.png'),
-        (control.lang(30004), "genres//", 'genres_&_tags.png'),
-        (control.lang(30005), "search_history", 'search.png'),
-        (control.lang(30006), "tools", 'tools.png')
+        (control.lang(30001), "airing_anime", 'airing_anime.png', {}),
+        # ("Airing Calendar", 'airing_calendar', '', {}),
+        (control.lang(30002), "upcoming_next_season", 'upcoming.png', {}),
+        (control.lang(30003), "top_100_anime", 'top_100_anime.png', {}),
+        (control.lang(30004), "genres//", 'genres_&_tags.png', {}),
+        (control.lang(30005), "search_history", 'search.png', {}),
+        (control.lang(30006), "tools", 'tools.png', {})
     ]
     NEW_MENU_ITEMS = []
     NEW_MENU_ITEMS = add_watchlist(NEW_MENU_ITEMS)
+
     if control.getBool('menu.lastwatched'):
         NEW_MENU_ITEMS = add_last_watched(NEW_MENU_ITEMS)
     for i in MENU_ITEMS:
         if control.getBool(i[1]):
             NEW_MENU_ITEMS.append(i)
-    control.draw_items([utils.allocate_item(name, url, True, False, image) for name, url, image in NEW_MENU_ITEMS], 'addons')
+    control.draw_items([utils.allocate_item(name, url, True, False, [], image, info) for name, url, image, info in NEW_MENU_ITEMS], 'addons')
 
 
 @Route('tools')
@@ -309,7 +321,7 @@ def TOOLS_MENU(payload: str, params: dict):
         (control.lang(30017), 'sort_select', {'plot': "Choose Sorting..."}, ''),
         (control.lang(30018), 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
     ]
-    control.draw_items([utils.allocate_item(name, url, False, False, image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
+    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
 
 
 # ### Maintenance ###
@@ -372,6 +384,12 @@ def COMPLETED_SYNC(payload: str, params: dict):
 def SORT_SELECT(payload: str, params: dict):
     from resources.lib.windows.sort_select import SortSelect
     SortSelect(*('sort_select.xml', control.ADDON_PATH)).doModal()
+
+
+@Route('install_packages')
+def INSTALL_PACKAGES(payload: str, params: dict):
+    from resources.lib.pages import custom_providers
+    custom_providers.main()
 
 
 @Route('download_manager')

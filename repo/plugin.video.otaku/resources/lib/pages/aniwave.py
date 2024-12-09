@@ -54,6 +54,7 @@ class Sources(BrowserBase):
         sources = []
         headers = {'Referer': self._BASE_URL}
         r = requests.get(slug, headers=headers).text
+        # control.log(f'1: {r}')
         sid = re.search(r'id="watch-main.+?data-id="([^"]+)', r)
         if not sid:
             return sources
@@ -63,6 +64,7 @@ class Sources(BrowserBase):
         params = {'vrf': vrf}
         r = requests.get(f'{self._BASE_URL}ajax/episode/list/{sid}', headers=headers, params=params)
         res = r.json().get('result')
+
         elink = SoupStrainer('div', {'class': re.compile('^episodes')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
         items = ediv.find_all('a')

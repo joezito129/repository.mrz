@@ -290,20 +290,18 @@ def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: 
     return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
 
 
-def bulk_draw_items(video_data: list, draw_cm: list) -> bool:
-    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, True, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
+def bulk_draw_items(video_data: list) -> bool:
+    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], True, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
     return xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
-def draw_items(video_data: list, content_type: str = '', draw_cm: list = None) -> None:
-    if not draw_cm:
-        draw_cm = []
+def draw_items(video_data: list, content_type: str = '') -> None:
     if len(video_data) > 99:
-        bulk_draw_items(video_data, draw_cm)
+        bulk_draw_items(video_data)
     else:
         for vid in video_data:
             if vid:
-                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, False, vid['isfolder'], vid['isplayable'])
+                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], False, vid['isfolder'], vid['isplayable'])
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
     if content_type == 'episodes':

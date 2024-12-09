@@ -24,7 +24,7 @@ def get_episodeList(mal_id, pass_idx):
             'premiered': str(kodi_meta['start_date']),
             'year': int(str(kodi_meta['start_date'])[:4])
         }
-        items = [utils.allocate_item(title, 'null', False, True, info=info, poster=kodi_meta['poster'])]
+        items = [utils.allocate_item(title, 'null', False, True, [], info=info, poster=kodi_meta['poster'])]
 
     else:
         episodes = database.get_episode_list(mal_id)

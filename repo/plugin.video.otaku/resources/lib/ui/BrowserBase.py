@@ -12,7 +12,7 @@ class BrowserBase:
             return []
         next_page = page + 1
         name = "Next Page (%d)" % next_page
-        return [utils.allocate_item(name, base_url % next_page, True, False, 'next.png', {'plot': name}, 'next.png')]
+        return [utils.allocate_item(name, base_url % next_page, True, False, [], 'next.png', {'plot': name}, 'next.png')]
 
     @staticmethod
     def open_completed() -> dict:

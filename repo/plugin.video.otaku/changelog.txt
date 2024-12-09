@@ -1,3 +1,7 @@
+Changelog v5.1.6 (2024-12-09):
+- Added Torbox (unfinished)
+- Context menu for last watched
+
 Changelog v5.1.6 (2024-11-26):
 - Updated Types
 - Some bug fixes

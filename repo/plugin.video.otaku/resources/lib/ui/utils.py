@@ -1,9 +1,10 @@
 import os
 
+from functools import partial
 from resources.lib.ui import control
 
 
-def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, image: str = '', info: dict = None,
+def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: list, image: str, info: dict,
                   fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None) -> dict:
     if image and '/' not in image:
         image = os.path.join(control.ICONS_PATH, image)
@@ -17,8 +18,9 @@ def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, image: 
         'name': name,
         'url': url,
         'info': info,
+        'cm': cm,
         'image': {
-                'poster': poster,
+                'poster': poster or image,
                 'icon': image,
                 'thumb': image,
                 'fanart': fanart,
@@ -30,14 +32,16 @@ def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, image: 
     }
 
 
-def parse_history_view(res: str) -> dict:
-    return allocate_item(res, f'search/{res}', True, False)
+def parse_history_view(res: str, cm: list) -> dict:
+    return allocate_item(res, f'search/{res}', True, False, cm, '', {})
 
 
 def search_history(search_array):
-    result = [allocate_item("New Search", "search/", True, False, 'new_search.png')]
-    result += list(map(parse_history_view, search_array))
-    result.append(allocate_item("Clear Search History...", "clear_search_history", False, False, 'clear_search_history.png'))
+    cm = [('Remove from Item', 'remove_search_item'), ("Edit Search Item...", "edit_search_item")]
+    result = [allocate_item("New Search", "search/", True, False, [], 'new_search.png', {})]
+    mapfun = partial(parse_history_view, cm=cm)
+    result += list(map(mapfun, search_array))
+    result.append(allocate_item("Clear Search History...", "clear_search_history", False, False, [], 'clear_search_history.png', {}))
     return result
 
 
@@ -45,7 +49,7 @@ def parse_view(base: dict, isfolder: bool, isplayable: bool, dub: bool = False) 
     if control.settingids.showdub and dub:
         base['name'] += ' [COLOR blue](Dub)[/COLOR]'
         base['info']['title'] = base['name']
-    parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
+    parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, [], base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
     if control.settingids.dubonly and not dub:
         parsed_view = None
     return parsed_view

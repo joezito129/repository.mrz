@@ -72,7 +72,7 @@ class KitsuWLF(WatchlistFlavorBase):
         name = "Next Page (%d)" % next_page
         parsed = parse.urlparse(hasnextpage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
-        return [utils.parse_view({'name': name, 'url': f'{base_url}/{offset}?page={next_page}', 'image': 'next.png', 'info': {'plot': name}, 'fanart': 'next.png'}, True, False)]
+        return [utils.allocate_item(name, f'{base_url}/{offset}?page={next_page}', True, False, [], 'next.png', {'plot': name}, fanart='next.png')]
 
     def __get_sort(self):
         sort_types = ['-progressed_at', '-progress', f"anime.titles.{self.__get_title_lang()}"]
@@ -94,7 +94,7 @@ class KitsuWLF(WatchlistFlavorBase):
             ("On Hold", "on_hold", 'onhold.png'),
             ("Dropped", "dropped", 'dropped.png')
         ]
-        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res in statuses]
+        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, [], res[2], {}) for res in statuses]
 
     @staticmethod
     def action_statuses():

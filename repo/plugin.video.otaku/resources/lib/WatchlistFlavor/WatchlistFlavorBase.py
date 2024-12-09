@@ -25,6 +25,7 @@ class WatchlistFlavorBase:
     def name(cls):
         return cls._NAME
 
+    # todo
     @property
     def image(self):
         return self._IMAGE

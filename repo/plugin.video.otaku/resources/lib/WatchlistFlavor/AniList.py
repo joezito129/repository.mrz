@@ -58,11 +58,11 @@ class AniListWLF(WatchlistFlavorBase):
             ("Completed", "COMPLETED", 'completed.png'),
             ("Dropped", "DROPPED", 'dropped.png')
         ]
-        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, res[2]) for res in statuses]
+        return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, [], res[2], {}) for res in statuses]
 
     def _base_watchlist_view(self, res):
         url = f'watchlist_status_type/{self._NAME}/{res[1]}'
-        return [utils.allocate_item(res[0], url, True, False, f'{res[0].lower()}.png')]
+        return [utils.allocate_item(res[0], url, True, False, [], f'{res[0].lower()}.png', {})]
 
     @staticmethod
     def action_statuses():
