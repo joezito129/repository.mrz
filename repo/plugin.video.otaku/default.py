@@ -447,12 +447,7 @@ def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict):
 
 
 if __name__ == "__main__":
-    try:
-        router_process(control.get_plugin_url(), control.get_plugin_params())
-    except Exception as e:
-        control.log(repr(e), level='error')
-
-    # router_process(control.get_plugin_url(), control.get_plugin_params())
+    router_process(control.get_plugin_url(), control.get_plugin_params())
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():

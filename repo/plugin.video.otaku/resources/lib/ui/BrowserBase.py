@@ -64,7 +64,7 @@ class BrowserBase:
         return text
 
     @staticmethod
-    def embeds() -> list[str]:
+    def embeds() -> list:
         return [
             'doodstream', 'filelions', 'filemoon', 'hd-2', 'iga', 'kwik',
             'megaf', 'moonf', 'mp4upload', 'mp4u', 'mycloud', 'noads', 'noadsalt',
