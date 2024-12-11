@@ -55,7 +55,7 @@ class DownloadManager(BaseWindow):
             self.abort = True
             manager.clear_complete()
             self.close()
-            DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
+            DownloadManager(*('download_manager.xml', control.ADDON_PATH.as_posix())).doModal()
 
         if controlID == 3101:   # close
             self.abort = True
@@ -122,8 +122,8 @@ class Manager:
         self.status = "Starting"
         self.download_ids = []
         self.download = {}
-        if not xbmcvfs.exists(control.downloads_json):
-            with open(control.downloads_json, 'w') as file:     # type: [str]
+        if not control.downloads_json.exists():
+            with open(control.downloads_json, 'w') as file:
                 json.dump({}, file)
         self.storage_location = control.getSetting('download.location')
 

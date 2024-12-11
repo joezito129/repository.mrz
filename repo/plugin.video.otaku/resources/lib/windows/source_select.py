@@ -111,7 +111,7 @@ class SourceSelect(BaseWindow):
                     self.close()
                     source = [self.sources[self.display_list.getSelectedPosition()]]
                     self.actionArgs['play'] = False
-                    return_data = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
+                    return_data = Resolver(*('resolver.xml', control.ADDON_PATH.as_posix()), actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
                     if isinstance(return_data, dict):
                         Manager().download_file(return_data['link'])
 
@@ -135,6 +135,6 @@ class SourceSelect(BaseWindow):
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
         self.actionArgs['close'] = self.close
-        self.stream_link = Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
+        self.stream_link = Resolver(*('resolver.xml', control.ADDON_PATH.as_posix()), actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
         if isinstance(self.stream_link, dict):
             self.close()

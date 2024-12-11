@@ -1,4 +1,3 @@
-import os
 import json
 
 from resources.lib.windows.base_window import BaseWindow
@@ -42,7 +41,7 @@ default_sort_options = {
     }
 
 try:
-    with open(os.path.join(control.dataPath, 'sort_options.json')) as f:
+    with open(control.dataPath / 'sort_options.json') as f:
         sort_options = json.load(f)
 except FileNotFoundError:
     sort_options = default_sort_options
@@ -124,7 +123,7 @@ class SortSelect(BaseWindow):
         self.setProperty(f"{sort_method}", method)
 
     def save_settings(self):
-        with open(os.path.join(control.dataPath, 'sort_options.json'), 'w') as file:
+        with open(control.dataPath / 'sort_options.json', 'w') as file:
             json.dump(self.sort_options, file)
 
 

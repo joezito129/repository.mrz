@@ -197,10 +197,6 @@ msgctxt "#30314"
 msgid "Get Watchlist Episode Data"
 msgstr ""
 
-msgctxt "#30315"
-msgid "Disable Title Names and Plot"
-msgstr ""
-
 msgctxt "#30316"
 msgid "Show Empty Episode Meta"
 msgstr ""

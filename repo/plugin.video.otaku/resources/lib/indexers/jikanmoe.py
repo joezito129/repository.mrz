@@ -43,8 +43,7 @@ class JikanAPI:
         return res_data
 
     @staticmethod
-    def parse_episode_view(res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data,
-                           filler_data, episodes=None):
+    def parse_episode_view(res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
         episode = res['mal_id']
         url = f"{mal_id}/{episode}"
         title = res.get('title')
@@ -108,12 +107,8 @@ class JikanAPI:
         control.notify("Jikanmoa", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
-    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None,
-                        dub_data=None):
-        update_time = datetime.date.today().isoformat()
-        last_updated = datetime.datetime.fromtimestamp(
-            time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
-        diff = (datetime.datetime.today() - last_updated).days
+    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None, dub_data=None):
+        update_time, diff = indexers.get_diff(episodes[0])
         if diff > int(control.getSetting('interface.check.updates')):
             result = self.get_episode_meta(mal_id)
             season = episodes[0]['season']

@@ -1,3 +1,4 @@
+from __future__ import annotations
 # -*- coding: utf-8 -*-
 """
     Otaku Add-on
@@ -26,10 +27,11 @@ from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlist
 
+
 BROWSER = OtakuBrowser.BROWSER
 
 
-def add_last_watched(items: list[tuple]) -> list[tuple]:
+def add_last_watched(items: list[tuple[str, str, str, dict]]) -> list[tuple[str, str, str, dict]]:
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
@@ -162,14 +164,14 @@ def PLAY(payload: str, params: dict):
         elif context == 1:
             resume_time = None
 
-    sources = pages.get_sources(mal_id, episode, 'show', rescrape, source_select)
+    sources = pages.get_kodi_sources(mal_id, episode, 'show', rescrape, source_select)
     _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        SourceSelect(*('source_select.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
+        Resolver(*('resolver.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args).doModal(sources, {}, False)
     control.exit_code()
 
 
@@ -188,16 +190,15 @@ def PLAY_MOVIE(payload: str, params: dict):
         elif context == 1:
             resume_time = None
 
-    sources = pages.get_sources(mal_id, 1, 'movie', rescrape, source_select)
+    sources = pages.get_kodi_sources(mal_id, 1, 'movie', rescrape, source_select)
     _mock_args = {'mal_id': mal_id, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
     control.playList.clear()
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect(*('source_select.xml', control.ADDON_PATH), actionArgs=_mock_args, sources=sources,
-                     rescrape=rescrape).doModal()
+        SourceSelect(*('source_select.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        Resolver(*('resolver.xml', control.ADDON_PATH), actionArgs=_mock_args).doModal(sources, {}, False)
+        Resolver(*('resolver.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args).doModal(sources, {}, False)
     control.exit_code()
 
 
@@ -259,6 +260,7 @@ def REFRESH(payload: str, params: dict):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload: str, params: dict):
+
     path, mal_id, eps_watched = payload.rsplit("/")
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
@@ -383,7 +385,7 @@ def COMPLETED_SYNC(payload: str, params: dict):
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict):
     from resources.lib.windows.sort_select import SortSelect
-    SortSelect(*('sort_select.xml', control.ADDON_PATH)).doModal()
+    SortSelect(*('sort_select.xml', control.ADDON_PATH.as_posix())).doModal()
 
 
 @Route('install_packages')
@@ -395,14 +397,13 @@ def INSTALL_PACKAGES(payload: str, params: dict):
 @Route('download_manager')
 def DOWNLOAD_MANAGER(payload: str, params: dict):
     from resources.lib.windows.download_manager import DownloadManager
-    DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
+    DownloadManager(*('download_manager.xml', control.ADDON_PATH.as_posix())).doModal()
 
 
 @Route('import_settings')
 def IMPORT_SETTINGS(payload: str, params: dict):
-    import os
     import xbmcvfs
-    setting_xml = os.path.join(control.dataPath, 'settings.xml')
+    setting_xml = (control.dataPath / 'settings.xml').as_posix()
 
     import_location = control.browse(1, f"{control.ADDON_NAME}:  Import Setting", 'files', 'settings.xml')
     if not import_location:
@@ -424,7 +425,7 @@ def IMPORT_SETTINGS(payload: str, params: dict):
     import os
     import xbmcvfs
 
-    setting_xml = os.path.join(control.dataPath, 'settings.xml')
+    setting_xml = (control.dataPath / 'settings.xml').as_posix()
     export_location = control.browse(3, f"{control.ADDON_NAME}: Export Location", 'files')
 
     if not export_location:

@@ -1,6 +1,5 @@
 import time
 import requests
-import os
 import json
 
 from resources.lib.ui import control, database_sync
@@ -44,7 +43,7 @@ def update_mappings_db() -> None:
     # url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
     url = 'https://github.com/Goldenfreddy0703/Otaku-Mappings/raw/main/anime_mappings.db'
     r = requests.get(url)
-    with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
+    with open(control.dataPath / 'mappings.db', 'wb') as file:
         file.write(r.content)
 
 
@@ -82,12 +81,12 @@ def update_dub_json() -> None:
 
 
 def getChangeLog() -> None:
-    with open(os.path.join(control.ADDON_PATH, 'changelog.txt')) as f:
+    with open(control.ADDON_PATH / 'changelog.txt') as f:
         changelog_text = f.read()
 
     heading = '[B]%s -  v%s - ChangeLog[/B]' % (control.ADDON_NAME, control.ADDON_VERSION)
     from resources.lib.windows.textviewer import TextViewerXML
-    windows = TextViewerXML('textviewer.xml', control.ADDON_PATH, heading=heading, text=changelog_text)
+    windows = TextViewerXML('textviewer.xml', control.ADDON_PATH.as_posix(), heading=heading, text=changelog_text)
     windows.run()
     del windows
 
@@ -99,7 +98,7 @@ def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
         if not forced_state:
             control.ok_dialog(control.ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
             control.execute('LoadProfile({})'.format(control.xbmc.getInfoLabel("system.profilename")))
-    file_path = os.path.join(control.ADDON_PATH, "addon.xml")
+    file_path = control.ADDON_PATH / "addon.xml"
     with open(file_path) as addon_xml:
         file_lines = addon_xml.readlines()
     for i in range(len(file_lines)):

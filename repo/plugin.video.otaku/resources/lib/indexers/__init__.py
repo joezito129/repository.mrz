@@ -40,3 +40,16 @@ def process_dub(mal_id, ename):
     else:
         dub_data = pickle.loads(show_data['data'])['dub_data']
     return dub_data
+
+
+def get_diff(episodes_0):
+    import datetime
+    update_time = datetime.date.today().isoformat()
+    try:
+        last_updated = datetime.datetime.strptime(episodes_0.get('last_updated'), "%Y-%m-%d")
+    except:
+        import time
+        control.log('Unsupported strptime using fromtimestamp', 'warning')
+        last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes_0.get('last_updated'), '%Y-%m-%d')))
+    diff = (datetime.datetime.today() - last_updated).days
+    return update_time, diff

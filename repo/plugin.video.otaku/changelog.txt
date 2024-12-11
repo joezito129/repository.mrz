@@ -1,4 +1,8 @@
-Changelog v5.1.6 (2024-12-09):
+Changelog v5.1.9 (2024-12-10):
+- Added pathlib
+- Fix type hints
+
+Changelog v5.1.8 (2024-12-09):
 - Added Torbox (unfinished)
 - Context menu for last watched
 

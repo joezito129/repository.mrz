@@ -214,9 +214,9 @@ class PlayerDialogs(xbmc.Player):
         args = self._get_next_item_args()
         args['skipoutro_end'] = skipoutro_end
         if skipoutro_aniskip:
-            PlayingNext(*('playing_next_aniskip.xml', control.ADDON_PATH), actionArgs=args).doModal()
+            PlayingNext(*('playing_next_aniskip.xml', control.ADDON_PATH.as_posix()), actionArgs=args).doModal()
         else:
-            PlayingNext(*('playing_next.xml', control.ADDON_PATH), actionArgs=args).doModal()
+            PlayingNext(*('playing_next.xml', control.ADDON_PATH.as_posix()), actionArgs=args).doModal()
 
     @staticmethod
     def show_skip_intro(skipintro_aniskip, skipintro_end):
@@ -226,7 +226,7 @@ class PlayerDialogs(xbmc.Player):
             'skipintro_aniskip': skipintro_aniskip,
             'skipintro_end': skipintro_end
         }
-        SkipIntro(*('skip_intro.xml', control.ADDON_PATH), actionArgs=args).doModal()
+        SkipIntro(*('skip_intro.xml', control.ADDON_PATH.as_posix()), actionArgs=args).doModal()
 
     @staticmethod
     def _get_next_item_args():

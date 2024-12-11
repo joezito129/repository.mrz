@@ -1,40 +1,32 @@
-import os
 import xbmcvfs
-import json
 import requests
 
+import shutil
 from resources.lib.ui import control
+from pathlib import Path
 
-folder_list = ['meta', 'media', 'module', 'provider']
+
+def download_zip(url: str, path: Path) -> None:
+    r = requests.get(url)
+    with open(path, 'wb') as file:
+        file.write(r.content)
+
+
+def create_package(provider_name: str, p: Path) -> None:
+    proider_path = Path.cwd() / 'here' / p.name
+    Path.mkdir(proider_path, parents=True, exist_ok=True)
+    with open(proider_path / '__init__.py', 'w'):
+        pass
+    source_providers = proider_path / provider_name
+    if source_providers.exists():
+        shutil.rmtree(source_providers)
+        control.log(f'deleted {provider_name} from {p.name}')
+    shutil.move(p / provider_name, proider_path)
 
 
 def main():
-    create_package()
-    control.print('done')
-
-
-def fetch_data(url):
-    r = requests.get(url)
-
-
-def create_package():
-    created_folder = [False, False, False, False]
-    for i, x in enumerate(folder_list):
-        folder_path = os.path.join(control.dataPath, x)
-        if not xbmcvfs.exists(folder_path):
-            created_folder[i] = xbmcvfs.mkdir(folder_path)
-    return created_folder
-
-
-def list_packages(meta_path):
-    packages = []
-    for root, _, files in os.walk(meta_path):
-        for filename in files:
-            if filename.endswith(".json"):
-                with open(os.path.join(root, filename)) as f:
-                    meta = json.load(f)
-                    try:
-                        packages.append((meta["name"], meta["author"], meta["remote_meta"], meta["version"], "|".join(meta.get("services", []))))
-                    except KeyError:
-                        continue
-    return packages
+    url = 'http://bit.ly/a4kScrapers'
+    temp_path = control.dataPath / 'temp.zip'
+    download_zip(url, temp_path)
+    if not temp_path.exists():
+        return

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pickle
 
 from resources.lib.ui import control, database
@@ -14,7 +15,7 @@ def get_auth_dialog(flavor):
     if 'linux' in platform:
         auth = wlf_auth.AltWatchlistFlavorAuth(flavor).set_settings()
     else:
-        auth = wlf_auth.WatchlistFlavorAuth(*('wlf_auth_%s.xml' % flavor, control.ADDON_PATH), flavor=flavor).doModal()
+        auth = wlf_auth.WatchlistFlavorAuth(*('wlf_auth_%s.xml' % flavor, control.ADDON_PATH.as_posix()), flavor=flavor).doModal()
     return WatchlistFlavor.login_request(flavor) if auth else None
 
 
@@ -131,7 +132,7 @@ def CONTEXT_MENU(payload: str, params: dict):
     return control.exit_code()
 
 
-def add_watchlist(items: list[tuple]) -> list[tuple]:
+def add_watchlist(items: list[tuple[str, str, str, dict]]) -> list[tuple[str, str, str, dict]]:
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:

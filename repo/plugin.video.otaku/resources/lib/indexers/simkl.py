@@ -3,6 +3,7 @@ import pickle
 import datetime
 
 from functools import partial
+
 from resources.lib.ui import database, utils, control
 from resources.lib import indexers
 from resources import jz
@@ -81,11 +82,7 @@ class SIMKLAPI:
         return all_results
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
-        update_time = datetime.date.today().isoformat()
-        # last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
-        last_updated = datetime.datetime.strptime(episodes[0].get('last_updated'), "%Y-%m-%d")
-        diff = (datetime.datetime.today() - last_updated).days
-
+        update_time, diff = indexers.get_diff(episodes[0])
         if diff >= int(control.getSetting('interface.check.updates')):
             result_meta = self.get_episode_meta(mal_id)
             result_ep = [x for x in result_meta if x['type'] == 'episode']

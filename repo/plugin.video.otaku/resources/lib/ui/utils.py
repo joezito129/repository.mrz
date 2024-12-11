@@ -1,5 +1,3 @@
-import os
-
 from functools import partial
 from resources.lib.ui import control
 
@@ -7,11 +5,11 @@ from resources.lib.ui import control
 def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: list, image: str, info: dict,
                   fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None) -> dict:
     if image and '/' not in image:
-        image = os.path.join(control.ICONS_PATH, image)
+        image = (control.ICONS_PATH / image).as_posix()
     if fanart and not isinstance(fanart, list) and '/' not in fanart:
-        fanart = os.path.join(control.ICONS_PATH, fanart)
+        fanart = (control.ICONS_PATH / fanart).as_posix()
     if poster and '/' not in poster:
-        poster = os.path.join(control.ICONS_PATH, poster)
+        poster = (control.ICONS_PATH / poster).as_posix()
     return {
         'isfolder': isfolder,
         'isplayable': isplayable,

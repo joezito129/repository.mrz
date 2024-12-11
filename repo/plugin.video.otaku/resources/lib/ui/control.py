@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import random
 import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcplugin
 import xbmcvfs
-import os
 import sys
 
 from urllib import parse
+from pathlib import Path
 
 try:
     HANDLE = int(sys.argv[1])
@@ -23,23 +25,23 @@ ADDON_NAME = addonInfo('name')
 ADDON_VERSION = addonInfo('version')
 ADDON_ICON = addonInfo('icon')
 FANART = addonInfo('fanart')
-ADDON_PATH = ADDON.getAddonInfo('path')
-dataPath = xbmcvfs.translatePath(addonInfo('profile'))
+ADDON_PATH = Path(ADDON.getAddonInfo('path'))
+dataPath = Path(xbmcvfs.translatePath(addonInfo('profile')))
 kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
 
-cacheFile = os.path.join(dataPath, 'cache.db')
-searchHistoryDB = os.path.join(dataPath, 'search.db')
-malSyncDB = os.path.join(dataPath, 'malSync.db')
-mappingDB = os.path.join(dataPath, 'mappings.db')
+cacheFile = dataPath / 'cache.db'
+searchHistoryDB = dataPath / 'search.db'
+malSyncDB = dataPath / 'malSync.db'
+mappingDB = dataPath / 'mappings.db'
 
-maldubFile = os.path.join(dataPath, 'mal_dub.json')
-downloads_json = os.path.join(dataPath, 'downloads.json')
-completed_json = os.path.join(dataPath, 'completed.json')
+maldubFile = dataPath / 'mal_dub.json'
+downloads_json = dataPath / 'downloads.json'
+completed_json = dataPath / 'completed.json'
 
-COMMON_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common')
-LOGO_SMALL = os.path.join(COMMON_PATH, 'trans-goku-small.png')
-LOGO_MEDIUM = os.path.join(COMMON_PATH, 'trans-goku.png')
-ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
+COMMON_PATH = ADDON_PATH / 'resources' / 'skins' / 'Default' / 'media' / 'common'
+LOGO_SMALL = COMMON_PATH / 'trans-goku-small.png'
+LOGO_MEDIUM = COMMON_PATH / 'trans-goku.png'
+ICONS_PATH = ADDON_PATH / 'resources' / 'images' / 'icons' / ADDON.getSetting("interface.icons")
 
 dialogWindow = xbmcgui.WindowDialog
 execute = xbmc.executebuiltin
@@ -101,6 +103,7 @@ def copy2clip(txt: str) -> bool:
     platform = sys.platform
     if platform == 'win32':
         try:
+            import os
             os.system('echo %s|clip' % txt)
             return True
         except AttributeError:
@@ -192,7 +195,7 @@ def yesnocustom_dialog(title: str, text: str, customlabel: str = '', nolabel: st
     return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
-def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 5000, sound: bool = True) -> None:
+def notify(title: str, text: str, icon: str = LOGO_MEDIUM.as_posix(), time: int = 5000, sound: bool = True) -> None:
     xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -282,7 +285,7 @@ def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: 
                 art['fanart'] = random.choice(art['fanart'])
 
     if settingids.clearlogo_disable:
-        art['clearlogo'] = ICONS_PATH
+        art['clearlogo'] = ICONS_PATH.as_posix()
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})

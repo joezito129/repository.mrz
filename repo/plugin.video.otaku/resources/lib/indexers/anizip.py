@@ -1,7 +1,6 @@
 import requests
 import pickle
 import datetime
-import time
 
 from functools import partial
 from resources.lib.ui import utils, database, control
@@ -89,9 +88,7 @@ class ANIZIPAPI:
         return all_results
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
-        update_time = datetime.date.today().isoformat()
-        last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes[0].get('last_updated'), '%Y-%m-%d')))
-        diff = (datetime.datetime.today() - last_updated).days
+        update_time, diff = indexers.get_diff(episodes[0])
         if diff > int(control.getSetting('interface.check.updates')):
             result = self.get_anime_info(mal_id)
             result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]

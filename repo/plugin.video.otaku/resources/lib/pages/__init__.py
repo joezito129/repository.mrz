@@ -8,7 +8,7 @@ from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
 
 
-def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
+def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
     import pickle
     from resources.lib.OtakuBrowser import BROWSER
     if not (show := database.get_show(mal_id)):
@@ -24,7 +24,7 @@ def get_sources(mal_id, episode, media_type, rescrape=False, source_select=False
         'source_select': source_select,
         'silent': silent
     }
-    sources_window = Sources('get_sources.xml', control.ADDON_PATH, actionargs=actionArgs)
+    sources_window = Sources('get_sources.xml', control.ADDON_PATH.as_posix(), actionargs=actionArgs)
     sources = sources_window.doModal()
     return sources
 
