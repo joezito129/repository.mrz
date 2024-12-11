@@ -2,9 +2,7 @@ import requests
 
 base_url = "https://api.anime-skip.com/graphql"
 
-headers = {
-    "X-Client-ID": "buT57NJMu4G65vxGJWdj4UXgnq65Agfi"
-}
+headers = {"X-Client-ID": "buT57NJMu4G65vxGJWdj4UXgnq65Agfi"}
 
 
 def get_episode_ids(anilist_id, episode):
