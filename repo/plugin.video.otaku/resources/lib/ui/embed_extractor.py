@@ -4,11 +4,13 @@ import random
 import re
 import string
 import time
+from json import JSONDecodeError
+
 import requests
 import xbmcvfs
-import os
 
-from resources.lib.ui import control, jsunpack, client
+from pathlib import Path
+from resources.lib.ui import control, jsunpack
 from resources.lib.ui.pyaes import AESModeOfOperationCBC, Decrypter, Encrypter
 from urllib import error, parse
 
@@ -108,12 +110,14 @@ def load_video_from_url(in_url):
             return found_extractor['parser'](in_url, data)
 
         control.log("Probing source: %s" % in_url)
-        r = client.request(in_url, output='extended')
-        if isinstance(r, tuple):
-            return found_extractor['parser'](r[5], r[0], r[2].get('Referer'))
-        # r = requests.get(in_url, stream=True)
-        # if r.ok:
-        #     return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
+        # r = client.request(in_url, output='extended')
+        # if isinstance(r, tuple):
+        #     return found_extractor['parser'](r[5], r[0], r[2].get('Referer'))
+        r = requests.get(in_url, stream=True)
+        if r.ok:
+            return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
+        else:
+            control.log(f'Could Not anal prob {in_url}', 'warning')
     except error.URLError:
         return  # Dead link, Skip result
 
@@ -411,7 +415,10 @@ def __extract_goload(url, page_content, referer=None):
         eurl = 'https://{0}/encrypt-ajax.php?id={1}&alias={2}'.format(
             host, _encrypt(media_id, keys[0], iv), params)
         r = requests.get(eurl)
-        response = r.json().get('data') if r.ok else None
+        try:
+            response = r.json().get('data')
+        except JSONDecodeError:
+            response = None
         if response:
             result = _decrypt(response, keys[1], iv)
             result = json.loads(result)
@@ -444,17 +451,13 @@ def __register_extractor(urls, function, url_preloader=None, datas=None):
 
 def get_sub(sub_url, sub_lang):
     content = requests.get(sub_url).text
-    subtitle = xbmcvfs.translatePath('special://temp/')
-    fname = f'TemporarySubs.{sub_lang}.srt'
-    fpath = os.path.join(subtitle, fname)
+    subtitle = Path(xbmcvfs.translatePath('special://temp/'))
+    fpath = subtitle / f'TemporarySubs.{sub_lang}.srt'
     if sub_url.endswith('.vtt'):
-        fname = fname.replace('.srt', '.vtt')
-        fpath = fpath.replace('.srt', '.vtt')
+        fpath = fpath.as_posix().replace('.srt', '.vtt')
     fpath = fpath.encode(encoding='ascii', errors='ignore').decode(encoding='ascii')
-    fname = fname.encode(encoding='ascii', errors='ignore').decode(encoding='ascii')
     with open(fpath, 'w', encoding='utf-8') as f:
         f.write(content)
-    return f'special://temp/{fname}'
 
 
 def del_subs():

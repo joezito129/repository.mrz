@@ -4,9 +4,10 @@ import pickle
 import re
 from functools import partial
 
+import requests
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib import parse
-from resources.lib.ui import database, client
+from resources.lib.ui import database
 from resources.lib.ui.BrowserBase import BrowserBase
 
 
@@ -24,7 +25,7 @@ class Sources(BrowserBase):
             'Referer': self._BASE_URL
         }
 
-        r = client.request(self._BASE_URL + 'api/lsearch', XHR=True, post={'qfast': title}, headers=headers)
+        r = requests.post(self._BASE_URL + 'api/lsearch', data={'qfast': title}, headers=headers).text
         if not r:
             return []
         soup = BeautifulSoup(json.loads(r).get('result'), 'html.parser')
@@ -50,20 +51,20 @@ class Sources(BrowserBase):
 
     def _process_animixplay(self, slug, title, episode):
         sources = []
-        r = client.request(slug, referer=self._BASE_URL)
+        r = requests.get(slug, headers={'Referer': self._BASE_URL})
         eurl = re.search(r'id="showstreambtn"\s*href="([^"]+)', r)
         if eurl:
             eurl = eurl.group(1)
-            resp = client.request(eurl, referer=self._BASE_URL, output='extended')
+            resp = requests.get(eurl, headers={'Referer': self._BASE_URL})
             if not resp:
                 return
-            s = resp[0]
-            cookie = resp[4]
+            s = resp.text
+            cookie = resp.cookies
             referer = parse.urljoin(eurl, '/')
             if episode:
                 esurl = re.findall(r'src="(/ajax/stats.js[^"]+)', s)[0]
                 esurl = parse.urljoin(eurl, esurl)
-                epage = client.request(esurl, referer=eurl)
+                epage = requests.get(esurl, headers={'Referer': eurl}).text
                 soup = BeautifulSoup(epage, "html.parser")
                 epurls = soup.find_all('a', {'class': 'playbutton'})
                 ep_not_found = True
@@ -72,9 +73,9 @@ class Sources(BrowserBase):
                         if int(epurl.text) == int(episode):
                             ep_not_found = False
                             epi_url = epurl.get('href')
-                            resp = client.request(epi_url, referer=eurl, output='extended')
-                            cookie = resp[4]
-                            s = resp[0]
+                            resp = requests.get(epi_url, headers={'Referer': eurl})
+                            cookie = resp.cookies
+                            s = resp.text
                             break
                     except:
                         continue
@@ -111,20 +112,14 @@ class Sources(BrowserBase):
                     }
                     headers = {
                         'Origin': referer[:-1],
-                        'X-CSRF-TOKEN': csrf_token
+                        'X-CSRF-TOKEN': csrf_token,
+                        'Referer': eurl
                     }
-                    r = client.request(
-                        parse.urljoin(eurl, '/ajax/embed'),
-                        post=data,
-                        headers=headers,
-                        XHR=True,
-                        referer=eurl,
-                        cookie=cookie
-                    )
+                    r = requests.post(parse.urljoin(eurl, '/ajax/embed'), data=data, headers=headers, cookies=cookie)
                     embed_url = parse.urljoin(eurl, re.findall(r'<iframe.+?src="([^"]+)', r)[0])
                     subs = ''
                     slink = ''
-                    s = client.request(embed_url, referer=eurl)
+                    s = requests.get(embed_url, headers={'Referer': eurl}).text
                     if not s:
                         continue
                     sdiv = re.search(r'<source.+?src="([^"]+)', s)

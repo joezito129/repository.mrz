@@ -1,78 +1,79 @@
 import xbmc
 import requests
 
-from urllib import parse
 from resources.lib.ui import source_utils, control
 
 
 class Premiumize:
     def __init__(self):
         self.client_id = "855400527"
-        self.headers = {'Authorization': 'Bearer {}'.format(control.getSetting('premiumize.token'))}
+        self.token = control.getSetting('premiumize.token')
+        self.base_url = 'https://www.premiumize.me/api'
+        self.OauthTimeStep = 0
+        self.OauthTimeout = 0
+        self.OauthTotalTimeout = 0
+
+    def headers(self) -> dict:
+        return {'Authorization': f"Bearer {self.token}"}
 
     def auth(self):
         data = {'client_id': self.client_id, 'response_type': 'device_code'}
         r = requests.post('https://www.premiumize.me/token', data=data)
         resp = r.json()
-        expiry = resp['expires_in']
-        token_ttl = resp['expires_in']
+        self.OauthTotalTimeout = self.OauthTimeout = resp['expires_in']
+        self.OauthTimeStep = int(resp['interval'])
         copied = control.copy2clip(resp['user_code'])
         display_dialog = (f"{control.lang(30020).format(control.colorstr(resp['verification_uri']))}[CR]"
                           f"{control.lang(30021).format(control.colorstr(resp['user_code']))}")
         if copied:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
         control.progressDialog.create(f'{control.ADDON_NAME}: Premiumize', display_dialog)
-        control.progressDialog.update(-1)
+        control.progressDialog.update(100)
 
-        poll_again = True
-        success = False
-        while poll_again and not token_ttl <= 0 and not control.progressDialog.iscanceled():
-            poll_again, success = self.poll_token(resp['device_code'])
-            progress_percent = 100 - int((float((expiry - token_ttl) / expiry) * 100))
-            control.progressDialog.update(progress_percent)
-            xbmc.sleep(resp['interval'])
-            token_ttl -= int(resp['interval'])
+        auth_done = False
+        while not auth_done and self.OauthTimeout > 0:
+            self.OauthTimeout -= self.OauthTimeStep
+            xbmc.sleep(self.OauthTimeStep * 1000)
+            auth_done = self.auth_loop(resp['device_code'])
         control.progressDialog.close()
 
-        if success:
-            control.ok_dialog(control.ADDON_NAME, 'Premiumize ' + control.lang(30023))
+        if auth_done:
+            self.status()
 
-    def poll_token(self, device_code):
-        poll_again = True
+    def status(self):
+        r = requests.get(f'{self.base_url}/account/info', headers=self.headers())
+        user_information = r.json()
+        premium = user_information['premium_until'] > 0
+        control.setSetting('premiumize.username', user_information['customer_id'])
+        control.ok_dialog(f'{control.ADDON_NAME}: Premiumize', control.lang(30023))
+        if not premium:
+            control.setSetting('premiumize.auth.status', 'Expired')
+            control.ok_dialog(f'{control.ADDON_NAME}: Premiumize', control.lang(30024))
+        else:
+            control.setSetting('premiumize.auth.status', 'Premium')
+
+    def auth_loop(self, device_code):
+        if control.progressDialog.iscanceled():
+            self.OauthTimeout = 0
+            return False
+        control.progressDialog.update(int(self.OauthTimeout / self.OauthTotalTimeout * 100))
         data = {'client_id': self.client_id, 'code': device_code, 'grant_type': 'device_code'}
         r = requests.post('https://www.premiumize.me/token', data=data)
         token = r.json()
         if r.ok:
             control.setSetting('premiumize.token', token['access_token'])
-            self.headers['Authorization'] = 'Bearer {}'.format(token['access_token'])
-            account_info = self.account_info()
-            control.setSetting('premiumize.username', account_info['customer_id'])
-            poll_again = False
+            return True
         else:
             if token.get('error') == 'access_denied':
-                poll_again = False
+                self.OauthTimeout = 0
             if token.get('error') == 'slow_down':
                 xbmc.sleep(1000)
-        return poll_again, r.ok
-
-    def get_url(self, url):
-        if self.headers['Authorization'] == 'Bearer ':
-            return None
-        url = "https://www.premiumize.me/api{}".format(url)
-        req = requests.get(url, timeout=10, headers=self.headers)
-        return req.json()
+        return False
 
     def post_url(self, url, data):
-        if self.headers['Authorization'] == 'Bearer ':
-            return None
         url = "https://www.premiumize.me/api{}".format(url)
-        req = requests.post(url, headers=self.headers, data=data, timeout=10)
+        req = requests.post(url, headers=self.headers(), data=data, timeout=10)
         return req.json()
-
-    def account_info(self):
-        url = "/account/info"
-        response = self.get_url(url)
-        return response
 
     def list_folder(self, folderid):
         url = "/folder/list"
@@ -80,16 +81,17 @@ class Premiumize:
         response = self.post_url(url, postData)
         return response['content']
 
-    def hash_check(self, hashlist):
-        url = '/cache/check'
-        hashString = '&'.join(['items[]=' + x for x in hashlist])
-        response = self.get_url('{0}?{1}'.format(url, parse.quote(hashString, '=&')))
-        return response
+    def hash_check(self, hashlist) -> dict:
+        params = {
+            'items[]': hashlist
+        }
+        r = requests.get(f'{self.base_url}/cache/check', headers=self.headers(), params=params)
+        return r.json()
 
-    def direct_download(self, src):
+    def direct_download(self, src) -> dict:
         postData = {'src': src}
-        url = '/transfer/directdl'
-        return self.post_url(url, postData)
+        r = requests.post(f'{self.base_url}/transfer/directdl', headers=self.headers(), data=postData)
+        return r.json()
 
     def resolve_hoster(self, source):
         directLink = self.direct_download(source)
@@ -103,27 +105,23 @@ class Premiumize:
 
         if pack_select:
             identified_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
-            stream_link = self._fetch_transcode_or_standard(identified_file)
+            stream_link = identified_file['link']
             return stream_link
 
         elif len(filter_list) == 1:
-            stream_link = self._fetch_transcode_or_standard(filter_list[0])
+            stream_link = filter_list[0]['link']
             return stream_link
 
         elif len(filter_list) >= 1:
             identified_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
-            stream_link = self._fetch_transcode_or_standard(identified_file)
+            stream_link = identified_file['link']
             return stream_link
 
         filter_list = [tfile for tfile in folder_details if 'sample' not in tfile['path'].lower()]
 
         if len(filter_list) == 1:
-            stream_link = self._fetch_transcode_or_standard(filter_list[0])
+            stream_link = filter_list[0]['link']
             return stream_link
-
-    @staticmethod
-    def _fetch_transcode_or_standard(file_object):
-        return file_object['link']
 
     @staticmethod
     def resolve_uncached_source(source, runinbackground):

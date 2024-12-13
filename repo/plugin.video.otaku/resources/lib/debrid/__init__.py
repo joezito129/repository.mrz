@@ -56,16 +56,9 @@ def torrentCacheCheck(torrent_list):
 
 def all_debrid_worker(torrent_list: list):
     if len(torrent_list) != 0:
-        cache_check = all_debrid.AllDebrid().check_hash([i['hash'] for i in torrent_list])
-        if cache_check:
-            cached_items = [m.get('hash') for m in cache_check if m.get('instant') is True]
-
-            for i in torrent_list:
-                i['debrid_provider'] = 'all_debrid'
-                if i['hash'] in cached_items:
-                    all_debridCached.append(i)
-                else:
-                    all_debridUnCached.append(i)
+        for i in torrent_list:
+            i['debrid_provider'] = 'all_debrid'
+            all_debridUnCached.append(i)
 
 
 def debrid_link_worker(torrent_list: list):

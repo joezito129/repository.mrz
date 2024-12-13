@@ -883,18 +883,18 @@
                     <default>0</default>
                     <control type="edit" format="integer"/>
                 </setting>
-<!--                <setting id="dl.auth.status" type="string" label="30123" help="">-->
-<!--                    <level>0</level>-->
-<!--                    <default/>-->
-<!--                    <constraints>-->
-<!--                        <allowempty>true</allowempty>-->
-<!--                    </constraints>-->
-<!--                    <control type="edit" format="string"/>-->
-<!--                    <enable>false</enable>-->
-<!--                    <dependencies>-->
-<!--                        <dependency type="visible" setting="dl.enabled">true</dependency>-->
-<!--                    </dependencies>-->
-<!--                </setting>-->
+                <setting id="dl.auth.status" type="string" label="30123" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="dl.auth_start" type="action" label="30124" help="">
                     <level>0</level>
                     <data>RunPlugin(plugin://plugin.video.otaku/auth/debridlink)</data>
@@ -952,26 +952,18 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="premiumize.token" type="string" label="" help="">
-                    <level>4</level>
+                <setting id="premiumize.auth.status" type="string" label="30133" help="">
+                    <level>0</level>
                     <default/>
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
                     <control type="edit" format="string"/>
+                    <enable>false</enable>
+                    <dependencies>
+                        <dependency type="visible" setting="premiumize.enabled">true</dependency>
+                    </dependencies>
                 </setting>
-<!--                <setting id="premiumize.auth.status" type="string" label="30133" help="">-->
-<!--                    <level>0</level>-->
-<!--                    <default/>-->
-<!--                    <constraints>-->
-<!--                        <allowempty>true</allowempty>-->
-<!--                    </constraints>-->
-<!--                    <control type="edit" format="string"/>-->
-<!--                    <enable>false</enable>-->
-<!--                    <dependencies>-->
-<!--                        <dependency type="visible" setting="premiumize.enabled">true</dependency>-->
-<!--                    </dependencies>-->
-<!--                </setting>-->
                 <setting id="premiumize.auth_start" type="action" label="30134" help="">
                     <level>0</level>
                     <data>RunPlugin(plugin://plugin.video.otaku/auth/premiumize)</data>
@@ -1124,7 +1116,7 @@
                       <dependency type="visible" setting="watchlist.update.enabled">true</dependency>
                   </dependencies>
                 </setting>
-                <setting id="watchlist.update.percent" type="integer" label="30366" help="">
+                <setting id="watchlist.update.percent" type="integer" label="30366" help="30367">
                     <level>0</level>
                     <default>80</default>
                     <constraints>
@@ -1138,18 +1130,6 @@
                     <dependencies>
                         <dependency type="visible" setting="watchlist.update.enabled">true</dependency>
                     </dependencies>
-                </setting>
-                <setting id="watchlist.1.text" type="string" label="30367" help="">
-                    <level>0</level>
-                    <default/>
-                    <enable>false</enable>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-					<control type="edit" format="string"/>
-                <dependencies>
-                    <dependency type="visible" setting="watchlist.update.enabled">true</dependency>
-                </dependencies>
                 </setting>
                 <setting id="watchlist.sync.enabled" type="boolean" label="30368" help="">
                     <level>0</level>

@@ -1,6 +1,7 @@
-Changelog v5.1.9 (2024-12-10):
+Changelog v5.1.9 (2024-12-13):
 - Added pathlib
 - Fix type hints
+- Fixed Debrids
 
 Changelog v5.1.8 (2024-12-09):
 - Added Torbox (unfinished)

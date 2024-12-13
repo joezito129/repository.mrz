@@ -313,17 +313,18 @@ def LIST_MENU(payload: str, params: dict):
 @Route('tools')
 def TOOLS_MENU(payload: str, params: dict):
     TOOLS_ITEMS = [
-        (control.lang(30010), "change_log", {'plot': "View Changelog"}, 'changelog.png'),
-        (control.lang(30011), "settings", {'plot': "Open Settings"}, 'open_settings_menu.png'),
-        (control.lang(30012), "clear_cache", {'plot': "Clear Cache"}, 'clear_cache.png'),
-        (control.lang(30013), "clear_search_history", {'plot': "Clear Search History"}, 'clear_search_history.png'),
-        (control.lang(30014), "rebuild_database", {'plot': "Rebuild Database"}, 'rebuild_database.png'),
-        (control.lang(30015), "completed_sync", {'plot': "Sync Completed Anime with Otaku"}, "sync_completed.png"),
-        (control.lang(30016), 'download_manager', {'plot': "Open Download Manager"}, 'download_manager.png'),
-        (control.lang(30017), 'sort_select', {'plot': "Choose Sorting..."}, ''),
-        (control.lang(30018), 'clear_slected_fanart', {'plot': "Clear All Selected Fanart"}, 'delete.png')
+        (control.lang(30010), "change_log", 'changelog.png', {'plot': "View Changelog"}),
+        (control.lang(30011), "settings", 'open_settings_menu.png', {'plot': "Open Settings"}),
+        (control.lang(30012), "clear_cache", 'clear_cache.png', {'plot': "Clear Cache"}),
+        (control.lang(30013), "clear_search_history", 'clear_search_history.png', {'plot': "Clear Search History"}),
+        (control.lang(30014), "rebuild_database", 'rebuild_database.png', {'plot': "Rebuild Database"}),
+        (control.lang(30015), "completed_sync", "sync_completed.png", {'plot': "Sync Completed Anime with Otaku"}),
+        (control.lang(30016), 'download_manager', 'download_manager.png', {'plot': "Open Download Manager"}),
+        (control.lang(30017), 'sort_select', '', {'plot': "Choose Sorting..."}),
+        (control.lang(30018), 'clear_slected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"}),
+        ("install Packages", 'install_packages', 'delete.png', {'plot': "Clear All Selected Fanart"})
     ]
-    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, info, image in TOOLS_ITEMS], 'addons')
+    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], 'addons')
 
 
 # ### Maintenance ###
@@ -392,6 +393,7 @@ def SORT_SELECT(payload: str, params: dict):
 def INSTALL_PACKAGES(payload: str, params: dict):
     from resources.lib.pages import custom_providers
     custom_providers.main()
+    control.print('done')
 
 
 @Route('download_manager')
@@ -452,7 +454,6 @@ if __name__ == "__main__":
         import xbmc
         if not xbmc.Player().isPlaying():
             control.playList.clear()
-
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')

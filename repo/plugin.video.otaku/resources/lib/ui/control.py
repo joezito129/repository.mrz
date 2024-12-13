@@ -56,7 +56,7 @@ def closeBusyDialog() -> None:
         execute('Dialog.Close(busydialognocancel)')
 
 
-def log(msg: str, level: str = "info") -> None:
+def log(msg, level="info") -> None:
     if level == 'info':
         level = xbmc.LOGINFO
     elif level == 'warning':
@@ -76,26 +76,15 @@ def enabled_debrid() -> dict[str: bool]:
     return enabled_debrids
 
 
-def myanimelist_enabled() -> bool:
-    return True if getSetting('mal.token') != '' and getBool('mal.enabled') else False
-
-
-def kitsu_enabled() -> bool:
-    return True if getSetting('kitsu.token') != '' and getBool('kitsu.enabled') else False
-
-
-def anilist_enabled() -> bool:
-    return True if getSetting('anilist.token') != '' and getBool('anilist.enabled') else False
-
-
-def simkl_enabled() -> bool:
-    return True if getSetting('simkl.token') != '' and getBool('simkl.enabled') else False
+def enabled_watchlists() -> list[str]:
+    watchlists = ['mal', 'anilist', 'simkl', 'kitsu']
+    return [x for x in watchlists if getSetting(f'{x}.token') != '' and getBool(f'{x}.enabled')]
 
 
 def watchlist_to_update() -> str:
     if getBool('watchlist.update.enabled'):
         flavor = getSetting('watchlist.update.flavor').lower()
-        if getBool('%s.enabled' % flavor):
+        if getBool(f"{flavor}.enabled"):
             return flavor
 
 
