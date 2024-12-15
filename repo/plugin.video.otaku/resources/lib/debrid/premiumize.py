@@ -6,7 +6,8 @@ from resources.lib.ui import source_utils, control
 
 class Premiumize:
     def __init__(self):
-        self.client_id = "855400527"
+        # self.client_id = "855400527"      # Swag
+        self.client_id = '807831898'        # Otaku
         self.token = control.getSetting('premiumize.token')
         self.base_url = 'https://www.premiumize.me/api'
         self.OauthTimeStep = 0
