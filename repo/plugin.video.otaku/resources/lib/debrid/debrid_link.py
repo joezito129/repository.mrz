@@ -128,7 +128,7 @@ class DebridLink:
         response = requests.post(url, data=postData, headers=self.headers()).json()
         return response.get('value')
 
-    def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
         files = self.addMagnet(magnet)['files']
         folder_details = [{'link': x['downloadUrl'], 'path': x['name']} for x in files]
         if episode:
@@ -141,8 +141,11 @@ class DebridLink:
         selected_file = max(sources)[1]
         if selected_file is None:
             return
-
         return selected_file
+
+    @staticmethod
+    def resolve_cloud(source, pack_selct):
+        pass
 
     @staticmethod
     def resolve_uncached_source(source, runinbackground):

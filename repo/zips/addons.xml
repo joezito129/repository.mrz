@@ -181,14 +181,13 @@
             <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.1.9">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.1.10">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" />
     <import addon="script.module.beautifulsoup4" />
     <import addon="script.module.inputstreamhelper" />
     <import addon="context.otaku" version="1.0.20" />
-    <import addon="script.module.six" />
   </requires>
   <extension library="default.py" point="xbmc.python.pluginsource">
         <provides>video</provides>

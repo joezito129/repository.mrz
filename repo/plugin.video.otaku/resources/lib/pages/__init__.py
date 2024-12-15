@@ -34,7 +34,8 @@ class Sources(GetSources):
         super().__init__(xml_file, location, actionargs)
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = [gogoanime, hianime, animepahe, animix, aniwave]
+        # self.embed_func = [gogoanime, hianime, animepahe, animix, aniwave]
+        self.embed_func = [gogoanime, animix]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
@@ -141,8 +142,9 @@ class Sources(GetSources):
     def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
         try:
             all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key=torrent_name)
-        except Exception as e:
-            control.log(repr(e), 'error')
+        except:
+            import traceback
+            control.log(traceback.format_exc(), 'error')
             all_sources = {}
         if all_sources:
             self.torrentUnCacheSources += all_sources['uncached']
@@ -154,8 +156,9 @@ class Sources(GetSources):
     def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape):
         try:
             embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, key=embed_name)
-        except Exception as e:
-            control.log(repr(e), 'error')
+        except:
+            import traceback
+            control.log(traceback.format_exc(), 'error')
             embed_sources = []
         if not isinstance(embed_sources, list):
             embed_sources = []
@@ -175,15 +178,8 @@ class Sources(GetSources):
         self.remainingProviders.remove('Local Files')
 
     def user_cloud_inspection(self, query, mal_id, episode):
-        debrid = {}
-        if control.enabled_debrid()['rd'] and control.getBool('rd.cloudInspection'):
-            debrid['real_debrid'] = True
-        if control.enabled_debrid()['premiumize'] and control.getBool('premiumize.cloudInspection'):
-            debrid['premiumize'] = True
-        if control.enabled_debrid()['alldebrid'] and control.getBool('alldebrid.cloudInspection'):
-            debrid['all_debrid'] = True
-        if control.enabled_debrid()['torbox'] and control.getBool('torbox.cloudInspection'):
-            debrid['torbox'] = True
+        enabled_debrids = control.enabled_debrid()
+        debrid = {x: enabled_debrids[x] and control.getBool(f'{x}.cloudInspection') for x in enabled_debrids}
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 

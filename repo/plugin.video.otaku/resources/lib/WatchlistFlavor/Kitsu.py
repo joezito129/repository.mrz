@@ -10,25 +10,26 @@ from resources.lib.ui.divide_flavors import div_flavor
 
 
 class KitsuWLF(WatchlistFlavorBase):
+    _NAME = "kitsu"
     _URL = "https://kitsu.io/api"
     _TITLE = "Kitsu"
-    _NAME = "kitsu"
     _IMAGE = "kitsu.png"
-    _mapping = None
+
+    mapping = None
 
     def __headers(self):
         headers = {
             'Content-Type': 'application/vnd.api+json',
             'Accept': 'application/vnd.api+json',
-            'Authorization': f'Bearer {self._token}'
+            'Authorization': f'Bearer {self.token}'
         }
         return headers
 
     def login(self):
         params = {
             "grant_type": "password",
-            "username": self._auth_var,
-            "password": self._password
+            "username": self.auth_var,
+            "password": self.password
         }
         resp = requests.post(f'{self._URL}/oauth/token', params=params)
 
@@ -36,7 +37,7 @@ class KitsuWLF(WatchlistFlavorBase):
             return
 
         data = resp.json()
-        self._token = data['access_token']
+        self.token = data['access_token']
         resp2 = requests.get(f'{self._URL}/edge/users', headers=self.__headers(), params={'filter[self]': True})
         data2 = resp2.json()["data"][0]
 
@@ -76,14 +77,14 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def __get_sort(self):
         sort_types = ['-progressed_at', '-progress', f"anime.titles.{self.__get_title_lang()}"]
-        return sort_types[int(self._sort)]
+        return sort_types[int(self.sort)]
 
     def __get_title_lang(self):
         title_langs = {
             "english": "en",
             "romaji": "en_jp",
         }
-        return title_langs[self._title_lang]
+        return title_langs[self.title_lang]
 
     def watchlist(self):
         statuses = [
@@ -113,7 +114,7 @@ class KitsuWLF(WatchlistFlavorBase):
         url = f'{self._URL}/edge/library-entries'
         params = {
             "fields[anime]": "titles,canonicalTitle,posterImage,episodeCount,synopsis,episodeLength,subtype,averageRating,ageRating,youtubeVideoId",
-            "filter[user_id]": self._user_id,
+            "filter[user_id]": self.user_id,
             "filter[kind]": "anime",
             "filter[status]": status,
             "include": "anime,anime.mappings,anime.mappings.item",
@@ -132,7 +133,7 @@ class KitsuWLF(WatchlistFlavorBase):
             result['included'] = []
 
         el = result["included"][:len(_list)]
-        self._mapping = [x for x in result['included'] if x['type'] == 'mappings']
+        self.mapping = [x for x in result['included'] if x['type'] == 'mappings']
 
         if next_up:
             all_results = map(self._base_next_up_view, _list, el)
@@ -244,7 +245,7 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def mapping_mal(self, kitsu_id):
         mal_id = ''
-        for i in self._mapping:
+        for i in self.mapping:
             if i['attributes']['externalSite'] == 'myanimelist/anime':
                 if i['relationships']['item']['data']['id'] == kitsu_id:
                     mal_id = i['attributes']['externalId']
@@ -258,7 +259,7 @@ class KitsuWLF(WatchlistFlavorBase):
 
     def get_library_entries(self, kitsu_id):
         params = {
-            "filter[user_id]": self._user_id,
+            "filter[user_id]": self.user_id,
             "filter[anime_id]": kitsu_id
         }
         r = requests.get(f'{self._URL}/edge/library-entries', headers=self.__headers(), params=params)
@@ -296,7 +297,7 @@ class KitsuWLF(WatchlistFlavorBase):
     def get_user_anime_list(self, status):
         url = f'{self._URL}/edge/library-entries'
         params = {
-            "filter[user_id]": self._user_id,
+            "filter[user_id]": self.user_id,
             "filter[kind]": "anime",
             "filter[status]": status,
             "page[limit]": "500",
@@ -329,7 +330,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     "relationships": {
                         "user": {
                             "data": {
-                                "id": self._user_id,
+                                "id": self.user_id,
                                 "type": "users"
                             }
                         },
@@ -374,7 +375,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     "relationships": {
                         "user": {
                             "data": {
-                                "id": self._user_id,
+                                "id": self.user_id,
                                 "type": "users"
                             }
                         },
@@ -423,7 +424,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     "relationships": {
                         "user": {
                             "data": {
-                                "id": self._user_id,
+                                "id": self.user_id,
                                 "type": "users"
                             }
                         },

@@ -8,9 +8,9 @@ from resources.lib.ui.divide_flavors import div_flavor
 
 
 class SimklWLF(WatchlistFlavorBase):
+    _NAME = 'simkl'
     _URL = 'https://api.simkl.com'
     _TITLE = 'Simkl'
-    _NAME = 'simkl'
     _IMAGE = "simkl.png"
 
     # client_id = '5178a709b7942f1f5077b737b752eea0f6dee684d0e044fa5acee8822a0cbe9b'    # Swag
@@ -20,7 +20,7 @@ class SimklWLF(WatchlistFlavorBase):
     def __headers(self):
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f'Bearer {self._token}',
+            "Authorization": f'Bearer {self.token}',
             "simkl-api-key": self.client_id
         }
         return headers
@@ -49,9 +49,9 @@ class SimklWLF(WatchlistFlavorBase):
             r = requests.get(f'{self._URL}/oauth/pin/{device_code["user_code"]}', params=params)
             r = r.json()
             if r['result'] == 'OK':
-                self._token = r['access_token']
+                self.token = r['access_token']
                 login_data = {
-                    'token': self._token
+                    'token': self.token
                 }
                 r = requests.post(f'{self._URL}/users/settings', headers=self.__headers())
                 if r.ok:
@@ -69,7 +69,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
 
     def __get_sort(self):
         sort_types = ['anime_title', 'list_updated_at', 'last_added', 'user_rating']
-        return sort_types[int(self._sort)]
+        return sort_types[int(self.sort)]
 
     def watchlist(self):
         statuses = [
@@ -132,7 +132,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta']) if show else {}
 
-        if self._title_lang == 'english':
+        if self.title_lang == 'english':
             title = kodi_meta.get('ename') or res['show']['title']
         else:
             title = res['show']['title']
@@ -186,7 +186,7 @@ Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["in
         mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
         if next_up_meta:
             kodi_meta = pickle.loads(show['kodi_meta'])
-            if self._title_lang == 'english':
+            if self.title_lang == 'english':
                 base_title = kodi_meta['english']
                 title = '%s - %s/%s' % (base_title, next_up, episode_count)
             if next_up_meta.get('title'):

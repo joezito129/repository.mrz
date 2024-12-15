@@ -1,11 +1,8 @@
-from __future__ import annotations
-
 import requests
 import pickle
 import datetime
 
 from functools import partial
-
 from resources.lib.ui import database, utils, control
 from resources.lib import indexers
 from resources import jz
@@ -98,7 +95,7 @@ class SIMKLAPI:
             all_results = list(map(mapfunc1, episodes))
         return all_results
 
-    def get_episodes(self, mal_id, show_meta) -> tuple[list, str]:
+    def get_episodes(self, mal_id, show_meta) -> tuple:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')

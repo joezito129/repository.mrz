@@ -1,4 +1,3 @@
-from __future__ import annotations
 import pickle
 
 from resources.lib.ui import control, database
@@ -132,7 +131,7 @@ def CONTEXT_MENU(payload: str, params: dict):
     return control.exit_code()
 
 
-def add_watchlist(items: list[tuple[str, str, str, dict]]) -> list[tuple[str, str, str, dict]]:
+def add_watchlists(items: list) -> list:
     flavors = WatchlistFlavor.get_enabled_watchlists()
     if flavors:
         for flavor in flavors:

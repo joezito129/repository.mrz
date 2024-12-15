@@ -25,12 +25,12 @@ class Sources(BrowserBase):
 
         all_results = []
         items = []
-        srcs = ['dub', 'sub']
+        srcs = ['dub', 'sub', 's-sub']
         if control.getSetting('general.source') == 'Sub':
             srcs.remove('dub')
         elif control.getSetting('general.source') == 'Dub':
             srcs.remove('sub')
-            srcs.remove('softsub')
+            srcs.remove('s-sub')
 
         headers = {'Referer': self._BASE_URL}
         params = {'keyword': title}
@@ -54,7 +54,6 @@ class Sources(BrowserBase):
         sources = []
         headers = {'Referer': self._BASE_URL}
         r = requests.get(slug, headers=headers).text
-        # control.log(f'1: {r}')
         sid = re.search(r'id="watch-main.+?data-id="([^"]+)', r)
         if not sid:
             return sources

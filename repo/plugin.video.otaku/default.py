@@ -1,4 +1,3 @@
-from __future__ import annotations
 # -*- coding: utf-8 -*-
 """
     Otaku Add-on
@@ -25,13 +24,13 @@ import pickle
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
-from resources.lib.WatchlistIntegration import add_watchlist
+from resources.lib.WatchlistIntegration import add_watchlists
 
 
 BROWSER = OtakuBrowser.BROWSER
 
 
-def add_last_watched(items: list[tuple[str, str, str, dict]]) -> list[tuple[str, str, str, dict]]:
+def add_last_watched(items: list) -> list:
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
@@ -300,7 +299,7 @@ def LIST_MENU(payload: str, params: dict):
         (control.lang(30006), "tools", 'tools.png', {})
     ]
     NEW_MENU_ITEMS = []
-    NEW_MENU_ITEMS = add_watchlist(NEW_MENU_ITEMS)
+    NEW_MENU_ITEMS = add_watchlists(NEW_MENU_ITEMS)
 
     if control.getBool('menu.lastwatched'):
         NEW_MENU_ITEMS = add_last_watched(NEW_MENU_ITEMS)
@@ -322,7 +321,7 @@ def TOOLS_MENU(payload: str, params: dict):
         (control.lang(30016), 'download_manager', 'download_manager.png', {'plot': "Open Download Manager"}),
         (control.lang(30017), 'sort_select', '', {'plot': "Choose Sorting..."}),
         (control.lang(30018), 'clear_slected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"}),
-        ("install Packages", 'install_packages', 'delete.png', {'plot': "Clear All Selected Fanart"})
+        # ("install Packages", 'install_packages', '', {'plot': "Install Custom Packages"})
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], 'addons')
 
@@ -385,8 +384,12 @@ def COMPLETED_SYNC(payload: str, params: dict):
 
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict):
-    from resources.lib.windows.sort_select import SortSelect
-    SortSelect(*('sort_select.xml', control.ADDON_PATH.as_posix())).doModal()
+    control.progressDialog.create(control.ADDON_NAME, 'test')
+    control.wait_for_abort(10)
+    control.progressDialog.close()
+    control.print('done')
+    # from resources.lib.windows.sort_select import SortSelect
+    # SortSelect(*('sort_select.xml', control.ADDON_PATH.as_posix())).doModal()
 
 
 @Route('install_packages')
@@ -454,6 +457,7 @@ if __name__ == "__main__":
         import xbmc
         if not xbmc.Player().isPlaying():
             control.playList.clear()
+
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')

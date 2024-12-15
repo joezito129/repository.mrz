@@ -6,45 +6,52 @@ from resources.lib.ui import control, database
 
 
 class WatchlistFlavorBase:
+    _NAME = None
     _URL = None
     _TITLE = None
-    _NAME = None
     _IMAGE = None
 
     def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None):
-        self._auth_var = auth_var
-        self._username = username
-        self._password = password
-        self._user_id = user_id
-        self._token = token
-        self._refresh = refresh
-        self._sort = sort
-        self._title_lang = ["romaji", 'english'][control.getInt("titlelanguage")]
+        self.auth_var = auth_var
+        self.username = username
+        self.password = password
+        self.user_id = user_id
+        self.token = token
+        self.refresh = refresh
+        self.sort = sort
+        self.title_lang = ["romaji", 'english'][control.getInt("titlelanguage")]
 
     @classmethod
     def name(cls):
         return cls._NAME
-
-    # todo
-    @property
-    def image(self):
-        return self._IMAGE
-
-    @property
-    def title(self):
-        return self._TITLE
-
-    @property
-    def url(self):
-        return self._URL
 
     @property
     def flavor_name(self):
         return self._NAME
 
     @property
-    def username(self):
-        return self._username
+    def url(self):
+        return self._URL
+
+    @property
+    def title(self):
+        return self._TITLE
+
+    @property
+    def image(self):
+        return self._IMAGE
+
+    @staticmethod
+    def login():
+        raise 'Should Not be called Directly'
+
+    @staticmethod
+    def get_watchlist_status(status, next_up, offset, page):
+        raise 'Should Not be called Directly'
+
+    @staticmethod
+    def watchlist():
+        raise 'Should Not be called Directly'
 
     @staticmethod
     def _get_next_up_meta(mal_id, next_up):

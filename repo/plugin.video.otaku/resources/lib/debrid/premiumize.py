@@ -27,7 +27,7 @@ class Premiumize:
                           f"{control.lang(30021).format(control.colorstr(resp['user_code']))}")
         if copied:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
-        control.progressDialog.create(f'{control.ADDON_NAME}: Premiumize', display_dialog)
+        control.progressDialog.create(f'{control.ADDON_NAME}: Premiumize Auth', display_dialog)
         control.progressDialog.update(100)
 
         auth_done = False
@@ -61,7 +61,8 @@ class Premiumize:
         r = requests.post('https://www.premiumize.me/token', data=data)
         token = r.json()
         if r.ok:
-            control.setSetting('premiumize.token', token['access_token'])
+            self.token = token['access_token']
+            control.setSetting('premiumize.token', self.token)
             return True
         else:
             if token.get('error') == 'access_denied':
@@ -70,34 +71,41 @@ class Premiumize:
                 xbmc.sleep(1000)
         return False
 
-    def post_url(self, url, data):
-        url = "https://www.premiumize.me/api{}".format(url)
-        req = requests.post(url, headers=self.headers(), data=data, timeout=10)
-        return req.json()
-
     def list_folder(self, folderid):
-        url = "/folder/list"
-        postData = {'id': folderid} if folderid else ''
-        response = self.post_url(url, postData)
+        params = {'id': folderid} if folderid else None
+        response = requests.get(f"{self.base_url}/folder/list", headers=self.headers(), params=params).json()
         return response['content']
 
     def hash_check(self, hashlist) -> dict:
-        params = {
-            'items[]': hashlist
-        }
+        params = {'items[]': hashlist}
         r = requests.get(f'{self.base_url}/cache/check', headers=self.headers(), params=params)
         return r.json()
 
     def direct_download(self, src) -> dict:
         postData = {'src': src}
         r = requests.post(f'{self.base_url}/transfer/directdl', headers=self.headers(), data=postData)
+        control.log(r.json())
+        return r.json()
+
+    def addMagnet(self, src) -> dict:
+        postData = {'src': src}
+        r = requests.post(f'{self.base_url}/transfer/create', headers=self.headers(), data=postData)
+        return r.json()
+
+    def transfer_list(self):
+        r = requests.get(f'{self.base_url}/transfer/list', headers=self.headers())
+        return r.json()['transfers']
+
+    def delete_torrent(self, torrent_id):
+        params = {'id': torrent_id}
+        r = requests.post(f'{self.base_url}/transfer/delete', headers=self.headers(), params=params)
         return r.json()
 
     def resolve_hoster(self, source):
         directLink = self.direct_download(source)
         return directLink['location'] if directLink['status'] == 'success' else None
 
-    def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
         folder_details = self.direct_download(magnet)['content']
         folder_details = sorted(folder_details, key=lambda i: int(i['size']), reverse=True)
         folder_details = [i for i in folder_details if source_utils.is_file_ext_valid(i['link'])]
@@ -113,7 +121,7 @@ class Premiumize:
             return stream_link
 
         elif len(filter_list) >= 1:
-            identified_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
+            identified_file = source_utils.get_best_match('path', folder_details, episode)
             stream_link = identified_file['link']
             return stream_link
 
@@ -123,7 +131,53 @@ class Premiumize:
             stream_link = filter_list[0]['link']
             return stream_link
 
-    @staticmethod
-    def resolve_uncached_source(source, runinbackground):
+    def resolve_cloud(self, source, pack_select):
+        link = None
+        if source['torrent_type'] == 'file':
+            link = source['hash']
+        elif source['torrent_type'] == 'folder':
+            torrent_folder = self.list_folder(source['id'])
+            best_match = source_utils.get_best_match('name', torrent_folder, source['episode'], pack_select)
+            if best_match and best_match.get('link'):
+                link = best_match['link']
+        return link
+
+    def resolve_uncached_source(self, source, runinbackground):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
-        control.ok_dialog(heading, 'Cache Reolver Has not been added for Premiumize')
+        if not runinbackground:
+            control.progressDialog.create(heading, "Caching Progress")
+        stream_link = None
+        torrent = self.addMagnet(source['magnet'])
+        if runinbackground:
+            control.notify(heading, "The souce is downloading to your cloud")
+            return
+
+        progress = 0
+        status = 'running'
+        while status != 'finished':
+            if control.progressDialog.iscanceled() or control.wait_for_abort(5):
+                break
+            transfer_list = self.transfer_list()
+            for i in transfer_list:
+                if i['id'] == torrent['id']:
+                    status = i['status']
+                    try:
+                        progress = float(i['progress'] * 100)
+                    except TypeError:
+                        control.log(i)
+                    f_body = (f"Progress: {round(progress, 2)} %[CR]"
+                              f"Status: {status}")
+                    control.progressDialog.update(int(progress), f_body)
+                    break
+            else:
+                control.log('Unable to find torrent', 'warning')
+                break
+        if status == 'finished':
+            control.ok_dialog(heading, "This file has been added to your Cloud")
+        else:
+            self.delete_torrent(torrent['id'])
+            # torrent_list = self.list_folder(torrent['id'])
+            # if torrent_list['transcode_status'] == 'finished':
+            #     stream_link = self.resolve_cloud(source, False)
+        control.progressDialog.close()
+        return stream_link

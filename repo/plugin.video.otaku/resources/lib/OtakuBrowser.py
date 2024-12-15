@@ -1,4 +1,3 @@
-from __future__ import annotations
 import pickle
 
 from resources.lib.ui import control, database, utils
@@ -25,7 +24,7 @@ def get_episodeList(mal_id, pass_idx):
             'premiered': str(kodi_meta['start_date']),
             'year': int(str(kodi_meta['start_date'])[:4])
         }
-        items = [utils.allocate_item(title, 'null', False, True, [], info=info, poster=kodi_meta['poster'])]
+        items = [utils.allocate_item(title, 'null', False, True, [], kodi_meta['poster'], info=info, poster=kodi_meta['poster'])]
 
     else:
         episodes = database.get_episode_list(mal_id)
@@ -36,7 +35,7 @@ def get_episodeList(mal_id, pass_idx):
     return items
 
 
-def get_anime_init(mal_id) -> tuple[list, str]:
+def get_anime_init(mal_id) -> tuple:
     show_meta = database.get_show_meta(mal_id)
     if not show_meta:
         BROWSER.get_anime(mal_id)

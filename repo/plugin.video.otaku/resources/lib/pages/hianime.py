@@ -125,7 +125,10 @@ class Sources(BrowserBase):
                             if res.get('encrypted'):
                                 slink = self._process_link(res.get('sources'))
                             else:
-                                slink = res['sources'][0].get('file')
+                                if res['sources']:
+                                    slink = res['sources'][0].get('file')
+                                else:
+                                    slink = None
                             if not slink:
                                 continue
                             res = requests.get(slink, headers=headers).text

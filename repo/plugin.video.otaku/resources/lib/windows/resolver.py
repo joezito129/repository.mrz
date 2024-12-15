@@ -10,8 +10,6 @@ from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debri
 from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
 
-control.sys.path.append(control.dataPath)
-
 
 class HookMimetype:
     __MIME_HOOKS = {}
@@ -87,18 +85,9 @@ class Resolver(BaseWindow):
             if 'uncached' in i['type']:
                 self.return_data['link'] = self.resolve_uncache(i)
                 break
-            if i['type'] == 'torrent':
+
+            if i['type'] in ['torrent', 'cloud', 'hoster']:
                 stream_link = self.resolve_source(self.resolvers[i['debrid_provider']], i)
-                if stream_link:
-                    self.return_data['link'] = stream_link
-                    break
-
-            elif i['type'] == 'cloud' or i['type'] == 'hoster':
-                if i['type'] == 'cloud' and i['debrid_provider'] in ['premiumize', 'all_debrid']:
-                    stream_link = i['hash']
-                else:
-                    stream_link = self.resolve_source(self.resolvers[i['debrid_provider']], i)
-
                 if stream_link:
                     self.return_data['link'] = stream_link
                     break
@@ -181,12 +170,12 @@ class Resolver(BaseWindow):
     def resolve_source(self, api, source):
         api = api()
         hash_ = source['hash']
-        magnet = 'magnet:?xt=urn:btih:%s' % hash_
+        magnet = f"magnet:?xt=urn:btih:{hash_}"
         stream_link = {}
         if source['type'] == 'torrent':
             stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select)
         elif source['type'] == 'cloud' or source['type'] == 'hoster':
-            hash_ = api.resolve_cloud()
+            hash_ = api.resolve_cloud(source, self.pack_select)
             if hash_:
                 stream_link = api.resolve_hoster(hash_)
         return stream_link
@@ -222,14 +211,11 @@ class Resolver(BaseWindow):
         }
 
     def resolve_uncache(self, source):
-        silent = False
         heading = f'{control.ADDON_NAME}: Cache Resolver'
-        f_string = f'''
-[I]{source['release_title']}[/I]
-
-This source is not cached would you like to cache it now?        
-        '''
-        if not control.getBool('uncached.runinforground'):
+        f_string = (f"[I]{source['release_title']}[/I][CR]"
+                    f"[CR]"
+                    f"This source is not cached would you like to cache it now?")
+        if not control.getBool('uncached.autoruninforground'):
             yesnocustom = control.yesnocustom_dialog(heading, f_string, "Cancel", "Run in Background", "Run in Forground")
             if yesnocustom == -1 or yesnocustom == 2:
                 self.canceled = True
@@ -242,14 +228,20 @@ This source is not cached would you like to cache it now?
                 return
         else:
             runbackground = False
-            silent = True
         api = self.resolvers[source['debrid_provider']]()
-        resolved_cache = api.resolve_uncached_source(source, runbackground, silent)
+        try:
+            resolved_cache = api.resolve_uncached_source(source, runbackground)
+        except Exception as e:
+            control.progressDialog.close()
+            import traceback
+            control.ok_dialog(control.ADDON_NAME, f'error; {e}')
+            control.log(traceback.format_exc(), 'error')
+            return
         if not resolved_cache:
             self.canceled = True
         return resolved_cache
 
-    def doModal(self, sources, args, pack_select) -> object:
+    def doModal(self, sources, args, pack_select) -> any:
         self.sources = sources
         if self.sources:
             self.args = args
@@ -290,7 +282,7 @@ class Monitor(xbmc.Monitor):
         elif method == 'Player.OnStop':
             self.playbackerror = True
         else:
-            control.log(f'{sender} | {method} | {data}')
+            control.log(f'{method} | {data}')
 
 
 @HookMimetype('application/dash+xml')

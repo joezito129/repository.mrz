@@ -7,20 +7,20 @@ from resources.lib.ui import control, database_sync
 
 def refresh_apis() -> None:
     control.log("### Refreshing API's")
-    rd_token = control.getSetting('rd.token')
-    dl_token = control.getSetting('dl.token')
+    rd_token = control.getSetting('real_debrid.token')
+    dl_token = control.getSetting('debrid_link.token')
 
     kitsu_token = control.getSetting('kitsu.token')
     mal_token = control.getSetting('mal.token')
 
     if rd_token != '':
-        rd_expiry = control.getInt('rd.expiry')
+        rd_expiry = control.getInt('real_debrid.expiry')
         if time.time() > (rd_expiry - 600):
             from resources.lib.debrid import real_debrid
             real_debrid.RealDebrid().refreshToken()
 
     if dl_token != '':
-        dl_expiry = control.getInt('dl.expiry')
+        dl_expiry = control.getInt('debrid_link.expiry')
         if time.time() > (dl_expiry - 600):
             from resources.lib.debrid import debrid_link
             debrid_link.DebridLink().refreshToken()
@@ -54,7 +54,7 @@ def sync_watchlist(silent: bool = False) -> None:
 
         flavor = WatchlistFlavor.get_update_flavor()
         if flavor:
-            if flavor.flavor_name in WatchlistFlavor.get_enabled_watchlist_list():
+            if flavor.flavor_name in control.enabled_watchlists():
                 flavor.save_completed()
                 if not silent:
                     notify_string = f'Completed Sync [B]{flavor.flavor_name.capitalize()}[/B]'

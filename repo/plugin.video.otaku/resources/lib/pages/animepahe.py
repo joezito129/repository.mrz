@@ -8,10 +8,7 @@ from resources.lib.ui.BrowserBase import BrowserBase
 
 class Sources(BrowserBase):
     _BASE_URL = 'https://animepahe.ru/'
-    _headers = {
-        'Referer': _BASE_URL,
-        'Cookie': '__ddg1_=PZYJSmACHBBQGP6auJU9; __ddg2_=hxAe1bBqtlUhMFik'
-    }
+    headers = {'Referer': _BASE_URL, 'Cookie': '__ddg1_=PZYJSmACHBBQGP6auJU9; __ddg2_=hxAe1bBqtlUhMFik'}
 
     def get_sources(self, mal_id, episode) -> list:
         show = database.get_show(mal_id)
@@ -23,13 +20,13 @@ class Sources(BrowserBase):
             'q': title
         }
 
-        r = requests.get(self._BASE_URL + 'api', params=params, headers=self._headers)
+        r = requests.get(self._BASE_URL + 'api', params=params, headers=self.headers)
         sitems = r.json().get('data')
 
         if not sitems and ':' in title:
             title = title.split(':')[0]
             params['q'] = title
-            r = requests.get(self._BASE_URL + 'api', params=params, headers=self._headers)
+            r = requests.get(self._BASE_URL + 'api', params=params, headers=self.headers)
             sitems = r.json().get('data')
 
         all_results = []
@@ -64,7 +61,7 @@ class Sources(BrowserBase):
             'sort': 'episode_asc',
             'page': page
         }
-        r = requests.get(self._BASE_URL + 'api', params=params, headers=self._headers)
+        r = requests.get(self._BASE_URL + 'api', params=params, headers=self.headers)
         r = r.json()
         items = r.get('data')
         items = sorted(items, key=lambda x: x.get('episode'))
@@ -75,7 +72,7 @@ class Sources(BrowserBase):
         items = [x for x in items if x.get('episode') == e_num]
         if items:
             eurl = self._BASE_URL + 'play/' + slug + '/' + items[0].get('session')
-            html = requests.get(eurl, headers=self._headers).text
+            html = requests.get(eurl, headers=self.headers).text
             mlink = SoupStrainer('div', {'id': 'resolutionMenu'})
             mdiv = BeautifulSoup(html, "html.parser", parse_only=mlink)
             items = mdiv.find_all('button')

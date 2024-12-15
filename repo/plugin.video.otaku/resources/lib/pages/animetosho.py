@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import requests
 import re
 import itertools
@@ -18,12 +16,11 @@ class Sources(BrowserBase):
     _BASE_URL = 'https://animetosho.org'
 
     def __init__(self):
-        self.all_sources = []
         self.sources = []
         self.cached = []
         self.uncached = []
 
-    def get_sources(self, show, mal_id, episode, status, media_type, rescrape) -> dict[str: list]:
+    def get_sources(self, show, mal_id, episode, status, media_type, rescrape) -> dict:
         show = self._clean_title(show)
         query = self._sphinx_clean(show)
         if rescrape:
@@ -79,10 +76,11 @@ class Sources(BrowserBase):
 
             self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
 
-        # remove any duplicate sources
+        # remove any duplicate sources with same hash
+        seen_hashes = set()
         for source in self.sources:
-            if source not in self.all_sources:
-                self.all_sources.append(source)
+            if source['hash'] not in seen_hashes:
+                seen_hashes.add(source['hash'])
                 if source['cached']:
                     self.cached.append(source)
                 else:
@@ -90,7 +88,7 @@ class Sources(BrowserBase):
         return {'cached': self.cached, 'uncached': self.uncached}
 
     @staticmethod
-    def process_animetosho_episodes(url, params, episode, season):
+    def process_animetosho_episodes(url: str, params: dict, episode, season) -> list:
         r = requests.get(url, params=params)
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
@@ -159,7 +157,7 @@ class Sources(BrowserBase):
         return all_results
 
 
-def parse_animetosho_view(res, episode, cached=True):
+def parse_animetosho_view(res, episode, cached=True) -> dict:
     source = {
         'release_title': res['name'],
         'hash': res['hash'],

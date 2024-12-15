@@ -51,7 +51,7 @@ class Sources(BrowserBase):
 
     def _process_animixplay(self, slug, title, episode):
         sources = []
-        r = requests.get(slug, headers={'Referer': self._BASE_URL})
+        r = requests.get(slug, headers={'Referer': self._BASE_URL}).text
         eurl = re.search(r'id="showstreambtn"\s*href="([^"]+)', r)
         if eurl:
             eurl = eurl.group(1)
@@ -115,7 +115,7 @@ class Sources(BrowserBase):
                         'X-CSRF-TOKEN': csrf_token,
                         'Referer': eurl
                     }
-                    r = requests.post(parse.urljoin(eurl, '/ajax/embed'), data=data, headers=headers, cookies=cookie)
+                    r = requests.post(parse.urljoin(eurl, '/ajax/embed'), data=data, headers=headers, cookies=cookie).text
                     embed_url = parse.urljoin(eurl, re.findall(r'<iframe.+?src="([^"]+)', r)[0])
                     subs = ''
                     slink = ''

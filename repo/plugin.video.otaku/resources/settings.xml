@@ -594,6 +594,14 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="uncached.autoruninforground" type="boolean" label="30106" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                    <dependencies>
+                        <dependency type="visible" setting="show.uncached">true</dependency>
+                    </dependencies>
+                </setting>
 
             </group>
             <group id="2" label="30363" help="">
@@ -679,12 +687,12 @@
         <category id="Accounts" label="30365" help="">
             <!-- Real-Debrid -->
             <group id="1" label="30100" help="">
-                <setting id="rd.enabled" type="boolean" label="30101" help="">
+                <setting id="real_debrid.enabled" type="boolean" label="30101" help="">
                     <level>0</level>
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="rd.username" type="string" label="30102" help="">
+                <setting id="real_debrid.username" type="string" label="30102" help="">
                     <level>0</level>
                     <default/>
                     <constraints>
@@ -693,10 +701,10 @@
                     <control type="edit" format="string"/>
                     <enable>false</enable>
                     <dependencies>
-                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                        <dependency type="visible" setting="real_debrid.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="rd.token" type="string" label="" help="">
+                <setting id="real_debrid.token" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -704,12 +712,12 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="rd.expiry" type="integer" label="" help="">
+                <setting id="real_debrid.expiry" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
                     <control type="edit" format="integer"/>
                 </setting>
-                <setting id="rd.refresh" type="string" label="" help="">
+                <setting id="real_debrid.refresh" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -717,7 +725,7 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="rd.secret" type="string" label="" help="">
+                <setting id="real_debrid.secret" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -725,7 +733,7 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="rd.client_id" type="string" label="" help="">
+                <setting id="real_debrid.client_id" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -733,7 +741,7 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="rd.auth.status" type="string" label="30103" help="">
+                <setting id="real_debrid.auth.status" type="string" label="30103" help="">
                     <level>0</level>
                     <default/>
                     <constraints>
@@ -742,43 +750,35 @@
                     <control type="edit" format="string"/>
                     <enable>false</enable>
                     <dependencies>
-                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                        <dependency type="visible" setting="real_debrid.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="rd.auth_start" type="action" label="30104" help="">
+                <setting id="real_debrid.auth_start" type="action" label="30104" help="">
                     <level>0</level>
                     <data>RunPlugin(plugin://plugin.video.otaku/auth/realdebrid)</data>
                     <control type="button" format="action">
                         <close>true</close>
                     </control>
                     <dependencies>
-                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                        <dependency type="visible" setting="real_debrid.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="rd.refresh.token" type="action" label="30105" help="">
+                <setting id="real_debrid.refresh.token" type="action" label="30105" help="">
                     <level>0</level>
                     <data>RunPlugin(plugin://plugin.video.otaku/refresh/realdebrid)</data>
                     <control type="button" format="action">
                         <close>true</close>
                     </control>
                     <dependencies>
-                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                        <dependency type="visible" setting="real_debrid.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="uncached.runinforground" type="boolean" label="30106" help="">
-                    <level>0</level>
-                    <default>true</default>
-                    <control type="toggle"/>
-                    <dependencies>
-                        <dependency type="visible" setting="rd.enabled">true</dependency>
-                    </dependencies>
-                </setting>
-                <setting id="rd.cloudInspection" type="boolean" label="30190" help="">
+                <setting id="real_debrid.cloudInspection" type="boolean" label="30190" help="">
                     <level>0</level>
                     <default>false</default>
                     <control type="toggle"/>
                     <dependencies>
-                        <dependency type="visible" setting="rd.enabled">true</dependency>
+                        <dependency type="visible" setting="real_debrid.enabled">true</dependency>
                     </dependencies>
                 </setting>
             </group>
@@ -853,12 +853,12 @@
             </group>
             <!-- Debrid-Link -->
             <group id="3" label="30120" help="">
-                <setting id="dl.enabled" type="boolean" label="30121" help="">
+                <setting id="debrid_link.enabled" type="boolean" label="30121" help="">
                     <level>0</level>
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="dl.username" type="string" label="30122" help="">
+                <setting id="debrid_link.username" type="string" label="30122" help="">
                     <level>0</level>
                     <default/>
                     <constraints>
@@ -867,10 +867,10 @@
                     <control type="edit" format="string"/>
                     <enable>false</enable>
                     <dependencies>
-                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                        <dependency type="visible" setting="debrid_link.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="dl.auth" type="string" label="" help="">
+                <setting id="debrid_link.auth" type="string" label="" help="">
                     <level>4</level>
                     <default/>
                     <constraints>
@@ -878,12 +878,12 @@
                     </constraints>
                     <control type="edit" format="string"/>
                 </setting>
-                <setting id="dl.expiry" type="integer" label="" help="">
+                <setting id="debrid_link.expiry" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
                     <control type="edit" format="integer"/>
                 </setting>
-                <setting id="dl.auth.status" type="string" label="30123" help="">
+                <setting id="debrid_link.auth.status" type="string" label="30123" help="">
                     <level>0</level>
                     <default/>
                     <constraints>
@@ -892,35 +892,35 @@
                     <control type="edit" format="string"/>
                     <enable>false</enable>
                     <dependencies>
-                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                        <dependency type="visible" setting="debrid_link.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="dl.auth_start" type="action" label="30124" help="">
+                <setting id="debrid_link.auth_start" type="action" label="30124" help="">
                     <level>0</level>
                     <data>RunPlugin(plugin://plugin.video.otaku/auth/debridlink)</data>
                     <control type="button" format="action">
                         <close>true</close>
                     </control>
                     <dependencies>
-                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                        <dependency type="visible" setting="debrid_link.enabled">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="dl.refresh.token" type="action" label="30125" help="">
+                <setting id="debrid_link.refresh.token" type="action" label="30125" help="">
                     <level>0</level>
                     <data>RunPlugin(plugin://plugin.video.otaku/refresh/debridlink)</data>
                     <control type="button" format="action">
                         <close>true</close>
                     </control>
                     <dependencies>
-                        <dependency type="visible" setting="dl.enabled">true</dependency>
+                        <dependency type="visible" setting="debrid_link.enabled">true</dependency>
                     </dependencies>
                 </setting>
-<!--                <setting id="dl.cloudInspection" type="boolean" label="30190" help="">-->
+<!--                <setting id="debrid_link.cloudInspection" type="boolean" label="30190" help="">-->
 <!--                    <level>0</level>-->
 <!--                    <default>false</default>-->
 <!--                    <control type="toggle"/>-->
 <!--                    <dependencies>-->
-<!--                        <dependency type="visible" setting="dl.enabled">true</dependency>-->
+<!--                        <dependency type="visible" setting="debrid_link.enabled">true</dependency>-->
 <!--                    </dependencies>-->
 <!--                </setting>-->
             </group>

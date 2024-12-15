@@ -21,12 +21,12 @@ threads = []
 
 def torrentCacheCheck(torrent_list):
     enabled_debrids = control.enabled_debrid()
-    if enabled_debrids['rd']:
+    if enabled_debrids['real_debrid']:
         t = threading.Thread(target=real_debrid_worker, args=(deepcopy(torrent_list),))
         t.start()
         threads.append(t)
 
-    if enabled_debrids['dl']:
+    if enabled_debrids['debrid_link']:
         t = threading.Thread(target=debrid_link_worker, args=(deepcopy(torrent_list),))
         threads.append(t)
         t.start()
@@ -49,15 +49,15 @@ def torrentCacheCheck(torrent_list):
     for i in threads:
         i.join()
 
-    cached_list = realdebridCached + premiumizeCached + all_debridCached + debrid_linkCached
-    uncached_list = realdebridUnCached + premiumizeUnCached + all_debridUnCached + debrid_linkUnCached
+    cached_list = realdebridCached + premiumizeCached + all_debridCached + debrid_linkCached + torboxCached
+    uncached_list = realdebridUnCached + premiumizeUnCached + all_debridUnCached + debrid_linkUnCached + torboxUnCached
     return cached_list, uncached_list
 
 
 def all_debrid_worker(torrent_list: list):
     if len(torrent_list) != 0:
         for i in torrent_list:
-            i['debrid_provider'] = 'all_debrid'
+            i['debrid_provider'] = 'alldebrid'
             all_debridUnCached.append(i)
 
 
@@ -98,11 +98,10 @@ def premiumize_worker(torrent_list: list):
 def torbox_worker(torrent_list: list):
     hash_list = [i['hash'] for i in torrent_list]
     if len(hash_list) != 0:
-        cache_check = torbox.Torbox().hash_check(hash_list)
-        if cache_check:
-            for index, torrent in enumerate(torrent_list):
-                torrent['debrid_provider'] = 'torbox'
-                if cache_check['hash'] in hash_list:
-                    torboxCached.append(torrent)
-                else:
-                    torboxUnCached.append(torrent)
+        cache_check = [i['hash'] for i in torbox.Torbox().hash_check(hash_list)]
+        for torrent in torrent_list:
+            torrent['debrid_provider'] = 'torbox'
+            if torrent['hash'] in cache_check:
+                torboxCached.append(torrent)
+            else:
+                torboxUnCached.append(torrent)

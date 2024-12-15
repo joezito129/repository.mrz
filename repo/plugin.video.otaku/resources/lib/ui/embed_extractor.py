@@ -315,20 +315,20 @@ def __extract_dood(url, page_content, referer=None):
         t = string.ascii_letters + string.digits
         return pdata + ''.join([random.choice(t) for _ in range(10)])
 
-    pattern = r'(?://|\.)((?:do*ds?(?:tream)?|ds2(?:play|video))\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream|pro))/(?:d|e)/([0-9a-zA-Z]+)'
-    match = re.search(r'''dsplayer\.hotkeys[^']+'([^']+).+?function\s*makePlay.+?return[^?]+([^"]+)''', page_content,
-                      re.DOTALL)
+    pattern = r'(?://|\.)((?:do*ds?(?:tream)?|ds2(?:play|video))\.(?:com?|watch|to|s[ho]|cx|l[ai]|w[sf]|pm|re|yt|stream|pro))/(?:d|e)/([0-9a-zA-Z]+)'
+    match = re.search(r'''dsplayer\.hotkeys[^']+'([^']+).+?function\s*makePlay.+?return[^?]+([^"]+)''', page_content, re.DOTALL)
     if match:
-        host, media_id = re.findall(pattern, url)[0]
-        token = match.group(2)
-        nurl = 'https://{0}{1}'.format(host, match.group(1))
-        headers = {'Referer': url}
-        # html = client.request(nurl, referer=url)
-        html = requests.get(nurl, headers=headers).text
-        if html != '{}':
-            headers = {'User-Agent': _EDGE_UA,
-                       'Referer': url}
-            return dood_decode(html) + token + str(int(time.time() * 1000)) + __append_headers(headers)
+        re_all = re.findall(pattern, url)
+        if re_all:
+            host, media_id = re_all[0]
+            token = match.group(2)
+            nurl = 'https://{0}{1}'.format(host, match.group(1))
+            headers = {'Referer': url}
+            r = requests.get(nurl, headers=headers)
+            if r.ok:
+                html = r.text
+                headers = {'User-Agent': _EDGE_UA, 'Referer': url}
+                return dood_decode(html) + token + str(int(time.time() * 1000)) + __append_headers(headers)
 
 
 def __extract_streamtape(url, page_content, referer=None):

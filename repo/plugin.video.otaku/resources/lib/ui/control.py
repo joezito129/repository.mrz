@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import random
 import xbmc
 import xbmcgui
@@ -27,6 +25,7 @@ ADDON_ICON = addonInfo('icon')
 FANART = addonInfo('fanart')
 ADDON_PATH = Path(ADDON.getAddonInfo('path'))
 dataPath = Path(xbmcvfs.translatePath(addonInfo('profile')))
+sys.path.append(dataPath.as_posix())
 kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
 
 cacheFile = dataPath / 'cache.db'
@@ -68,15 +67,12 @@ def log(msg, level="info") -> None:
     xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
 
 
-def enabled_debrid() -> dict[str: bool]:
-    debrids = ['rd', 'dl', 'alldebrid', 'premiumize', 'torbox']
-    enabled_debrids = {}
-    for debrid in debrids:
-        enabled_debrids[debrid] = getSetting(f'{debrid}.token') != '' and getBool(f'{debrid}.enabled')
-    return enabled_debrids
+def enabled_debrid() -> dict:
+    debrids = ['real_debrid', 'debrid_link', 'alldebrid', 'premiumize', 'torbox']
+    return {x: getSetting(f'{x}.token') != '' and getBool(f'{x}.enabled') for x in debrids}
 
 
-def enabled_watchlists() -> list[str]:
+def enabled_watchlists() -> list:
     watchlists = ['mal', 'anilist', 'simkl', 'kitsu']
     return [x for x in watchlists if getSetting(f'{x}.token') != '' and getBool(f'{x}.enabled')]
 
@@ -188,7 +184,11 @@ def notify(title: str, text: str, icon: str = LOGO_MEDIUM.as_posix(), time: int 
     xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
-def multiselect_dialog(title: str, dialog_list: list) -> list[int]:
+def input_dialog(title: str, input_: str) -> str:
+    return xbmcgui.Dialog().input(title, input_)
+
+
+def multiselect_dialog(title: str, dialog_list: list) -> list:
     return xbmcgui.Dialog().multiselect(title, dialog_list)
 
 

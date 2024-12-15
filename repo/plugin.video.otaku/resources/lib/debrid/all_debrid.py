@@ -6,7 +6,7 @@ from resources.lib.ui import control, source_utils
 
 class AllDebrid:
     def __init__(self):
-        self.apikey = control.getSetting('alldebrid.token')
+        self.token = control.getSetting('alldebrid.token')
         self.agent_identifier = 'Otaku'
         self.base_url = 'https://api.alldebrid.com/v4'
         self.cache_check_results = []
@@ -42,7 +42,7 @@ class AllDebrid:
     def status(self) -> None:
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey
+            'apikey': self.token
         }
         r = requests.get(f'{self.base_url}/user', params=params)
         res = r.json()['data']
@@ -65,15 +65,15 @@ class AllDebrid:
         r = requests.get(f'{self.base_url}/pin/check', params=params)
         resp = r.json()['data']
         if resp['activated']:
-            control.setSetting('alldebrid.token', resp['apikey'])
-            self.apikey = resp['apikey']
+            self.token = resp['apikey']
+            control.setSetting('alldebrid.token', self.token)
             return True
         return False
 
     def addMagnet(self, magnet_hash):
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey,
+            'apikey': self.token,
             'magnets': magnet_hash
         }
         r = requests.get(f'{self.base_url}/magnet/upload', params=params)
@@ -82,7 +82,7 @@ class AllDebrid:
     def resolve_hoster(self, url):
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey,
+            'apikey': self.token,
             'link': url
         }
         r = requests.get(f'{self.base_url}/link/unlock', params=params)
@@ -92,7 +92,7 @@ class AllDebrid:
     def magnet_status(self, magnet_id):
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey,
+            'apikey': self.token,
             'id': magnet_id
         }
         r = requests.get(f'{self.base_url}/magnet/status', params=params)
@@ -101,7 +101,7 @@ class AllDebrid:
     def list_torrents(self):
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey
+            'apikey': self.token
         }
         r = requests.get(f'{self.base_url}/user/links', params=params)
         return r.json()['data']
@@ -109,13 +109,13 @@ class AllDebrid:
     def link_info(self, link):
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey,
+            'apikey': self.token,
             'link[]': link
         }
         r = requests.get(f'{self.base_url}/link/infos', params=params)
         return r.json()['data']
 
-    def resolve_single_magnet(self, hash_, magnet, episode='', pack_select=False):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
         magnet_id = self.addMagnet(magnet)['magnets'][0]['id']
         folder_details = self.magnet_status(magnet_id)['magnets']['links']
         folder_details = [{'link': x['link'], 'path': x['filename']} for x in folder_details]
@@ -134,10 +134,13 @@ class AllDebrid:
         self.delete_magnet(magnet_id)
         return self.resolve_hoster(selected_file)
 
+    def resolve_cloud(self, source, pack_select):
+        pass
+
     def delete_magnet(self, magnet_id) -> bool:
         params = {
             'agent': self.agent_identifier,
-            'apikey': self.apikey,
+            'apikey': self.token,
             'id': magnet_id
         }
         r = requests.get(f'{self.base_url}/magnet/delete', params=params)
