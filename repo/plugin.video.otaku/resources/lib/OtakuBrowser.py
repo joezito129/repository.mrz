@@ -58,12 +58,12 @@ def get_anime_init(mal_id) -> tuple:
     else:
         from resources.lib.indexers import simkl
         data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)
-        if not data[0]:
+        if not data:
             from resources.lib.indexers import anizip
             data = anizip.ANIZIPAPI().get_episodes(mal_id, show_meta)
-        if not data[0]:
+        if not data:
             from resources.lib.indexers import jikanmoe
             data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
-        if not data[0]:
-            data = [], 'episodes'
-    return data
+        if not data:
+            data = []
+    return data, 'episodes'

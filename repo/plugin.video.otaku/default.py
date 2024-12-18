@@ -259,7 +259,6 @@ def REFRESH(payload: str, params: dict):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload: str, params: dict):
-
     path, mal_id, eps_watched = payload.rsplit("/")
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
@@ -303,9 +302,7 @@ def LIST_MENU(payload: str, params: dict):
 
     if control.getBool('menu.lastwatched'):
         NEW_MENU_ITEMS = add_last_watched(NEW_MENU_ITEMS)
-    for i in MENU_ITEMS:
-        if control.getBool(i[1]):
-            NEW_MENU_ITEMS.append(i)
+    [NEW_MENU_ITEMS.append(i) for i in MENU_ITEMS if control.getBool(i[1])]
     control.draw_items([utils.allocate_item(name, url, True, False, [], image, info) for name, url, image, info in NEW_MENU_ITEMS], 'addons')
 
 
@@ -384,12 +381,8 @@ def COMPLETED_SYNC(payload: str, params: dict):
 
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict):
-    control.progressDialog.create(control.ADDON_NAME, 'test')
-    control.wait_for_abort(10)
-    control.progressDialog.close()
-    control.print('done')
-    # from resources.lib.windows.sort_select import SortSelect
-    # SortSelect(*('sort_select.xml', control.ADDON_PATH.as_posix())).doModal()
+    from resources.lib.windows.sort_select import SortSelect
+    SortSelect(*('sort_select.xml', control.ADDON_PATH.as_posix())).doModal()
 
 
 @Route('install_packages')
@@ -452,12 +445,14 @@ def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict):
 
 
 if __name__ == "__main__":
-    router_process(control.get_plugin_url(), control.get_plugin_params())
+    plugin_url = control.get_plugin_url()
+    plugin_params = control.get_plugin_params()
+    router_process(plugin_url, plugin_params)
     if len(control.playList) > 0:
         import xbmc
         if not xbmc.Player().isPlaying():
             control.playList.clear()
-
+    control.log(f'Finished Running: {plugin_url=} {plugin_params=}')
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')

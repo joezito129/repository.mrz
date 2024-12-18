@@ -56,6 +56,7 @@ class Resolver(BaseWindow):
         self.resume_time = actionArgs.get('resume_time')
         self.context = actionArgs.get('context')
         self.silent = actionArgs.get('silent')
+        self.abort = False
 
     def onInit(self):
         self.resolve(self.sources)
@@ -156,14 +157,19 @@ class Resolver(BaseWindow):
                 xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
             monitor = Monitor()
             for _ in range(30):
-                monitor.waitForAbort(.5)
-                if monitor.abortRequested() or monitor.playing:
-                    break
-                if monitor.playbackerror:
+                if monitor.waitForAbort(0.5) or monitor.playbackerror or monitor.abortRequested():
                     xbmcplugin.setResolvedUrl(control.HANDLE, False, item)
+                    control.playList.clear()
+                    self.abort = True
                     break
+                if monitor.playing:
+                    break
+            else:
+                control.log('no xbmc playing source found; Continuing code', 'warning')
+            del monitor
             self.close()
-            player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
+            if not self.abort:
+                player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
         else:
             self.close()
 
