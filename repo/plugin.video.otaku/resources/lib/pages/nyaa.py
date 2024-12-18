@@ -14,6 +14,7 @@ class Sources(BrowserBase):
     _BASE_URL = 'https://nyaa.si'
 
     def __init__(self):
+        self.all_sources = []
         self.cached = []
         self.uncached = []
         self.sources = []
@@ -155,8 +156,15 @@ class Sources(BrowserBase):
         if not self.sources:
             self.sources = self.get_episode_sources_backup(query, mal_id, episode)
 
-        # remove any duplicate sources
-        self.append_cache_uncached_noduplicates()
+        # remove any duplicate sources with same hash
+        seen_hashes = set()
+        for source in self.sources:
+            if source['hash'] not in seen_hashes:
+                seen_hashes.add(source['hash'])
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
         return {'cached': self.cached, 'uncached': self.uncached}
 
     def get_episode_sources(self, show, mal_id, episode, status, rescrape):
@@ -300,7 +308,13 @@ class Sources(BrowserBase):
             self.sources = self.get_movie_sources_backup(mal_id)
 
         # make sure no duplicate sources
-        self.append_cache_uncached_noduplicates()
+        for source in self.sources:
+            if source not in self.all_sources:
+                self.all_sources.append(source)
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
         return {'cached': self.cached, 'uncached': self.uncached}
 
     def get_movie_sources_backup(self, mal_id):
@@ -345,13 +359,3 @@ class Sources(BrowserBase):
             source['magnet'] = res['magnet']
             source['type'] += ' (uncached)'
         return source
-
-    def append_cache_uncached_noduplicates(self):
-        seen_sources = []
-        for source in self.sources:
-            if source not in seen_sources:
-                seen_sources.append(source)
-                if source['cached']:
-                    self.cached.append(source)
-                else:
-                    self.uncached.append(source)

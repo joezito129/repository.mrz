@@ -184,8 +184,8 @@ def notify(title: str, text: str, icon: str = LOGO_MEDIUM.as_posix(), time: int 
     xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
-def input_dialog(title: str, input_: str = '', option: int = 0) -> str:
-    return xbmcgui.Dialog().input(title, input_, option=option)
+def input_dialog(title: str, input_: str) -> str:
+    return xbmcgui.Dialog().input(title, input_)
 
 
 def multiselect_dialog(title: str, dialog_list: list) -> list:
@@ -358,6 +358,20 @@ def exit_(code: int) -> None:
 
 def is_addon_visible() -> bool:
     return xbmc.getInfoLabel('Container.PluginName') == 'plugin.video.otaku'
+
+
+def abort_requested() -> bool:
+    monitor = xbmc.Monitor()
+    abort_requested_ = monitor.abortRequested()
+    del monitor
+    return abort_requested_
+
+
+def wait_for_abort(timeout: float = 1.0) -> bool:
+    monitor = xbmc.Monitor()
+    abort_requested_ = monitor.waitForAbort(timeout)
+    del monitor
+    return abort_requested_
 
 
 def print(string, *args) -> None:

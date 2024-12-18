@@ -1,5 +1,5 @@
 """ 
-    Put this script in the root folder of your repo and it will
+    Put this script in the root folder of your repo, and it will
     zip up all addon folders, create a new zip in your zips folder
     and then update the md5 and addons.xml file
 """
@@ -13,7 +13,7 @@ import zipfile
 from xml.etree import ElementTree
 
 SCRIPT_VERSION = 5
-KODI_VERSIONS = ["krypton", "leia", "matrix", "nexus", "omega", "repo"]
+KODI_VERSIONS = ["krypton", "leia", "matrix", "nexus", "repo"]
 IGNORE = [
     ".git",
     ".github",
@@ -150,10 +150,7 @@ class Generator:
         self._remove_binaries()
 
         if self._generate_addons_file(addons_xml_path):
-            print(
-                "Successfully updated {}".format(color_text(addons_xml_path, 'yellow'))
-            )
-
+            print("Successfully updated {}".format(color_text(addons_xml_path, 'yellow')))
             if self._generate_md5_file(addons_xml_path, md5_path):
                 print("Successfully updated {}".format(color_text(md5_path, 'yellow')))
 
@@ -254,7 +251,7 @@ class Generator:
         for ext in root.findall("extension"):
             if ext.get("point") in ["xbmc.addon.metadata", "kodi.addon.metadata"]:
                 assets = ext.find("assets")
-                if not assets:
+                if assets is not None:
                     continue
                 for art in [a for a in assets if a.text]:
                     copyfiles.append(os.path.normpath(art.text))

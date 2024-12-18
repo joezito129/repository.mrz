@@ -6,9 +6,10 @@ import pickle
 from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.ui import database, source_utils, control
+from resources.lib.ui import database, source_utils
 from resources.lib import debrid
 from resources.lib.indexers.simkl import SIMKLAPI
+from resources.lib.ui.control import settingids
 
 
 class Sources(BrowserBase):
@@ -18,7 +19,6 @@ class Sources(BrowserBase):
         self.sources = []
         self.cached = []
         self.uncached = []
-        self.anidb_id = None
 
     def get_sources(self, show, mal_id, episode, status, media_type, rescrape) -> dict:
         show = self._clean_title(show)
@@ -42,13 +42,11 @@ class Sources(BrowserBase):
         }
         if show_meta:
             meta_ids = pickle.loads(show_meta['meta_ids'])
-            self.anidb_id = meta_ids.get('anidb_id')
-            if not self.anidb_id:
+            params['aids'] = meta_ids.get('anidb_id')
+            if not params['aids']:
                 ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
-                self.anidb_id = meta_ids['anidb_id'] = ids['anidb']
+                params['aids'] = meta_ids['anidb_id'] = ids['anidb']
                 database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
-        if self.anidb_id:
-            params['aids'] = self.anidb_id
         self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
 
         if status == 'FINISHED':
@@ -78,11 +76,19 @@ class Sources(BrowserBase):
 
             self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
 
-        # remove any duplicate sources
-        self.append_cache_uncached_noduplicates()
+        # remove any duplicate sources with same hash
+        seen_hashes = set()
+        for source in self.sources:
+            if source['hash'] not in seen_hashes:
+                seen_hashes.add(source['hash'])
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def process_animetosho_episodes(self, url: str, params: dict, episode, season) -> list:
+    @staticmethod
+    def process_animetosho_episodes(url: str, params: dict, episode, season) -> list:
         r = requests.get(url, params=params)
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
@@ -115,7 +121,7 @@ class Sources(BrowserBase):
             except AttributeError:
                 continue
 
-            if season and not self.anidb_id:
+            if season:
                 title = torrent['name'].lower()
 
                 ep_match = rex_ep.findall(title)
@@ -145,20 +151,11 @@ class Sources(BrowserBase):
 
         mapfunc = partial(parse_animetosho_view, episode=episode)
         all_results = list(map(mapfunc, cache_list))
-        if control.settingids.showuncached:
+        if settingids.showuncached:
             mapfunc2 = partial(parse_animetosho_view, episode=episode, cached=False)
             all_results += list(map(mapfunc2, uncashed_list))
         return all_results
 
-    def append_cache_uncached_noduplicates(self):
-        seen_sources = []
-        for source in self.sources:
-            if source not in seen_sources:
-                seen_sources.append(source)
-                if source['cached']:
-                    self.cached.append(source)
-                else:
-                    self.uncached.append(source)
 
 def parse_animetosho_view(res, episode, cached=True) -> dict:
     source = {

@@ -95,7 +95,7 @@ class SIMKLAPI:
             all_results = list(map(mapfunc1, episodes))
         return all_results
 
-    def get_episodes(self, mal_id, show_meta) -> list:
+    def get_episodes(self, mal_id, show_meta) -> tuple:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
         kodi_meta.update(pickle.loads(show_meta['art']))
         fanart = kodi_meta.get('fanart')
@@ -113,14 +113,14 @@ class SIMKLAPI:
         dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
         if episodes:
             if kodi_meta['status'] not in ["FINISHED", "Finished Airing"]:
-                return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data)
-            return indexers.process_episodes(episodes, eps_watched, dub_data)
+                return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data), 'episodes'
+            return indexers.process_episodes(episodes, eps_watched, dub_data), 'episodes'
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
             from resources.jz import anime_filler
             filler_data = anime_filler.get_data(kodi_meta['ename'])
         else:
             filler_data = None
-        return self.process_episode_view(mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data)
+        return self.process_episode_view(mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data), 'episodes'
 
     def get_anime_info(self, mal_id):
         show_ids = database.get_show(mal_id)

@@ -1,5 +1,4 @@
 import requests
-import xbmcgui
 
 from resources.lib.ui import source_utils, control
 
@@ -13,7 +12,7 @@ class Torbox:
         return {'Authorization': f"Bearer {self.token}"}
 
     def auth(self) -> None:
-        self.token = control.input_dialog("Enter API KEY for Torbox:", self.token, xbmcgui.ALPHANUM_HIDE_INPUT)
+        self.token = control.input_dialog("Enter API KEY for Torbox:", self.token)
         control.setSetting('torbox.token', self.token)
         auth_done = self.status()
         if not auth_done:
