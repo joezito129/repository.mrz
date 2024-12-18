@@ -72,15 +72,10 @@ class Premiumize:
                 xbmc.sleep(1000)
         return False
 
-    def search_folder(self, query):
-        params = {'q': query}
-        r = requests.get(f'{self.base_url}/folder/search', headers=self.headers(), params=params)
-        return r.json()['content']
-
     def list_folder(self, folderid):
         params = {'id': folderid} if folderid else None
-        r = requests.get(f"{self.base_url}/folder/list", headers=self.headers(), params=params)
-        return r.json()['content']
+        response = requests.get(f"{self.base_url}/folder/list", headers=self.headers(), params=params).json()
+        return response['content']
 
     def hash_check(self, hashlist) -> dict:
         params = {'items[]': hashlist}
@@ -90,6 +85,7 @@ class Premiumize:
     def direct_download(self, src) -> dict:
         postData = {'src': src}
         r = requests.post(f'{self.base_url}/transfer/directdl', headers=self.headers(), data=postData)
+        control.log(r.json())
         return r.json()
 
     def addMagnet(self, src) -> dict:
@@ -159,9 +155,8 @@ class Premiumize:
 
         progress = 0
         status = 'running'
-        monitor = xbmc.Monitor()
         while status != 'finished':
-            if control.progressDialog.iscanceled() or monitor.waitForAbort(5):
+            if control.progressDialog.iscanceled() or control.wait_for_abort(5):
                 break
             transfer_list = self.transfer_list()
             for i in transfer_list:
@@ -178,7 +173,6 @@ class Premiumize:
             else:
                 control.log('Unable to find torrent', 'warning')
                 break
-        del monitor
         if status == 'finished':
             control.ok_dialog(heading, "This file has been added to your Cloud")
         else:

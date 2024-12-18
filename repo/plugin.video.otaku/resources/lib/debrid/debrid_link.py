@@ -10,8 +10,8 @@ class DebridLink:
     def __init__(self):
         self.ClientID = 'sdpBuYFQo6L53s3B4apluw'
         self.USER_AGENT = 'Otaku'
-        self.token = control.getSetting('debrid_link.token')
-        self.refresh = control.getSetting('debrid_link.refresh')
+        self.token = control.getSetting('dl.token')
+        self.refresh = control.getSetting('dl.refresh')
         self.api_url = "https://debrid-link.com/api/v2"
         self.cache_check_results = {}
         self.DeviceCode = ''
@@ -40,9 +40,9 @@ class DebridLink:
             control.progressDialog.close()
             self.token = response.get('access_token')
             self.refresh = response.get('refresh_token')
-            control.setSetting('debrid_link.token', self.token)
-            control.setSetting('debrid_link.refresh', self.refresh)
-            control.setInt('debrid_link.expiry', int(time.time()) + int(response['expires_in']))
+            control.setSetting('dl.token', self.token)
+            control.setSetting('dl.refresh', self.refresh)
+            control.setInt('dl.expiry', int(time.time()) + int(response['expires_in']))
         return r.ok
 
     def auth(self):
@@ -74,13 +74,13 @@ class DebridLink:
         response = requests.get(url, headers=self.headers()).json()
         username = response['value']['pseudo']
         premium = response['value']['premiumLeft'] > 0
-        control.setSetting('debrid_link.username', username)
+        control.setSetting('dl.username', username)
         control.ok_dialog(f'{control.ADDON_NAME}: Debrid-Link', control.lang(30023))
         if not premium:
-            control.setSetting('debrid_link.auth.status', 'Expired')
+            control.setSetting('dl.auth.status', 'Expired')
             control.ok_dialog(control.ADDON_NAME, control.lang(30024))
         else:
-            control.setSetting('debrid_link.auth.status', 'Premium')
+            control.setSetting('dl.auth.status', 'Premium')
 
     def refreshToken(self):
         postData = {
@@ -92,8 +92,8 @@ class DebridLink:
         response = requests.post(url, data=postData, headers={'User-Agent': self.USER_AGENT}).json()
         if response.get('access_token'):
             self.token = response['access_token']
-            control.setSetting('debrid_link.token', self.token)
-            control.setInt('debrid_link.expiry', int(time.time()) + response['expires_in'])
+            control.setSetting('dl.token', self.token)
+            control.setInt('dl.expiry', int(time.time()) + response['expires_in'])
 
     def check_hash(self, hashlist):
         if isinstance(hashlist, list):

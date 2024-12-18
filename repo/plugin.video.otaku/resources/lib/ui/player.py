@@ -89,7 +89,7 @@ class WatchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
-        for _ in range(40):
+        for inx in range(40):
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
             xbmc.sleep(250)
@@ -126,7 +126,8 @@ class WatchlistPlayer(player):
         if endpoint != 0:
             while self.isPlaying():
                 self.current_time = int(self.getTime())
-                if (not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
+                if (
+                        not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
                     PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
                     break
                 xbmc.sleep(5000)
@@ -168,7 +169,8 @@ class WatchlistPlayer(player):
                     if self.skipoutro_aniskip_enable:
                         if outro_start is None and skip['type']['name'] in ['Credits', 'New Credits']:
                             outro_start = int(skip['at'])
-                        elif outro_end is None and outro_start is not None and skip['type']['name'] in ['Canon', 'Preview']:
+                        elif outro_end is None and outro_start is not None and skip['type']['name'] in ['Canon',
+                                                                                                        'Preview']:
                             outro_end = int(skip['at'])
 
             if intro_start is not None and intro_end is not None:

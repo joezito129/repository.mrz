@@ -120,7 +120,9 @@ class RealDebrid:
             control.log(f"real_debrid.refresh: {repr(r)}", 'warning')
 
     def addMagnet(self, magnet):
-        postData = {'magnet': magnet}
+        postData = {
+            'magnet': magnet
+        }
         response = requests.post(f'{self.BaseUrl}/torrents/addMagnet', headers=self.headers(), data=postData).json()
         return response
 
@@ -178,9 +180,8 @@ class RealDebrid:
             if runinbackground:
                 control.notify(heading, "The souce is downloading to your cloud")
                 return
-            monitor = xbmc.Monitor()
             while torrent['status'] != 'downloaded':
-                if control.progressDialog.iscanceled() or monitor.waitForAbort(5):
+                if control.progressDialog.iscanceled() or control.wait_for_abort(5):
                     break
                 torrent = self.torrentInfo(torrent['id'])
                 f_body = (f"Progress: {torrent['progress']} %[CR]"
