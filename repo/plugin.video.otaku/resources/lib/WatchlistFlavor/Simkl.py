@@ -58,7 +58,7 @@ class SimklWLF(WatchlistFlavorBase):
                     user = r.json()['user']
                     login_data['username'] = user['name']
                 return login_data
-            new_display_dialog = f"{display_dialog}[CR]Code Valid for {control.colorstr(device_code["expires_in"] - i * device_code["interval"])} Seconds"
+            new_display_dialog = f"{display_dialog}[CR]Code Valid for {control.colorstr(device_code['expires_in'] - i * device_code['interval'])} Seconds"
             control.progressDialog.update(int((inter - i) / inter * 100), new_display_dialog)
 
     def __get_sort(self):
