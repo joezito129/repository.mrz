@@ -230,7 +230,6 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
-
 class SQL:
     def __init__(self, path: str, timeout: int = 60):
         self.lock = threading.Lock()
@@ -255,4 +254,7 @@ class SQL:
             control.log('database error')
             control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
         if exc_type is OperationalError:
+            import traceback
+            control.log('database error')
+            control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
             return True

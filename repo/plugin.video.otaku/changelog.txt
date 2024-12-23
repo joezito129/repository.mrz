@@ -1,3 +1,9 @@
+Changelog v5.1.12 (2024-12-23):
+- Added building playlist
+- Fixed Context menu playing items
+- Fixed Resume Time
+- Added auto choose subtitle with signs or songs in name
+
 Changelog v5.1.11 (2024-12-17):
 - Improved Animetosho Scraping
 - Improved Debrid Cloud Searching

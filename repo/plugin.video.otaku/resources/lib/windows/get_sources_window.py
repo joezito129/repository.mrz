@@ -51,6 +51,7 @@ class GetSources(BaseWindow):
     def onAction(self, action):
         actionID = action.getId()
         if actionID in [92, 10]:
+            # BACKSPACE / ESCAPE
             self.canceled = True
 
     def update_properties(self, text):

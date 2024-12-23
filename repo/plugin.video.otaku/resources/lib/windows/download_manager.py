@@ -29,7 +29,6 @@ class DownloadManager(BaseWindow):
 
     def onAction(self, action):
         actionID = action.getId()
-
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
             self.abort = True
@@ -46,7 +45,7 @@ class DownloadManager(BaseWindow):
                 manager.cancel_task(url_hash)
                 manager.remove_download_task(url_hash)
                 self.close()
-                DownloadManager(*('download_manager.xml', control.ADDON_PATH)).doModal()
+                DownloadManager('download_manager.xml', control.ADDON_PATH).doModal()
 
     def onClick(self, controlID):
         self.handle_action(controlID)
@@ -56,7 +55,7 @@ class DownloadManager(BaseWindow):
             self.abort = True
             manager.clear_complete()
             self.close()
-            DownloadManager(*('download_manager.xml', control.ADDON_PATH.as_posix())).doModal()
+            DownloadManager('download_manager.xml', control.ADDON_PATH.as_posix()).doModal()
 
         if controlID == 3101:   # close
             self.abort = True

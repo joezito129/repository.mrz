@@ -4,8 +4,7 @@ import pickle
 
 from resources.lib.ui import control, database
 from resources.lib.indexers import aniskip, anime_skip
-
-# from resources.lib import OtakuBrowser
+from resources.lib import indexers
 
 playList = control.playList
 player = xbmc.Player
@@ -15,15 +14,15 @@ class WatchlistPlayer(player):
     def __init__(self):
         super(WatchlistPlayer, self).__init__()
         self.vtag = None
-        self.resume_time = None
         self.episode = None
-        self._build_playlist = None
         self.mal_id = None
         self._watchlist_update = None
         self.current_time = 0
         self.updated = False
         self.media_type = None
         self.update_percent = control.getInt('watchlist.update.percent')
+        self.path = ''
+        self.context = False
 
         self.total_time = None
         self.delay_time = control.getInt('skipintro.delay')
@@ -39,12 +38,12 @@ class WatchlistPlayer(player):
         self.skipintro_offset = control.getInt('skipintro.aniskip.offset')
         self.skipoutro_offset = control.getInt('skipoutro.aniskip.offset')
 
-    def handle_player(self, mal_id, watchlist_update, build_playlist, episode, resume_time):
+    def handle_player(self, mal_id, watchlist_update, episode, path, context):
         self.mal_id = mal_id
         self._watchlist_update = watchlist_update
-        self._build_playlist = build_playlist
         self.episode = episode
-        self.resume_time = resume_time
+        self.path = path
+        self.context = context
 
         # process skip times
         self.process_embed('aniwave')
@@ -62,6 +61,23 @@ class WatchlistPlayer(player):
     def onPlayBackStopped(self):
         control.closeAllDialogs()
         playList.clear()
+        if self.context and self.path:
+            if 10 < self.getWatchedPercent() < 90:
+                query = {
+                    'jsonrpc': '2.0',
+                    'method': 'Files.SetFileDetails',
+                    'params': {
+                        'file': self.path,
+                        'media': 'video',
+                        'resume': {
+                            'position': self.current_time,
+                            'total': self.total_time
+                        }
+                    },
+                    'id': 1
+                }
+                res = control.jsonrpc(query)
+
 
     def onPlayBackEnded(self):
         control.closeAllDialogs()
@@ -69,19 +85,23 @@ class WatchlistPlayer(player):
     def onPlayBackError(self):
         control.closeAllDialogs()
         playList.clear()
-        control.exit_(1)
+
+    def build_playlist(self):
+        episodes = database.get_episode_list(self.mal_id)
+        video_data = indexers.process_episodes(episodes, '') if episodes else []
+        playlist = control.bulk_dir_list(video_data, True)[self.episode:]
+        for i in playlist:
+            control.playList.add(url=i[0], listitem=i[1])
 
     def getWatchedPercent(self):
-        current_position = self.getTime()
-        media_length = self.getTotalTime()
-        return float(current_position) / float(media_length) * 100 if int(media_length) != 0 else 0
+        return (self.current_time / self.total_time) * 100 if self.total_time != 0 else 0
 
     def onWatchedPercent(self):
         if not self._watchlist_update:
             return
         while self.isPlaying() and not self.updated:
-            watched_percentage = self.getWatchedPercent()
             self.current_time = self.getTime()
+            watched_percentage = self.getWatchedPercent()
             if watched_percentage > self.update_percent:
                 self._watchlist_update(self.mal_id, self.episode)
                 self.updated = True
@@ -89,47 +109,73 @@ class WatchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
-        for _ in range(40):
+        for _ in range(20):
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
             xbmc.sleep(250)
-
         if not self.isPlayingVideo():
+            control.log('Not playing Video', 'warning')
             return
+
+        # todo make setting
+        if True:
+            query = {
+                'jsonrpc': '2.0',
+                'id': 1,
+                'method': 'Player.GetProperties',
+                'params': {
+                    'playerid': 1,
+                    'properties': ['subtitles']
+                }
+            }
+            res = control.jsonrpc(query)['result']
+            subtitles = res.get('subtitles', [])
+
+            subtitles = filter(lambda x: x['language'] == 'eng', subtitles)
+            matches = ['sign', 'songs']
+            for s in subtitles:
+                if any(x in s['name'].lower() for x in matches):
+                    self.setSubtitleStream(s['index'])
+                    break
+
+        control.setSetting('addon.last_watched', self.mal_id)
+        control.closeAllDialogs()
 
         self.vtag = self.getVideoInfoTag()
         self.media_type = self.vtag.getMediaType()
-        control.setSetting('addon.last_watched', self.mal_id)
-
         self.total_time = int(self.getTotalTime())
-        control.closeAllDialogs()
-        if self.resume_time:
-            player().seekTime(self.resume_time)
 
         if self.media_type == 'movie':
-            return self.onWatchedPercent()
+            self.onWatchedPercent()
+        else:
+            if self.media_type == 'episode' and playList.size() == 1:
+                self.build_playlist()
+            if control.getBool('smartplay.skipintrodialog'):
+                if self.skipintro_start < 1:
+                    self.skipintro_start = 1
+                while self.isPlaying():
+                    self.current_time = int(self.getTime())
+                    if self.current_time > self.skipintro_end:
+                        break
+                    elif self.current_time > self.skipintro_start:
+                        PlayerDialogs().show_skip_intro(self.skipintro_aniskip, self.skipintro_end)
+                        break
+                    xbmc.sleep(1000)
+            self.onWatchedPercent()
 
-        if control.getBool('smartplay.skipintrodialog'):
-            if self.skipintro_start < 1:
-                self.skipintro_start = 1
-            while self.isPlaying():
-                self.current_time = int(self.getTime())
-                if self.current_time > self.skipintro_end:
-                    break
-                elif self.current_time > self.skipintro_start:
-                    PlayerDialogs().show_skip_intro(self.skipintro_aniskip, self.skipintro_end)
-                    break
-                xbmc.sleep(1000)
-        self.onWatchedPercent()
-        # OtakuBrowser.get_sources(self.mal_id, str(self.episode), self.media_type, silent=True)
-        endpoint = control.getInt('playingnext.time') if control.getBool('smartplay.playingnextdialog') else 0
-        if endpoint != 0:
-            while self.isPlaying():
-                self.current_time = int(self.getTime())
-                if (not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
-                    PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
-                    break
-                xbmc.sleep(5000)
+            endpoint = control.getInt('playingnext.time') if control.getBool('smartplay.playingnextdialog') else 0
+            if endpoint != 0:
+                while self.isPlaying():
+                    self.current_time = int(self.getTime())
+                    if (not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
+                        PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
+                        break
+                    xbmc.sleep(5000)
+
+        monitor = xbmc.Monitor()
+        while not monitor.waitForAbort(5) and self.isPlaying():
+            self.current_time = int(self.getTime())
+        control.closeAllDialogs()
 
     def process_aniskip(self):
         if self.skipintro_aniskip_enable:
@@ -212,9 +258,9 @@ class PlayerDialogs(xbmc.Player):
         args = self._get_next_item_args()
         args['skipoutro_end'] = skipoutro_end
         if skipoutro_aniskip:
-            PlayingNext(*('playing_next_aniskip.xml', control.ADDON_PATH.as_posix()), actionArgs=args).doModal()
+            PlayingNext('playing_next_aniskip.xml', control.ADDON_PATH.as_posix(), actionArgs=args).doModal()
         else:
-            PlayingNext(*('playing_next.xml', control.ADDON_PATH.as_posix()), actionArgs=args).doModal()
+            PlayingNext('playing_next.xml', control.ADDON_PATH.as_posix(), actionArgs=args).doModal()
 
     @staticmethod
     def show_skip_intro(skipintro_aniskip, skipintro_end):
@@ -224,7 +270,7 @@ class PlayerDialogs(xbmc.Player):
             'skipintro_aniskip': skipintro_aniskip,
             'skipintro_end': skipintro_end
         }
-        SkipIntro(*('skip_intro.xml', control.ADDON_PATH.as_posix()), actionArgs=args).doModal()
+        SkipIntro('skip_intro.xml', control.ADDON_PATH.as_posix(), actionArgs=args).doModal()
 
     @staticmethod
     def _get_next_item_args():

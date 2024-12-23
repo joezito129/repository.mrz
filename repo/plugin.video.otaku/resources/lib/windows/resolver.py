@@ -4,10 +4,9 @@ import xbmcplugin
 import xbmc
 
 from urllib import parse
-from resources.lib import OtakuBrowser
 from resources.lib.WatchlistIntegration import watchlist_update_episode
 from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid, torbox
-from resources.lib.ui import control, source_utils, player
+from resources.lib.ui import control, source_utils, player, utils
 from resources.lib.windows.base_window import BaseWindow
 
 
@@ -30,7 +29,7 @@ class HookMimetype:
 
 
 class Resolver(BaseWindow):
-    def __init__(self, xml_file, location=None, actionArgs=None, source_select=False):
+    def __init__(self, xml_file, location, actionArgs=None, source_select=False):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.return_data = {
             'link': None,
@@ -56,6 +55,7 @@ class Resolver(BaseWindow):
         self.resume_time = actionArgs.get('resume_time')
         self.context = actionArgs.get('context')
         self.silent = actionArgs.get('silent')
+        self.params = actionArgs.get('params', {})
         self.abort = False
 
     def onInit(self):
@@ -147,17 +147,16 @@ class Resolver(BaseWindow):
                 item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
 
             if self.context:
+                control.set_videotags(item, self.params)
+                art = utils.get_image(self.params.get('poster'), self.params.get('fanart'), self.params.get('poster'), self.params.get('landscape'), self.params.get('banner'), self.params.get('clearart'), self.params.get('clearlogo'))
+                item.setArt(art)
                 control.playList.add(linkInfo['url'], item)
-                playlist_info = OtakuBrowser.get_episodeList(self.mal_id, self.episode)
-                episode_info = playlist_info[self.episode - 1]
-                control.set_videotags(item, episode_info['info'])
-                item.setArt(episode_info['image'])
                 xbmc.Player().play(control.playList, item)
             else:
                 xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
             monitor = Monitor()
             for _ in range(30):
-                if monitor.waitForAbort(0.5) or monitor.playbackerror or monitor.abortRequested():
+                if monitor.waitForAbort(1) or monitor.playbackerror or monitor.abortRequested():
                     xbmcplugin.setResolvedUrl(control.HANDLE, False, item)
                     control.playList.clear()
                     self.abort = True
@@ -169,7 +168,7 @@ class Resolver(BaseWindow):
             del monitor
             self.close()
             if not self.abort:
-                player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, OtakuBrowser.get_episodeList, self.episode, self.resume_time)
+                player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, self.episode, self.params.get('path', ''), self.context)
         else:
             self.close()
 
@@ -272,6 +271,7 @@ class Resolver(BaseWindow):
     def onAction(self, action):
         actionID = action.getId()
         if actionID in [92, 10]:
+            # BACKSPACE / ESCAPE
             self.canceled = True
             self.close()
 

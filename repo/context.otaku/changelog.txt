@@ -1,3 +1,6 @@
+Changelog v1.0.21 (2024-12-23)
+- Added ListItem params to path
+
 Changelog v1.0.20 (2024-10-31)
 - Disable Error
 

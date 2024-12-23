@@ -1,3 +1,4 @@
+import json
 import random
 import xbmc
 import xbmcgui
@@ -79,7 +80,7 @@ def enabled_watchlists() -> list:
 
 def watchlist_to_update() -> str:
     if getBool('watchlist.update.enabled'):
-        flavor = getSetting('watchlist.update.flavor').lower()
+        flavor = getSetting('watchlist.update.flavor')
         if getBool(f"{flavor}.enabled"):
             return flavor
 
@@ -137,7 +138,7 @@ def lang(x: int) -> str:
 
 
 def addon_url(url: str) -> str:
-    return f'plugin://{ADDON_ID}/{url}'
+    return f"plugin://{ADDON_ID}/{url}"
 
 
 def get_plugin_url() -> str:
@@ -151,7 +152,7 @@ def get_plugin_params() -> dict:
 
 def exit_code() -> None:
     if getSetting('reuselanguageinvoker.status') == 'Enabled':
-        exit_(1)
+        exit_(0)
 
 
 def keyboard(title: str, text: str = '') -> str:
@@ -205,7 +206,7 @@ def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
 
 
 def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
-    vinfo = li.getVideoInfoTag()
+    vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
     if title := info.get('title'):
         vinfo.setTitle(title)
     if media_type := info.get('mediatype'):
@@ -215,7 +216,7 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     if plot := info.get('plot'):
         vinfo.setPlot(plot)
     if year := info.get('year'):
-        vinfo.setYear(year)
+        vinfo.setYear(int(year))
     if premiered := info.get('premiered'):
         vinfo.setPremiered(premiered)
     if status := info.get('status'):
@@ -227,9 +228,9 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     if rating := info.get('rating'):
         vinfo.setRating(rating.get('score', 0), rating.get('votes', 0))
     if season := info.get('season'):
-        vinfo.setSeason(season)
+        vinfo.setSeason(int(season))
     if episode := info.get('episode'):
-        vinfo.setEpisode(episode)
+        vinfo.setEpisode(int(episode))
     if aired := info.get('aired'):
         vinfo.setFirstAired(aired)
     if playcount := info.get('playcount'):
@@ -248,9 +249,11 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
         vinfo.setTrailer(trailer)
     if uniqueids := info.get('UniqueIDs'):
         vinfo.setUniqueIDs(uniqueids)
-    # if info.get('resume'):
-    #     vinfo.setResumePoint(info['resume'], 0)
+    if resume := info.get('resume'):
+        vinfo.setResumePoint(float(resume), 1)
 
+def jsonrpc(json_data: dict) -> dict:
+    return json.loads(xbmc.executeJSONRPC(json.dumps(json_data)))
 
 def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: bool, isfolder: bool, isplayable: bool):
     u = addon_url(url)
@@ -283,7 +286,7 @@ def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: 
 
 
 def bulk_draw_items(video_data: list) -> bool:
-    list_items = [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], True, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
+    list_items = bulk_dir_list(video_data, True)
     return xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
@@ -332,8 +335,8 @@ def draw_items(video_data: list, content_type: str = '') -> None:
                 xbmc.executebuiltin('Action(Down)')
 
 
-def bulk_player_list(video_data: list, draw_cm: list = None, bulk_add: bool = True) -> list:
-    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], draw_cm, bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
+def bulk_dir_list(video_data: list, bulk_add: bool = True) -> list:
+    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
 
 
 def get_view_type(viewtype: str) -> int:
@@ -377,7 +380,7 @@ class SettingIDs:
         self.clean_titles = getBool('interface.cleantitles')
         self.dubonly = getBool("divflavors.dubonly")
         self.showdub = getBool("divflavors.showdub")
-        self.watchlist_data = getBool('interface.watchlist.data')
+        self.watchlist_data = getBool('watchlist.episode.data')
         self.fanart_select = getBool('context.otaku.fanartselect')
 
         # Ints

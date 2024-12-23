@@ -1,7 +1,54 @@
 import sys
 
-from xbmc import executebuiltin
+import xbmc
+from urllib import parse
 
+import xbmcgui
+
+
+def get_video_info(li: xbmcgui.ListItem) -> dict:
+    params = {}
+    vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
+    # if test := vinfo.getDbId():
+    #     params['test'] = test
+    if title := vinfo.getTitle():
+        params['title'] = title
+    if mediatype := vinfo.getMediaType():
+        params['mediatype'] = mediatype
+    if season := vinfo.getSeason():
+        params['season'] = str(season)
+    if episode := vinfo.getEpisode():
+        params['episode'] = str(episode)
+    if plot := vinfo.getPlot():
+        params['plot'] = str(plot)
+    if tvshowtitle := vinfo.getTVShowTitle():
+        params['tvshowtitle'] = tvshowtitle
+    if premiered := vinfo.getPremieredAsW3C():
+        params['premiered'] = premiered
+    if year := vinfo.getYear():
+        params['year'] = str(year)
+    if resume := vinfo.getResumeTime():
+        params['resume'] = str(resume)
+
+    if fanart := li.getArt('fanart'):
+        params['fanart'] = fanart
+    if poster := li.getArt('poster'):
+        params['poster'] = poster
+    elif tvshowposter := li.getArt('tvshow.poster'):
+        params['poster'] = tvshowposter
+    if poster := li.getArt('thumb'):
+        params['thumb'] = poster
+    if banner := li.getArt('banner'):
+        params['banner'] = banner
+    if clearart := li.getArt('clearart'):
+        params['clearart'] = clearart
+    if clearlogo := li.getArt('clearlogo'):
+        params['clearlogo'] = clearlogo
+    if landscape := li.getArt('landscape'):
+        params['landscape'] = landscape
+    if icon := li.getArt('icon'):
+        params['icon'] = icon
+    return params
 
 def main():
     arg = sys.argv[1]
@@ -10,37 +57,35 @@ def main():
     plugin = 'plugin://plugin.video.otaku'
     if arg == 'findrecommendations':
         path = path.split(plugin, 1)[1]
-        executebuiltin(f"ActivateWindow(Videos,{plugin}/find_recommendations{path})")
+        xbmc.executebuiltin(f"ActivateWindow(Videos,{plugin}/find_recommendations{path})")
     elif arg == 'findrelations':
         path = path.split(plugin, 1)[1]
-        executebuiltin(f"ActivateWindow(Videos,{plugin}/find_relations{path})")
+        xbmc.executebuiltin(f"ActivateWindow(Videos,{plugin}/find_relations{path})")
     elif arg == 'rescrape':
-        resume_time = item.getVideoInfoTag().getResumeTime()
-        path += "?rescrape=true"
-        if resume_time > 0:
-            path += f"&resume={resume_time}"
-        executebuiltin(f"PlayMedia({path})")
+        params = get_video_info(item)
+        params['rescrape'] = 'true'
+        path = f"{path}?{parse.urlencode(params)}"
+        xbmc.executebuiltin(f"PlayMedia({path})")
     elif arg == 'sourceselect':
-        resume_time = item.getVideoInfoTag().getResumeTime()
-        path += '?source_select=true'
-        if resume_time > 0:
-            path += f'&resume={resume_time}'
-        executebuiltin(f"PlayMedia({path})")
+        params = get_video_info(item)
+        params['source_select'] = 'true'
+        path = f"{path}?{parse.urlencode(params)}"
+        xbmc.executebuiltin(f"PlayMedia({path})")
     elif arg == 'logout':
         path = path.split(f'{plugin}/watchlist', 1)[1]
-        executebuiltin(f"RunPlugin({plugin}/watchlist_logout{path})")
+        xbmc.executebuiltin(f"RunPlugin({plugin}/watchlist_logout{path})")
     elif arg == 'deletefromdatabase':
         path = path.split(plugin, 1)[1]
-        executebuiltin(f"RunPlugin({plugin}/delete_anime_database{path})")
+        xbmc.executebuiltin(f"RunPlugin({plugin}/delete_anime_database{path})")
     elif arg == 'watchlist':
         path = path.split(plugin, 1)[1]
-        executebuiltin(f"RunPlugin({plugin}/watchlist_manager{path})")
+        xbmc.executebuiltin(f"RunPlugin({plugin}/watchlist_manager{path})")
     elif arg == 'markedaswatched':
         path = path.split(f'{plugin}/play', 1)[1]
-        executebuiltin(f"RunPlugin({plugin}/marked_as_watched{path})")
+        xbmc.executebuiltin(f"RunPlugin({plugin}/marked_as_watched{path})")
     elif arg == 'fanartselect':
         path = path.split(plugin, 1)[1]
-        executebuiltin(f"ActivateWindow(Videos,{plugin}/fanart_select{path})")
+        xbmc.executebuiltin(f"ActivateWindow(Videos,{plugin}/fanart_select{path})")
     else:
         raise KeyError("Could Not find %s in Context Menu Action" % arg)
 

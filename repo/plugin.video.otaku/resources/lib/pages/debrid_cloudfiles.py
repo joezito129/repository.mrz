@@ -12,7 +12,7 @@ class Sources(BrowserBase):
         self.cloud_files = []
         self.threads = []
 
-    def get_sources(self, debrid: dict, query: str, episode) -> list:
+    def get_sources(self, debrid: dict, query: str, episode: str) -> list:
         if debrid.get('real_debrid'):
             t = threading.Thread(target=self.rd_cloud_inspection, args=(query, episode,))
             t.start()
@@ -33,7 +33,7 @@ class Sources(BrowserBase):
             i.join()
         return self.cloud_files
 
-    def rd_cloud_inspection(self, query: str, episode) -> None:
+    def rd_cloud_inspection(self, query: str, episode: str) -> None:
         api = real_debrid.RealDebrid()
         torrents = api.list_torrents()
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]
@@ -74,7 +74,7 @@ class Sources(BrowserBase):
                 }
             )
 
-    def premiumize_cloud_inspection(self, query: str, episode) -> None:
+    def premiumize_cloud_inspection(self, query: str, episode: str) -> None:
         query1, query2 = query.replace('(', '').replace(')', '').rsplit('|', 1)
         cloud_items = premiumize.Premiumize().search_folder(query1)
         cloud_items += premiumize.Premiumize().search_folder(query2)
@@ -84,7 +84,7 @@ class Sources(BrowserBase):
             filename = re.sub(r'\[.*?]', '', torrent['name']).lower()
 
             if torrent['type'] == 'file':
-                if source_utils.is_file_ext_valid(filename) and episode not in filename.rsplit('-', 1)[1]:
+                if source_utils.is_file_ext_valid(filename) and episode.zfill(2) not in filename.rsplit('-', 1)[1]:
                     continue
 
             self.cloud_files.append(
@@ -105,7 +105,7 @@ class Sources(BrowserBase):
                 }
             )
 
-    def torbox_cloud_inspection(self, query: str, episode) -> None:
+    def torbox_cloud_inspection(self, query: str, episode: str) -> None:
         cloud_items = torbox.Torbox().list_torrents()
         filenames = [re.sub(r'\[.*?]\s*', '', i['name'].replace(',', '')) for i in cloud_items]
         filenames_query = ','.join(filenames)
@@ -137,7 +137,7 @@ class Sources(BrowserBase):
                 }
             )
 
-    def alldebrid_cloud_inspection(self, query: str, episode) -> None:
+    def alldebrid_cloud_inspection(self, query: str, episode: str) -> None:
         api = all_debrid.AllDebrid()
         torrents = api.list_torrents()['links']
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]

@@ -4,6 +4,7 @@ from resources.lib.ui import control
 
 def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: list, image: str, info: dict,
                   fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None) -> dict:
+
     if image and '/' not in image:
         image = (control.ICONS_PATH / image).as_posix()
     if fanart and not isinstance(fanart, list) and '/' not in fanart:
@@ -28,6 +29,19 @@ def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: lis
                 'clearlogo': clearlogo
         }
     }
+
+def get_image(image, fanart, poster, landscape, banner, clearart, clearlogo) -> dict:
+    params =  {
+        'poster': poster or image,
+        'icon': image,
+        'thumb': image,
+        'fanart': fanart,
+        'landscape': landscape,
+        'banner': banner,
+        'clearart': clearart,
+        'clearlogo': clearlogo
+    }
+    return {p: params[p] for p in params if params[p]}
 
 
 def parse_history_view(res: str, cm: list) -> dict:

@@ -154,6 +154,7 @@ def PLAY(payload: str, params: dict):
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume_time = params.get('resume')
+    params['path'] = f"{control.addon_url(f'play/{payload}')}"
     if resume_time:
         resume_time = float(resume_time)
         context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
@@ -161,15 +162,14 @@ def PLAY(payload: str, params: dict):
             return control.exit_code()
         elif context == 1:
             resume_time = None
-
     sources = pages.get_kodi_sources(mal_id, episode, 'show', rescrape, source_select)
-    _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
+    _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select, 'params': params}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect(*('source_select.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        SourceSelect('source_select.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        Resolver(*('resolver.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args).doModal(sources, {}, False)
+        Resolver('resolver.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args).doModal(sources, {}, False)
     control.exit_code()
 
 
@@ -180,6 +180,7 @@ def PLAY_MOVIE(payload: str, params: dict):
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume_time = params.get('resume')
+    params['path'] = f"{control.addon_url(f'play_movie/{payload}')}"
     if resume_time:
         resume_time = float(resume_time)
         context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
@@ -189,14 +190,13 @@ def PLAY_MOVIE(payload: str, params: dict):
             resume_time = None
 
     sources = pages.get_kodi_sources(mal_id, 1, 'movie', rescrape, source_select)
-    _mock_args = {'mal_id': mal_id, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select}
-    control.playList.clear()
+    _mock_args = {'mal_id': mal_id, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select, 'params': params}
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect(*('source_select.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        SourceSelect('source_select.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        Resolver(*('resolver.xml', control.ADDON_PATH.as_posix()), actionArgs=_mock_args).doModal(sources, {}, False)
+        Resolver('resolver.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args).doModal(sources, {}, False)
     control.exit_code()
 
 
@@ -381,7 +381,7 @@ def COMPLETED_SYNC(payload: str, params: dict):
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict):
     from resources.lib.windows.sort_select import SortSelect
-    SortSelect(*('sort_select.xml', control.ADDON_PATH.as_posix())).doModal()
+    SortSelect('sort_select.xml', control.ADDON_PATH.as_posix()).doModal()
 
 
 @Route('install_packages')
@@ -394,7 +394,7 @@ def INSTALL_PACKAGES(payload: str, params: dict):
 @Route('download_manager')
 def DOWNLOAD_MANAGER(payload: str, params: dict):
     from resources.lib.windows.download_manager import DownloadManager
-    DownloadManager(*('download_manager.xml', control.ADDON_PATH.as_posix())).doModal()
+    DownloadManager('download_manager.xml', control.ADDON_PATH.as_posix()).doModal()
 
 
 @Route('import_settings')
@@ -447,11 +447,8 @@ if __name__ == "__main__":
     plugin_url = control.get_plugin_url()
     plugin_params = control.get_plugin_params()
     router_process(plugin_url, plugin_params)
-    if len(control.playList) > 0:
-        import xbmc
-        if not xbmc.Player().isPlaying():
-            control.playList.clear()
     control.log(f'Finished Running: {plugin_url=} {plugin_params=}')
+
 # t1 = time.perf_counter_ns()
 # totaltime = (t1-t0)/1_000_000
 # control.print(totaltime, 'ms')

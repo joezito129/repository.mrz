@@ -17,7 +17,9 @@ class TextViewerXML(WindowXMLDialog):
         self.setFocusId(self.window_id)
 
     def onAction(self, action):
-        if action in [92, 10]:
+        actionID = action.getId()
+        if actionID in [92, 10]:
+            # BACKSPACE / ESCAPE
             self.close()
 
     def set_properties(self):
