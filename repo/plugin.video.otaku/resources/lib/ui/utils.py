@@ -30,22 +30,8 @@ def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: lis
         }
     }
 
-def get_image(image, fanart, poster, landscape, banner, clearart, clearlogo) -> dict:
-    params =  {
-        'poster': poster or image,
-        'icon': image,
-        'thumb': image,
-        'fanart': fanart,
-        'landscape': landscape,
-        'banner': banner,
-        'clearart': clearart,
-        'clearlogo': clearlogo
-    }
-    return {p: params[p] for p in params if params[p]}
-
-
 def parse_history_view(res: str, cm: list) -> dict:
-    return allocate_item(res, f'search/{res}', True, False, cm, '', {})
+    return allocate_item(res, f'search/{res}', True, False, cm, 'new_search.png', {})
 
 
 def search_history(search_array):

@@ -1,6 +1,6 @@
 import sys
-
 import xbmc
+
 from urllib import parse
 
 
@@ -19,31 +19,30 @@ def get_video_info(li) -> dict:
         params['plot'] = str(plot)
     if tvshowtitle := vinfo.getTVShowTitle():
         params['tvshowtitle'] = tvshowtitle
-    if premiered := vinfo.getPremieredAsW3C():
-        params['premiered'] = premiered
+    # if premiered := vinfo.getPremieredAsW3C():
+    #     params['premiered'] = premiered
     if year := vinfo.getYear():
         params['year'] = str(year)
     if resume := vinfo.getResumeTime():
         params['resume'] = str(resume)
 
-    if fanart := li.getArt('fanart'):
-        params['fanart'] = fanart
-    if poster := li.getArt('poster'):
-        params['poster'] = poster
-    elif tvshowposter := li.getArt('tvshow.poster'):
-        params['poster'] = tvshowposter
+    if tvshowposter := li.getArt('tvshow.poster'):
+        params['tvshow.poster'] = tvshowposter
     if poster := li.getArt('thumb'):
         params['thumb'] = poster
-    if banner := li.getArt('banner'):
-        params['banner'] = banner
-    if clearart := li.getArt('clearart'):
-        params['clearart'] = clearart
-    if clearlogo := li.getArt('clearlogo'):
-        params['clearlogo'] = clearlogo
-    if landscape := li.getArt('landscape'):
-        params['landscape'] = landscape
-    if icon := li.getArt('icon'):
-        params['icon'] = icon
+
+    # if fanart := li.getArt('fanart'):
+    #     params['fanart'] = fanart
+    # if banner := li.getArt('banner'):
+    #     params['banner'] = banner
+    # if clearart := li.getArt('clearart'):
+    #     params['clearart'] = clearart
+    # if clearlogo := li.getArt('clearlogo'):
+    #     params['clearlogo'] = clearlogo
+    # if landscape := li.getArt('landscape'):
+    #     params['landscape'] = landscape
+    # if icon := li.getArt('icon'):
+    #     params['icon'] = icon
     return params
 
 def main():

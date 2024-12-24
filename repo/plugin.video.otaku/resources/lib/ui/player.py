@@ -135,16 +135,20 @@ class WatchlistPlayer(player):
             }
             res = control.jsonrpc(query)['result']
             current_audio = res.get('currentaudiostream', {})
-            if current_audio['language'] == 'eng':
-                subtitles = res.get('subtitles', [])
-                subtitles = filter(lambda x: x['language'] == 'eng', subtitles)
-                matches = ['sign', 'songs']
-                for s in subtitles:
+            subtitles = res.get('subtitles', [])
+            subtitles = sorted(subtitles, key=lambda x: x['isforced'], reverse=True)
+            show_subtitle = False
+            for s in subtitles:
+                if s['language'] == 'eng':
+                    show_subtitle = True
+                    if current_audio['language'] == 'eng':
+                        matches = ['sings', 'songs', 'forced']
+                    else:
+                        matches = ['full', 'dialogue']
                     if any(x in s['name'].lower() for x in matches):
                         self.setSubtitleStream(s['index'])
                         break
-            elif current_audio['language'] == 'jpn':
-                pass
+            self.showSubtitles(show_subtitle)
 
         control.setSetting('addon.last_watched', self.mal_id)
         control.closeAllDialogs()

@@ -6,7 +6,7 @@ import xbmc
 from urllib import parse
 from resources.lib.WatchlistIntegration import watchlist_update_episode
 from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid, torbox
-from resources.lib.ui import control, source_utils, player, utils
+from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
 
 
@@ -148,7 +148,10 @@ class Resolver(BaseWindow):
 
             if self.context:
                 control.set_videotags(item, self.params)
-                art = utils.get_image(self.params.get('poster'), self.params.get('fanart'), self.params.get('poster'), self.params.get('landscape'), self.params.get('banner'), self.params.get('clearart'), self.params.get('clearlogo'))
+                art = {
+                    'tvshow.poster': self.params.get('tvshow.poster'),
+                    'thumb': self.params.get('thumb')
+                }
                 item.setArt(art)
                 control.playList.add(linkInfo['url'], item)
                 xbmc.Player().play(control.playList, item)

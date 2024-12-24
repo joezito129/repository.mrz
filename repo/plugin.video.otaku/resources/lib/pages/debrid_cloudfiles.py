@@ -2,6 +2,8 @@ import re
 import requests
 import threading
 
+
+
 from resources.lib.ui import source_utils
 from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.debrid import real_debrid, premiumize, all_debrid, torbox
@@ -57,13 +59,13 @@ class Sources(BrowserBase):
 
             self.cloud_files.append(
                 {
-                    'quality': source_utils.getQuality(torrent_files[0]['path']),
-                    'lang': source_utils.getAudio_lang(torrent_files[0]['path']),
+                    'quality': source_utils.getQuality(torrent['filename']),
+                    'lang': source_utils.getAudio_lang(torrent['filename']),
                     'hash': torrent_info['links'],
                     'provider': 'Cloud',
                     'type': 'cloud',
                     'release_title': torrent['filename'],
-                    'info': source_utils.getInfo(torrent_files[0]['path']),
+                    'info': source_utils.getInfo(torrent['filename']),
                     'debrid_provider': 'real_debrid',
                     'size': source_utils.get_size(torrent['bytes']),
                     'byte_size': torrent['bytes'],

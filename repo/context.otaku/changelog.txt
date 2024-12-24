@@ -1,4 +1,7 @@
-Changelog v1.0.21 (2024-12-23)
+Changelog v1.0.22 (2024-12-23)
+- No context menu in playlist
+
+Changelog v1.0.22 (2024-12-23)
 - Added ListItem params to path
 
 Changelog v1.0.20 (2024-10-31)

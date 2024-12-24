@@ -1,3 +1,9 @@
+Changelog v5.1.13 (2024-12-24):
+- Fixed playlist
+- Fixed Context menu
+- Fixed real-debrid info
+- Improved Subtitle Settings
+
 Changelog v5.1.12 (2024-12-23):
 - Added building playlist
 - Fixed Context menu playing items

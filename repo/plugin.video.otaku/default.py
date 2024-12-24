@@ -319,7 +319,7 @@ def TOOLS_MENU(payload: str, params: dict):
         (control.lang(30018), 'clear_slected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"}),
         # ("install Packages", 'install_packages', '', {'plot': "Install Custom Packages"})
     ]
-    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], 'addons')
+    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS])
 
 
 # ### Maintenance ###
