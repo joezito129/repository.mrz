@@ -197,6 +197,10 @@ msgctxt "#30314"
 msgid "Get Watchlist Episode Data"
 msgstr ""
 
+msgctxt "#30315"
+msgid "Hide Spoilers"
+msgstr ""
+
 msgctxt "#30316"
 msgid "Show Empty Episode Meta"
 msgstr ""
@@ -257,7 +261,9 @@ msgctxt "#30330"
 msgid "Export Settings"
 msgstr ""
 
-######31###
+msgctxt "#30331"
+msgid "Hides Plot and Episode Title"
+msgstr ""
 
 msgctxt "#30332"
 msgid "Torrents"
@@ -502,6 +508,22 @@ msgstr ""
 msgctxt "#30397"
 msgid "Offset for Aniskip (seconds)"
 msgstr ""
+
+msgctxt "#30398"
+msgid "Subtitles"
+msgstr ""
+
+msgctxt "#30399"
+msgid "Enable Subtitle"
+msgstr ""
+
+msgctxt "#30600"
+msgid ""
+msgstr ""
+
+
+
+##############################################################################
 
 ######Debrid######
 msgctxt "#30100"

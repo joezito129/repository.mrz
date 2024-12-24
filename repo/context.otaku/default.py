@@ -3,14 +3,10 @@ import sys
 import xbmc
 from urllib import parse
 
-import xbmcgui
 
-
-def get_video_info(li: xbmcgui.ListItem) -> dict:
+def get_video_info(li) -> dict:
     params = {}
     vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
-    # if test := vinfo.getDbId():
-    #     params['test'] = test
     if title := vinfo.getTitle():
         params['title'] = title
     if mediatype := vinfo.getMediaType():

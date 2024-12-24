@@ -153,17 +153,17 @@ def PLAY(payload: str, params: dict):
     mal_id, episode = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
-    resume_time = params.get('resume')
+    resume = params.get('resume')
     params['path'] = f"{control.addon_url(f'play/{payload}')}"
-    if resume_time:
-        resume_time = float(resume_time)
-        context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
+    if resume:
+        resume = float(resume)
+        context = control.context_menu([f'Resume from {utils.format_time(resume)}', 'Play from beginning'])
         if context == -1:
-            return control.exit_code()
+            return
         elif context == 1:
-            resume_time = None
+            resume = None
     sources = pages.get_kodi_sources(mal_id, episode, 'show', rescrape, source_select)
-    _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select, 'params': params}
+    _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         SourceSelect('source_select.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
@@ -179,18 +179,18 @@ def PLAY_MOVIE(payload: str, params: dict):
     mal_id, eps_watched = payload.rsplit("/")
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
-    resume_time = params.get('resume')
+    resume = params.get('resume')
     params['path'] = f"{control.addon_url(f'play_movie/{payload}')}"
-    if resume_time:
-        resume_time = float(resume_time)
-        context = control.context_menu([f'Resume from {utils.format_time(resume_time)}', 'Play from beginning'])
+    if resume:
+        resume = float(resume)
+        context = control.context_menu([f'Resume from {utils.format_time(resume)}', 'Play from beginning'])
         if context == -1:
             return
         elif context == 1:
-            resume_time = None
+            resume = None
 
     sources = pages.get_kodi_sources(mal_id, 1, 'movie', rescrape, source_select)
-    _mock_args = {'mal_id': mal_id, 'play': True, 'resume_time': resume_time, 'context': rescrape or source_select, 'params': params}
+    _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
         SourceSelect('source_select.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()

@@ -21,6 +21,7 @@ class WatchlistPlayer(player):
         self.updated = False
         self.media_type = None
         self.update_percent = control.getInt('watchlist.update.percent')
+        self.resume = None
         self.path = ''
         self.context = False
 
@@ -38,10 +39,11 @@ class WatchlistPlayer(player):
         self.skipintro_offset = control.getInt('skipintro.aniskip.offset')
         self.skipoutro_offset = control.getInt('skipoutro.aniskip.offset')
 
-    def handle_player(self, mal_id, watchlist_update, episode, path, context):
+    def handle_player(self, mal_id, watchlist_update, episode, resume, path, context):
         self.mal_id = mal_id
         self._watchlist_update = watchlist_update
         self.episode = episode
+        self.resume = resume
         self.path = path
         self.context = context
 
@@ -117,26 +119,32 @@ class WatchlistPlayer(player):
             control.log('Not playing Video', 'warning')
             return
 
-        # todo make setting
-        if True:
+        if self.resume:
+            self.seekTime(self.resume)
+
+
+        if control.getBool('subtitle.enable'):
             query = {
-                'jsonrpc': '2.0',
-                'id': 1,
-                'method': 'Player.GetProperties',
-                'params': {
-                    'playerid': 1,
-                    'properties': ['subtitles']
-                }
+                "jsonrpc": "2.0",
+                "method": "Player.GetProperties",
+                "params": {
+                "playerid": 1,
+                    "properties": ["currentaudiostream", 'subtitles']
+                },
+                "id": 1
             }
             res = control.jsonrpc(query)['result']
-            subtitles = res.get('subtitles', [])
-
-            subtitles = filter(lambda x: x['language'] == 'eng', subtitles)
-            matches = ['sign', 'songs']
-            for s in subtitles:
-                if any(x in s['name'].lower() for x in matches):
-                    self.setSubtitleStream(s['index'])
-                    break
+            current_audio = res.get('currentaudiostream', {})
+            if current_audio['language'] == 'eng':
+                subtitles = res.get('subtitles', [])
+                subtitles = filter(lambda x: x['language'] == 'eng', subtitles)
+                matches = ['sign', 'songs']
+                for s in subtitles:
+                    if any(x in s['name'].lower() for x in matches):
+                        self.setSubtitleStream(s['index'])
+                        break
+            elif current_audio['language'] == 'jpn':
+                pass
 
         control.setSetting('addon.last_watched', self.mal_id)
         control.closeAllDialogs()
@@ -172,8 +180,8 @@ class WatchlistPlayer(player):
                         break
                     xbmc.sleep(5000)
 
-        monitor = xbmc.Monitor()
-        while not monitor.waitForAbort(5) and self.isPlaying():
+        while self.isPlaying():
+            xbmc.sleep(5000)
             self.current_time = int(self.getTime())
         control.closeAllDialogs()
 

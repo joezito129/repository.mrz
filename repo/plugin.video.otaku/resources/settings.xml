@@ -219,7 +219,7 @@
                         <dependency type="visible" setting="interface.viewtypes.bool">true</dependency>
                     </dependencies>
                 </setting>
-                <setting id="interface.cleantitles" type="boolean" label="30315" help="">
+                <setting id="interface.cleantitles" type="boolean" label="30315" help="30331">
                     <level>0</level>
                     <default>false</default>
                     <control type="toggle"/>
@@ -533,6 +533,13 @@
                     <dependencies>
                         <dependency type="visible" setting="smartplay.playingnextdialog">true</dependency>
                     </dependencies>
+                </setting>
+            </group>
+            <group id="4" label="30398" help="">
+                <setting id="subtitle.enable" type="boolean" label="30399" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
                 </setting>
             </group>
         </category>

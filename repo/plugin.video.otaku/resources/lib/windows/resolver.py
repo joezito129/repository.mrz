@@ -52,7 +52,7 @@ class Resolver(BaseWindow):
         self.episode = int(actionArgs.get('episode', 1))
         self.play = actionArgs.get('play')
         self.source_select_close = actionArgs.get('close')
-        self.resume_time = actionArgs.get('resume_time')
+        self.resume = actionArgs.get('resume')
         self.context = actionArgs.get('context')
         self.silent = actionArgs.get('silent')
         self.params = actionArgs.get('params', {})
@@ -168,7 +168,7 @@ class Resolver(BaseWindow):
             del monitor
             self.close()
             if not self.abort:
-                player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, self.episode, self.params.get('path', ''), self.context)
+                player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, self.episode, self.resume, self.params.get('path', ''), self.context)
         else:
             self.close()
 
@@ -287,8 +287,8 @@ class Monitor(xbmc.Monitor):
             self.playing = True
         elif method == 'Player.OnStop':
             self.playbackerror = True
-        else:
-            control.log(f'{method} | {data}')
+        # else:
+        #     control.log(f'{method} | {data}')
 
 
 @HookMimetype('application/dash+xml')
