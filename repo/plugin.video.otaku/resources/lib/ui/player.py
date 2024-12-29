@@ -12,7 +12,7 @@ player = xbmc.Player
 
 class WatchlistPlayer(player):
     def __init__(self):
-        super(WatchlistPlayer, self).__init__()
+        super().__init__()
         self.vtag = None
         self.episode = None
         self.mal_id = None
@@ -64,7 +64,7 @@ class WatchlistPlayer(player):
         control.closeAllDialogs()
         playList.clear()
         if self.context and self.path:
-            if 10 < self.getWatchedPercent() < 90:
+            if 20 < self.getWatchedPercent() < 80:
                 query = {
                     'jsonrpc': '2.0',
                     'method': 'Files.SetFileDetails',
@@ -92,6 +92,9 @@ class WatchlistPlayer(player):
         episodes = database.get_episode_list(self.mal_id)
         video_data = indexers.process_episodes(episodes, '') if episodes else []
         playlist = control.bulk_dir_list(video_data, True)[self.episode:]
+        maxplaylist = control.getInt('general.plalist.size')
+        if maxplaylist > 0:
+            playlist = playlist[:maxplaylist - 1]
         for i in playlist:
             control.playList.add(url=i[0], listitem=i[1])
 
@@ -111,13 +114,18 @@ class WatchlistPlayer(player):
             xbmc.sleep(5000)
 
     def keepAlive(self):
+        monitor = Monitor()
         for _ in range(20):
+            if monitor.playbackerror:
+                return
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
-            xbmc.sleep(250)
+            monitor.waitForAbort(0.25)
+        del monitor
         if not self.isPlayingVideo():
             control.log('Not playing Video', 'warning')
             return
+
 
         if self.resume:
             self.seekTime(self.resume)
@@ -137,10 +145,10 @@ class WatchlistPlayer(player):
             current_audio = res.get('currentaudiostream', {})
             subtitles = res.get('subtitles', [])
             subtitles = sorted(subtitles, key=lambda x: x['isforced'], reverse=True)
-            show_subtitle = False
+            enable_subtitles = False
             for s in subtitles:
                 if s['language'] == 'eng':
-                    show_subtitle = True
+                    enable_subtitles = True
                     if current_audio['language'] == 'eng':
                         matches = ['sings', 'songs', 'forced']
                     else:
@@ -148,7 +156,8 @@ class WatchlistPlayer(player):
                     if any(x in s['name'].lower() for x in matches):
                         self.setSubtitleStream(s['index'])
                         break
-            self.showSubtitles(show_subtitle)
+            if enable_subtitles:
+                self.showSubtitles(enable_subtitles)
 
         control.setSetting('addon.last_watched', self.mal_id)
         control.closeAllDialogs()
@@ -184,9 +193,11 @@ class WatchlistPlayer(player):
                         break
                     xbmc.sleep(5000)
 
+
         while self.isPlaying():
             xbmc.sleep(5000)
             self.current_time = int(self.getTime())
+
         control.closeAllDialogs()
 
     def process_aniskip(self):
@@ -255,7 +266,7 @@ class WatchlistPlayer(player):
 
 class PlayerDialogs(xbmc.Player):
     def __init__(self):
-        super(PlayerDialogs, self).__init__()
+        super().__init__()
         self.playing_file = self.getPlayingFile()
 
     def display_dialog(self, skipoutro_aniskip, skipoutro_end):
@@ -270,9 +281,9 @@ class PlayerDialogs(xbmc.Player):
         args = self._get_next_item_args()
         args['skipoutro_end'] = skipoutro_end
         if skipoutro_aniskip:
-            PlayingNext('playing_next_aniskip.xml', control.ADDON_PATH.as_posix(), actionArgs=args).doModal()
+            PlayingNext('playing_next_aniskip.xml', control.ADDON_PATH, actionArgs=args).doModal()
         else:
-            PlayingNext('playing_next.xml', control.ADDON_PATH.as_posix(), actionArgs=args).doModal()
+            PlayingNext('playing_next.xml', control.ADDON_PATH, actionArgs=args).doModal()
 
     @staticmethod
     def show_skip_intro(skipintro_aniskip, skipintro_end):
@@ -282,7 +293,7 @@ class PlayerDialogs(xbmc.Player):
             'skipintro_aniskip': skipintro_aniskip,
             'skipintro_end': skipintro_end
         }
-        SkipIntro('skip_intro.xml', control.ADDON_PATH.as_posix(), actionArgs=args).doModal()
+        SkipIntro('skip_intro.xml', control.ADDON_PATH, actionArgs=args).doModal()
 
     @staticmethod
     def _get_next_item_args():
@@ -298,3 +309,13 @@ class PlayerDialogs(xbmc.Player):
     @staticmethod
     def _is_video_window_open():
         return False if xbmcgui.getCurrentWindowId() != 12005 else True
+
+
+class Monitor(xbmc.Monitor):
+    def __init__(self):
+        super().__init__()
+        self.playbackerror = False
+
+    def onNotification(self, sender, method, data):
+        if method == 'Player.OnStop':
+            self.playbackerror = True

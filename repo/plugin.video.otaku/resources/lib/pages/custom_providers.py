@@ -28,7 +28,7 @@ def create_package(provider_name: str, p: Path) -> None:
 
 def main():
     url = 'http://bit.ly/a4kScrapers'
-    temp_path = control.dataPath / 'temp'
+    temp_path = Path(control.dataPath) / 'temp'
     temp_zip = temp_path / 'temp.zip'
     download_zip(url, temp_zip)
     if not temp_zip.exists():

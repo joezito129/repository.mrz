@@ -61,13 +61,13 @@ class WatchlistFlavor:
 
     @staticmethod
     def __instance_flavor(name):
-        user_id = control.getSetting(f'{name}.userid')
-        auth_var = control.getSetting(f'{name}.authvar')
-        token = control.getSetting(f'{name}.token')
-        refresh = control.getSetting(f'{name}.refresh')
-        username = control.getSetting(f'{name}.username')
-        password = control.getSetting(f'{name}.password')
-        sort = control.getSetting(f'{name}.sort')
+        user_id = control.getSetting(f"{name}.userid")
+        auth_var = control.getSetting(f"{name}.authvar")
+        token = control.getSetting(f"{name}.token")
+        refresh = control.getSetting(f"{name}.refresh")
+        username = control.getSetting(f"{name}.username")
+        password = control.getSetting(f"{name}.password")
+        sort = control.getSetting(f"{name}.sort")
 
         flavor_class = WatchlistFlavor.__get_flavor_class(name)
         return flavor_class(auth_var, username, password, user_id, token, refresh, sort)

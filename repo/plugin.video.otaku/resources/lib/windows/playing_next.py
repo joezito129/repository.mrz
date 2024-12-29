@@ -4,7 +4,7 @@ from resources.lib.windows.base_window import BaseWindow
 
 
 class PlayingNext(BaseWindow):
-    def __init__(self, xml_file, xml_location, actionArgs=None):
+    def __init__(self, xml_file, xml_location, *, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = xbmc.Player()
         self.playing_file = self.player.getPlayingFile()
@@ -43,10 +43,10 @@ class PlayingNext(BaseWindow):
             self.actioned = True
             self.player.playnext()
             self.close()
-        if controlID == 3002:   # close
+        elif controlID == 3002:   # close
             self.actioned = True
             self.close()
-        if controlID == 3003:   # skipoutro
+        elif controlID == 3003:   # skipoutro
             self.actioned = True
             skipoutro_end_skip_time = self.skipoutro_end
             if skipoutro_end_skip_time != 0:
@@ -58,5 +58,3 @@ class PlayingNext(BaseWindow):
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
             self.close()
-        if actionID == 7:
-            self.handle_action(7)

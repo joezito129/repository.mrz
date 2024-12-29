@@ -1,6 +1,7 @@
 import time
 import requests
 import json
+import os
 
 from resources.lib.ui import control, database_sync
 
@@ -43,7 +44,7 @@ def update_mappings_db() -> None:
     # url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
     url = 'https://github.com/Goldenfreddy0703/Otaku-Mappings/raw/main/anime_mappings.db'
     r = requests.get(url)
-    with open(control.dataPath / 'mappings.db', 'wb') as file:
+    with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
         file.write(r.content)
 
 
@@ -81,12 +82,12 @@ def update_dub_json() -> None:
 
 
 def getChangeLog() -> None:
-    with open(control.ADDON_PATH / 'changelog.txt') as f:
+    with open(os.path.join(control.ADDON_PATH, 'changelog.txt')) as f:
         changelog_text = f.read()
 
     heading = '[B]%s -  v%s - ChangeLog[/B]' % (control.ADDON_NAME, control.ADDON_VERSION)
     from resources.lib.windows.textviewer import TextViewerXML
-    windows = TextViewerXML('textviewer.xml', control.ADDON_PATH.as_posix(), heading=heading, text=changelog_text)
+    windows = TextViewerXML('textviewer.xml', control.ADDON_PATH, heading=heading, text=changelog_text)
     windows.run()
     del windows
 

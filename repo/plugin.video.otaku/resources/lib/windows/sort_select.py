@@ -1,4 +1,6 @@
 import json
+import os
+import xbmcvfs
 
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.ui import control
@@ -40,10 +42,12 @@ default_sort_options = {
         'audio.4': 3
     }
 
-try:
-    with open(control.dataPath / 'sort_options.json') as f:
+sort_path = os.path.join(control.dataPath, 'sort_options.json')
+
+if xbmcvfs.exists(sort_path):
+    with open(sort_path) as f:
         sort_options = json.load(f)
-except FileNotFoundError:
+else:
     sort_options = default_sort_options
 
 

@@ -238,7 +238,7 @@ class SQL:
 
     def __enter__(self):
         self.lock.acquire()
-        xbmcvfs.mkdir(control.dataPath.as_posix())
+        xbmcvfs.mkdir(control.dataPath)
         conn = dbapi2.connect(self.path, timeout=self.timeout)
         conn.row_factory = dict_factory
         conn.execute("PRAGMA FOREIGN_KEYS=1")

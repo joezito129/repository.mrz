@@ -118,31 +118,8 @@ def getInfo(release_title):
     return info
 
 
-def get_cache_check_reg(episode):
-    # playList = control.playList
-    # playList_position = playList.getposition()
-    # if playList_position != -1:
-    #     info = playList[playList_position].getVideoInfoTag()
-    #     season = str(info.getSeason()).zfill(2)
-    # else:
-    #     season = ''
-    episode = str(episode)
+def get_cache_check_reg(episode: str):
     season = ''
-    # if control.getSetting('regex.question') == 'true':
-    #     reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
-    #                  (?:                                    # non-grouping pattern
-    #                    s|season                             # s or season
-    #                    )?
-    #                  ({})?                                  # season num format
-    #                  (?:                                    # non-grouping pattern
-    #                    e|x|episode|ep|ep\.|_|-|\(           # e or x or episode or start of a line
-    #                    )?                                   # end non-grouping pattern
-    #                  \s*                                    # 0-or-more whitespaces
-    #                  (?<![\d])
-    #                  ({}|{}|{})                             # episode num format: xx or xxx or xxxx
-    #                  (?![\d])
-    #                  '''.format(season, episode.zfill(2), episode.zfill(3))
-    # else:
     reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
                  (?:                                    # non-grouping pattern
                    s|season                             # s or season
@@ -174,7 +151,7 @@ def convert_to_bytes(size, units):
     return byte_size
 
 
-def get_size(size=0):
+def get_size(size=0) -> str:
     power = 1024.0
     n = 0
     power_labels = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB'}
@@ -184,7 +161,7 @@ def get_size(size=0):
     return '{0:.2f} {1}'.format(size, power_labels[n])
 
 
-def get_best_match(dict_key, dictionary_list, episode, pack_select=False):
+def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -> dict:
     regex = get_cache_check_reg(episode)
     files = []
     for i in dictionary_list:
@@ -196,14 +173,14 @@ def get_best_match(dict_key, dictionary_list, episode, pack_select=False):
     else:
         files = [i for i in files if len(i['regex_matches']) > 0]
         if len(files) == 0:
-            return
+            return {}
         files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
         if len(files) != 1:
             files = user_select(files, dict_key)
     return files[0]
 
 
-def cleanTitle(title):
+def cleanTitle(title: str) -> str:
     title = title.lower()
     result = ''.join(char for char in title if char in string.printable)
     title = result.encode('ascii', errors='ignore').decode('ascii', errors='ignore')
@@ -218,7 +195,7 @@ def cleanTitle(title):
     return title.strip()
 
 
-def is_file_ext_valid(file_name):
+def is_file_ext_valid(file_name: str) -> bool:
     return False if '.' + file_name.split('.')[-1] not in video_ext() else True
 
 

@@ -2,7 +2,6 @@ import base64
 import json
 import pickle
 import re
-import xbmc
 import requests
 
 from bs4 import BeautifulSoup, SoupStrainer
@@ -12,7 +11,7 @@ from resources.lib.ui.BrowserBase import BrowserBase
 
 
 class Sources(BrowserBase):
-    _BASE_URL = 'https://aniwave.se/'
+    _BASE_URL = 'https://aniwave.se'
     EKEY = "ysJhV6U27FVIjjuk"
     DKEY = "hlPeNwkncH0fq9so"
     CHAR_SUBST_OFFSETS = (-3, 3, -4, 2, -2, 5, 4, 5)
@@ -34,7 +33,7 @@ class Sources(BrowserBase):
 
         headers = {'Referer': self._BASE_URL}
         params = {'keyword': title}
-        res = requests.get(f'{self._BASE_URL}filter', headers=headers, params=params)
+        res = requests.get(f'{self._BASE_URL}/filter', headers=headers, params=params)
         if not res.ok:
             return all_results
         r = res.text
@@ -61,58 +60,92 @@ class Sources(BrowserBase):
         sid = sid.group(1)
         vrf = self.generate_vrf(sid)
         params = {'vrf': vrf}
-        r = requests.get(f'{self._BASE_URL}ajax/episode/list/{sid}', headers=headers, params=params)
+        r = requests.get(f'{self._BASE_URL}/ajax/episode/list/{sid}', headers=headers, params=params)
         res = r.json().get('result')
-
         elink = SoupStrainer('div', {'class': re.compile('^episodes')})
         ediv = BeautifulSoup(res, "html.parser", parse_only=elink)
         items = ediv.find_all('a')
         e_id = [x.get('data-ids') for x in items if x.get('data-num') == episode]
-        if e_id:
-            e_id = e_id[0]
-            vrf = self.generate_vrf(e_id)
-            params = {'vrf': vrf}
-            r = requests.get(f'{self._BASE_URL}ajax/server/list/{e_id}', headers=headers, params=params)
-            eres = r.json().get('result')
-            scrapes = 0
-            for lang in langs:
-                elink = SoupStrainer('div', {'data-type': lang})
-                sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
-                srcs = sdiv.find_all('li')
-                for src in srcs:
-                    edata_id = src.get('data-link-id')
-                    edata_name = src.text
-                    if self.clean_title(edata_name) in self.embeds():
-                        if scrapes == 3:
-                            xbmc.sleep(5000)
-                            scrapes = 0
-                        vrf = self.generate_vrf(edata_id)
-                        params = {'vrf': vrf}
-                        r = requests.get(f'{self._BASE_URL}ajax/server/{edata_id}', headers=headers, params=params)
-                        scrapes += 1
-                        resp = r.json().get('result')
-                        skip = {}
-                        if resp.get('skip_data'):
-                            skip_data = json.loads(self.decrypt_vrf(resp.get('skip_data')))
-                            intro = skip_data.get('intro')
-                            if intro:
-                                skip['intro'] = {'start': intro[0], 'end': intro[1]}
-                            outro = skip_data.get('outro')
-                            if outro:
-                                skip['outro'] = {'start': outro[0], 'end': outro[1]}
-                        slink = self.decrypt_vrf(resp.get('url'))
+        if not e_id:
+            return
+        e_id = e_id[0]
+        vrf = self.generate_vrf(e_id)
+        params = {'vrf': vrf}
+        r = requests.get(f'{self._BASE_URL}/ajax/server/list/{e_id}', headers=headers, params=params)
+        eres = r.json().get('result')
+        for lang in langs:
+            elink = SoupStrainer('div', {'data-type': lang})
+            sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
+            srcs = sdiv.find_all('li')
+            for src in srcs:
+                edata_id = src.get('data-link-id')
+                edata_name = src.text
+                if self.clean_title(edata_name) not in self.embeds():
+                    continue
+                vrf = self.generate_vrf(edata_id)
+                params = {'vrf': vrf}
+                r = requests.get(f'{self._BASE_URL}/ajax/server/{edata_id}', headers=headers, params=params)
+                resp = r.json().get('result')
+                slink = self.decrypt_vrf(resp.get('url'))
+                if self._BASE_URL not in slink:
+                    source = {
+                        'release_title': f"{title} - Ep {episode}",
+                        'hash': slink,
+                        'type': 'embed',
+                        'quality': 0,
+                        'debrid_provider': '',
+                        'provider': 'aniwave',
+                        'size': 'NA',
+                        'byte_size': 0,
+                        'info': [lang, edata_name],
+                        'lang': 2 if lang == 'dub' else 0,
+                        'skip': {}
+                    }
+                    sources.append(source)
+                    continue
+                r = requests.get(slink, headers={'Referer': self._BASE_URL})
+                if not r.ok:
+                    continue
+                r = r.text
+                res = re.search(r'''sources["\s]?[:=]\s*\[\{"?file"?:\s*"([^"]+)''', r)
+                if not res:
+                    continue
+                surl = res.group(1)
+                if 'vipanicdn.net' in surl:
+                    surl = surl.replace('vipanicdn.net', 'anzeat.pro')
+
+                s = re.search(r'''tracks:\s*(\[[^\]]+])''', r)
+                if s:
+                    s = json.loads(s.group(1))
+                    subs = [{'url': x['file'], 'lang': x.get('label')} for x in s if x.get('kind') == 'captions' and x.get('file')]
+                else:
+                    subs = []
+                s = re.search(r'''var\s*intro_begin\s*=\s*(\d+);\s*var\s*introEnd\s*=\s*(\d+);\s*var\s*outroStart\s*=\s*(\d+);\s*var\s*outroEnd\s*=\s*(\d+);''',r)
+                if s and int(s.group(2)) > 0:
+                    skip = {
+                        "intro": {"start": int(s.group(1)), "end": int(s.group(2))},
+                        "outro": {"start": int(s.group(3)), "end": int(s.group(4))}
+                    }
+                else:
+                    skip = {}
+                r = requests.get(surl).text
+                quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).+\n(?!#)(.+)', r)
+                if quals:
+                    for qual, qlink in quals:
+                        quality = self.get_quality(int(qual))
                         source = {
-                            'release_title': '{0} - Ep {1}'.format(title, episode),
-                            'hash': slink,
-                            'type': 'embed',
-                            'quality': 0,
+                            'release_title': f"{title} - Ep {episode}",
+                            'hash': parse.urljoin(surl, qlink) + '|User-Agent=iPad',
+                            'type': 'direct',
+                            'quality': quality,
                             'debrid_provider': '',
                             'provider': 'aniwave',
                             'size': 'NA',
                             'byte_size': 0,
                             'info': [lang, edata_name],
                             'lang': 2 if lang == 'dub' else 0,
-                            'skip': skip
+                            'skip': skip,
+                            'subs': subs
                         }
                         sources.append(source)
         return sources
@@ -146,7 +179,6 @@ class Sources(BrowserBase):
             j = (j + S[i]) % 256
             S[i], S[j] = S[j], S[i]
             app(c ^ S[(S[i] + S[j]) % 256])
-
         return out
 
     def generate_vrf(self, content_id, key=EKEY):

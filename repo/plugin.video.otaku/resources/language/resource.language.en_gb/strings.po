@@ -40,6 +40,12 @@ msgctxt "#30006"
 msgid "Tools"
 msgstr ""
 
+msgctxt "#30007"
+msgid "Airing Calendar"
+msgstr ""
+
+
+
 ######TOOLS & SEARCH DIRECTORY#######
 msgctxt "#30010"
 msgid "View Changelog"
@@ -518,7 +524,11 @@ msgid "Enable Subtitle"
 msgstr ""
 
 msgctxt "#30600"
-msgid ""
+msgid "Max Playlist Size"
+msgstr ""
+
+msgctxt "#30601"
+msgid "0 is any size"
 msgstr ""
 
 

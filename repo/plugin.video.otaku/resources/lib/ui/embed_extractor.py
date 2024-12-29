@@ -1,15 +1,13 @@
 import base64
 import json
+import os.path
 import random
 import re
 import string
 import time
-from json import JSONDecodeError
-
 import requests
 import xbmcvfs
 
-from pathlib import Path
 from resources.lib.ui import control, jsunpack
 from resources.lib.ui.pyaes import AESModeOfOperationCBC, Decrypter, Encrypter
 from urllib import error, parse
@@ -377,16 +375,6 @@ def __extract_voe(url, page_content, referer=None):
         stream_url = r.group(1) + __append_headers(headers)
         return stream_url
 
-
-def __extract_aniwave(url, page_content, referer=None):
-    r = re.search(r'''sources\s*[:=]\s*\[{["']?file["']?:\s*["']([^"']+)''', page_content)
-    if r:
-        surl = r.group(1)
-        if 'vipanicdn.net' in surl:
-            surl = surl.replace('vipanicdn.net', 'anzeat.pro')
-        return surl
-
-
 def __extract_goload(url, page_content, referer=None):
     def _encrypt(msg, key, iv_):
         key = key.encode()
@@ -417,7 +405,7 @@ def __extract_goload(url, page_content, referer=None):
         r = requests.get(eurl)
         try:
             response = r.json().get('data')
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             response = None
         if response:
             result = _decrypt(response, keys[1], iv)
@@ -451,10 +439,10 @@ def __register_extractor(urls, function, url_preloader=None, datas=None):
 
 def get_sub(sub_url, sub_lang):
     content = requests.get(sub_url).text
-    subtitle = Path(xbmcvfs.translatePath('special://temp/'))
-    fpath = subtitle / f'TemporarySubs.{sub_lang}.srt'
+    subtitle = xbmcvfs.translatePath('special://temp/')
+    fpath = os.path.join(subtitle, f'TemporarySubs.{sub_lang}.srt')
     if sub_url.endswith('.vtt'):
-        fpath = fpath.as_posix().replace('.srt', '.vtt')
+        fpath = fpath.replace('.srt', '.vtt')
     fpath = fpath.encode(encoding='ascii', errors='ignore').decode(encoding='ascii')
     with open(fpath, 'w', encoding='utf-8') as f:
         f.write(content)
@@ -486,9 +474,6 @@ __register_extractor(["https://kwik.cx/",
 
 __register_extractor(["https://www.yourupload.com/"],
                      __extract_yourupload)
-
-__register_extractor(["https://aniwave.se/"],
-                     __extract_aniwave)
 
 __register_extractor(["https://mixdrop.co/",
                       "https://mixdrop.to/",

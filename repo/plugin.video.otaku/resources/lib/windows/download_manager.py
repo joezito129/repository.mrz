@@ -34,9 +34,6 @@ class DownloadManager(BaseWindow):
             self.abort = True
             self.close()
 
-        if actionID == 7:
-            self.handle_action(7)
-
         elif actionID == 117:
             context_response = control.context_menu(['Cancel Download'])
             if context_response == 0:
@@ -55,9 +52,9 @@ class DownloadManager(BaseWindow):
             self.abort = True
             manager.clear_complete()
             self.close()
-            DownloadManager('download_manager.xml', control.ADDON_PATH.as_posix()).doModal()
+            DownloadManager('download_manager.xml', control.ADDON_PATH).doModal()
 
-        if controlID == 3101:   # close
+        elif controlID == 3101:   # close
             self.abort = True
             self.close()
 
@@ -70,7 +67,7 @@ class DownloadManager(BaseWindow):
 
     def populate_menu_items(self):
         def create_menu_item(download_item):
-            new_item = xbmcgui.ListItem(label=f"{download_item['filename']}", offscreen=False)
+            new_item = xbmcgui.ListItem(download_item['filename'], offscreen=False)
             self.set_menu_item_properties(new_item, download_item)
             return new_item
 

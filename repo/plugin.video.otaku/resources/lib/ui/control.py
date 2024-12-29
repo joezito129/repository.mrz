@@ -6,9 +6,11 @@ import xbmcaddon
 import xbmcplugin
 import xbmcvfs
 import sys
+import os
 
 from urllib import parse
-from pathlib import Path
+
+# from pathlib import Path
 
 try:
     HANDLE = int(sys.argv[1])
@@ -24,30 +26,29 @@ ADDON_NAME = addonInfo('name')
 ADDON_VERSION = addonInfo('version')
 ADDON_ICON = addonInfo('icon')
 FANART = addonInfo('fanart')
-ADDON_PATH = Path(ADDON.getAddonInfo('path'))
-dataPath = Path(xbmcvfs.translatePath(addonInfo('profile')))
-sys.path.append(dataPath.as_posix())
+ADDON_PATH = ADDON.getAddonInfo('path')
+dataPath = xbmcvfs.translatePath(addonInfo('profile'))
+# sys.path.append(dataPath)
 kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
 
-cacheFile = dataPath / 'cache.db'
-searchHistoryDB = dataPath / 'search.db'
-malSyncDB = dataPath / 'malSync.db'
-mappingDB = dataPath / 'mappings.db'
+cacheFile = os.path.join(dataPath, 'cache.db')
+searchHistoryDB = os.path.join(dataPath, 'search.db')
+malSyncDB = os.path.join(dataPath, 'malSync.db')
+mappingDB = os.path.join(dataPath, 'mappings.db')
 
-maldubFile = dataPath / 'mal_dub.json'
-downloads_json = dataPath / 'downloads.json'
-completed_json = dataPath / 'completed.json'
+maldubFile = os.path.join(dataPath, 'mal_dub.json')
+downloads_json = os.path.join(dataPath, 'downloads.json')
+completed_json = os.path.join(dataPath, 'completed.json')
 
-COMMON_PATH = ADDON_PATH / 'resources' / 'skins' / 'Default' / 'media' / 'common'
-LOGO_SMALL = COMMON_PATH / 'trans-goku-small.png'
-LOGO_MEDIUM = COMMON_PATH / 'trans-goku.png'
-ICONS_PATH = ADDON_PATH / 'resources' / 'images' / 'icons' / ADDON.getSetting("interface.icons")
+COMMON_PATH = os.path.join(ADDON_PATH, 'resources', 'skins', 'Default', 'media', 'common')
+LOGO_SMALL = os.path.join(COMMON_PATH, 'trans-goku-small.png')
+LOGO_MEDIUM = os.path.join(COMMON_PATH, 'trans-goku.png')
+ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
 
-dialogWindow = xbmcgui.WindowDialog
 execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-
+window_context = [xbmcgui.ACTION_CONTEXT_MENU]
 
 def closeBusyDialog() -> None:
     if xbmc.getCondVisibility('Window.IsActive(busydialog)'):
@@ -141,14 +142,20 @@ def addon_url(url: str) -> str:
     return f"plugin://{ADDON_ID}/{url}"
 
 
-def get_plugin_url() -> str:
+def get_plugin_url(url: str) -> str:
     addon_base = addon_url('')
-    return sys.argv[0][len(addon_base):]
+    return url[len(addon_base):]
 
 
-def get_plugin_params() -> dict:
-    return dict(parse.parse_qsl(sys.argv[2].replace('?', '')))
+def get_plugin_params(param: str) -> dict:
+    return dict(parse.parse_qsl(param.replace('?', '')))
 
+def get_payload_params(url: str) -> tuple:
+    url_list = url.rsplit('?', 1)
+    if len(url_list) == 1:
+        url_list.append('')
+    payload, params = url_list
+    return get_plugin_url(payload), get_plugin_params(params)
 
 def exit_code() -> None:
     if getSetting('reuselanguageinvoker.status') == 'Enabled':
@@ -181,7 +188,7 @@ def yesnocustom_dialog(title: str, text: str, customlabel: str = '', nolabel: st
     return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
-def notify(title: str, text: str, icon: str = LOGO_MEDIUM.as_posix(), time: int = 5000, sound: bool = True) -> None:
+def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 5000, sound: bool = True) -> None:
     xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -204,6 +211,20 @@ def context_menu(context_list: list) -> int:
 def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
     return xbmcgui.Dialog().browse(type_, heading, shares, mask)
 
+def handle_set_fanart(art: dict, info: dict) -> dict:
+    if not art.get('fanart') or settingids.fanart_disable:
+        art['fanart'] = FANART
+    else:
+        if isinstance(art['fanart'], list):
+            if settingids.fanart_select:
+                if info.get('UniqueIDs', {}).get('mal_id'):
+                    fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
+                    art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
+                else:
+                    art['fanart'] = FANART
+            else:
+                art['fanart'] = random.choice(art['fanart'])
+    return art
 
 def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
@@ -251,6 +272,8 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
         vinfo.setUniqueIDs(uniqueids)
     if resume := info.get('resume'):
         vinfo.setResumePoint(float(resume), 1)
+    if properties := info.get('properties'):
+        li.setProperties(properties)
 
 def jsonrpc(json_data: dict) -> dict:
     return json.loads(xbmc.executeJSONRPC(json.dumps(json_data)))
@@ -263,21 +286,11 @@ def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: 
     if draw_cm:
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
-    if not art.get('fanart') or settingids.fanart_disable:
-        art['fanart'] = FANART
-    else:
-        if isinstance(art['fanart'], list):
-            if settingids.fanart_select:
-                if info.get('UniqueIDs', {}).get('mal_id'):
-                    fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
-                    art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
-                else:
-                    art['fanart'] = FANART
-            else:
-                art['fanart'] = random.choice(art['fanart'])
+
+    art = handle_set_fanart(art, info)
 
     if settingids.clearlogo_disable:
-        art['clearlogo'] = ICONS_PATH.as_posix()
+        art['clearlogo'] = ICONS_PATH
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
@@ -368,7 +381,6 @@ def print(string, *args) -> None:
         string = f'{string} {i}'
     textviewer_dialog('print', f'{string}')
     del args, string
-
 
 class SettingIDs:
     def __init__(self):

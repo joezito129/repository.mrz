@@ -1,8 +1,11 @@
 import pickle
 import random
 import requests
+import datetime
+import time
 
 from functools import partial
+from dateutil.tz import tzlocal
 from resources.lib.ui import database, get_meta, utils, control
 from resources.lib.ui.BrowserBase import BrowserBase
 from resources.lib.ui.divide_flavors import div_flavor
@@ -19,7 +22,6 @@ class AniListBrowser(BrowserBase):
 
     @staticmethod
     def get_season_year(period='current'):
-        import datetime
         date = datetime.datetime.today()
         year = date.year
         month = date.month
@@ -32,11 +34,28 @@ class AniListBrowser(BrowserBase):
             season = seasons[int((month - 1) / 3)]
         return season, year
 
-    def get_airing_anime(self, page):
+    def get_airing_calendar(self, page: int):
+        one_day = 60 * 60 * 24
+        one_week = one_day * 7
+        time_now = int(time.time())
+        variables = {
+            'page': page,
+            'perPage': self.perpage,
+            'airingAt_greater': time_now - one_day,
+            'airingAt_lesser': time_now + one_week,
+        }
+
+        calendar = database.get_(self.get_airing_calendar_res, 24, variables)
+        if not control.getBool('search.adult'):
+            calendar['airingSchedules'] = [x for x in calendar['airingSchedules'] if not x['media']['isAdult']]
+
+        return self.process_calendar_view(calendar, f'airing_calendar?page=%d', page)
+
+    def get_airing_anime(self, page: int):
         season, year = self.get_season_year('Aired')
         variables = {
             'page': page,
-            'perpage': self.perpage,
+            'perPage': self.perpage,
             'type': "ANIME",
             'season': season,
             'year': f'{year}%',
@@ -52,11 +71,11 @@ class AniListBrowser(BrowserBase):
         airing = database.get_(self.get_base_res, 24, variables)
         return self.process_anilist_view(airing, "airing_anime?page=%d", page)
 
-    def get_upcoming_next_season(self, page):
+    def get_upcoming_next_season(self, page: int):
         season, year = self.get_season_year('next')
         variables = {
             'page': page,
-            'perpage': self.perpage,
+            'perPage': self.perpage,
             'type': "ANIME",
             'season': season,
             'year': f'{year}%',
@@ -74,7 +93,7 @@ class AniListBrowser(BrowserBase):
     def get_top_100_anime(self, page: int):
         variables = {
             'page': page,
-            'perpage': self.perpage,
+            'perPage': self.perpage,
             'type': "ANIME",
             'sort': "SCORE_DESC"
         }
@@ -90,7 +109,7 @@ class AniListBrowser(BrowserBase):
     def get_search(self, query: str, page: int):
         variables = {
             'page': page,
-            'perpage': self.perpage,
+            'perPage': self.perpage,
             'search': query,
             'sort': "SEARCH_MATCH",
             'type': "ANIME"
@@ -104,7 +123,7 @@ class AniListBrowser(BrowserBase):
             search['ANIME'] += search_adult['ANIME']
         return self.process_anilist_view(search, f"search/{query}?page=%d", page)
 
-    def get_recommendations(self, mal_id, page):
+    def get_recommendations(self, mal_id, page: int):
         variables = {
             'page': page,
             'perPage': self.perpage,
@@ -128,21 +147,21 @@ class AniListBrowser(BrowserBase):
         anilist_res = database.get_(self.get_anilist_res, 24, variables)
         return self.process_res(anilist_res)
 
-    def get_base_res(self, variables):
+    def get_base_res(self, variables: dict):
         query = '''
         query (
             $page: Int=1,
-            $perpage: Int=20
+            $perPage: Int=20
             $type: MediaType,
-            $isAdult: Boolean = false,
-            $format:[MediaFormat],
-            $countryOfOrigin:CountryCode
+            $isAdult: Boolean=false,
+            $format: [MediaFormat],
+            $countryOfOrigin: CountryCode,
             $season: MediaSeason,
             $year: String,
             $status: MediaStatus,
-            $sort: [MediaSort] = [POPULARITY_DESC, SCORE_DESC]
+            $sort: [MediaSort]=[POPULARITY_DESC, SCORE_DESC]
         ) {
-            Page (page: $page, perPage: $perpage) {
+            Page (page: $page, perPage: $perPage) {
                 pageInfo {
                     hasNextPage
                 }
@@ -152,8 +171,8 @@ class AniListBrowser(BrowserBase):
                     season: $season,
                     startDate_like: $year,
                     sort: $sort,
-                    status: $status
-                    isAdult: $isAdult
+                    status: $status,
+                    isAdult: $isAdult,
                     countryOfOrigin: $countryOfOrigin
                 ) {
                     id
@@ -221,17 +240,73 @@ class AniListBrowser(BrowserBase):
         json_res = results['data']['Page']
         return json_res
 
-    def get_search_res(self, variables):
+    def get_airing_calendar_res(self, variables: dict):
+        query = '''
+        query (
+                $page: Int=1,
+                $perPage: Int=20,
+                $airingAt_greater: Int,
+                $airingAt_lesser: Int
+        ){
+            Page(page: $page, perPage: $perPage) {
+                pageInfo {
+                        hasNextPage
+                }
+                airingSchedules(
+                        airingAt_greater: $airingAt_greater,
+                        airingAt_lesser: $airingAt_lesser
+                ) {
+                    id
+                    episode
+                    airingAt
+
+                    media {
+                        id
+                        idMal
+                        isAdult
+                        title {
+                                romaji
+                                english
+                        }
+                        
+                        startDate {
+                            year,
+                            month,
+                            day
+                        }
+                        episodes
+                        format
+                        description
+                        countryOfOrigin
+                        genres
+                        averageScore
+                        duration
+                        coverImage {
+                                extraLarge
+                        }
+                        bannerImage
+                    }
+                }
+            }
+        }
+        '''
+
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        results = r.json()
+        json_res = results['data']['Page']
+        return json_res
+
+    def get_search_res(self, variables: dict):
         query = '''
         query (
             $page: Int=1,
-            $perpage: Int=20
+            $perPage: Int=20,
             $type: MediaType,
-            $isAdult: Boolean = false,
+            $isAdult: Boolean=false,
             $search: String,
-            $sort: [MediaSort] = [SCORE_DESC, POPULARITY_DESC]
+            $sort: [MediaSort]=[SCORE_DESC, POPULARITY_DESC]
         ) {
-            Page (page: $page, perPage: $perpage) {
+            Page (page: $page, perPage: $perPage) {
                 pageInfo {
                     hasNextPage
                 }
@@ -307,12 +382,12 @@ class AniListBrowser(BrowserBase):
         json_res = results['data']['Page']
         return json_res
 
-    def get_recommendations_res(self, variables):
+    def get_recommendations_res(self, variables: dict):
         query = '''
-        query ($idMal: Int, $page: Int, $perpage: Int=20) {
+        query ($idMal: Int, $page: Int, $perPage: Int=20) {
           Media(idMal: $idMal, type: ANIME) {
             id
-            recommendations(page: $page, perPage: $perpage, sort: [RATING_DESC, ID]) {
+            recommendations(page: $page, perPage: $perPage, sort: [RATING_DESC, ID]) {
               pageInfo {
                 hasNextPage
               }
@@ -389,7 +464,7 @@ class AniListBrowser(BrowserBase):
         json_res = results['data']['Media']['recommendations']
         return json_res
 
-    def get_relations_res(self, variables):
+    def get_relations_res(self, variables: dict):
         query = '''
         query ($idMal: Int) {
           Media(idMal: $idMal, type: ANIME) {
@@ -464,7 +539,7 @@ class AniListBrowser(BrowserBase):
         json_res = results['data']['Media']['relations']
         return json_res
 
-    def get_anilist_res(self, variables):
+    def get_anilist_res(self, variables: dict):
         query = '''
         query($idMal: Int, $type: MediaType){
             Media(idMal: $idMal, type: $type) {
@@ -535,7 +610,7 @@ class AniListBrowser(BrowserBase):
         json_res = results['data']['Media']
         return json_res
 
-    def process_anilist_view(self, json_res, base_plugin_url, page):
+    def process_anilist_view(self, json_res: dict, base_plugin_url: str, page: int):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         get_meta.collect_meta(json_res['ANIME'])
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
@@ -543,7 +618,7 @@ class AniListBrowser(BrowserBase):
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
-    def process_recommendations_view(self, json_res, base_plugin_url, page):
+    def process_recommendations_view(self, json_res: dict, base_plugin_url: str, page: int):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         res = [edge['node']['mediaRecommendation'] for edge in json_res['edges'] if edge['node']['mediaRecommendation']]
         get_meta.collect_meta(res)
@@ -552,7 +627,7 @@ class AniListBrowser(BrowserBase):
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
 
-    def process_relations_view(self, json_res):
+    def process_relations_view(self, json_res: dict):
         res = []
         for edge in json_res['edges']:
             if edge['relationType'] != 'ADAPTATION':
@@ -570,9 +645,18 @@ class AniListBrowser(BrowserBase):
         return database.get_show(res['idMal'])
 
     @div_flavor
-    def base_anilist_view(self, res, completed=None, mal_dub=None):
+    def base_anilist_view(self, res: dict, completed=None, mal_dub=None):
         if not completed:
             completed = {}
+
+        if res.get('media'):
+            airingat = res.get('airingAt')
+            episode = res.get('episode')
+            res = res['media']
+        else:
+            airingat = None
+            episode = None
+
         anilist_id = res['id']
         mal_id = res.get('idMal')
 
@@ -624,15 +708,19 @@ class AniListBrowser(BrowserBase):
                 actor_hs = x['voiceActors'][0]['image']['large']
                 cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
             info['cast'] = cast
-        except IndexError:
+        except (KeyError, IndexError):
             pass
 
-        info['studio'] = [x['node'].get('name') for x in res['studios']['edges']]
+        try:
+            info['studio'] = [x['node'].get('name') for x in res['studios']['edges']]
+        except KeyError:
+            pass
 
         try:
             info['rating'] = {'score': res.get('averageScore') / 10.0}
         except TypeError:
             pass
+
         try:
             info['duration'] = res['duration'] * 60
         except TypeError:
@@ -645,6 +733,18 @@ class AniListBrowser(BrowserBase):
                 info['trailer'] = f"plugin://plugin.video.dailymotion_com/?url={res['trailer']['id']}&mode=playVideo"
         except (KeyError, TypeError):
             pass
+
+        if airingat:
+            info['episode'] = episode
+            time_format = datetime.datetime.fromtimestamp(airingat, tzlocal())
+            info['properties'] = {
+                "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
+                "date": f"{time_format:%A[CR]%B %d, %Y}",
+                "time": f"{time_format:%I:%M %p %Z}",
+            }
+            # info['premiered'] = f"{time_format:%Y-%m-%d}"
+
+
 
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
@@ -671,14 +771,14 @@ class AniListBrowser(BrowserBase):
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    def database_update_show(self, res):
+    def database_update_show(self, res: dict):
         mal_id = res.get('idMal')
 
         if not mal_id:
             return
 
         try:
-            start_date = res['startDate']
+            start_date = res.get('startDate')
             start_date = '{}-{:02}-{:02}'.format(start_date['year'], start_date['month'], start_date['day'])
         except TypeError:
             start_date = None
@@ -701,7 +801,7 @@ class AniListBrowser(BrowserBase):
             'title_userPreferred': title_userPreferred,
             'start_date': start_date,
             'query': titles,
-            'episodes': res['episodes'],
+            'episodes': res.get('episodes'),
             'poster': res['coverImage']['extraLarge'],
             'status': res.get('status'),
             'format': res.get('format', ''),
@@ -751,7 +851,7 @@ class AniListBrowser(BrowserBase):
                 tag_display_list.append(tag_display_list[selection])
         return self.genres_payload(genre_display_list, tag_display_list, 1)
 
-    def genres_payload(self, genre_list, tag_list, page):
+    def genres_payload(self, genre_list, tag_list, page: int):
         import ast
         query = '''
         query (
@@ -850,7 +950,7 @@ class AniListBrowser(BrowserBase):
             variables['isAdult'] = True
         return self.process_genre_view(query, variables, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
-    def process_genre_view(self, query, variables, base_plugin_url, page):
+    def process_genre_view(self, query: str, variables: dict, base_plugin_url: str, page: int):
         r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
@@ -858,5 +958,17 @@ class AniListBrowser(BrowserBase):
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
         get_meta.collect_meta(anime_res)
         all_results = list(map(mapfunc, anime_res))
+        all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
+        return all_results
+
+    def process_calendar_view(self, res: dict, base_plugin_url: str, page: int):
+        all_results = []
+        previous_page = page - 1
+        if previous_page > 0:
+            name = f"Prevous Page ({previous_page})"
+            all_results.append(utils.allocate_item(name, base_plugin_url % previous_page, True, False, [], 'next.png', {'plot': name}, 'next.png'))
+        anime_res = res['airingSchedules']
+        hasNextPage = res['pageInfo']['hasNextPage']
+        all_results += list(map(self.base_anilist_view, anime_res))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results

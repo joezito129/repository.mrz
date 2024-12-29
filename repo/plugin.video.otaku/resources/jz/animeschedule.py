@@ -2,8 +2,10 @@ import requests
 import datetime
 import re
 
-from resources.lib.ui import database, control
+from dateutil.tz import tzlocal
+from resources.lib.ui import database
 from bs4 import BeautifulSoup
+
 base_url = "https://animeschedule.net/api/v3"
 dub_list = []
 
@@ -46,11 +48,6 @@ def get_dub_time(mal_id):
 
 
 def add_to_list(ep_number, date_time):
-    try:
-        dub_time = datetime.datetime.strptime(date_time[:16], '%Y-%m-%dT%H:%M')
-    except:
-        control.log('unsuprted strptime using fromtimestamp', 'warning')
-        import time
-        dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(date_time[:16], '%Y-%m-%dT%H:%M')))
-    dub_time = str(dub_time - datetime.timedelta(hours=5))[:16]
+    dub_time = datetime.datetime.strptime(date_time, '%Y-%m-%dT%H:%M%z')
+    dub_time = str(dub_time.astimezone(tzlocal()))[:16]
     dub_list.append({"season": 0, "episode": ep_number, "release_time": dub_time})

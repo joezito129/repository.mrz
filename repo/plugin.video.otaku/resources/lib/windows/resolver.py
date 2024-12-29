@@ -29,7 +29,7 @@ class HookMimetype:
 
 
 class Resolver(BaseWindow):
-    def __init__(self, xml_file, location, actionArgs=None, source_select=False):
+    def __init__(self, xml_file, location, *, actionArgs=None, source_select=False):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.return_data = {
             'link': None,
@@ -130,7 +130,7 @@ class Resolver(BaseWindow):
                 self.source_select_close()
             linkInfo = self.return_data['linkinfo']
 
-            item = xbmcgui.ListItem(path=linkInfo['url'])
+            item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=False)
             if self.return_data.get('sub'):
                 from resources.lib.ui import embed_extractor
                 embed_extractor.del_subs()
@@ -278,22 +278,6 @@ class Resolver(BaseWindow):
             self.canceled = True
             self.close()
 
-
-class Monitor(xbmc.Monitor):
-    def __init__(self):
-        super().__init__()
-        self.playbackerror = False
-        self.playing = False
-
-    def onNotification(self, sender, method, data):
-        if method == 'Player.OnAVStart':
-            self.playing = True
-        elif method == 'Player.OnStop':
-            self.playbackerror = True
-        # else:
-        #     control.log(f'{method} | {data}')
-
-
 @HookMimetype('application/dash+xml')
 def _DASH_HOOK(item):
     import inputstreamhelper
@@ -319,3 +303,15 @@ def _HLS_HOOK(item):
     item.setMimeType('application/vnd.apple.mpegstream_url')
     item.setContentLookup(False)
     return item
+
+class Monitor(xbmc.Monitor):
+    def __init__(self):
+        super().__init__()
+        self.playbackerror = False
+        self.playing = False
+
+    def onNotification(self, sender, method, data):
+        if method == 'Player.OnAVStart':
+            self.playing = True
+        elif method == 'Player.OnStop':
+            self.playbackerror = True

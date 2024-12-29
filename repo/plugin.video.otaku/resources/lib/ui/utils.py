@@ -1,16 +1,18 @@
+import os
+
 from functools import partial
 from resources.lib.ui import control
 
 
 def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: list, image: str, info: dict,
-                  fanart=None, poster=None, landscape=None, banner=None, clearart=None, clearlogo=None) -> dict:
+                  fanart='', poster='', landscape='', banner='', clearart='', clearlogo='') -> dict:
 
     if image and '/' not in image:
-        image = (control.ICONS_PATH / image).as_posix()
+        image = os.path.join(control.ICONS_PATH, image)
     if fanart and not isinstance(fanart, list) and '/' not in fanart:
-        fanart = (control.ICONS_PATH / fanart).as_posix()
+        fanart = os.path.join(control.ICONS_PATH, fanart)
     if poster and '/' not in poster:
-        poster = (control.ICONS_PATH / poster).as_posix()
+        poster = os.path.join(control.ICONS_PATH, poster)
     return {
         'isfolder': isfolder,
         'isplayable': isplayable,
@@ -29,6 +31,7 @@ def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: lis
                 'clearlogo': clearlogo
         }
     }
+
 
 def parse_history_view(res: str, cm: list) -> dict:
     return allocate_item(res, f'search/{res}', True, False, cm, 'new_search.png', {})

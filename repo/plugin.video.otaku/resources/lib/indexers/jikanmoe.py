@@ -56,10 +56,14 @@ class JikanAPI:
             'season': season,
             'episode': episode,
             'plot': '',
-            'rating': {'score': float(res.get('score', 0))},
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode'
         }
+
+        try:
+            info['rating'] = {'score': float(res['score'])}
+        except (KeyError, TypeError):
+            pass
 
         try:
             info['aired'] = res['aired'][:10]

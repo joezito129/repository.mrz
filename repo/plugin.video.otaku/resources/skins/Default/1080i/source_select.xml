@@ -2,8 +2,6 @@
     <defaultcontrol>2</defaultcontrol>
     <controls>
         <control type="image">
-            <top>0</top>
-            <left>0</left>
             <width>1920</width>
             <height>1080</height>
             <texture background="true">$INFO[Window().Property(item.art.fanart)]</texture>
@@ -49,8 +47,8 @@
                     <align>center</align>
                     <aligny>center</aligny>
                     <scroll>true</scroll>
-                    <scrollspeed>80</scrollspeed>
-                    <label>[COLOR deepskyblue]$INFO[Window().Property(item.info.title)] [/COLOR]</label>
+                    <scrollspeed>50</scrollspeed>
+                    <label>[COLOR deepskyblue]$INFO[Window().Property(item.info.title)][/COLOR]</label>
                 </control>
                 <control type="label">
                     <top>120</top>
@@ -59,7 +57,7 @@
                     <textcolor>AAFFFFFF</textcolor>
                     <align>center</align>
                     <aligny>center</aligny>
-                    <visible>String.IsEmpty(Window().Property(item.info.season))</visible>
+                    <visible>!String.IsEqual(Window().Property(item.info.rating),)</visible>
                     <label>Year: [COLOR deepskyblue]$INFO[Window().Property(item.info.year)] [/COLOR] | Rating: [COLOR deepskyblue]$INFO[Window().Property(item.info.rating)][/COLOR]</label>
                 </control>
                 <control type="label">
@@ -69,7 +67,7 @@
                     <textcolor>AAFFFFFF</textcolor>
                     <align>center</align>
                     <aligny>center</aligny>
-                    <visible>!String.IsEmpty(Window().Property(item.info.season))</visible>
+                    <visible>String.IsEqual(Window().Property(item.info.rating),)</visible>
                     <label>Aired: [COLOR deepskyblue]$INFO[Window().Property(item.info.aired)] [/COLOR]</label>
                 </control>
 
@@ -82,7 +80,7 @@
                     <font>font12</font>
                     <textcolor>AAFFFFFF</textcolor>
                     <align>center</align>
-                    <autoscroll delay="3000" time="2500" repeat="10000">true</autoscroll>
+                    <autoscroll delay="3000" time="3000" repeat="10000">true</autoscroll>
                     <label>$INFO[Window().Property(item.info.plot)]</label>
                 </control>
             </control>

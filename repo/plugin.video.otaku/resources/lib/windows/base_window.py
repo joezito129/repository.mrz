@@ -6,7 +6,7 @@ from resources.lib.ui import control, database
 
 
 class BaseWindow(xbmcgui.WindowXMLDialog):
-    def __init__(self, xml_file, location, actionArgs=None):
+    def __init__(self, xml_file, location, *, actionArgs=None):
         super().__init__(xml_file, location)
 
         control.closeBusyDialog()
@@ -18,6 +18,7 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
             show_meta = database.get_show_meta(actionArgs['mal_id'])
             if show_meta:
                 self.item_information.update(pickle.loads(show_meta.get('art')))
+
         elif item_type == 'playing_next':
             self.item_information = actionArgs
         else:
@@ -26,10 +27,8 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
         if thumb := self.item_information.get('thumb'):
             thumb = random.choice(thumb)
             self.setProperty('item.art.thumb', thumb)
-
         fanart = self.item_information.get('fanart')
-        clearlogo = self.item_information.get('clearlogo', control.LOGO_SMALL.as_posix())
-
+        clearlogo = self.item_information.get('clearlogo', control.LOGO_SMALL)
         if not fanart or control.settingids.fanart_disable:
             fanart = control.FANART
         else:
@@ -40,7 +39,7 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
                 else:
                     fanart = random.choice(fanart)
         if isinstance(clearlogo, list):
-            clearlogo = control.LOGO_SMALL.as_posix() if control.settingids.clearlogo_disable else random.choice(clearlogo)
+            clearlogo = control.LOGO_SMALL if control.settingids.clearlogo_disable else random.choice(clearlogo)
 
         if item_type != 'playing_next':
             self.setProperty('item.art.fanart', fanart)
@@ -48,8 +47,3 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
         self.setProperty('item.art.poster', self.item_information.get('poster'))
         self.setProperty('item.art.clearlogo', clearlogo)
         self.setProperty('item.info.title', self.item_information.get('name'))
-
-        if self.item_information.get('format', '').lower() == 'movie':
-            self.setProperty('item.info.plot', self.item_information.get('plot'))
-            self.setProperty('item.info.rating', str(self.item_information.get('rating')))
-            self.setProperty('item.info.title', self.item_information.get('title_userPreferred'))

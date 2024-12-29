@@ -24,7 +24,7 @@ def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=
         'source_select': source_select,
         'silent': silent
     }
-    sources = Sources('get_sources.xml', control.ADDON_PATH.as_posix(), actionArgs=actionArgs).doModal()
+    sources = Sources('get_sources.xml', control.ADDON_PATH, actionArgs=actionArgs).doModal()
     return sources
 
 class Sources(GetSources):
@@ -32,8 +32,8 @@ class Sources(GetSources):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        # self.embed_func = [gogoanime, hianime, animepahe, animix, aniwave]
-        self.embed_func = [gogoanime, animix]
+        # self.embed_func = [gogoanime, hianime, animepahe, animix]
+        self.embed_func = [gogoanime, animix, aniwave]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders

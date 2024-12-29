@@ -174,7 +174,7 @@ def parse_animetosho_view(res, episode, cached=True) -> dict:
         'byte_size': 0,
         'lang': source_utils.getAudio_lang(res['name']),
         'cached': cached,
-        'seeders': res['seeders'],
+        'seeders': res['seeders']
     }
 
     match = re.match(r'(\d+).(\d+) (\w+)', res['size'])

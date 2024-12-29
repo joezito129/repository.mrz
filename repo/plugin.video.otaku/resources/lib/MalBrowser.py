@@ -16,9 +16,9 @@ class MalBrowser(BrowserBase):
         self._TITLE_LANG = ['title', 'title_english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.mal')
         self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
-        self.adult = 'true' if control.getSetting('search.adult') == "false" else 'false'
+        self.adult = 'true' if not control.getBool('search.adult') else 'false'
 
-    def process_mal_view(self, res, base_plugin_url, page):
+    def process_mal_view(self, res, base_plugin_url, page) -> list:
         get_meta.collect_meta(res['data'])
         mapfunc = partial(self.base_mal_view, completed=self.open_completed())
         all_results = list(map(mapfunc, res['data']))
@@ -50,7 +50,11 @@ class MalBrowser(BrowserBase):
         res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")
         return self.process_res(res['data'])
 
-    def get_recommendations(self, mal_id, page):
+    def get_airing_calendar(self, page: int) -> list:
+        control.print('No Airing Calendar For MAL API')
+        return []
+
+    def get_recommendations(self, mal_id, page: int) -> list:
         params = {
             'page': page,
             'limit': self.perpage,
@@ -61,7 +65,7 @@ class MalBrowser(BrowserBase):
         all_results = list(map(mapfunc, recommendations['data']))
         return all_results
 
-    def get_relations(self, mal_id):
+    def get_relations(self, mal_id) -> list:
         relations = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime/{mal_id}/relations')
 
         relation_res = []
@@ -80,7 +84,7 @@ class MalBrowser(BrowserBase):
         all_results = list(map(mapfunc, relation_res))
         return all_results
 
-    def get_search(self, query, page=1):
+    def get_search(self, query, page: int) -> list:
         params = {
             "q": query,
             "page": page,
@@ -94,7 +98,7 @@ class MalBrowser(BrowserBase):
         search = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime", params)
         return self.process_mal_view(search, f"search/{query}?page=%d", page)
 
-    def get_airing_anime(self, page):
+    def get_airing_anime(self, page: int) -> list:
         params = {
             'page': page,
             'limit': self.perpage,
@@ -106,7 +110,7 @@ class MalBrowser(BrowserBase):
         airing = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/now", params)
         return self.process_mal_view(airing, "airing_anime?page=%d", page)
 
-    def get_upcoming_next_season(self, page):
+    def get_upcoming_next_season(self, page: int) -> list:
         season, year = self.get_season_year('next')
         params = {
             'page': page,
@@ -119,7 +123,7 @@ class MalBrowser(BrowserBase):
         upcoming = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/{year}/{season}", params)
         return self.process_mal_view(upcoming, "upcoming_next_season?page=%d", page)
 
-    def get_top_100_anime(self, page):
+    def get_top_100_anime(self, page: int) -> list:
         params = {
             'page': page,
             'limit': self.perpage,
@@ -137,7 +141,7 @@ class MalBrowser(BrowserBase):
         return r.json()
 
     @div_flavor
-    def recommendation_relation_view(self, res, completed=None, mal_dub=None):
+    def recommendation_relation_view(self, res, completed=None, mal_dub=None) -> dict:
         if res.get('entry'):
             res = res['entry']
         if not completed:
@@ -173,7 +177,7 @@ class MalBrowser(BrowserBase):
 
         return utils.parse_view(base, True, False, dub)
 
-    def get_genres(self):
+    def get_genres(self) -> list:
         res = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/genres/anime')
 
         genre = res['data']
@@ -189,7 +193,7 @@ class MalBrowser(BrowserBase):
                 genre_display_list.append(str(genre[selection]['mal_id']))
         return self.genres_payload(genre_display_list, [], 1)
 
-    def genres_payload(self, genre_list, tag_list, page):
+    def genres_payload(self, genre_list, tag_list, page: int) -> list:
         import ast
         if not isinstance(genre_list, list):
             genre_list = ast.literal_eval(genre_list)
@@ -210,7 +214,7 @@ class MalBrowser(BrowserBase):
         return self.process_mal_view(genres, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
     @div_flavor
-    def base_mal_view(self, res, completed=None, mal_dub=None):
+    def base_mal_view(self, res: dict, completed=None, mal_dub=None) -> dict:
         if not completed:
             completed = {}
 
@@ -285,7 +289,7 @@ class MalBrowser(BrowserBase):
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    def database_update_show(self, res):
+    def database_update_show(self, res: dict) -> None:
         mal_id = res['mal_id']
 
         try:
@@ -318,3 +322,4 @@ class MalBrowser(BrowserBase):
                 kodi_meta['rating']['votes'] = res['scored_by']
 
         database.update_show(mal_id, pickle.dumps(kodi_meta))
+

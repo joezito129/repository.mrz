@@ -5,7 +5,7 @@ from resources.lib.windows.base_window import BaseWindow
 
 
 class SkipIntro(BaseWindow):
-    def __init__(self, xml_file, xml_location, actionArgs=None):
+    def __init__(self, xml_file, xml_location, *, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = xbmc.Player()
         self.total_time = int(self.player.getTotalTime())
@@ -48,7 +48,7 @@ class SkipIntro(BaseWindow):
                 self.player.seekTime(int(self.player.getTime()) + int(control.getSetting('skipintro.time')))
             self.close()
 
-        if controlId == 3002:
+        elif controlId == 3002:
             self.actioned = True
             self.close()
 
@@ -57,5 +57,3 @@ class SkipIntro(BaseWindow):
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
             self.close()
-        if actionID == 7:
-            self.handle_action(actionID)

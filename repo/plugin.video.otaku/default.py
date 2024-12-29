@@ -20,6 +20,8 @@
 # t0 = time.perf_counter_ns()
 
 import pickle
+import os
+import sys
 
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
@@ -34,16 +36,12 @@ def add_last_watched(items: list) -> list:
     mal_id = control.getSetting("addon.last_watched")
     try:
         kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
-        last_watched = "%s[I]%s[/I]" % (control.lang(30000), kodi_meta['title_userPreferred'])
+        last_watched = f"{control.lang(30000)}[I]{kodi_meta['title_userPreferred']}[/I]"
         info = {
             'UniqueIDs': {'mal_id': mal_id},
             'title': kodi_meta['title_userPreferred'],
             'plot': kodi_meta['plot'],
-            # 'mpaa': kodi_meta[''],
-            # 'duration': self.duration_to_seconds(res.get('duration')),
-            # 'genre': [x['name'] for x in res.get('genres', [])],
-            # 'studio': [x['name'] for x in res.get('studios', [])],
-            # 'status': res.get('status'),
+            'status': kodi_meta['status'],
             'mediatype': 'tvshow',
             'rating': kodi_meta['rating']
         }
@@ -55,20 +53,20 @@ def add_last_watched(items: list) -> list:
 
 @Route('animes/*')
 def ANIMES_PAGE(payload: str, params: dict):
-    mal_id, eps_watched = payload.rsplit("/")
+    mal_id, eps_watched = payload.rsplit("/", 1)
     control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
 
 
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/")
+    path, mal_id, eps_watched = payload.rsplit("/", 2)
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_recommendations(mal_id, page), 'tvshows')
 
 
 @Route('find_relations/*')
 def FIND_RELATIONS(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/")
+    path, mal_id, eps_watched = payload.rsplit("/", 2)
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
@@ -92,12 +90,16 @@ def TOP_100_ANIME_PAGES(payload: str, params: dict):
 
 @Route('airing_calendar')
 def CALENDAR(payload: str, params: dict):
-    pass
-
+    page = int(params.get('page', 1))
+    calendar = BROWSER.get_airing_calendar(page)
+    if calendar:
+        from resources.lib.windows.anichart import Anichart
+        Anichart('anichart.xml', control.ADDON_PATH, calendar=calendar).doModal()
+    control.exit_code()
 
 @Route('genres/*')
 def GENRES_PAGES(payload: str, params: dict):
-    genres, tags = payload.rsplit("/")
+    genres, tags = payload.rsplit("/", 1)
     page = int(params.get('page', 1))
     if genres or tags:
         control.draw_items(BROWSER.genres_payload(genres, tags, page), 'tvshows')
@@ -150,7 +152,7 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict):
 @Route('play/*')
 def PLAY(payload: str, params: dict):
     from resources.lib import pages
-    mal_id, episode = payload.rsplit("/")
+    mal_id, episode = payload.rsplit("/", 1)
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume = params.get('resume')
@@ -166,17 +168,17 @@ def PLAY(payload: str, params: dict):
     _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
     if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect('source_select.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        Resolver('resolver.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args).doModal(sources, {}, False)
+        Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
     control.exit_code()
 
 
 @Route('play_movie/*')
 def PLAY_MOVIE(payload: str, params: dict):
     from resources.lib import pages
-    mal_id, eps_watched = payload.rsplit("/")
+    mal_id, eps_watched = payload.rsplit("/", 1)
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume = params.get('resume')
@@ -193,10 +195,10 @@ def PLAY_MOVIE(payload: str, params: dict):
     _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
     if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
         from resources.lib.windows.source_select import SourceSelect
-        SourceSelect('source_select.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
     else:
         from resources.lib.windows.resolver import Resolver
-        Resolver('resolver.xml', control.ADDON_PATH.as_posix(), actionArgs=_mock_args).doModal(sources, {}, False)
+        Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
     control.exit_code()
 
 
@@ -205,7 +207,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
     from resources.lib.WatchlistIntegration import watchlist_update_episode
 
-    mal_id, episode = payload.rsplit("/")
+    mal_id, episode = payload.rsplit("/", 1)
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(mal_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
@@ -215,7 +217,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict):
 
 @Route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/")
+    path, mal_id, eps_watched = payload.rsplit("/", 2)
     database.remove_from_database('shows', mal_id)
     database.remove_from_database('episodes', mal_id)
     database.remove_from_database('show_data', mal_id)
@@ -258,7 +260,7 @@ def REFRESH(payload: str, params: dict):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/")
+    path, mal_id, eps_watched = payload.rsplit("/", 2)
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
         episode = database.get_episode(mal_id)
@@ -270,7 +272,7 @@ def FANART_SELECT(payload: str, params: dict):
 
 @Route('fanart/*')
 def FANART(payload: str, params: dict):
-    mal_id, select = payload.rsplit('/', 2)
+    mal_id, select = payload.rsplit('/', 1)
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random"]
@@ -289,7 +291,7 @@ def FANART(payload: str, params: dict):
 def LIST_MENU(payload: str, params: dict):
     MENU_ITEMS = [
         (control.lang(30001), "airing_anime", 'airing_anime.png', {}),
-        # ("Airing Calendar", 'airing_calendar', '', {}),
+        (control.lang(30007), 'airing_calendar', '', {}),
         (control.lang(30002), "upcoming_next_season", 'upcoming.png', {}),
         (control.lang(30003), "top_100_anime", 'top_100_anime.png', {}),
         (control.lang(30004), "genres//", 'genres_&_tags.png', {}),
@@ -373,6 +375,7 @@ def REBUILD_DATABASE(payload: str, params: dict):
 @Route('completed_sync')
 def COMPLETED_SYNC(payload: str, params: dict):
     import service
+
     service.sync_watchlist()
     if params.get('setting'):
         control.exit_code()
@@ -381,7 +384,7 @@ def COMPLETED_SYNC(payload: str, params: dict):
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict):
     from resources.lib.windows.sort_select import SortSelect
-    SortSelect('sort_select.xml', control.ADDON_PATH.as_posix()).doModal()
+    SortSelect('sort_select.xml', control.ADDON_PATH).doModal()
 
 
 @Route('install_packages')
@@ -394,14 +397,14 @@ def INSTALL_PACKAGES(payload: str, params: dict):
 @Route('download_manager')
 def DOWNLOAD_MANAGER(payload: str, params: dict):
     from resources.lib.windows.download_manager import DownloadManager
-    DownloadManager('download_manager.xml', control.ADDON_PATH.as_posix()).doModal()
+    DownloadManager('download_manager.xml', control.ADDON_PATH).doModal()
 
 
 @Route('import_settings')
 def IMPORT_SETTINGS(payload: str, params: dict):
     import xbmcvfs
-    setting_xml = (control.dataPath / 'settings.xml').as_posix()
 
+    setting_xml = os.path.join(control.dataPath, 'settings.xml')
     import_location = control.browse(1, f"{control.ADDON_NAME}:  Import Setting", 'files', 'settings.xml')
     if not import_location:
         return control.exit_code()
@@ -419,10 +422,9 @@ def IMPORT_SETTINGS(payload: str, params: dict):
 
 @Route('export_settings')
 def IMPORT_SETTINGS(payload: str, params: dict):
-    import os
     import xbmcvfs
 
-    setting_xml = (control.dataPath / 'settings.xml').as_posix()
+    setting_xml = os.path.join(control.dataPath, 'settings.xml')
     export_location = control.browse(3, f"{control.ADDON_NAME}: Export Location", 'files')
 
     if not export_location:
@@ -444,8 +446,8 @@ def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict):
 
 
 if __name__ == "__main__":
-    plugin_url = control.get_plugin_url()
-    plugin_params = control.get_plugin_params()
+    plugin_url = control.get_plugin_url(sys.argv[0])
+    plugin_params = control.get_plugin_params(sys.argv[2])
     router_process(plugin_url, plugin_params)
     control.log(f'Finished Running: {plugin_url=} {plugin_params=}')
 

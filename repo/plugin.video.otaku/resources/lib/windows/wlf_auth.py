@@ -5,7 +5,7 @@ from resources.lib.windows.base_window import BaseWindow
 
 
 class WatchlistFlavorAuth(BaseWindow):
-    def __init__(self, xml_file, location, flavor=None):
+    def __init__(self, xml_file, location, *, flavor=None):
         super().__init__(xml_file, location)
         self.flavor = flavor
         self.authorized = False
@@ -14,19 +14,17 @@ class WatchlistFlavorAuth(BaseWindow):
     def onInit(self):
         self.setFocusId(1000)
 
-    def doModal(self) -> object:
+    def doModal(self) -> bool:
         super(WatchlistFlavorAuth, self).doModal()
         return self.authorized
 
     def onClick(self, controlId):
-        if controlId == 1000:
-            self.handle_action(7)
+        self.handle_action(controlId)
 
     def handle_action(self, actionID):
-        if actionID == 7 and self.getFocusId() == 1002:
+        if self.getFocusId() == 1002:
             self.set_settings()
-
-        if actionID == 7 and self.getFocusId() == 1003:
+        elif self.getFocusId() == 1003:
             self.close()
 
     def onAction(self, action):
@@ -34,9 +32,6 @@ class WatchlistFlavorAuth(BaseWindow):
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
             self.close()
-
-        if actionID in [7, 100]:
-            self.handle_action(7)
 
     def set_settings(self):
         res = {}

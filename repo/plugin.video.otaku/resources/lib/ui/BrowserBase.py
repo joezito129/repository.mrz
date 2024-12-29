@@ -1,4 +1,6 @@
 import re
+import json
+import xbmcvfs
 
 from resources.lib.ui import control, utils
 
@@ -16,11 +18,10 @@ class BrowserBase:
 
     @staticmethod
     def open_completed() -> dict:
-        import json
-        try:
+        if xbmcvfs.exists(control.completed_json):
             with open(control.completed_json) as file:
                 completed = json.load(file)
-        except FileNotFoundError:
+        else:
             completed = {}
         return completed
 
@@ -62,6 +63,20 @@ class BrowserBase:
         text = text.replace('?', r'\?')
         text = text.replace(':', r'\:')
         return text
+
+    @staticmethod
+    def get_quality(qual):
+        if qual > 1080:
+            quality = 4
+        elif qual > 720:
+            quality = 3
+        elif qual > 480:
+            quality = 2
+        elif qual > 360:
+            quality = 1
+        else:
+            quality = 0
+        return quality
 
     @staticmethod
     def embeds() -> list:

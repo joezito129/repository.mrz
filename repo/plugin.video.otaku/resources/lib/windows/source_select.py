@@ -3,13 +3,12 @@ import xbmcgui
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
-from resources.lib.windows.download_manager import Manager
 from resources.lib.windows.resolver import Resolver
 from resources.lib import OtakuBrowser
 
 
 class SourceSelect(BaseWindow):
-    def __init__(self, xml_file, location, actionArgs=None, sources=None, rescrape=False):
+    def __init__(self, xml_file, location, *, actionArgs=None, sources=None, rescrape=False):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.actionArgs = actionArgs
         self.sources = sources
@@ -23,68 +22,57 @@ class SourceSelect(BaseWindow):
         if episode:
             anime_init = OtakuBrowser.get_anime_init(actionArgs.get('mal_id'))
             episode = int(episode)
-            try:
-                self.setProperty('item.info.season', str(anime_init[0][episode - 1]['info']['season']))
-                self.setProperty('item.info.episode', str(anime_init[0][episode - 1]['info']['episode']))
-                self.setProperty('item.info.plot', anime_init[0][episode - 1]['info']['plot'])
-                self.setProperty('item.info.aired', anime_init[0][episode - 1]['info'].get('aired'))
-                self.setProperty('item.art.thumb', anime_init[0][episode - 1]['image']['thumb'])
-                self.setProperty('item.art.poster', anime_init[0][episode - 1]['image']['poster'])
-            except IndexError:
-                self.setProperty('item.info.season', '-1')
-                self.setProperty('item.info.episode', '-1')
+            self.info = anime_init[0][episode - 1]['info']
+            self.setProperty('item.info.title', self.info.get('title', ''))
+            self.setProperty('item.info.season', str(self.info.get('season', '')))
+            self.setProperty('item.info.episode', str(self.info.get('episode', '')))
+            self.setProperty('item.info.plot', self.info.get('plot', ''))
+            self.setProperty('item.info.rating', str(self.info.get('rating', {}).get('score', '')))
 
-            try:
-                year, month, day = anime_init[0][episode - 1]['info'].get('aired', '0000-00-00').split('-')
+            aired = self.info.get('aired', '')
+            self.setProperty('item.info.aired', aired)
+            aired_list = aired.rsplit('-', 2)
+            if len(aired_list) == 3:
+                year, month, day = aired_list
                 self.setProperty('item.info.year', year)
-            except ValueError:
-                pass
 
         else:
             show = database.get_show(actionArgs.get('mal_id'))
             if show:
                 kodi_meta = pickle.loads(show.get('kodi_meta'))
-                self.setProperty('item.info.plot', kodi_meta.get('plot'))
-                self.setProperty('item.info.rating', str(kodi_meta.get('rating', {}).get('score')))
-                self.setProperty('item.info.aired', kodi_meta.get('start_date'))
-                self.setProperty('item.art.poster', kodi_meta.get('poster'))
-                try:
-                    self.setProperty('item.info.year', kodi_meta.get('start_date').split('-')[0])
-                except AttributeError:
-                    pass
+                self.setProperty('item.info.plot', kodi_meta.get('plot', ''))
+                self.setProperty('item.info.rating', str(kodi_meta.get('rating', {}).get('score', '')))
+                aired = self.info.get('start_date', '')
+                self.setProperty('item.info.aired', aired)
+                aired_list = aired.rsplit('-', 2)
+                if len(aired_list) == 3:
+                    year, month, day = aired_list
+                    self.setProperty('item.info.year', year)
 
     def onInit(self):
         self.display_list = self.getControl(1000)
-        menu_items = []
         for i in self.sources:
-            if not i:
-                continue
-            menu_item = xbmcgui.ListItem('%s' % i['release_title'], offscreen=False)
-            # properties = {
-            #     'type': i['type'],
-            #     'debrid': i['debrid'],
-            #     'provider': i['provider'],
-            # }
-            for info in list(i.keys()):
-                try:
-                    value = i[info]
-                    if isinstance(value, list):
-                        value = [str(k) for k in value]
-                        value = ' '.join(sorted(value))
-                    menu_item.setProperty(info, str(value).replace('_', ' '))
-                except UnicodeEncodeError:
-                    menu_item.setProperty(info, i[info])
-            menu_items.append(menu_item)
-            self.display_list.addItem(menu_item)
+            if i:
+                menu_item = xbmcgui.ListItem(i['release_title'], offscreen=True)
+                properties = {
+                    'type': i['type'],
+                    'debrid_provider': i['debrid_provider'],
+                    'provider': i['provider'],
+                    'quality': str(i['quality']),
+                    'info': str(' '.join(i['info'])),
+                    'seeders': str(i.get('seeders', '')),
+                    'size': i['size']
+                }
+                menu_item.setProperties(properties)
+                self.display_list.addItem(menu_item)
         self.setFocusId(1000)
 
     def doModal(self):
         super(SourceSelect, self).doModal()
         return self.stream_link
 
-    # def onClick(self, controlId):
-    #     if controlId == 1000:
-    #         self.handle_action(7)
+    def onClick(self, controlId):
+        self.handle_action(controlId)
 
     def onAction(self, action):
         actionID = action.getId()
@@ -95,11 +83,7 @@ class SourceSelect(BaseWindow):
             self.stream_link = False
             self.close()
 
-        if actionID in [7, 100] and self.getFocusId() == 1000:
-            self.position = self.display_list.getSelectedPosition()
-            self.resolve_item()
-
-        if actionID == 117:
+        elif actionID == 117:
             context = control.context_menu(
                 [
                     "Play",
@@ -117,8 +101,9 @@ class SourceSelect(BaseWindow):
                     self.close()
                     source = [self.sources[self.display_list.getSelectedPosition()]]
                     self.actionArgs['play'] = False
-                    return_data = Resolver('resolver.xml', control.ADDON_PATH.as_posix(), actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
+                    return_data = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
                     if isinstance(return_data, dict):
+                        from resources.lib.windows.download_manager import Manager
                         Manager().download_file(return_data['link'])
 
             elif context == 2:  # File Selection
@@ -126,6 +111,12 @@ class SourceSelect(BaseWindow):
                     control.notify(control.ADDON_NAME, "Please Select A Debrid File")
                 else:
                     self.resolve_item(True)
+
+    def handle_action(self, controlID):
+        if self.getFocusId() == 1000:
+            self.position = self.display_list.getSelectedPosition()
+            self.resolve_item()
+
 
     def resolve_item(self, pack_select=False):
         if control.getBool('general.autotrynext') and not pack_select:
@@ -136,6 +127,6 @@ class SourceSelect(BaseWindow):
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
         self.actionArgs['close'] = self.close
-        self.stream_link = Resolver('resolver.xml', control.ADDON_PATH.as_posix(), actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
+        self.stream_link = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
         if isinstance(self.stream_link, dict):
             self.close()

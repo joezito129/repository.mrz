@@ -22,3 +22,4 @@ def router_process(url: str, params: dict = None) -> None:
     for route_obj in ROUTES:
         if url == route_obj.path or (route_obj.wildcard and url.startswith(route_obj.path)):
             route_obj.func(payload, params)
+            break
