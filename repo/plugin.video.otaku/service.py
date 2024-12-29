@@ -99,7 +99,7 @@ def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
         if not forced_state:
             control.ok_dialog(control.ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
             control.execute('LoadProfile({})'.format(control.xbmc.getInfoLabel("system.profilename")))
-    file_path = control.ADDON_PATH / "addon.xml"
+    file_path = os.path.join(control.ADDON_PATH, "addon.xml")
     with open(file_path) as addon_xml:
         file_lines = addon_xml.readlines()
     for i in range(len(file_lines)):
