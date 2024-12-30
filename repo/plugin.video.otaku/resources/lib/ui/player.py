@@ -49,12 +49,9 @@ class WatchlistPlayer(player):
 
         # process skip times
         self.process_embed('aniwave')
-        if not self.skipintro_aniskip or not self.skipoutro_aniskip:
-            self.process_embed('hianime')
-        if not self.skipintro_aniskip or not self.skipoutro_aniskip:
-            self.process_aniskip()
-        if not self.skipintro_aniskip or not self.skipoutro_aniskip:
-            self.process_animeskip()
+        self.process_embed('hianime')
+        self.process_aniskip()
+        self.process_animeskip()
         self.keepAlive()
 
     # def onPlayBackStarted(self):
@@ -117,15 +114,14 @@ class WatchlistPlayer(player):
         monitor = Monitor()
         for _ in range(20):
             if monitor.playbackerror:
-                return
+                return control.log('playbackerror', 'warning')
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
             monitor.waitForAbort(0.25)
         del monitor
-        if not self.isPlayingVideo():
-            control.log('Not playing Video', 'warning')
-            return
 
+        if not self.isPlayingVideo():
+            return control.log('Not playing Video', 'warning')
 
         if self.resume:
             self.seekTime(self.resume)
@@ -150,7 +146,7 @@ class WatchlistPlayer(player):
                 if s['language'] == 'eng':
                     enable_subtitles = True
                     if current_audio['language'] == 'eng':
-                        matches = ['sings', 'songs', 'forced']
+                        matches = ['signs', 'songs', 'forced']
                     else:
                         matches = ['full', 'dialogue']
                     if any(x in s['name'].lower() for x in matches):
@@ -201,7 +197,7 @@ class WatchlistPlayer(player):
         control.closeAllDialogs()
 
     def process_aniskip(self):
-        if self.skipintro_aniskip_enable:
+        if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
             skipintro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'op')
             if skipintro_aniskip_res:
                 skip_times = skipintro_aniskip_res['results'][0]['interval']
@@ -209,7 +205,7 @@ class WatchlistPlayer(player):
                 self.skipintro_end = int(skip_times['endTime']) + self.skipintro_offset
                 self.skipintro_aniskip = True
 
-        if self.skipoutro_aniskip_enable:
+        if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
             skipoutro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'ed')
             if skipoutro_aniskip_res:
                 skip_times = skipoutro_aniskip_res['results'][0]['interval']
@@ -221,7 +217,7 @@ class WatchlistPlayer(player):
         show_meta = database.get_show_meta(self.mal_id)
         anilist_id = pickle.loads(show_meta['meta_ids'])['anilist_id']
 
-        if self.skipintro_aniskip_enable or self.skipoutro_aniskip_enable:
+        if (self.skipintro_aniskip_enable and not self.skipintro_aniskip) or (self.skipoutro_aniskip_enable and not self.skipoutro_aniskip):
             skip_times = anime_skip.get_time_stamps(anime_skip.get_episode_ids(str(anilist_id), int(self.episode)))
             intro_start = None
             intro_end = None
@@ -229,12 +225,12 @@ class WatchlistPlayer(player):
             outro_end = None
             if skip_times:
                 for skip in skip_times:
-                    if self.skipintro_aniskip_enable:
+                    if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
                         if intro_start is None and skip['type']['name'] in ['Intro', 'New Intro', 'Branding']:
                             intro_start = int(skip['at'])
                         elif intro_end is None and intro_start is not None and skip['type']['name'] in ['Canon']:
                             intro_end = int(skip['at'])
-                    if self.skipoutro_aniskip_enable:
+                    if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
                         if outro_start is None and skip['type']['name'] in ['Credits', 'New Credits']:
                             outro_start = int(skip['at'])
                         elif outro_end is None and outro_start is not None and skip['type']['name'] in ['Canon', 'Preview']:
@@ -250,13 +246,13 @@ class WatchlistPlayer(player):
                 self.skipoutro_aniskip = True
 
     def process_embed(self, embed):
-        if self.skipintro_aniskip_enable:
+        if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
             embed_skipintro_start = control.getInt(f'{embed}.skipintro.start')
             if embed_skipintro_start != -1:
                 self.skipintro_start = embed_skipintro_start + self.skipintro_offset
                 self.skipintro_end = control.getInt(f'{embed}.skipintro.end') + self.skipintro_offset
                 self.skipintro_aniskip = True
-        if self.skipoutro_aniskip_enable:
+        if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
             embed_skipoutro_start = control.getInt(f'{embed}.skipoutro.start')
             if embed_skipoutro_start != -1:
                 self.skipoutro_start = embed_skipoutro_start + self.skipoutro_offset
