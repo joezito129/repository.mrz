@@ -385,9 +385,9 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="general.plalist.size" type="integer" label="30600" help="30601">
+                <setting id="general.playlist.size" type="integer" label="30600" help="30601">
                     <level>0</level>
-                    <default>0</default>
+                    <default>1</default>
                     <constraints>
                         <minimum>0</minimum>
                         <step>1</step>
@@ -1117,7 +1117,7 @@
                 </setting>
                 <setting id="watchlist.update.flavor" type="string" label="30371" help="">
                     <level>0</level>
-                    <default>MAL</default>
+                    <default>mal</default>
                     <constraints>
                         <options>
                             <option label="MAL">mal</option>

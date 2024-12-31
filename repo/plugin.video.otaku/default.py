@@ -28,26 +28,29 @@ from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlists
 
-
 BROWSER = OtakuBrowser.BROWSER
 
 
 def add_last_watched(items: list) -> list:
     mal_id = control.getSetting("addon.last_watched")
-    try:
-        kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
+    show = database.get_show(mal_id)
+    if show:
+        kodi_meta = pickle.loads(show['kodi_meta'])
         last_watched = f"{control.lang(30000)}[I]{kodi_meta['title_userPreferred']}[/I]"
         info = {
             'UniqueIDs': {'mal_id': mal_id},
             'title': kodi_meta['title_userPreferred'],
             'plot': kodi_meta['plot'],
             'status': kodi_meta['status'],
-            'mediatype': 'tvshow',
             'rating': kodi_meta['rating']
         }
-        items.append((last_watched, f'animes/{mal_id}/', kodi_meta['poster'], info))
-    except TypeError:
-        pass
+        if kodi_meta['format'] == 'movie':
+            url = f'play_movie/{mal_id}/'
+            info['mediatype'] = 'movie'
+        else:
+            info['mediatype'] = 'tvshow'
+            url = f'animes/{mal_id}/'
+        items.append((last_watched, url, kodi_meta['poster'], info))
     return items
 
 
@@ -89,7 +92,7 @@ def TOP_100_ANIME_PAGES(payload: str, params: dict):
 
 
 @Route('airing_calendar')
-def CALENDAR(payload: str, params: dict):
+def AIRING_CALENDAR(payload: str, params: dict):
     page = int(params.get('page', 1))
     calendar = BROWSER.get_airing_calendar(page)
     if calendar:

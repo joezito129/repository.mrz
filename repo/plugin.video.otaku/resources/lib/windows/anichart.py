@@ -1,7 +1,7 @@
 import xbmcgui
 import time
-
 import default
+
 from resources.lib.windows.base_window import BaseWindow
 from resources.lib.ui import control
 
@@ -58,5 +58,5 @@ class Anichart(BaseWindow):
                 finally:
                     control.progressDialog.close()
             elif 'airing_calendar' in new_payload:
-                default.CALENDAR(new_payload.rsplit('airing_calendar', 0)[0], new_params)
+                default.AIRING_CALENDAR(new_payload.rsplit('airing_calendar', 0)[0], new_params)
             self.close()

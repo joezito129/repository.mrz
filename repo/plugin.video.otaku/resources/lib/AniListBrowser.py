@@ -779,7 +779,7 @@ class AniListBrowser(BrowserBase):
 
         try:
             start_date = res.get('startDate')
-            start_date = '{}-{:02}-{:02}'.format(start_date['year'], start_date['month'], start_date['day'])
+            start_date = f"{start_date['year']}-{start_date['month']:02}-{start_date['day']:02}"
         except TypeError:
             start_date = None
 
@@ -803,8 +803,8 @@ class AniListBrowser(BrowserBase):
             'query': titles,
             'episodes': res.get('episodes'),
             'poster': res['coverImage']['extraLarge'],
-            'status': res.get('status'),
-            'format': res.get('format', ''),
+            'status': "Finished Airing" if res.get('status') == "FINISHED" else res.get('status'),
+            'format': res.get('format', '').lower(),
             'plot': desc
         }
 

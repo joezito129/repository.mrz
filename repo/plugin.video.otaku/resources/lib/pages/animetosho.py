@@ -51,7 +51,7 @@ class Sources(BrowserBase):
             params['aids'] = self.anidb_id
         self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
 
-        if status == 'FINISHED':
+        if status == 'Finished Airing':
             query = f'{show} "Batch"|"Complete Series"'
             episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
             if episodes:

@@ -112,7 +112,7 @@ class SIMKLAPI:
         episodes = database.get_episode_list(mal_id)
         dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
         if episodes:
-            if kodi_meta['status'] not in ["FINISHED", "Finished Airing"]:
+            if kodi_meta['status'] != "Finished Airing":
                 return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data)
             return indexers.process_episodes(episodes, eps_watched, dub_data)
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:

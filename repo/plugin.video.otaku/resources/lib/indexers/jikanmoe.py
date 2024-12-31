@@ -111,14 +111,14 @@ class JikanAPI:
         control.notify("Jikanmoa", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
-    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data=None, dub_data=None):
+    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
         update_time, diff = indexers.get_diff(episodes[0])
         if diff > int(control.getSetting('interface.check.updates')):
             result = self.get_episode_meta(mal_id)
             season = episodes[0]['season']
             mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart,
                                eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle,
-                               dub_data=dub_data, filler_data=filler_data, episodes=episodes)
+                               dub_data=dub_data, filler_data=None, episodes=episodes)
             all_results = list(map(mapfunc2, result))
             control.notify("Jikanmoa", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
@@ -143,10 +143,8 @@ class JikanAPI:
         episodes = database.get_episode_list(mal_id)
         dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
         if episodes:
-            if kodi_meta['status'] not in ["FINISHED", "Finished Airing"]:
-                from resources.jz import anime_filler
-                filler_data = anime_filler.get_data(kodi_meta['ename'])
-                return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, filler_data, dub_data)
+            if kodi_meta['status'] != "Finished Airing":
+                return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data)
             return indexers.process_episodes(episodes, eps_watched, dub_data)
 
         if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:

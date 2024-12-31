@@ -185,7 +185,7 @@ class Sources(BrowserBase):
             'o': 'desc'
         }
         nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
-        if status == 'FINISHED':
+        if status == "Finished Airing":
             query = '%s "Batch"|"Complete Series"' % show
             episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
             if episodes:

@@ -42,7 +42,7 @@ class SourceSelect(BaseWindow):
                 kodi_meta = pickle.loads(show.get('kodi_meta'))
                 self.setProperty('item.info.plot', kodi_meta.get('plot', ''))
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating', {}).get('score', '')))
-                aired = self.info.get('start_date', '')
+                aired = kodi_meta.get('start_date', '')
                 self.setProperty('item.info.aired', aired)
                 aired_list = aired.rsplit('-', 2)
                 if len(aired_list) == 3:

@@ -2,6 +2,7 @@ import time
 import requests
 import random
 import pickle
+import datetime
 
 from functools import partial
 from resources.lib.ui import database, control, utils, get_meta
@@ -50,10 +51,6 @@ class MalBrowser(BrowserBase):
         res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")
         return self.process_res(res['data'])
 
-    def get_airing_calendar(self, page: int) -> list:
-        control.print('No Airing Calendar For MAL API')
-        return []
-
     def get_recommendations(self, mal_id, page: int) -> list:
         params = {
             'page': page,
@@ -97,6 +94,18 @@ class MalBrowser(BrowserBase):
 
         search = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime", params)
         return self.process_mal_view(search, f"search/{query}?page=%d", page)
+
+    def get_airing_calendar(self, page: int) -> list:
+        params = {
+            'page': page,
+            'limit': self.perpage,
+            'sfw': self.adult
+        }
+        if self.format_in_type:
+            params['filter'] = self.format_in_type
+
+        calendar = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/now", params)
+        return self.process_calendar_view(calendar, f"airing_calendar?page=%d", page)
 
     def get_airing_anime(self, page: int) -> list:
         params = {
@@ -263,6 +272,24 @@ class MalBrowser(BrowserBase):
         if res.get('trailer'):
             info['trailer'] = f"plugin://plugin.video.youtube/play/?video_id={res['trailer']['youtube_id']}"
 
+        if res.get('broadcast'):
+            airingat = res.get('aired', {}).get('from')
+            broadcast = res['broadcast']
+            day = broadcast.get('day')
+            time_ = broadcast.get('time')
+            timezone = broadcast.get('timezone')
+
+            if day and time_ and airingat:
+                string_time = f"{airingat[:10]} at {time_}"
+                if timezone == 'Asia/Tokyo':
+                    string_time += "+09:00"
+
+                time_format = datetime.datetime.strptime(string_time, f"%Y-%m-%d at %H:%M%z")
+                info['properties'] = {
+                    "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
+                    "date": f"{time_format:%A[CR]%B %d, %Y}",
+                    "time": f"{time_format:%I:%M %p}",
+                }
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
         image = res['images']['webp']['large_image_url']
@@ -312,7 +339,7 @@ class MalBrowser(BrowserBase):
             'episodes': res['episodes'],
             'poster': res['images']['webp']['large_image_url'],
             'status': res.get('status'),
-            'format': res.get('type'),
+            'format': res.get('type', '').lower(),
             'plot': res.get('synopsis')
         }
 
@@ -323,3 +350,14 @@ class MalBrowser(BrowserBase):
 
         database.update_show(mal_id, pickle.dumps(kodi_meta))
 
+    def process_calendar_view(self, res: dict, base_plugin_url: str, page: int):
+        all_results = []
+        previous_page = page - 1
+        if previous_page > 0:
+            name = f"Prevous Page ({previous_page})"
+            all_results.append(utils.allocate_item(name, base_plugin_url % previous_page, True, False, [], 'next.png', {'plot': name}, 'next.png'))
+        anime_res = res['data']
+        hasNextPage = res['pagination']['has_next_page']
+        all_results += list(map(self.base_mal_view, anime_res))
+        all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
+        return all_results
