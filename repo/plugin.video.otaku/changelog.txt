@@ -3,7 +3,6 @@ Changelog v5.1.14 (2024-12-29):
 - Changed back to os
 - Added timezone
 - Added AnimeChart
--
 
 Changelog v5.1.13 (2024-12-24):
 - Fixed playlist

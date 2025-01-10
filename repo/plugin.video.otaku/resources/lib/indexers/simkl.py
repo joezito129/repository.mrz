@@ -172,4 +172,4 @@ class SIMKLAPI:
         r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params)
         if r.ok:
             r = r.json()
-            return r['ids']
+            return r.get('ids')

@@ -189,10 +189,9 @@ class WatchlistPlayer(player):
                         break
                     xbmc.sleep(5000)
 
-
         while self.isPlaying():
-            xbmc.sleep(5000)
             self.current_time = int(self.getTime())
+            xbmc.sleep(5000)
 
         control.closeAllDialogs()
 

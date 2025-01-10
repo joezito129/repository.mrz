@@ -45,8 +45,9 @@ class Sources(BrowserBase):
             self.anidb_id = meta_ids.get('anidb_id')
             if not self.anidb_id:
                 ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
-                self.anidb_id = meta_ids['anidb_id'] = ids['anidb']
-                database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
+                if ids:
+                    self.anidb_id = meta_ids['anidb_id'] = ids['anidb']
+                    database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
         if self.anidb_id:
             params['aids'] = self.anidb_id
         self.sources += self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode, season)
