@@ -7,7 +7,7 @@ from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui import database, source_utils
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.indexers import malsync
+from resources.lib.endpoint import malsync
 
 
 def get_backup(mal_id, source) -> dict:
@@ -25,7 +25,7 @@ class Sources(BrowserBase):
     def get_sources(self, mal_id, episode):
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta.get('name')
+        title = kodi_meta['name']
         title = self._clean_title(title)
 
         slugs = database.get_(malsync.get_slugs, 168, mal_id=mal_id, site='Gogoanime')
@@ -98,11 +98,12 @@ class Sources(BrowserBase):
 
         soup = BeautifulSoup(r, 'html.parser')
         sources = []
+        embed_config = self.embeds()
         for element in soup.select('.anime_muti_link > ul > li'):
             server = element.get('class')[0]
             link = element.a.get('data-video')
 
-            if server.lower() in self.embeds():
+            if server.lower() in embed_config:
                 if link.startswith('//'):
                     link = 'https:' + link
 

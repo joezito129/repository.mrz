@@ -1,6 +1,5 @@
 import requests
 import re
-import itertools
 import pickle
 
 from functools import partial
@@ -83,7 +82,7 @@ class Sources(BrowserBase):
         self.append_cache_uncached_noduplicates()
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def process_animetosho_episodes(self, url: str, params: dict, episode, season) -> list:
+    def process_animetosho_episodes(self, url: str, params: dict, episode: int, season) -> list:
         r = requests.get(url, params=params)
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
@@ -103,41 +102,10 @@ class Sources(BrowserBase):
             except AttributeError:
                 list_item['seeders'] = 0
             list_.append(list_item)
-
-        regex = r'\ss(\d+)|season\s(\d+)|(\d+)+(?:st|[nr]d|th)\sseason'
-        regex_ep = r'\de(\d+)\b|\se(\d+)\b|\s-\s(\d{1,3})\b'
-        rex = re.compile(regex)
-        rex_ep = re.compile(regex_ep)
-
-        filtered_list = []
-        for torrent in list_:
-            try:
-                torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(1)
-            except AttributeError:
-                continue
-
-            if season and not self.anidb_id:
-                title = torrent['name'].lower()
-
-                ep_match = rex_ep.findall(title)
-                ep_match = list(map(int, list(filter(None, itertools.chain(*ep_match)))))
-
-                if ep_match and ep_match[0] != int(episode):
-                    regex_ep_range = r'\s\d+-\d+|\s\d+~\d+|\s\d+\s-\s\d+|\s\d+\s~\s\d+'
-                    rex_ep_range = re.compile(regex_ep_range)
-
-                    if not rex_ep_range.search(title):
-                        continue
-
-                match = rex.findall(title)
-                match = list(map(int, list(filter(None, itertools.chain(*match)))))
-
-                if not match or match[0] == int(season):
-                    filtered_list.append(torrent)
-
-            else:
-                filtered_list.append(torrent)
-
+        if season:
+            filtered_list = source_utils.filter_sources('animetosho', list_, int(season), int(episode), anidb_id=self.anidb_id)
+        else:
+            filtered_list = list_
         cache_list, uncashed_list_ = debrid.torrentCacheCheck(filtered_list)
         uncashed_list = [i for i in uncashed_list_ if i['seeders'] > 0]
 

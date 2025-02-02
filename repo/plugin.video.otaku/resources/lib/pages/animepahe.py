@@ -76,9 +76,9 @@ class Sources(BrowserBase):
             mlink = SoupStrainer('div', {'id': 'resolutionMenu'})
             mdiv = BeautifulSoup(html, "html.parser", parse_only=mlink)
             items = mdiv.find_all('button')
-
+            embed_config = self.embeds()
             for item in items:
-                if any(x in item.get('data-src').lower() for x in self.embeds()):
+                if any(x in item.get('data-src').lower() for x in embed_config):
                     qual = int(item.get('data-resolution'))
                     if qual < 577:
                         quality = 0

@@ -165,8 +165,7 @@ class Manager:
         return downloads.values()
 
     def get_download_index(self):
-        index = control.getSetting("DMIndex")
-        self.download_ids = [i for i in index.split(",") if i] if index is not None else []
+        self.download_ids = control.getStringList("DMIndex")
 
     def clear_complete(self):
         for download_ in self.get_all_tasks_info():
@@ -186,7 +185,7 @@ class Manager:
 
     def remove_from_index(self, url_hash):
         self.download_ids.remove(url_hash)
-        control.setSetting("DMIndex", ",".join(self.download_ids))
+        control.setStringList("DMIndex", self.download_ids)
 
     def download_file(self, url, filename=None):
         if not xbmcvfs.exists(self.storage_location):

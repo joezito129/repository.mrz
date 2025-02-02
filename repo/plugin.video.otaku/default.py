@@ -280,12 +280,10 @@ def FANART(payload: str, params: dict):
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random"]
     fanart += ["None", ""]
-    fanart_all = control.getSetting(f'fanart.all').split(',')
-    if '' in fanart_all:
-        fanart_all.remove('')
-    fanart_all += [str(mal_id)]
+    fanart_all = control.getStringList(f'fanart.all')
+    fanart_all.append(str(mal_id))
     control.setSetting(f'fanart.select.{mal_id}', fanart[int(select)])
-    control.setSetting(f'fanart.all', ",".join(fanart_all))
+    control.setStringList(f'fanart.all', fanart_all)
     control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[int(select)]}")
 
 
@@ -321,7 +319,7 @@ def TOOLS_MENU(payload: str, params: dict):
         (control.lang(30015), "completed_sync", "sync_completed.png", {'plot': "Sync Completed Anime with Otaku"}),
         (control.lang(30016), 'download_manager', 'download_manager.png', {'plot': "Open Download Manager"}),
         (control.lang(30017), 'sort_select', '', {'plot': "Choose Sorting..."}),
-        (control.lang(30018), 'clear_slected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"}),
+        (control.lang(30018), 'clear_selected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"}),
         # ("install Packages", 'install_packages', '', {'plot': "Install Custom Packages"})
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], 'addons')
@@ -358,10 +356,10 @@ def CLEAR_SEARCH_HISTORY(payload: str, params: dict):
 
 @Route('clear_selected_fanart')
 def CLEAR_SELECTED_FANART(payload: str, params: dict):
-    fanart_all = control.getSetting(f'fanart.all').split(',')
+    fanart_all = control.getStringList(f'fanart.all')
     for i in fanart_all:
         control.setSetting(f'fanart.select.{i}', '')
-    control.setSetting('fanart.all', '')
+    control.setStringList('fanart.all', [])
     control.ok_dialog(control.ADDON_NAME, "Completed")
     if params.get('setting'):
         control.exit_code()
@@ -394,7 +392,7 @@ def SORT_SELECT(payload: str, params: dict):
 def INSTALL_PACKAGES(payload: str, params: dict):
     from resources.lib.pages import custom_providers
     custom_providers.main()
-    control.print('done')
+    control.print('installed_packages')
 
 
 @Route('download_manager')

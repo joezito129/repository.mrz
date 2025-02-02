@@ -18,11 +18,12 @@ class Torbox:
         auth_done = self.status()
         if not auth_done:
             control.ok_dialog(f'{control.ADDON_NAME}: Torbox Auth', "Invalid API KEY!")
+            control.setSetting('torbox.username', '')
+            control.setSetting('torbox.auth.status', '')
 
     def status(self) -> bool:
         r = requests.get(f'{self.BaseUrl}/user/me', headers=self.headers())
         if r.ok:
-
             user_info = r.json()['data']
             control.setSetting('torbox.username', user_info['email'])
             if user_info['plan'] == 0:

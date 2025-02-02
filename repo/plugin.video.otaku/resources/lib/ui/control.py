@@ -20,6 +20,7 @@ except IndexError:
 addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_ID = addonInfo('id')
 ADDON = xbmcaddon.Addon(ADDON_ID)
+Settings = ADDON.getSettings()
 language = ADDON.getLocalizedString
 addonInfo = ADDON.getAddonInfo
 ADDON_NAME = addonInfo('name')
@@ -64,6 +65,11 @@ def log(msg, level="info") -> None:
         level = xbmc.LOGWARNING
     elif level == 'error':
         level = xbmc.LOGERROR
+    elif level == 'debug':
+        level = xbmc.LOGDEBUG
+    elif level == 'fatal':
+        level = xbmc.LOGFATAL
+        # SAVE THE KIDS THE PLANE IS GOING DOWN!!
     else:
         level = xbmc.LOGNONE
     xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
@@ -133,6 +139,11 @@ def setBool(settingid: str, value: bool) -> bool:
 def setInt(settingid: str, value: int) -> bool:
     return ADDON.setSettingInt(settingid, value)
 
+def setStringList(settingid: str, value: list):
+    return Settings.setStringList(settingid, value)
+
+def getStringList(settingid: str):
+    return Settings.getStringList(settingid)
 
 def lang(x: int) -> str:
     return language(x)

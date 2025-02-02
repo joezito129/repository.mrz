@@ -8,7 +8,7 @@ from urllib import parse
 from resources.lib.ui import control, database
 from resources.lib.ui.jscrypto import jscrypto
 from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.indexers import malsync
+from resources.lib.endpoint import malsync
 
 
 class Sources(BrowserBase):
@@ -78,6 +78,7 @@ class Sources(BrowserBase):
             params = {'episodeId': e_id[0]}
             r = requests.get("%sajax/v2/episode/servers" % self._BASE_URL, headers=headers, params=params)
             eres = r.json().get('html')
+            embed_config = self.embeds()
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
                 sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
@@ -85,7 +86,7 @@ class Sources(BrowserBase):
                 for src in srcs:
                     edata_id = src.get('data-id')
                     edata_name = src.text.strip().lower()
-                    if edata_name.lower() in self.embeds():
+                    if edata_name.lower() in embed_config:
                         params = {'id': edata_id}
                         r = requests.get("%sajax/v2/episode/sources" % self._BASE_URL, headers=headers, params=params)
                         slink = r.json().get('link')

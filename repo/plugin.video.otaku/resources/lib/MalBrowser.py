@@ -1,4 +1,4 @@
-import time
+import xbmc
 import requests
 import random
 import pickle
@@ -75,7 +75,7 @@ class MalBrowser(BrowserBase):
                     res_data['relation'] = relation['relation']
                     relation_res.append(res_data)
                     if count % 3 == 0:
-                        time.sleep(2)
+                        xbmc.sleep(2)
                     count += 1
         mapfunc = partial(self.base_mal_view, completed=self.open_completed())
         all_results = list(map(mapfunc, relation_res))
@@ -253,7 +253,6 @@ class MalBrowser(BrowserBase):
             'status': res.get('status'),
             'mediatype': 'tvshow'
         }
-
         if completed.get(str(mal_id)):
             info['playcount'] = 1
 

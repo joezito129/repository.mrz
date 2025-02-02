@@ -90,8 +90,9 @@ class Sources(BrowserBase):
             mlink = SoupStrainer('div', {'class': re.compile('sv_container$')})
             mdiv = BeautifulSoup(s, "html.parser", parse_only=mlink)
             mitems = mdiv.find_all('li')
+            embed_config = self.embeds()
             for mitem in mitems:
-                if any(x in mitem.text.lower() for x in self.embeds()):
+                if any(x in mitem.text.lower() for x in embed_config):
                     type_ = 'direct'
                     server = mitem.a.get('data-name')
                     qual = mitem.a.get('title')

@@ -1,3 +1,8 @@
+Changelog v5.1.15 (2025-02-02):
+- Fixed append to database
+- Major Scraping Improvements
+- Added embed.config in settings
+
 Changelog v5.1.14 (2024-12-29):
 - Fixed Aniwave
 - Changed back to os

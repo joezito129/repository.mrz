@@ -3,7 +3,7 @@ import xbmcgui
 import pickle
 
 from resources.lib.ui import control, database
-from resources.lib.indexers import aniskip, anime_skip
+from resources.lib.endpoint import anime_skip, aniskip
 from resources.lib import indexers
 
 playList = control.playList

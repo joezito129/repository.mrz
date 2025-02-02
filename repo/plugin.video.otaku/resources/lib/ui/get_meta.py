@@ -1,7 +1,7 @@
 import threading
 
 from resources.lib.ui import database
-from resources.lib.indexers import tmdb, fanart
+from resources.lib.endpoint import tmdb, fanart
 
 
 def collect_meta(anime_list):

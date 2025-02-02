@@ -321,6 +321,39 @@
                 </setting>
             </group>
             <group id="2" label="30333" help="">
+                <setting id="embed.config" type="list[string]" label="30644" help="">
+                    <level>0</level>
+                    <default>filelions,filemoon,hd-2,iga,kwik,megaf,moonf,mp4upload,mp4u,mycloud,noads,noadsalt,swish,streamtape,streamwish,vidplay,vidstream,yourupload,zto</default>
+                    <constraints>
+                        <options sort="ascending">
+                            <option>filelions</option>
+                            <option>filemoon</option>
+                            <option>hd-2</option>
+                            <option>iga</option>
+                            <option>kwik</option>
+                            <option>megaf</option>
+                            <option>moonf</option>
+                            <option>mp4upload</option>
+                            <option>mp4u</option>
+                            <option>mycloud</option>
+                            <option>noads</option>
+                            <option>noadsalt</option>
+                            <option>swish</option>
+                            <option>streamtape</option>
+                            <option>streamwish</option>
+                            <option>vidplay</option>
+                            <option>vidstream</option>
+                            <option>yourupload</option>
+                            <option>zto</option>
+                        </options>
+                        <allowempty>true</allowempty>
+                        <delimiter>,</delimiter>
+                    </constraints>
+                    <control type="list" format="string">
+                        <heading>30644</heading>
+                        <multiselect>true</multiselect>
+                    </control>
+                </setting>
                 <setting id="provider.hianime" type="boolean" label="30402" help="">
                     <level>0</level>
                     <default>false</default>
@@ -725,12 +758,10 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="real_debrid.expiry" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="integer"/>
                 </setting>
                 <setting id="real_debrid.refresh" type="string" label="" help="">
                     <level>4</level>
@@ -738,7 +769,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="real_debrid.secret" type="string" label="" help="">
                     <level>4</level>
@@ -746,7 +776,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="real_debrid.client_id" type="string" label="" help="">
                     <level>4</level>
@@ -754,7 +783,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="real_debrid.auth.status" type="string" label="30103" help="">
                     <level>0</level>
@@ -823,7 +851,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="alldebrid.auth.status" type="string" label="30113" help="">
                     <level>0</level>
@@ -891,12 +918,14 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
+                </setting>
+                <setting id="debrid_link.token" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>0</default>
                 </setting>
                 <setting id="debrid_link.expiry" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="integer"/>
                 </setting>
                 <setting id="debrid_link.auth.status" type="string" label="30123" help="">
                     <level>0</level>
@@ -965,7 +994,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="premiumize.auth.status" type="string" label="30133" help="">
                     <level>0</level>
@@ -1034,12 +1062,10 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="torbox.expiry" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="integer"/>
                 </setting>
                 <setting id="torbox.refresh" type="string" label="" help="">
                     <level>4</level>
@@ -1047,7 +1073,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="torbox.secret" type="string" label="" help="">
                     <level>4</level>
@@ -1055,7 +1080,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="torbox.client_id" type="string" label="" help="">
                     <level>4</level>
@@ -1063,7 +1087,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="torbox.auth.status" type="string" label="30143" help="">
                     <level>0</level>
@@ -1183,7 +1206,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="mal.authvar" type="string" label="" parent="mal.enabled" help="">
                     <level>4</level>
@@ -1191,7 +1213,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="mal.userid" type="string" label="" parent="mal.enabled" help="">
                     <level>4</level>
@@ -1199,7 +1220,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="mal.password" type="string" label="" parent="mal.enabled" help="">
                     <level>4</level>
@@ -1207,12 +1227,10 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="mal.expiry" type="integer" label="" parent="mal.enabled" help="">
                     <level>4</level>
                     <default>0</default>
-					<control type="edit" format="integer"/>
                 </setting>
                 <setting id="mal.refresh" type="string" label="" parent="mal.enabled" help="">
                     <level>4</level>
@@ -1220,7 +1238,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="mal.login" type="action" label="30291" parent="mal.enabled" help="">
                     <level>0</level>
@@ -1333,12 +1350,10 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="kitsu.expiry" type="integer" label=""  parent="kitsu.enabled" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="integer"/>
                 </setting>
                 <setting id="kitsu.userid" type="string" label="" parent="kitsu.enabled" help="">
                     <level>4</level>
@@ -1346,7 +1361,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="kitsu.refresh" type="string" label="" parent="kitsu.enabled" help="">
                     <level>4</level>
@@ -1354,7 +1368,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-					<control type="edit" format="string"/>
                 </setting>
                 <setting id="kitsu.authvar" type="string" label="30223"  parent="kitsu.enabled" help="">
                     <level>0</level>
@@ -1452,7 +1465,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="simkl.userid" type="string" label="" help="">
                     <level>4</level>
@@ -1460,7 +1472,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="simkl.authvar" type="string" label="" help="">
                     <level>4</level>
@@ -1468,7 +1479,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="simkl.refresh" type="string" label="" help="">
                     <level>4</level>
@@ -1484,7 +1494,6 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string"/>
                 </setting>
                 <setting id="simkl.login" type="action" label="30291"  parent="simkl.enabled" help="">
                     <level>0</level>
@@ -1671,12 +1680,25 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string" />
+                </setting>
+
+                <setting id="fanart.all" type="list[String]" help="">
+                    <level>4</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                </setting>
+                <setting id="DMIndex" type="list[String]" help="">
+                    <level>4</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
                 </setting>
                 <setting id="last_played" type="string" label="" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="string" />
                 </setting>
                 <setting id="addon.last_watched" type="string" label="" help="">
                     <level>4</level>
@@ -1684,59 +1706,48 @@
                     <constraints>
                         <allowempty>true</allowempty>
                     </constraints>
-                    <control type="edit" format="string" />
                 </setting>
                 <setting id="update.time.30" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="update.time.7" type="integer" label="" help="">
                     <level>4</level>
                     <default>0</default>
-                    <control type="edit" format="integer" />
                 </setting>
 
                 <setting id="hianime.skipintro.start" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="hianime.skipintro.end" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="hianime.skipoutro.start" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="hianime.skipoutro.end" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
 
               <setting id="aniwave.skipintro.start" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="aniwave.skipintro.end" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="aniwave.skipoutro.start" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
                 <setting id="aniwave.skipoutro.end" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
-                    <control type="edit" format="integer" />
                 </setting>
             </group>
         </category>

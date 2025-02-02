@@ -807,3 +807,6 @@ msgctxt "#30513"
 msgid "Min Resolution"
 msgstr ""
 
+msgctxt "#30644"
+msgid "Configure Embed Servers"
+msgstr ""

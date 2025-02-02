@@ -187,6 +187,7 @@ class RealDebrid:
                           f"Seeders: {torrent.get('seeders', 0)}[CR]"
                           f"Speed: {source_utils.get_size(torrent.get('speed', 0))}")
                 control.progressDialog.update(int(torrent.get('progress', 0)), f_body)
+            del monitor
         control.progressDialog.close()
         if torrent['status'] == 'downloaded':
             torrent_files = [selected for selected in torrent['files'] if selected['selected'] == 1]

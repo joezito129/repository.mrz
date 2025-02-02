@@ -77,10 +77,11 @@ class Sources(BrowserBase):
             elink = SoupStrainer('div', {'data-type': lang})
             sdiv = BeautifulSoup(eres, "html.parser", parse_only=elink)
             srcs = sdiv.find_all('li')
+            embed_config = self.embeds()
             for src in srcs:
                 edata_id = src.get('data-link-id')
                 edata_name = src.text
-                if self.clean_title(edata_name) not in self.embeds():
+                if self.clean_title(edata_name) not in embed_config:
                     continue
                 vrf = self.generate_vrf(edata_id)
                 params = {'vrf': vrf}
