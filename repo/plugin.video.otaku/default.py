@@ -32,25 +32,26 @@ BROWSER = OtakuBrowser.BROWSER
 
 
 def add_last_watched(items: list) -> list:
-    mal_id = control.getSetting("addon.last_watched")
-    show = database.get_show(mal_id)
-    if show:
-        kodi_meta = pickle.loads(show['kodi_meta'])
-        last_watched = f"{control.lang(30000)}[I]{kodi_meta['title_userPreferred']}[/I]"
-        info = {
-            'UniqueIDs': {'mal_id': mal_id},
-            'title': kodi_meta['title_userPreferred'],
-            'plot': kodi_meta['plot'],
-            'status': kodi_meta['status'],
-            'rating': kodi_meta['rating']
-        }
-        if kodi_meta['format'] == 'movie':
-            url = f'play_movie/{mal_id}/'
-            info['mediatype'] = 'movie'
-        else:
-            info['mediatype'] = 'tvshow'
-            url = f'animes/{mal_id}/'
-        items.append((last_watched, url, kodi_meta['poster'], info))
+    mal_id = control.getInt("addon.last_watched")
+    if mal_id != -1:
+        show = database.get_show(mal_id)
+        if show:
+            kodi_meta = pickle.loads(show['kodi_meta'])
+            last_watched = f"{control.lang(30000)}[I]{kodi_meta['title_userPreferred']}[/I]"
+            info = {
+                'UniqueIDs': {'mal_id': mal_id},
+                'title': kodi_meta['title_userPreferred'],
+                'plot': kodi_meta['plot'],
+                'status': kodi_meta['status'],
+                'rating': kodi_meta['rating']
+            }
+            if kodi_meta['format'] == 'movie':
+                url = f'play_movie/{mal_id}/'
+                info['mediatype'] = 'movie'
+            else:
+                info['mediatype'] = 'tvshow'
+                url = f'animes/{mal_id}/'
+            items.append((last_watched, url, kodi_meta['poster'], info))
     return items
 
 
@@ -376,7 +377,6 @@ def REBUILD_DATABASE(payload: str, params: dict):
 @Route('completed_sync')
 def COMPLETED_SYNC(payload: str, params: dict):
     import service
-
     service.sync_watchlist()
     if params.get('setting'):
         control.exit_code()

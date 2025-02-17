@@ -138,12 +138,15 @@ class Sources(GetSources):
 
 #   ### Torrents ###
     def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
-        try:
-            all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, rescrape, key=torrent_name)
-        except:
-            import traceback
-            control.log(traceback.format_exc(), 'error')
-            all_sources = {}
+        if rescrape:
+            all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
+        else:
+            try:
+                all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, key=torrent_name)
+            except:
+                import traceback
+                control.log(traceback.format_exc(), 'error')
+                all_sources = {}
         if all_sources:
             self.torrentUnCacheSources += all_sources['uncached']
             self.torrentCacheSources += all_sources['cached']

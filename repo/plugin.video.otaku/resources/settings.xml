@@ -323,7 +323,7 @@
             <group id="2" label="30333" help="">
                 <setting id="embed.config" type="list[string]" label="30644" help="">
                     <level>0</level>
-                    <default>filelions,filemoon,hd-2,iga,kwik,megaf,moonf,mp4upload,mp4u,mycloud,noads,noadsalt,swish,streamtape,streamwish,vidplay,vidstream,yourupload,zto</default>
+                    <default>doodstream,filelions,filemoon,hd-2,iga,kwik,megaf,moonf,mp4upload,mp4u,mycloud,noads,noadsalt,swish,streamtape,streamwish,vidplay,vidstream,yourupload,zto</default>
                     <constraints>
                         <options sort="ascending">
                             <option>filelions</option>
@@ -345,6 +345,7 @@
                             <option>vidstream</option>
                             <option>yourupload</option>
                             <option>zto</option>
+                            <option>doodstream</option>
                         </options>
                         <allowempty>true</allowempty>
                         <delimiter>,</delimiter>
@@ -352,6 +353,7 @@
                     <control type="list" format="string">
                         <heading>30644</heading>
                         <multiselect>true</multiselect>
+                        <hidevalue>true</hidevalue>
                     </control>
                 </setting>
                 <setting id="provider.hianime" type="boolean" label="30402" help="">
@@ -1700,12 +1702,9 @@
                     <level>4</level>
                     <default>0</default>
                 </setting>
-                <setting id="addon.last_watched" type="string" label="" help="">
+                <setting id="addon.last_watched" type="integer" label="" help="">
                     <level>4</level>
-                    <default/>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
+                    <default>-1</default>
                 </setting>
                 <setting id="update.time.30" type="integer" label="" help="">
                     <level>4</level>

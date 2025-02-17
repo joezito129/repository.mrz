@@ -43,8 +43,8 @@ class SIMKLAPI:
         try:
             filler = filler_data[episode - 1]
         except (IndexError, TypeError):
-            filler = ''
-        parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler)
+            filler = None
+        parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, None)
         return parsed
 
     def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
@@ -59,7 +59,6 @@ class SIMKLAPI:
 
         result_meta = self.get_episode_meta(mal_id)
         result_ep = [x for x in result_meta if x['type'] == 'episode']
-
         mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
         all_results = list(map(mapfunc, result_ep))
 
@@ -71,8 +70,9 @@ class SIMKLAPI:
         if diff >= int(control.getSetting('interface.check.updates')):
             result_meta = self.get_episode_meta(mal_id)
             result_ep = [x for x in result_meta if x['type'] == 'episode']
+
             season = episodes[0]['season']
-            mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=None, episodes=episodes)
+            mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, episodes=episodes)
             all_results = list(map(mapfunc2, result_ep))
             control.notify("SIMKL Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:

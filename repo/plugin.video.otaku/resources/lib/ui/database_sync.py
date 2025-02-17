@@ -19,7 +19,7 @@ class SyncDatabase:
         # You will need to update the below version number to match the new addon version
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
-        self.last_meta_update = '1.0.0'
+        self.last_meta_update = '1.0.1'
         self.refresh_activites()
         self.check_database_version()
 
@@ -40,7 +40,8 @@ class SyncDatabase:
     @staticmethod
     def build_show_table():
         with SQL(control.malSyncDB) as cursor:
-            cursor.execute('CREATE TABLE IF NOT EXISTS shows (mal_id INTEGER PRIMARY KEY, '
+            cursor.execute('CREATE TABLE IF NOT EXISTS shows ('
+                           'mal_id INTEGER PRIMARY KEY, '
                            'anilist_id INTEGER,'
                            'simkl_id INTEGER,'
                            'kitsu_id INTEGER,'
@@ -53,7 +54,8 @@ class SyncDatabase:
     @staticmethod
     def build_showmeta_table():
         with SQL(control.malSyncDB) as cursor:
-            cursor.execute('CREATE TABLE IF NOT EXISTS shows_meta (mal_id INTEGER PRIMARY KEY, '
+            cursor.execute('CREATE TABLE IF NOT EXISTS shows_meta ('
+                           'mal_id INTEGER PRIMARY KEY, '
                            'meta_ids BLOB,'
                            'art BLOB, '
                            'UNIQUE(mal_id))')
@@ -63,7 +65,8 @@ class SyncDatabase:
     @staticmethod
     def build_show_data_table():
         with SQL(control.malSyncDB) as cursor:
-            cursor.execute('CREATE TABLE IF NOT EXISTS show_data (mal_id INTEGER PRIMARY KEY, '
+            cursor.execute('CREATE TABLE IF NOT EXISTS show_data ('
+                           'mal_id INTEGER PRIMARY KEY, '
                            'data BLOB NOT NULL, '
                            'last_updated TEXT NOT NULL, '
                            'UNIQUE(mal_id))')
@@ -73,12 +76,14 @@ class SyncDatabase:
     @staticmethod
     def build_episode_table():
         with SQL(control.malSyncDB) as cursor:
-            cursor.execute('CREATE TABLE IF NOT EXISTS episodes (mal_id INTEGER NOT NULL, '
+            cursor.execute('CREATE TABLE IF NOT EXISTS episodes ('
+                           'mal_id INTEGER NOT NULL, '
+                           'number INTEGER NOT NULL, '
+                           'last_updated TEXT NOT NULL, '
                            'season INTEGER NOT NULL, '
                            'kodi_meta BLOB NOT NULL, '
-                           'last_updated TEXT NOT NULL, '
-                           'number INTEGER NOT NULL, '
                            'filler TEXT, '
+                           'anidb_ep_id INTEGER, '
                            'FOREIGN KEY(mal_id) REFERENCES shows(mal_id) ON DELETE CASCADE)')
             cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_episodes ON episodes (mal_id ASC, season ASC, number ASC)')
             cursor.connection.commit()

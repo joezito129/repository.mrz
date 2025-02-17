@@ -77,7 +77,7 @@ class JikanAPI:
         except (IndexError, TypeError):
             filler = ''
 
-        parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler)
+        parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, None)
         return parsed
 
     def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
@@ -124,7 +124,7 @@ class JikanAPI:
                 data = flavor.get_watchlist_anime_entry(mal_id)
                 if data.get('eps_watched'):
                     eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
-                    self.meta = database.update_kodi_meta(mal_id, kodi_meta)
+                    database.update_kodi_meta(mal_id, kodi_meta)
         episodes = database.get_episode_list(mal_id)
         dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
         if episodes:

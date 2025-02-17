@@ -99,16 +99,15 @@ class WatchlistPlayer(player):
         return (self.current_time / self.total_time) * 100 if self.total_time != 0 else 0
 
     def onWatchedPercent(self):
-        if not self._watchlist_update:
-            return
-        while self.isPlaying() and not self.updated:
-            self.current_time = self.getTime()
-            watched_percentage = self.getWatchedPercent()
-            if watched_percentage > self.update_percent:
-                self._watchlist_update(self.mal_id, self.episode)
-                self.updated = True
-                break
-            xbmc.sleep(5000)
+        if self._watchlist_update:
+            while self.isPlaying() and not self.updated:
+                self.current_time = self.getTime()
+                watched_percentage = self.getWatchedPercent()
+                if watched_percentage > self.update_percent:
+                    self._watchlist_update(self.mal_id, self.episode)
+                    self.updated = True
+                    break
+                xbmc.sleep(5000)
 
     def keepAlive(self):
         monitor = Monitor()

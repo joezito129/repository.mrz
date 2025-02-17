@@ -179,13 +179,13 @@ def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -
             files = user_select(files, dict_key)
     return files[0]
 
-def filter_sources(provider: str, list_, season: int, episode: int, anidb_id=None, part=None):
+def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
     import itertools
 
     regex_season = r"(?i)\b(?:s(?:eason)?[ ._-]?(\d{1,2}))(?=\D|$)"
     rex_season = re.compile(regex_season)
 
-    regex_ep = r"(?i)(?:s(?:eason)?\s?\d{1,2})?[ ._-]?(?:e(?:p)?\s?(\d{1,4})(?:v\d+)?(?:[ ._-]?[-~][ ._-]?e?(?:p)?\s?(\d{1,4}))?)"
+    regex_ep = r"(?i)(?:s(?:eason)?\s?\d{1,2})?[ ._-]?(?:e(?:p)?\s?(\d{1,4})(?:v\d+)?)?(?:[ ._-]?[-~][ ._-]?e?(?:p)?\s?(\d{1,4}))?|(?:-\s?(\d{1,4})\b)"
     rex_ep = re.compile(regex_ep)
 
     if part:
@@ -196,15 +196,6 @@ def filter_sources(provider: str, list_, season: int, episode: int, anidb_id=Non
 
     filtered_list= []
     for torrent in list_:
-        if provider == 'animetosho':
-            try:
-                torrent['hash'] = re.match(r'https://animetosho.org/storage/torrent/([^/]+)', torrent['torrent']).group(1)
-            except AttributeError:
-                continue
-        elif provider == 'nyaa':
-            torrent['hash'] = re.findall(r'btih:(.*?)(?:&|$)', torrent['magnet'])[0]
-        else:
-            continue
         title = torrent['name'].lower()
 
         # filter parts
@@ -239,8 +230,6 @@ def filter_sources(provider: str, list_, season: int, episode: int, anidb_id=Non
                     filtered_list.append(torrent)
             else:
                 filtered_list.append(torrent)
-        # control.log(f'{season_match=}\t| {ep_match=}\t| {bool(batch_math)=}')
-        # control.log(title)
 
     return filtered_list
 

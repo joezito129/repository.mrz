@@ -82,7 +82,7 @@ def is_cache_valid(cached_time: int, cache_timeout: int) -> bool:
     return (cache_timeout * 3600) > diff
 
 
-def update_show(mal_id, kodi_meta, anime_schedule_route: str = '') -> None:
+def update_show(mal_id: int, kodi_meta, anime_schedule_route: str = '') -> None:
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
         cursor.execute('REPLACE INTO shows (mal_id, kodi_meta, anime_schedule_route) VALUES (?, ?, ?)', (mal_id, kodi_meta, anime_schedule_route))
@@ -90,7 +90,7 @@ def update_show(mal_id, kodi_meta, anime_schedule_route: str = '') -> None:
         cursor.connection.commit()
 
 
-def update_show_meta(mal_id, meta_ids: dict, art: dict) -> None:
+def update_show_meta(mal_id: int, meta_ids: dict, art: dict) -> None:
     meta_ids = pickle.dumps(meta_ids)
     art = pickle.dumps(art)
     with SQL(control.malSyncDB) as cursor:
@@ -100,35 +100,39 @@ def update_show_meta(mal_id, meta_ids: dict, art: dict) -> None:
         cursor.connection.commit()
 
 
-def add_mapping_id(mal_id, column: str, value: str):
+def add_mapping_id(mal_id: int, column: str, value: str):
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('UPDATE shows SET %s=? WHERE mal_id=?' % column, (value, mal_id))
         cursor.connection.commit()
 
 
-def update_kodi_meta(mal_id, kodi_meta: dict):
+def update_kodi_meta(mal_id: int, kodi_meta: dict):
     kodi_meta = pickle.dumps(kodi_meta)
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('UPDATE shows SET kodi_meta=? WHERE mal_id=?', (kodi_meta, mal_id))
         cursor.connection.commit()
 
 
-def update_show_data(mal_id, data: dict, last_updated: str = ''):
+def update_show_data(mal_id: int, data: dict, last_updated: str = ''):
     data = pickle.dumps(data)
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute("REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)", (mal_id, data, last_updated))
+        cursor.execute('REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)', (mal_id, data, last_updated))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
 
 
-def update_episode(mal_id, season: int, number: int, update_time: str, kodi_meta, filler: str = '') -> None:
+def create_episode(mal_id: int, number: int, update_time: str, season: int, kodi_meta, filler: str, anidb_ep_id) -> None:
     with SQL(control.malSyncDB) as cursor:
-        cursor.execute('REPLACE INTO episodes (mal_id, season, kodi_meta, last_updated, number, filler) VALUES (?, ?, ?, ?, ?, ?)', (mal_id, season, kodi_meta, update_time, number, filler))
+        cursor.execute('REPLACE INTO episodes (mal_id, number, last_updated, season, kodi_meta, filler, anidb_ep_id) VALUES (?, ?, ?, ?, ?, ?, ?)', (mal_id, number, update_time, season, kodi_meta, filler, anidb_ep_id))
         cursor.connection.commit()
 
+def update_episode_column(mal_id: int, episode: int, column: str, value):
+    with SQL(control.malSyncDB) as cursor:
+        cursor.execute('UPDATE episodes SET %s=? WHERE mal_id=? AND number=?' % column, (value, mal_id, episode))
+        cursor.connection.commit()
 
-def get_show_data(mal_id):
+def get_show_data(mal_id: int):
     with SQL(control.malSyncDB) as cursor:
         db_query = 'SELECT * FROM show_data WHERE mal_id IN (%s)' % mal_id
         cursor.execute(db_query)
@@ -136,28 +140,31 @@ def get_show_data(mal_id):
         return show_data
 
 
-def get_episode_list(mal_id):
+def get_episode_list(mal_id: int):
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT* FROM episodes WHERE mal_id=?', (mal_id,))
         episodes = cursor.fetchall()
         return episodes
 
 
-def get_episode(mal_id):
+def get_episode(mal_id, episode: int=None):
     with SQL(control.malSyncDB) as cursor:
-        cursor.execute('SELECT* FROM episodes WHERE mal_id=?', (mal_id,))
+        if episode:
+            cursor.execute('SELECT * FROM episodes WHERE mal_id=? AND number=?', (mal_id, episode))
+        else:
+            cursor.execute('SELECT * FROM episodes WHERE mal_id=?', (mal_id,))
         episode = cursor.fetchone()
         return episode
 
 
-def get_show(mal_id):
+def get_show(mal_id: int):
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()
         return shows
 
 
-def get_show_meta(mal_id):
+def get_show_meta(mal_id: int):
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows_meta WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()

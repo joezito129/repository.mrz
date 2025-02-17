@@ -1,20 +1,8 @@
 from resources.lib.ui.control import settingids
 
 
-def get_second_label(info, dub_data, filler=None):
-    if settingids.filler and filler:
-        return filler
-
-    code_dub = code_sub = code = None
-
-    # if ani_data:
-    #     episode_schedule = ani_data['airingSchedule']['nodes']
-    #     if len(episode_schedule) != 0:
-    #         from datetime import datetime
-    #         for ep_sched in episode_schedule:
-    #             if ep_sched['episode'] == episode:
-    #                 # info['title'] = control.colorString(info['title'], color="red")
-    #                 code_sub = f'{datetime.fromtimestamp(ep_sched["airingAt"])}'[:-3]
+def get_second_label(info, dub_data, filler):
+    code_dub = None
 
     if dub_data:
         episode = info['episode']
@@ -22,11 +10,12 @@ def get_second_label(info, dub_data, filler=None):
             season = int(info['season'])
             if (int(dub_dat['season']) == season or dub_dat['season'] == 0) and int(dub_dat['episode']) == episode:
                 code_dub = dub_dat["release_time"]
+                break
 
-    if code_dub and code_sub:
-        code = f'Sub {code_sub} / Dub {code_dub}'
-    elif code_dub:
+    if code_dub:
         code = f'Dub {code_dub}'
-    elif code_sub:
-        code = code_sub
+    elif settingids.filler:
+        code = filler
+    else:
+        code = None
     return code

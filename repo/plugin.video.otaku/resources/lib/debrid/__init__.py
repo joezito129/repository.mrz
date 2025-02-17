@@ -74,6 +74,7 @@ def debrid_link_worker(torrent_list: list):
 
 
 def real_debrid_worker(torrent_list: list):
+
     hash_list = [i['hash'] for i in torrent_list]
     if len(hash_list) != 0:
         for torrent in torrent_list:

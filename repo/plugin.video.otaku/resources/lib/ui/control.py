@@ -90,6 +90,7 @@ def watchlist_to_update() -> str:
         flavor = getSetting('watchlist.update.flavor')
         if getBool(f"{flavor}.enabled"):
             return flavor
+    return ''
 
 
 def copy2clip(txt: str) -> bool:

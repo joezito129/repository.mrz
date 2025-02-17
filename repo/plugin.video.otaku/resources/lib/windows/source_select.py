@@ -60,7 +60,7 @@ class SourceSelect(BaseWindow):
                     'provider': i['provider'],
                     'quality': str(i['quality']),
                     'info': str(' '.join(i['info'])),
-                    'seeders': str(i.get('seeders', '')),
+                    'seeders': str(i.get('seeders', '')) if i.get('seeders') != -1 else '',
                     'size': i['size']
                 }
                 menu_item.setProperties(properties)

@@ -23,18 +23,20 @@ class Sources(BrowserBase):
         html = r.text
         mlink = SoupStrainer('div', {'class': 'table-responsive'})
         soup = BeautifulSoup(html, "html.parser", parse_only=mlink)
-        rex = r'(magnet:)+[^"]*'
+        re_mag = re.compile(r'(magnet:)+[^"]*')
+        re_hash = re.compile(r'btih:(.*?)(?:&|$)')
         list_ = [
-            {'magnet': i.find('a', {'href': re.compile(rex)}).get('href'),
+            {'magnet': i.find('a', {'href': re_mag}).get('href'),
              'name': i.find_all('a', {'class': None})[1].get('title'),
              'size': i.find_all('td', {'class': 'text-center'})[1].text.replace('i', ''),
              'downloads': int(i.find_all('td', {'class': 'text-center'})[-1].text),
-             'seeders': int(i.find_all('td', {'class': 'text-center'})[-3].text)
+             'seeders': int(i.find_all('td', {'class': 'text-center'})[-3].text),
+             'hash': re_hash.findall(i.find('a', {'href': re_mag}).get('href'))[0]
              } for i in soup.select("tr.danger,tr.default,tr.success")
         ]
 
         if self.media_type != 'movie':
-            filtered_list = source_utils.filter_sources('nyaa', list_, int(season_zfill), int(episode_zfill), part=part)
+            filtered_list = source_utils.filter_sources(list_, int(season_zfill), int(episode_zfill), part=part)
         else:
             filtered_list = list_
         cache_list, uncashed_list_ = debrid.torrentCacheCheck(filtered_list)
@@ -47,38 +49,6 @@ class Sources(BrowserBase):
         if control.settingids.showuncached:
             mapfunc2 = partial(self.parse_nyaa_view, episode=episode_zfill, cached=False)
             all_results += list(map(mapfunc2, uncashed_list))
-        return all_results
-
-    def process_nyaa_backup(self, url, params, episode):
-        r = requests.get(url, params=params)
-        res = r.text
-        results = BeautifulSoup(res, 'html.parser')
-        rex = r'(magnet:)+[^"]*'
-
-        search_results = [
-            (i.find_all('a', {'href': re.compile(rex)})[0].get('href'),
-             i.find_all('a', {'class': None})[1].get('title'),
-             i.find_all('td', {'class': 'text-center'})[1].text,
-             i.find_all('td', {'class': 'text-center'})[-1].text,
-             i.find_all('td', {'class': 'text-center'})[-3].text
-             ) for i in results.select("tr.danger,tr.default,tr.success")][:30]
-
-        list_ = [
-            {'magnet': magnet,
-             'name': name,
-             'size': size.replace('i', ''),
-             'downloads': int(downloads),
-             'seeders': int(seeders)
-             } for magnet, name, size, downloads, seeders in search_results]
-
-        for torrent in list_:
-            torrent['hash'] = re.findall(r'btih:(.*?)(?:&|$)', torrent['magnet'])[0]
-
-        cache_list, uncashed_list = debrid.torrentCacheCheck(list_)
-        cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
-
-        mapfunc = partial(self.parse_nyaa_view, episode=episode)
-        all_results = list(map(mapfunc, cache_list))
         return all_results
 
     def process_nyaa_movie(self, url, params):
@@ -112,31 +82,26 @@ class Sources(BrowserBase):
         all_results = list(map(mapfunc, cache_list))
         return all_results
 
-    def get_sources(self, query, mal_id, episode, status, media_type, rescrape):
+    def get_sources(self, query, mal_id, episode, status, media_type):
         query = self._clean_title(query).replace('-', ' ')
         self.media_type = media_type
         if media_type == 'movie':
             return self.get_movie_sources(query, mal_id)
 
-        self.sources = self.get_episode_sources(query, mal_id, episode, status, rescrape)
+        self.sources = self.get_episode_sources(query, mal_id, episode, status)
         if not self.sources and ':' in query:
             q1, q2 = query.split('|', 2)
             q1 = q1[1:-1].split(':')[0]
             q2 = q2[1:-1].split(':')[0]
             query2 = '({0})|({1})'.format(q1, q2)
-            self.sources = self.get_episode_sources(query2, mal_id, episode, status, rescrape)
-        if not self.sources:
-            self.sources = self.get_episode_sources_backup(query, mal_id, episode)
+            self.sources = self.get_episode_sources(query2, mal_id, episode, status)
 
         # remove any duplicate sources
         self.append_cache_uncached_noduplicates()
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def get_episode_sources(self, show, mal_id, episode, status, rescrape):
+    def get_episode_sources(self, show, mal_id, episode, status):
         nyaa_sources = []
-        if rescrape:
-            return self.get_episode_sources_pack(show, mal_id, episode)
-
         if 'part' in show.lower():
             part = re.search(r'part ?(\d+)', show.lower())
             if part:
@@ -203,67 +168,6 @@ class Sources(BrowserBase):
         nyaa_sources += self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill, part)
         return nyaa_sources
 
-    def get_episode_sources_backup(self, db_query, mal_id, episode):
-        r = requests.get('https://kaito-title.firebaseio.com/%s.json' % mal_id)
-        show = r.json()
-        if not show:
-            return []
-
-        if isinstance(show, str):
-            show = {'general_title': show}
-
-        if show.get('general_title'):
-            query = show['general_title']
-            _zfill = show.get('zfill', 2)
-            episode = episode.zfill(_zfill)
-            params = {
-                'f': '0',
-                'c': '1_0',
-                'q': query.replace(' ', '+'),
-                's': 'downloads',
-                'o': 'desc'
-            }
-            return self.process_nyaa_backup(self._BASE_URL, params, episode)
-
-        kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
-        kodi_meta['query'] = f'{db_query}|{show["general_title"]}'
-        database.update_kodi_meta(mal_id, kodi_meta)
-
-        season = database.get_episode(mal_id)['season']
-        episode_zfill = episode.zfill(2)
-
-        query = f'{show} "- {episode_zfill}"'
-
-        season_zfill = str(season['season']).zfill(2)
-        query += f'|"S{season_zfill}E{episode_zfill}"'
-
-        params = {
-            'f': '0',
-            'c': '0_1',
-            'q': query.replace(' ', '+')
-        }
-        return self.process_nyaa_episodes(self._BASE_URL, params, episode_zfill, season_zfill)
-
-    def get_episode_sources_pack(self, show, mal_id, episode):
-        query = '%s "Batch"|"Complete Series"' % show
-
-        episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
-        if episodes:
-            query += '|"01-{0}"|"01~{0}"|"01 - {0}"|"01 ~ {0}"'.format(episodes)
-
-        season = database.get_episode(mal_id)['season']
-        season_zfill = str(season).zfill(2)
-        query += '|"S{0}"|"Season {0}"'.format(season_zfill)
-
-        params = {
-            'f': '0',
-            'c': '1_2',
-            'q': query.replace(' ', '+'),
-            's': 'seeders',
-            'o': 'desc'
-        }
-        return self.process_nyaa_backup(self._BASE_URL, params, episode.zfill(2))
-
     def get_movie_sources(self, query, mal_id):
         params = {
             'f': '0',
@@ -274,30 +178,10 @@ class Sources(BrowserBase):
         }
 
         self.sources = self.process_nyaa_movie(self._BASE_URL, params)
-        if not self.sources:
-            self.sources = self.get_movie_sources_backup(mal_id)
 
         # make sure no duplicate sources
         self.append_cache_uncached_noduplicates()
         return {'cached': self.cached, 'uncached': self.uncached}
-
-    def get_movie_sources_backup(self, mal_id):
-        r = requests.get("https://kimetsu-title.firebaseio.com/%s.json" % mal_id)
-        show = r.json()
-        if not show:
-            return []
-        params = {
-            'f': '0',
-            'c': '1_2'
-        }
-        if show.get('general_title'):
-            query = show['general_title']
-            params['s'] = 'downloads'
-            params['o'] = 'desc'
-            params['q'] = query.replace(' ', '+')
-            return self.process_nyaa_backup(self._BASE_URL, params, 1)
-        params['q'] = show.replace(' ', '+')
-        return self.process_nyaa_movie(self._BASE_URL, params)
 
     @staticmethod
     def parse_nyaa_view(res, episode, cached=True):

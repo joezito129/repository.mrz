@@ -13,7 +13,7 @@ def parse_episodes(res, eps_watched, dub_data=None):
     if control.settingids.clean_titles and parsed['info'].get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["number"]}'
         parsed['info']['plot'] = None
-    code = endpoint.get_second_label(parsed['info'], dub_data, res['filler'])
+    code = endpoint.get_second_label(parsed['info'], dub_data, res.get('filler'))
     parsed['info']['code'] = code
     return parsed
 
@@ -54,18 +54,21 @@ def get_diff(episodes_0):
     diff = (datetime.datetime.today() - last_updated).days
     return update_time, diff
 
-def update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler):
-    code = endpoint.get_second_label(info, dub_data)
-    if not code and control.settingids.filler:
-        filler = code = control.colorstr(filler, color="red") if filler == 'Filler' else filler
-    info['code'] = code
+def update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id):
+    filler = control.colorstr(filler, color="red") if filler == 'Filler' else filler
 
     parsed = utils.allocate_item(title, f"play/{url}", False, True, [], image, info, fanart, poster)
     kodi_meta = pickle.dumps(parsed)
-    if not episodes or len(episodes) <= episode or kodi_meta != episodes[episode - 1]['kodi_meta']:
-        database.update_episode(mal_id, season, episode, update_time, kodi_meta, filler)
+    if not episodes or len(episodes) <= episode:
+        database.create_episode(mal_id, episode, update_time, season, kodi_meta, filler, anidb_ep_id)
+    elif kodi_meta != episodes[episode - 1]['kodi_meta']:
+        database.update_episode_column(mal_id, episode, 'kodi_meta', kodi_meta)
 
     if control.settingids.clean_titles and info.get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["episode"]}'
         parsed['info']['plot'] = None
+
+    code = endpoint.get_second_label(info, dub_data, filler)
+    parsed['info']['code'] = code
+
     return parsed

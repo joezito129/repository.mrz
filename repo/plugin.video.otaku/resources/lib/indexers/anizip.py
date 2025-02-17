@@ -32,14 +32,16 @@ class ANIZIPAPI:
 
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
-            'plot': res.get('overview'),
+            'plot': res.get('overview', res.get('summary')),
             'title': title,
             'season': season,
             'episode': episode,
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode',
+            'duration': res.get('runtime', res.get('length', 0)) * 60,
             'rating': {'score': float(res.get('rating', 0))}
         }
+
         if eps_watched and int(eps_watched) >= episode:
             info['playcount'] = 1
 
@@ -53,7 +55,9 @@ class ANIZIPAPI:
         except (IndexError, TypeError):
             filler = ''
 
-        parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler)
+        anidb_ep_id = res.get('anidbEid')
+
+        parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id)
         return parsed
 
     def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
