@@ -39,7 +39,7 @@ def add_last_watched(items: list) -> list:
             kodi_meta = pickle.loads(show['kodi_meta'])
             last_watched = f"{control.lang(30000)}[I]{kodi_meta['title_userPreferred']}[/I]"
             info = {
-                'UniqueIDs': {'mal_id': mal_id},
+                'UniqueIDs': {'mal_id': str(mal_id)},
                 'title': kodi_meta['title_userPreferred'],
                 'plot': kodi_meta['plot'],
                 'status': kodi_meta['status'],
