@@ -18,6 +18,7 @@ class Sources(BrowserBase.BrowserBase):
         self.uncached = []
         self.anidb_id = None
         self.anidb_ep_id = None
+        self.tasks = []
 
     def get_sources(self, show, mal_id, episode, status, media_type) -> dict:
         asyncio.run(self.get_sources_async(show, mal_id, episode, media_type))
@@ -48,15 +49,12 @@ class Sources(BrowserBase.BrowserBase):
         episode_zfill = episode.zfill(2)
 
         if self.anidb_ep_id:
-            task1 = asyncio.create_task(self.process_animetosho_episodes(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, ''))
-        else:
-            task1 = None
+            self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, '')))
 
         show = self._clean_title(show)
         if media_type != "movie":
             season = database.get_episode(mal_id)['season']
             season_zfill = str(season).zfill(2)
-
             query = f'{show} "- {episode_zfill}"'
         else:
             season_zfill = None
@@ -69,8 +67,7 @@ class Sources(BrowserBase.BrowserBase):
         if self.anidb_id:
             params['aids'] = self.anidb_id
 
-        task2 = asyncio.create_task(self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill))
-
+        self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)))
 
         show_lower = show.lower()
         if 'season' in show_lower:
@@ -80,22 +77,26 @@ class Sources(BrowserBase.BrowserBase):
         else:
             params['q'] = self._sphinx_clean(show)
 
-        task3 = asyncio.create_task(self.process_animetosho_episodes(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill))
+        self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)))
 
-        task1_result = await task1 if task1 else []
-        task2_result = await task2
-        task3_result = await task3
-
-
-        self.sources = task1_result + task2_result + task3_result
+        results = await asyncio.gather(*self.tasks)
 
         # remove any duplicate sources
-        self.append_cache_uncached_noduplicates()
+        seen_sources = []
+        for result in results:
+            for source in result:
+                if source not in seen_sources:
+                    seen_sources.append(source)
+                    if source['cached']:
+                        self.cached.append(source)
+                    else:
+                        self.uncached.append(source)
+
+
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    async def process_animetosho_episodes(self, url: str, params, episode_zfill: str, season_zfill: str) -> list:
+    async def process_animetosho(self, url: str, params, episode_zfill: str, season_zfill: str) -> list:
         r = await self.send_request(url, params)
-        control.log('got data')
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
         content = soup.find('div', id='content')

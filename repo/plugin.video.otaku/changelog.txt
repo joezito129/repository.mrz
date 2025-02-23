@@ -1,3 +1,7 @@
+Changelog v5.1.17(2025-02-23)
+- Improve Animietosho speed
+- Improved Nyaa
+
 Changelog v5.1.16(2025-02-17):
 - Fixed Download Manager
 - Improved Animetosho Scrapping
