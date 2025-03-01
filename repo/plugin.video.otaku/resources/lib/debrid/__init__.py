@@ -55,14 +55,14 @@ def torrentCacheCheck(torrent_list):
 
 
 def all_debrid_worker(torrent_list: list):
-    if len(torrent_list) != 0:
+    if torrent_list:
         for i in torrent_list:
             i['debrid_provider'] = 'alldebrid'
             all_debridUnCached.append(i)
 
 
 def debrid_link_worker(torrent_list: list):
-    if len(torrent_list) != 0:
+    if torrent_list:
         cache_check = debrid_link.DebridLink().check_hash([i['hash'] for i in torrent_list])
         if cache_check:
             for i in torrent_list:
@@ -74,7 +74,6 @@ def debrid_link_worker(torrent_list: list):
 
 
 def real_debrid_worker(torrent_list: list):
-
     hash_list = [i['hash'] for i in torrent_list]
     if len(hash_list) != 0:
         for torrent in torrent_list:
@@ -84,7 +83,7 @@ def real_debrid_worker(torrent_list: list):
 
 def premiumize_worker(torrent_list: list):
     hash_list = [i['hash'] for i in torrent_list]
-    if len(hash_list) != 0:
+    if hash_list:
         premiumizeCache = premiumize.Premiumize().hash_check(hash_list)
         premiumizeCache = premiumizeCache['response']
 
@@ -98,7 +97,7 @@ def premiumize_worker(torrent_list: list):
 
 def torbox_worker(torrent_list: list):
     hash_list = [i['hash'] for i in torrent_list]
-    if len(hash_list) != 0:
+    if hash_list:
         cache_check = [i['hash'] for i in torbox.Torbox().hash_check(hash_list)]
         for torrent in torrent_list:
             torrent['debrid_provider'] = 'torbox'

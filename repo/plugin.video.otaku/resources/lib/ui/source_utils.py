@@ -172,7 +172,7 @@ def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -
         files = user_select(files, dict_key)
     else:
         files = [i for i in files if len(i['regex_matches']) > 0]
-        if len(files) == 0:
+        if not files:
             return {}
         files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
         if len(files) != 1:

@@ -320,7 +320,7 @@ class KitsuWLF(WatchlistFlavorBase):
             return False
 
         r = self.get_library_entries(kitsu_id)
-        if len(r['data']) == 0:
+        if not r['data']:
             data = {
                 "data": {
                     "type": "libraryEntries",
@@ -364,7 +364,7 @@ class KitsuWLF(WatchlistFlavorBase):
             return False
 
         r = self.get_library_entries(kitsu_id)
-        if len(r['data']) == 0:
+        if not r['data']:
             data = {
                 "data": {
                     "type": "libraryEntries",
@@ -414,7 +414,7 @@ class KitsuWLF(WatchlistFlavorBase):
         if score == 0:
             score = None
         r = self.get_library_entries(kitsu_id)
-        if len(r['data']) == 0:
+        if not r['data']:
             data = {
                 "data": {
                     "type": "libraryEntries",

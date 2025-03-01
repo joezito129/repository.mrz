@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, hianime, gogoanime, animepahe, animix, aniwave, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, gogoanime, aniwave, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -11,6 +11,7 @@ from resources.lib.windows import sort_select
 def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
     import pickle
     from resources.lib.OtakuBrowser import BROWSER
+
     if not (show := database.get_show(mal_id)):
         show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
@@ -30,10 +31,10 @@ def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=
 class Sources(GetSources):
     def __init__(self, xml_file, location, actionArgs=None):
         super().__init__(xml_file, location, actionArgs=actionArgs)
+        self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        # self.embed_func = [gogoanime, hianime, animepahe, animix]
-        self.embed_func = [gogoanime, animix, aniwave]
+        self.embed_func = [gogoanime, aniwave]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
@@ -123,30 +124,29 @@ class Sources(GetSources):
                     control.colorstr(self.torrents_qual_len[3] + self.embeds_qual_len[3])
                 ))
             xbmc.sleep(500)
-
-            if self.canceled or len(self.remainingProviders) < 1 and runtime > 5 or control.getBool('general.terminate.oncloud') and len(self.cloud_files) > 0:
+            if self.canceled or not self.remainingProviders or (self.terminate_on_cloud and self.cloud_files):
                 break
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100
 
-        if len(self.torrentSources) + len(self.embedSources) + len(self.cloud_files) + len(self.local_files) == 0:
-            self.return_data = []
-        else:
+        if self.torrentSources or self.embedSources or self.cloud_files or self.local_files:
             self.return_data = self.sortSources()
+        else:
+            self.return_data = []
         self.close()
         return self.return_data
 
 #   ### Torrents ###
     def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
-        if rescrape:
-            all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
-        else:
-            try:
+        try:
+            if rescrape:
+                all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
+            else:
                 all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, key=torrent_name)
-            except:
-                import traceback
-                control.log(traceback.format_exc(), 'error')
-                all_sources = {}
+        except:
+            import traceback
+            control.log(traceback.format_exc(), 'error')
+            all_sources = {}
         if all_sources:
             self.torrentUnCacheSources += all_sources['uncached']
             self.torrentCacheSources += all_sources['cached']

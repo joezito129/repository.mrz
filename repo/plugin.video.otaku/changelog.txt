@@ -1,4 +1,9 @@
 Changelog v5.1.17(2025-02-23)
+- Fixed Aniwave
+- Fixed scraping time issue
+- Removed Animix, H!anime, Animapehe
+
+Changelog v5.1.17(2025-02-23)
 - Improve Animietosho speed
 - Improved Nyaa
 

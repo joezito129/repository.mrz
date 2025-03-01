@@ -233,10 +233,8 @@ def __extract_kwik(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
     r = re.search(r"const\s*source\s*=\s*'([^']+)", page_content)
     if r:
-        headers = {
-            'User-Agent': _EDGE_UA,
-            'Referer': url
-        }
+        headers = {'User-Agent': _EDGE_UA,
+                   'Referer': url}
         return r.group(1) + __append_headers(headers)
 
 
@@ -433,7 +431,6 @@ def __register_extractor(urls, function, url_preloader=None, datas=None):
             "data": data
         }
 
-
 def get_sub(sub_url, sub_lang):
     content = requests.get(sub_url).text
     subtitle = xbmcvfs.translatePath('special://temp/')
@@ -450,6 +447,23 @@ def del_subs():
     for fname in files:
         if fname.startswith('TemporarySubs'):
             xbmcvfs.delete(f'special://temp/{fname}')
+
+def randomagent():
+    _agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.8464.47 Safari/537.36 OPR/117.0.8464.47',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.62',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 17.1.2) AppleWebKit/800.6.25 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/117.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Vivaldi/6.2.3105.48',
+        'Mozilla/5.0 (MacBook Air; M1 Mac OS X 11_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/604.1',
+        'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.21 (KHTML, like Gecko) konqueror/4.14.26 Safari/537.21'
+    ]
+    return random.choice(_agents)
 
 
 __register_extractor(["https://www.mp4upload.com/",
@@ -580,3 +594,4 @@ __register_extractor(["https://lulustream.com",
                       "https://luluvdo.com",
                       "https://kinoger.pw"],
                      __extract_lulu)
+

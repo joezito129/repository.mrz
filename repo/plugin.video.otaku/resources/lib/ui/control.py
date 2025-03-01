@@ -9,7 +9,6 @@ import sys
 import os
 
 from urllib import parse
-
 # from pathlib import Path
 
 try:
@@ -223,6 +222,7 @@ def context_menu(context_list: list) -> int:
 def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
     return xbmcgui.Dialog().browse(type_, heading, shares, mask)
 
+
 def handle_set_fanart(art: dict, info: dict) -> dict:
     if not art.get('fanart') or settingids.fanart_disable:
         art['fanart'] = FANART
@@ -237,6 +237,7 @@ def handle_set_fanart(art: dict, info: dict) -> dict:
             else:
                 art['fanart'] = random.choice(art['fanart'])
     return art
+
 
 def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
@@ -287,8 +288,10 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     if properties := info.get('properties'):
         li.setProperties(properties)
 
+
 def jsonrpc(json_data: dict) -> dict:
     return json.loads(xbmc.executeJSONRPC(json.dumps(json_data)))
+
 
 def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: bool, isfolder: bool, isplayable: bool):
     u = addon_url(url)
@@ -393,6 +396,7 @@ def print(string, *args) -> None:
         string = f'{string} {i}'
     textviewer_dialog('print', f'{string}')
     del args, string
+
 
 class SettingIDs:
     def __init__(self):
