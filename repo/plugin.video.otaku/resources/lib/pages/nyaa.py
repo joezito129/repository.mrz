@@ -128,7 +128,7 @@ class Sources(BrowserBase):
 
         show = show.lower()
         if 'season' in show:
-            query1, query2 = show.rsplit('|', 2)
+            query1, query2 = show.split('|', 2)
             match_1 = re.match(r'.+?(?=season)', query1)
             if match_1:
                 match_1 = match_1.group(0).strip() + ')'

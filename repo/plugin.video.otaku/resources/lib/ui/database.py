@@ -106,7 +106,7 @@ def add_mapping_id(mal_id: int, column: str, value: str):
         cursor.connection.commit()
 
 
-def update_kodi_meta(mal_id: int, kodi_meta: dict):
+def update_kodi_meta(mal_id, kodi_meta: dict):
     kodi_meta = pickle.dumps(kodi_meta)
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('UPDATE shows SET kodi_meta=? WHERE mal_id=?', (kodi_meta, mal_id))
@@ -157,7 +157,7 @@ def get_episode(mal_id, episode: int=None):
         return episode
 
 
-def get_show(mal_id: int):
+def get_show(mal_id):
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()

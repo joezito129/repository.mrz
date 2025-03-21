@@ -258,7 +258,7 @@ def is_file_ext_valid(file_name: str) -> bool:
 
 
 def video_ext():
-    COMMON_VIDEO_EXTENSIONS = xbmc.getSupportedMedia('video').split('|')
+    COMMON_VIDEO_EXTENSIONS = xbmc.getSupportedMedia('video').rsplit('|')
     COMMON_VIDEO_EXTENSIONS = [i for i in COMMON_VIDEO_EXTENSIONS if i != '' and i != '.zip']
     return COMMON_VIDEO_EXTENSIONS
 

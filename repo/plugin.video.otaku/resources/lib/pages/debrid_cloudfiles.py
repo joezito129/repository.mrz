@@ -75,7 +75,7 @@ class Sources(BrowserBase):
             )
 
     def premiumize_cloud_inspection(self, query: str, episode: str) -> None:
-        query1, query2 = query.replace('(', '').replace(')', '').rsplit('|', 1)
+        query1, query2 = query.replace('(', '').replace(')', '').split('|', 1)
         cloud_items = premiumize.Premiumize().search_folder(query1)
         cloud_items += premiumize.Premiumize().search_folder(query2)
         unique_cloud_items = []
@@ -84,7 +84,7 @@ class Sources(BrowserBase):
             filename = re.sub(r'\[.*?]', '', torrent['name']).lower()
 
             if torrent['type'] == 'file':
-                if source_utils.is_file_ext_valid(filename) and episode.zfill(2) not in filename.rsplit('-', 1)[1]:
+                if source_utils.is_file_ext_valid(filename) and episode.zfill(2) not in filename.split('-', 1)[1]:
                     continue
 
             self.cloud_files.append(

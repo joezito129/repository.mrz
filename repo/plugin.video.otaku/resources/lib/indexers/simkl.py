@@ -16,7 +16,7 @@ class SIMKLAPI:
         self.baseUrl = "https://api.simkl.com"
         self.imagePath = "https://wsrv.nl/?url=https://simkl.in/episodes/%s_w.webp"
 
-    def parse_episode_view(self, res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
+    def parse_episode_view(self, res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data=None, episodes=None):
         episode = int(res['episode'])
         url = f"{mal_id}/{episode}"
         title = res.get('title')

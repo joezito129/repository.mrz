@@ -60,7 +60,7 @@ class ANIZIPAPI:
         parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id)
         return parsed
 
-    def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
+    def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data=None):
         update_time = datetime.date.today().isoformat()
 
         result = self.get_anime_info(mal_id)

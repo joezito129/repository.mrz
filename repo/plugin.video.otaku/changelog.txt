@@ -1,13 +1,11 @@
-Changelog v5.1.17(2025-02-23)
-- Fixed Aniwave
-- Fixed scraping time issue
-- Removed Animix, H!anime, Animapehe
+Changelog v5.1.18 (2025-03-20)
+- Changed rsplit to split and maxsplit
 
-Changelog v5.1.17(2025-02-23)
+Changelog v5.1.17 (2025-02-23)
 - Improve Animietosho speed
 - Improved Nyaa
 
-Changelog v5.1.16(2025-02-17):
+Changelog v5.1.16 (2025-02-17):
 - Fixed Download Manager
 - Improved Animetosho Scrapping
 - Nyaa in progress

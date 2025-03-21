@@ -57,20 +57,20 @@ def add_last_watched(items: list) -> list:
 
 @Route('animes/*')
 def ANIMES_PAGE(payload: str, params: dict):
-    mal_id, eps_watched = payload.rsplit("/", 1)
+    mal_id, eps_watched = payload.split("/", 1)
     control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
 
 
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/", 2)
+    path, mal_id, eps_watched = payload.split("/", 2)
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_recommendations(mal_id, page), 'tvshows')
 
 
 @Route('find_relations/*')
 def FIND_RELATIONS(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/", 2)
+    path, mal_id, eps_watched = payload.split("/", 2)
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
@@ -103,7 +103,7 @@ def AIRING_CALENDAR(payload: str, params: dict):
 
 @Route('genres/*')
 def GENRES_PAGES(payload: str, params: dict):
-    genres, tags = payload.rsplit("/", 1)
+    genres, tags = payload.split("/", 1)
     page = int(params.get('page', 1))
     if genres or tags:
         control.draw_items(BROWSER.genres_payload(genres, tags, page), 'tvshows')
@@ -136,7 +136,7 @@ def SEARCH(payload: str, params: dict):
 @Route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload: str, params: dict):
     if 'search/' in payload:
-        search_item = payload.rsplit('search/')[1]
+        search_item = payload.split('search/')[1]
         database.remove_search(table='show', value=search_item)
     control.exit_code()
 
@@ -144,7 +144,7 @@ def REMOVE_SEARCH_ITEM(payload: str, params: dict):
 @Route('edit_search_item/*')
 def EDIT_SEARCH_ITEM(payload: str, params: dict):
     if 'search/' in payload:
-        search_item = payload.rsplit('search/')[1]
+        search_item = payload.split('search/')[1]
         if search_item:
             query = control.keyboard(control.lang(30005), search_item)
             if query and query != search_item:
@@ -156,7 +156,7 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict):
 @Route('play/*')
 def PLAY(payload: str, params: dict):
     from resources.lib import pages
-    mal_id, episode = payload.rsplit("/", 1)
+    mal_id, episode = payload.split("/", 1)
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume = params.get('resume')
@@ -182,7 +182,7 @@ def PLAY(payload: str, params: dict):
 @Route('play_movie/*')
 def PLAY_MOVIE(payload: str, params: dict):
     from resources.lib import pages
-    mal_id, eps_watched = payload.rsplit("/", 1)
+    mal_id, eps_watched = payload.split("/", 1)
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
     resume = params.get('resume')
@@ -211,7 +211,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
     from resources.lib.WatchlistIntegration import watchlist_update_episode
 
-    mal_id, episode = payload.rsplit("/", 1)
+    mal_id, episode = payload.split("/", 1)
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(mal_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
@@ -221,7 +221,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict):
 
 @Route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/", 2)
+    path, mal_id, eps_watched = payload.split("/", 2)
     database.remove_from_database('shows', mal_id)
     database.remove_from_database('episodes', mal_id)
     database.remove_from_database('show_data', mal_id)
@@ -264,7 +264,7 @@ def REFRESH(payload: str, params: dict):
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload: str, params: dict):
-    path, mal_id, eps_watched = payload.rsplit("/", 2)
+    path, mal_id, eps_watched = payload.split("/", 2)
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
         episode = database.get_episode(mal_id)
@@ -276,7 +276,7 @@ def FANART_SELECT(payload: str, params: dict):
 
 @Route('fanart/*')
 def FANART(payload: str, params: dict):
-    mal_id, select = payload.rsplit('/', 1)
+    mal_id, select = payload.split('/', 1)
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random"]

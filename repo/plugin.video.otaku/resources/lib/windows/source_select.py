@@ -31,7 +31,7 @@ class SourceSelect(BaseWindow):
 
             aired = self.info.get('aired', '')
             self.setProperty('item.info.aired', aired)
-            aired_list = aired.rsplit('-', 2)
+            aired_list = aired.split('-', 2)
             if len(aired_list) == 3:
                 year, month, day = aired_list
                 self.setProperty('item.info.year', year)
@@ -44,7 +44,7 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating', {}).get('score', '')))
                 aired = kodi_meta.get('start_date', '')
                 self.setProperty('item.info.aired', aired)
-                aired_list = aired.rsplit('-', 2)
+                aired_list = aired.split('-', 2)
                 if len(aired_list) == 3:
                     year, month, day = aired_list
                     self.setProperty('item.info.year', year)

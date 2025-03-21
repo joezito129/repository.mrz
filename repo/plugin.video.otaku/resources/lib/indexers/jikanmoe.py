@@ -42,7 +42,7 @@ class JikanAPI:
         return res_data
 
     @staticmethod
-    def parse_episode_view(res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
+    def parse_episode_view(res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data=None, episodes=None):
         episode = res['mal_id']
         url = f"{mal_id}/{episode}"
         title = res.get('title')
@@ -91,9 +91,7 @@ class JikanAPI:
 
         season = utils.get_season(title_list)
         result_ep = self.get_episode_meta(mal_id)
-        mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart,
-                          eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data,
-                          filler_data=filler_data)
+        mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
         all_results = sorted(list(map(mapfunc, result_ep)), key=lambda x: x['info']['episode'])
         control.notify("Jikanmoa", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results

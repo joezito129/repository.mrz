@@ -53,7 +53,7 @@ class Anichart(BaseWindow):
             if 'animes/' in new_payload:
                 control.progressDialog.create(control.ADDON_NAME, "Loading..")
                 try:
-                    x = new_payload.rsplit('animes/', 1)[1]
+                    x = new_payload.split('animes/', 1)[1]
                     default.ANIMES_PAGE(x, new_params)
                 finally:
                     control.progressDialog.close()

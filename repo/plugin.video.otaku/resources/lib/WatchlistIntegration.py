@@ -39,7 +39,7 @@ def WATCHLIST(payload: str, params: dict):
 
 @Route('watchlist_status_type/*')
 def WATCHLIST_STATUS_TYPE(payload: str, params: dict):
-    flavor, status = payload.rsplit("/")
+    flavor, status = payload.split("/", 1)
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
     control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up), content_type)
@@ -47,7 +47,7 @@ def WATCHLIST_STATUS_TYPE(payload: str, params: dict):
 
 @Route('watchlist_status_type_pages/*')
 def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict):
-    flavor, status, offset = payload.rsplit("/")
+    flavor, status, offset = payload.split("/", 2)
     page = int(params.get('page', 1))
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
@@ -56,8 +56,7 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict):
 
 @Route('watchlist_to_ep/*')
 def WATCHLIST_TO_EP(payload: str, params: dict):
-    payload_list = payload.rsplit("/")
-    mal_id, eps_watched = payload_list
+    mal_id, eps_watched = payload.split("/", 1)
     show_meta = database.get_show(mal_id)
     if not show_meta:
         show_meta = BROWSER.get_anime(mal_id)
@@ -72,8 +71,7 @@ def CONTEXT_MENU(payload: str, params: dict):
     if not control.getBool('watchlist.update.enabled'):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
         return control.exit_code()
-    payload_list = payload.rsplit('/')
-    path, mal_id, eps_watched = payload_list
+    path, mal_id, eps_watched  = payload.split('/', 2)
 
     if not (show := database.get_show(mal_id)):
         show = BROWSER.get_anime(mal_id)
