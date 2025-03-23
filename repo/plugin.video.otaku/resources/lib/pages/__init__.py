@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, gogoanime, aniwave, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, gogoanime, aniwave, hianime, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -34,7 +34,7 @@ class Sources(GetSources):
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = [gogoanime, aniwave]
+        self.embed_func = [gogoanime, aniwave, hianime]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
