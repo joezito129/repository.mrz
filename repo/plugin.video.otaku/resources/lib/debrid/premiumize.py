@@ -116,25 +116,22 @@ class Premiumize:
         folder_details = [i for i in folder_details if source_utils.is_file_ext_valid(i['link'])]
         filter_list = [i for i in folder_details]
 
+        stream_link = None
+        dict_key = 'path'
         if pack_select:
-            identified_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
-            stream_link = identified_file.get('link')
-            return stream_link
+            idx = control.select_dialog('Select File', [i[dict_key].rsplit('/')[-1] for i in folder_details])
+            if idx != -1:
+                file = folder_details[idx]
+                stream_link = file['link']
 
         elif len(filter_list) == 1:
             stream_link = filter_list[0]['link']
-            return stream_link
 
         elif len(filter_list) >= 1:
             identified_file = source_utils.get_best_match('path', folder_details, episode)
             stream_link = identified_file.get('link')
-            return stream_link
 
-        filter_list = [tfile for tfile in folder_details if 'sample' not in tfile['path'].lower()]
-
-        if len(filter_list) == 1:
-            stream_link = filter_list[0]['link']
-            return stream_link
+        return stream_link
 
     def resolve_cloud(self, source, pack_select):
         link = None

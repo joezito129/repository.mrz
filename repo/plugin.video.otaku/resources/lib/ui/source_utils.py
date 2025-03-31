@@ -165,7 +165,7 @@ def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -
     regex = get_cache_check_reg(episode)
     files = []
     for i in dictionary_list:
-        path = re.sub(r'\[.*?]', '', i[dict_key].split('/')[-1])
+        path = re.sub(r'\[.*?]', '', i[dict_key].rsplit('/')[-1])
         i['regex_matches'] = regex.findall(path)
         files.append(i)
     if pack_select:

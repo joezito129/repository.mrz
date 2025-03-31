@@ -1,3 +1,8 @@
+Changelog v5.1.20 (2025-03-31)
+- Fixed MAL Find Relations
+- Removed fuzzypacks
+- Fix .lower()
+
 Changelog v5.1.19 (2025-03-23)
 - Added H!Anime
 

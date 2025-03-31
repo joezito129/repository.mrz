@@ -1,15 +1,14 @@
 import os
 import re
-import requests
+import difflib
 
 from functools import partial
-from resources.lib.ui.BrowserBase import BrowserBase
-from resources.lib.ui import source_utils, control
+from resources.lib.ui import BrowserBase, source_utils, control
 
 PATH = control.getSetting('download.location')
 
 
-class Sources(BrowserBase):
+class Sources(BrowserBase.BrowserBase):
     def get_sources(self, query, mal_id, episode):
         filenames = []
         for root, dirs, files in os.walk(PATH):
@@ -18,9 +17,9 @@ class Sources(BrowserBase):
                     filenames.append(str(os.path.join(root, file).replace(PATH, '')))
 
         clean_filenames = [re.sub(r'\[.*?]\s*', '', os.path.basename(i).replace(',', '')) for i in filenames]
-        filenames_query = ','.join(clean_filenames)
-        r = requests.get('https://armkai.vercel.app/api/fuzzypacks', params={"dict": filenames_query, "match": query})
-        resp = r.json()
+
+        close_matches = difflib.get_close_matches(query, clean_filenames, cutoff=0.3)
+        resp = [clean_filenames.index(i) for i in close_matches]
         match_files = []
         for i in resp:
             if episode not in clean_filenames[i]:

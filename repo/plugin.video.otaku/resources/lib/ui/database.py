@@ -28,6 +28,7 @@ def get_(function, duration, *args, **kwargs):
             return_data = ast.literal_eval(cache_result['value'])
         except:
             import traceback
+            control.log('database.get_error', 'fatal')
             control.log(traceback.format_exc(), 'error')
             return_data = None
         return return_data

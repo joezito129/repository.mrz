@@ -7,11 +7,10 @@ import requests
 
 from urllib import parse
 from bs4 import BeautifulSoup, SoupStrainer
-from resources.lib.ui import control, database
-from resources.lib.ui.BrowserBase import BrowserBase
+from resources.lib.ui import BrowserBase, control, database
 
 
-class Sources(BrowserBase):
+class Sources(BrowserBase.BrowserBase):
     _BASE_URL = 'https://aniwave.se/'
     EKEY = "ysJhV6U27FVIjjuk"
     DKEY = "hlPeNwkncH0fq9so"

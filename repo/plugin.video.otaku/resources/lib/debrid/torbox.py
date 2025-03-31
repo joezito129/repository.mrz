@@ -95,7 +95,6 @@ class Torbox:
         torrentId = torrent['torrent_id']
         torrent_info = self.get_torrent_info(torrentId)
         folder_details = [{'fileId': x['id'], 'path': x['name']} for x in torrent_info['files']]
-
         if episode:
             selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select)
             if selected_file and selected_file['fileId'] is not None:

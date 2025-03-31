@@ -52,6 +52,7 @@ class WatchlistPlayer(player):
         self.process_embed('hianime')
         self.process_aniskip()
         self.process_animeskip()
+
         self.keepAlive()
 
     # def onPlayBackStarted(self):

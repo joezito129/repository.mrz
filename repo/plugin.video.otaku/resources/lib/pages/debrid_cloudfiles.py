@@ -1,13 +1,13 @@
 import re
 import requests
 import threading
+import difflib
 
-from resources.lib.ui import source_utils
-from resources.lib.ui.BrowserBase import BrowserBase
+from resources.lib.ui import BrowserBase, source_utils
 from resources.lib.debrid import real_debrid, premiumize, all_debrid, torbox
 
 
-class Sources(BrowserBase):
+class Sources(BrowserBase.BrowserBase):
     def __init__(self):
         self.cloud_files = []
         self.threads = []
@@ -37,10 +37,8 @@ class Sources(BrowserBase):
         api = real_debrid.RealDebrid()
         torrents = api.list_torrents()
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]
-        filenames_query = ','.join(filenames)
-        r = requests.get('https://armkai.vercel.app/api/fuzzypacks', params={"dict": filenames_query, "match": query})
-        resp = r.json()
-
+        close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)
+        resp = [filenames.index(i) for i in close_matches]
         for i in resp:
             torrent = torrents[i]
             filename = re.sub(r'\[.*?]', '', torrent['filename']).lower()

@@ -6,12 +6,11 @@ import time
 
 from functools import partial
 from dateutil.tz import tzlocal
-from resources.lib.ui import database, get_meta, utils, control
-from resources.lib.ui.BrowserBase import BrowserBase
+from resources.lib.ui import BrowserBase, database, get_meta, utils, control
 from resources.lib.ui.divide_flavors import div_flavor
 
 
-class AniListBrowser(BrowserBase):
+class AniListBrowser(BrowserBase.BrowserBase):
     _BASE_URL = "https://graphql.anilist.co"
 
     def __init__(self):
@@ -804,7 +803,7 @@ class AniListBrowser(BrowserBase):
             'episodes': res.get('episodes'),
             'poster': res['coverImage']['extraLarge'],
             'status': "Finished Airing" if res.get('status') == "FINISHED" else res.get('status'),
-            'format': res.get('format', '').lower(),
+            'format': res.get('format'),
             'plot': desc
         }
 

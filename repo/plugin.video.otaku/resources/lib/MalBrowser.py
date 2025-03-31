@@ -5,12 +5,11 @@ import pickle
 import datetime
 
 from functools import partial
-from resources.lib.ui import database, control, utils, get_meta
-from resources.lib.ui.BrowserBase import BrowserBase
+from resources.lib.ui import BrowserBase, database, control, utils, get_meta
 from resources.lib.ui.divide_flavors import div_flavor
 
 
-class MalBrowser(BrowserBase):
+class MalBrowser(BrowserBase.BrowserBase):
     _BASE_URL = "https://api.jikan.moe/v4"
 
     def __init__(self):
@@ -64,19 +63,18 @@ class MalBrowser(BrowserBase):
 
     def get_relations(self, mal_id) -> list:
         relations = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime/{mal_id}/relations')
-
         relation_res = []
-        count = 0
+        count = 1
         for relation in relations['data']:
             for entry in relation['entry']:
                 if entry['type'] == 'anime':
-                    res_data = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")['data']
-                    res_data['relation'] = relation['relation']
+                    res_data = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{entry['mal_id']}")['data']
                     res_data['relation'] = relation['relation']
                     relation_res.append(res_data)
+                    count += 1
                     if count % 3 == 0:
                         xbmc.sleep(2)
-                    count += 1
+
         mapfunc = partial(self.base_mal_view, completed=self.open_completed())
         all_results = list(map(mapfunc, relation_res))
         return all_results
@@ -239,6 +237,7 @@ class MalBrowser(BrowserBase):
         rating = res.get('rating')
         if rating == 'Rx - Hentai':
             title += ' - ' + control.colorstr("Adult", 'red')
+
         if res.get('relation'):
             title += ' [I]%s[/I]' % control.colorstr(res['relation'], 'limegreen')
 
@@ -338,7 +337,7 @@ class MalBrowser(BrowserBase):
             'episodes': res['episodes'],
             'poster': res['images']['webp']['large_image_url'],
             'status': res.get('status'),
-            'format': res.get('type', '').lower(),
+            'format': res.get('type'),
             'plot': res.get('synopsis')
         }
 

@@ -1,6 +1,6 @@
 import threading
 
-from resources.lib.ui import database
+from resources.lib.ui import database, control
 from resources.lib.endpoint import tmdb, fanart
 
 
@@ -11,7 +11,7 @@ def collect_meta(anime_list):
         if not mal_id:
             continue
         if not database.get_show_meta(mal_id):
-            if (anime.get('format', '').lower() or anime.get('type', '').lower()) in ['movie', 'special', 'ona'] and anime.get('episodes') == 1:
+            if (anime.get('format') or anime.get('type')) in control.movie_types() and anime.get('episodes') == 1:
                 mtype = 'movies'
             else:
                 mtype = 'tv'

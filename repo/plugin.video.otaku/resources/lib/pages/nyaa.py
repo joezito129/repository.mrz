@@ -5,11 +5,10 @@ import requests
 from functools import partial
 from bs4 import BeautifulSoup, SoupStrainer
 from resources.lib import debrid
-from resources.lib.ui import database, source_utils, control
-from resources.lib.ui.BrowserBase import BrowserBase
+from resources.lib.ui import BrowserBase, database, source_utils, control
 
 
-class Sources(BrowserBase):
+class Sources(BrowserBase.BrowserBase):
     _BASE_URL = 'https://nyaa.si'
 
     def __init__(self):

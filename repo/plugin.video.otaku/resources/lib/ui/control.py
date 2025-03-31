@@ -9,7 +9,6 @@ import sys
 import os
 
 from urllib import parse
-# from pathlib import Path
 
 try:
     HANDLE = int(sys.argv[1])
@@ -397,6 +396,8 @@ def print(string, *args) -> None:
     textviewer_dialog('print', f'{string}')
     del args, string
 
+def movie_types():
+    return ['MOVIE', 'ONA', 'OVA', 'SPECIAL', 'Movie', "Special"]
 
 class SettingIDs:
     def __init__(self):
