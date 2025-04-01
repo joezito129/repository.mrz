@@ -4,7 +4,7 @@ import requests
 
 from functools import partial
 from bs4 import BeautifulSoup, SoupStrainer
-from resources.lib import debrid
+from resources.lib.debrid import Debrid
 from resources.lib.ui import BrowserBase, database, source_utils, control
 
 
@@ -41,17 +41,20 @@ class Sources(BrowserBase.BrowserBase):
                 'downloads': downloads
             }
             list_.append(source)
-
         if self.media_type != 'movie':
             filtered_list = source_utils.filter_sources(list_, int(season_zfill), int(episode_zfill), part=part)
         else:
             filtered_list = list_
 
-        cache_list, uncashed_list_ = debrid.torrentCacheCheck(filtered_list)
+        cache_list, uncashed_list_ = Debrid().torrentCacheCheck(filtered_list)
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
 
         uncashed_list = [i for i in uncashed_list_ if i['seeders'] > 0]
         uncashed_list = sorted(uncashed_list, key=lambda k: k['seeders'], reverse=True)
+
+        for x in (uncashed_list + cache_list):
+            control.log(x['name'])
+
 
         re_size = re.compile(r'(\d+).(\d+) (\w+)')
         mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill, re_size=re_size, cached=True)
@@ -66,12 +69,12 @@ class Sources(BrowserBase.BrowserBase):
         self.media_type = media_type
         if media_type != 'movie':
             self.get_episode_sources(query, mal_id, episode, status)
-            if not self.sources and ':' in query:
-                q1, q2 = query.split('|', 2)
-                q1 = q1[1:-1].split(':')[0]
-                q2 = q2[1:-1].split(':')[0]
-                query2 = '({0})|({1})'.format(q1, q2)
-                self.get_episode_sources(query2, mal_id, episode, status)
+            # if not self.sources and ':' in query:
+            #     q1, q2 = query.split('|', 2)
+            #     q1 = q1[1:-1].split(':')[0]
+            #     q2 = q2[1:-1].split(':')[0]
+            #     query2 = '({0})|({1})'.format(q1, q2)
+            #     self.get_episode_sources(query2, mal_id, episode, status)
         else:
             self.get_movie_sources(query, mal_id)
 

@@ -6,7 +6,7 @@ import asyncio
 from functools import partial
 from bs4 import BeautifulSoup
 from resources.lib.ui import database, source_utils, control, BrowserBase
-from resources.lib import debrid
+from resources.lib.debrid import Debrid
 
 
 class Sources(BrowserBase.BrowserBase):
@@ -132,7 +132,7 @@ class Sources(BrowserBase.BrowserBase):
         else:
             filtered_list = list_
 
-        cache_list, uncashed_list_ = debrid.torrentCacheCheck(filtered_list)
+        cache_list, uncashed_list_ = Debrid().torrentCacheCheck(filtered_list)
         uncashed_list = [i for i in uncashed_list_ if i['seeders'] != 0]
 
         uncashed_list = sorted(uncashed_list, key=lambda k: k['seeders'], reverse=True)

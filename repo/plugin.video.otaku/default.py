@@ -90,7 +90,7 @@ def UPCOMING_NEXT_SEASON(payload: str, params: dict):
 def TOP_100_ANIME_PAGES(payload: str, params: dict):
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_top_100_anime(page), 'tvshows')
-
+    import xbmcvfs
 
 @Route('airing_calendar')
 def AIRING_CALENDAR(payload: str, params: dict):

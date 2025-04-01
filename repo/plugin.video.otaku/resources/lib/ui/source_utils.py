@@ -187,7 +187,6 @@ def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
 
     regex_ep = r"(?i)(?:s(?:eason)?\s?\d{1,2})?[ ._-]?(?:e(?:p)?\s?(\d{1,4})(?:v\d+)?)?(?:[ ._-]?[-~][ ._-]?e?(?:p)?\s?(\d{1,4}))?|(?:-\s?(\d{1,4})\b)"
     rex_ep = re.compile(regex_ep)
-
     if part:
         regex_part = r"part ?(\d+)"
         rex_part = re.compile(regex_part)
@@ -197,7 +196,6 @@ def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
     filtered_list= []
     for torrent in list_:
         title = torrent['name'].lower()
-
         # filter parts
         if rex_part and 'part' in title:
             part_match = rex_part.search(title)
@@ -209,12 +207,10 @@ def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
         # filter episode number
         ep_match = rex_ep.findall(clean_text(title))
         ep_match = list(map(int, list(filter(None, itertools.chain(*ep_match)))))
-
         if not ep_match:
-            regex_batch = r"(?i)\b(batch|complete|season\s*\d+\b|s\d{1,2}\s*(?:-\s*\d{2,})?(?=\s*\[?\d{2,}])|\d{2,}\s*episodes?)\b"
-            batch_math = re.search(regex_batch, title)
-            if not batch_math:
-                continue
+            pass
+            # if not difflib.get_close_matches(show.lower(), [title], cutoff=.15):
+            #     continue
         elif ep_match and ep_match[0] != episode:
             if not (len(ep_match) > 1 and ep_match[0] <= episode <= ep_match[1]):
                 continue
