@@ -17,7 +17,7 @@ def collect_meta(anime_list):
                 mtype = 'tv'
             t = threading.Thread(target=update_meta, args=(mal_id, mtype))
             t.start()
-            self.threads.append(t)
+            threads.append(t)
     for thread in threads:
         thread.join()
 
