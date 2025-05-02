@@ -52,10 +52,6 @@ class Sources(BrowserBase.BrowserBase):
         uncashed_list = [i for i in uncashed_list_ if i['seeders'] > 0]
         uncashed_list = sorted(uncashed_list, key=lambda k: k['seeders'], reverse=True)
 
-        for x in (uncashed_list + cache_list):
-            control.log(x['name'])
-
-
         re_size = re.compile(r'(\d+).(\d+) (\w+)')
         mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill, re_size=re_size, cached=True)
         all_results = list(map(mapfunc, cache_list))
