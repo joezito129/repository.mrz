@@ -78,7 +78,6 @@ class WatchlistPlayer(player):
                 }
                 res = control.jsonrpc(query)
 
-
     def onPlayBackEnded(self):
         control.closeAllDialogs()
 
@@ -193,7 +192,7 @@ class WatchlistPlayer(player):
             self.current_time = int(self.getTime())
             xbmc.sleep(5000)
 
-        control.closeAllDialogs()
+        return None
 
     def process_aniskip(self):
         if self.skipintro_aniskip_enable and not self.skipintro_aniskip:

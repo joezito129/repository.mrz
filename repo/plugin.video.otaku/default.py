@@ -43,7 +43,7 @@ def add_last_watched(items: list) -> list:
                 'title': kodi_meta['title_userPreferred'],
                 'plot': kodi_meta['plot'],
                 'status': kodi_meta['status'],
-                'rating': kodi_meta['rating']
+                'rating': kodi_meta.get('rating')
             }
             if kodi_meta['format'] == 'movie':
                 url = f'play_movie/{mal_id}/'
@@ -90,7 +90,6 @@ def UPCOMING_NEXT_SEASON(payload: str, params: dict):
 def TOP_100_ANIME_PAGES(payload: str, params: dict):
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_top_100_anime(page), 'tvshows')
-    import xbmcvfs
 
 @Route('airing_calendar')
 def AIRING_CALENDAR(payload: str, params: dict):
@@ -130,7 +129,7 @@ def SEARCH(payload: str, params: dict):
             return control.draw_items([], 'tvshows')
         if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
-    control.draw_items(BROWSER.get_search(query, page), 'tvshows')
+    return control.draw_items(BROWSER.get_search(query, page), 'tvshows')
 
 
 @Route('remove_search_item/*')
@@ -210,12 +209,18 @@ def PLAY_MOVIE(payload: str, params: dict):
 def MARKED_AS_WATCHED(payload: str, params: dict):
     from resources.lib.WatchlistFlavor import WatchlistFlavor
     from resources.lib.WatchlistIntegration import watchlist_update_episode
+    payload_list = payload.split("/")
+    if len(payload_list) == 2:
+        mal_id, episode = payload_list
+    else:
+        mal_id = payload_list[1]
+        episode = 1
 
-    mal_id, episode = payload.split("/", 1)
     flavor = WatchlistFlavor.get_update_flavor()
     watchlist_update_episode(mal_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
-    control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{mal_id}/{episode})')
+    if len(payload_list) == 2:
+        control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{mal_id}/{episode})')
     control.exit_code()
 
 

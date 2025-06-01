@@ -21,7 +21,13 @@ class MalBrowser(BrowserBase.BrowserBase):
     def process_mal_view(self, res, base_plugin_url, page) -> list:
         get_meta.collect_meta(res['data'])
         mapfunc = partial(self.base_mal_view, completed=self.open_completed())
-        all_results = list(map(mapfunc, res['data']))
+
+        no_duplicate_res = []
+        for x in res['data']:
+            if x not in no_duplicate_res:
+                no_duplicate_res.append(x)
+
+        all_results = list(map(mapfunc, no_duplicate_res))
         hasNextPage = res['pagination']['has_next_page']
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results

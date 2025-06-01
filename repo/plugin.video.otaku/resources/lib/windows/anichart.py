@@ -38,7 +38,7 @@ class Anichart(BaseWindow):
         actionID = action.getId()
         if actionID in [xbmcgui.ACTION_NAV_BACK, xbmcgui.ACTION_BACKSPACE, xbmcgui.ACTION_PREVIOUS_MENU]:
             self.close()
-        elif actionID in [xbmcgui.ACTION_SELECT_ITEM]:
+        elif actionID in [xbmcgui.ACTION_SELECT_ITEM, xbmcgui.ACTION_TOUCH_TAP]:
             time_ = time.time()
             if time_ - self.last_action_time < .3:
                 self.handle_action(actionID)

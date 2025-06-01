@@ -46,7 +46,7 @@ class Sources(BrowserBase.BrowserBase):
                 for anidb_ep in anidb_meta:
                     database.update_episode_column(mal_id, anidb_ep, 'anidb_ep_id', anidb_meta[anidb_ep]['anidb_id'])
 
-        episode_zfill = episode.zfill(2)
+        episode_zfill = str(episode).zfill(2)
 
         if self.anidb_ep_id:
             self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, '')))

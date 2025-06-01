@@ -79,6 +79,7 @@ def CONTEXT_MENU(payload: str, params: dict):
     if not (flavor := WatchlistFlavor.get_update_flavor()):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
         return control.exit_code()
+
     actions = WatchlistFlavor.context_statuses()
 
     kodi_meta = pickle.loads(show['kodi_meta'])
