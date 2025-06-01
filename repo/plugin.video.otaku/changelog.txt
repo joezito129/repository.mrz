@@ -1,7 +1,7 @@
 Changelog v5.1.22 (2025-06-01)
 - Fixed Marked as Watched (WatchList) for movies
 - Fixed Anime calendar for touch screen devices
--
+- Fixed Duplicate Animes on MAL api
 
 Changelog v5.1.21 (2025-05-02)
 - Fixed Teamup
