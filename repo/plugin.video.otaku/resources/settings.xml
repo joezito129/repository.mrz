@@ -911,7 +911,7 @@
                         <allowempty>true</allowempty>
                     </constraints>
                 </setting>
-                <setting id="debrid_link.token" type="integer" label="" help="">
+                <setting id="debrid_link.token" type="string" label="" help="">
                     <level>4</level>
                     <default>0</default>
                 </setting>
