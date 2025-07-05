@@ -1,4 +1,8 @@
-Changelog v5.1.22 (2025-06-01)
+Changelog v5.1.23 (2025-07-05)
+- Removed GogoAnime
+- Removed caching torrents
+
+hangelog v5.1.22 (2025-06-01)
 - Fixed Marked as Watched (WatchList) for movies
 - Fixed Anime calendar for touch screen devices
 - Fixed Duplicate Animes on MAL api

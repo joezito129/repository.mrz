@@ -361,11 +361,6 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="provider.gogoanime" type="boolean" label="30403" help="">
-                    <level>0</level>
-                    <default>true</default>
-                    <control type="toggle"/>
-                </setting>
                 <setting id="provider.aniwave" type="boolean" label="30406" help="">
                     <level>0</level>
                     <default>true</default>

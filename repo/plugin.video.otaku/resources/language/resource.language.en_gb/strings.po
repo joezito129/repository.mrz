@@ -730,10 +730,6 @@ msgctxt "#30402"
 msgid "HiAnime"
 msgstr ""
 
-msgctxt "#30403"
-msgid "Gogo"
-msgstr ""
-
 msgctxt "#30404"
 msgid "Animepahe"
 msgstr ""

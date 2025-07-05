@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, gogoanime, aniwave, hianime, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, aniwave, hianime, localfiles
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -34,7 +34,7 @@ class Sources(GetSources):
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = [gogoanime, aniwave, hianime]
+        self.embed_func = [aniwave, hianime]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
@@ -138,19 +138,10 @@ class Sources(GetSources):
 
 #   ### Torrents ###
     def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
-        try:
-            if rescrape:
-                all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
-            else:
-                all_sources = database.get_(torrent_func.Sources().get_sources, 8, query, mal_id, episode, status, media_type, key=torrent_name)
-        except:
-            import traceback
-            control.log(traceback.format_exc(), 'error')
-            all_sources = {}
-        if all_sources:
-            self.torrentUnCacheSources += all_sources['uncached']
-            self.torrentCacheSources += all_sources['cached']
-            self.torrentSources += all_sources['cached'] + all_sources['uncached']
+        all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
+        self.torrentUnCacheSources += all_sources['uncached']
+        self.torrentCacheSources += all_sources['cached']
+        self.torrentSources += all_sources['cached'] + all_sources['uncached']
         self.remainingProviders.remove(torrent_name)
 
 #   ### embeds ###
