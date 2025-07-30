@@ -15,7 +15,7 @@ class Sources(BrowserBase.BrowserBase):
         title = self._clean_title(title)
 
         data = {
-            'catara': f'{title.replace(' ', '+')}+S+1+E+{episode}',
+            'catara': f"{title.replace(' ', '+')}+S+1+E+{episode}",
             'konuara': 'episodes'
         }
         r = requests.post(f'{self._BASE_URL}/search', data=data)
