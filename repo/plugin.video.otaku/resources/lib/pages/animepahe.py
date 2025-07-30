@@ -22,12 +22,12 @@ class Sources(BrowserBase.BrowserBase):
             'm': 'search',
             'q': title
         }
-        r = requests.get(f'{self._BASE_URL}api', params=params, headers=self._headers)
+        r = requests.get(f"{self._BASE_URL}api", params=params, headers=self._headers)
         sitems = r.json().get('data')
 
         if not sitems and ':' in title:
             params['q'] = title.split(':')[0]
-            r = requests.get(f'{self._BASE_URL}api', params=params, headers=self._headers)
+            r = requests.get(f"{self._BASE_URL}api", params=params, headers=self._headers)
             sitems = r.json().get('data')
 
         all_results = []
@@ -58,7 +58,7 @@ class Sources(BrowserBase.BrowserBase):
             'page': page
         }
 
-        r = requests.get(f'{self._BASE_URL}api', params=params, headers=self._headers)
+        r = requests.get(f"{self._BASE_URL}api", params=params, headers=self._headers)
         r = r.json()
         items = r.get('data')
         items = sorted(items, key=lambda x: x.get('episode'))
@@ -68,7 +68,7 @@ class Sources(BrowserBase.BrowserBase):
 
         items = [x for x in items if x.get('episode') == e_num]
         if items:
-            html = requests.get(f'{self._BASE_URL}play/{slug}/{items[0].get('session')}', headers=self._headers).text
+            html = requests.get(f"{self._BASE_URL}play/{slug}/{items[0].get('session')}", headers=self._headers).text
             mlink = SoupStrainer('div', {'id': 'resolutionMenu'})
             mdiv = BeautifulSoup(html, "html.parser", parse_only=mlink)
             items = mdiv.find_all('button')
@@ -96,7 +96,7 @@ class Sources(BrowserBase.BrowserBase):
                         'seeders': -1,
                         'byte_size': 0,
                         'info': [source_utils.get_embedhost(item.get('data-src')) + (' DUB' if item.get('data-audio') == 'eng' else ' SUB')],
-                        'lang': 1 if item.get('data-audio') == 'eng' else 2
+                        'lang': 1 if item.get('data-audio') == 'eng' else 0
                     }
                     sources.append(source)
         return sources

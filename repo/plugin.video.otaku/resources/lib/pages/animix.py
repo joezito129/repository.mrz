@@ -33,7 +33,7 @@ class Sources(BrowserBase.BrowserBase):
             'Origin': self._BASE_URL[:-1],
             'Referer': self._BASE_URL
         }
-        r = requests.post(f'{self._BASE_URL}api/search', data={'qfast': title}, headers=headers)
+        r = requests.post(f"{self._BASE_URL}api/search", data={'qfast': title}, headers=headers)
         if r.ok:
             soup = BeautifulSoup(r.json()['result'], 'html.parser')
             items = soup.find_all('a')
@@ -99,7 +99,7 @@ class Sources(BrowserBase.BrowserBase):
 
                         source = {
                             'release_title': f'{title} Ep{episode}',
-                            'hash': f'{src}|Referer={playbunny}&Origin={playbunny[:-1]}&User-Agent=iPad',
+                            'hash': f"{src}|Referer={playbunny}&Origin={playbunny[:-1]}&User-Agent=iPad",
                             'type': 'direct',
                             'quality': 2,
                             'debrid_provider': '',
@@ -107,7 +107,7 @@ class Sources(BrowserBase.BrowserBase):
                             'size': 'NA',
                             'seeders': -1,
                             'byte_size': 0,
-                            'info': [f'{server} {slug[-3:]}'],
+                            'info': [f"{server} {slug[-3:]}"],
                             'lang': lang,
                             'skip': skip
                         }

@@ -76,7 +76,7 @@ class Sources(BrowserBase.BrowserBase):
         e_id = [x.get('data-id') for x in items if int(x.get('data-number')) == int(episode)]
         if e_id:
             params = {'episodeId': e_id[0]}
-            r = requests.get(f'{self._BASE_URL}ajax/v2/episode/servers', headers=headers, params=params)
+            r = requests.get(f"{self._BASE_URL}ajax/v2/episode/servers", headers=headers, params=params)
             eres = r.json().get('html')
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
@@ -87,7 +87,7 @@ class Sources(BrowserBase.BrowserBase):
                     edata_name = src.text.strip().lower()
                     if edata_name.lower() in self.embeds():
                         params = {'id': edata_id}
-                        r = requests.get(f'{self._BASE_URL}ajax/v2/episode/sources', params=params, headers=headers)
+                        r = requests.get(f"{self._BASE_URL}ajax/v2/episode/sources", params=params, headers=headers)
                         slink = r.json().get('link')
                         if edata_name == 'streamtape':
                             source = {
@@ -100,14 +100,14 @@ class Sources(BrowserBase.BrowserBase):
                                 'size': 'NA',
                                 'seeders': 0,
                                 'byte_size': 0,
-                                'info': [edata_name + (' DUB' if lang == 'dub' else ' SUB')],
+                                'info': [f"{edata_name} {lang}"],
                                 'lang': 2 if lang == 'dub' else 0,
                                 'skip': {}
                             }
                             sources.append(source)
                         else:
                             params = {'url': slink, 'referer': self._BASE_URL}
-                            r = requests.get(f'{self._MEGA_URL}/get', params=params)
+                            r = requests.get(f"{self._MEGA_URL}/get", params=params)
                             res = r.json()
                             subs = res.get('tracks')
                             if subs:
