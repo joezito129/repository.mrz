@@ -1,3 +1,12 @@
+Changelog v5.1.24 (2025-07-30)
+- Improved Nyaa Scrapping
+- Improved Scrapping Uncached torrents
+- Fixed Aniwave
+- Fixed autoplaying next playlist when no sources found
+- Fixed filting lang
+- Added Animix
+- starting adding animepahe, watchnixtoons2
+
 Changelog v5.1.23 (2025-07-05)
 - Removed GogoAnime
 - Removed caching torrents

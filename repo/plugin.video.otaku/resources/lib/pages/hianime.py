@@ -19,13 +19,17 @@ class Sources(BrowserBase.BrowserBase):
         title = kodi_meta['name']
         title = keyword = self._clean_title(title)
 
-        all_results = []
-        srcs = ['sub', 'dub', 'raw']
-        if control.getSetting('general.source') == 'Sub':
-            srcs.remove('dub')
-        elif control.getSetting('general.source') == 'Dub':
-            srcs.remove('sub')
+        lang_int = control.getInt('general.source')  # 0 SUB, 1 BOTH, 2 DUB
+        if lang_int == 1:
+            srcs = ['dub', 'sub']
+        elif lang_int == 2:
+            srcs = ['dub']
+        elif lang_int == 0:
+            srcs = ['sub']
+        else:
+            srcs = []
 
+        all_results = []
         items = malsync.get_slugs(mal_id=mal_id, site='Zoro')
         if not items:
             if kodi_meta.get('start_date'):
@@ -97,7 +101,7 @@ class Sources(BrowserBase.BrowserBase):
                                 'seeders': 0,
                                 'byte_size': 0,
                                 'info': [edata_name + (' DUB' if lang == 'dub' else ' SUB')],
-                                'lang': 3 if lang == 'dub' else 2,
+                                'lang': 2 if lang == 'dub' else 0,
                                 'skip': {}
                             }
                             sources.append(source)
@@ -116,36 +120,34 @@ class Sources(BrowserBase.BrowserBase):
 
                             if res.get('sources'):
                                 srclink = res['sources'][0].get('file')
-                            else:
-                                continue
-                            res = requests.get(srclink, headers=headers).text
-                            quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).*\n(?!#)(.+)', res)
+                                res = requests.get(srclink, headers=headers).text
+                                quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).*\n(?!#)(.+)', res)
 
-                            for qual, qlink in quals:
-                                qual = int(qual)
-                                if qual <= 480:
-                                    quality = 1
-                                elif qual <= 720:
-                                    quality = 2
-                                elif qual <= 1080:
-                                    quality = 3
-                                else:
-                                    quality = 0
+                                for qual, qlink in quals:
+                                    qual = int(qual)
+                                    if qual <= 480:
+                                        quality = 1
+                                    elif qual <= 720:
+                                        quality = 2
+                                    elif qual <= 1080:
+                                        quality = 3
+                                    else:
+                                        quality = 0
 
-                                source = {
-                                    'release_title': '{0} - Ep {1}'.format(title, episode),
-                                    'hash': parse.urljoin(srclink, qlink) + '|User-Agent=iPad',
-                                    'type': 'direct',
-                                    'quality': quality,
-                                    'debrid_provider': '',
-                                    'provider': 'h!anime',
-                                    'size': 'NA',
-                                    'seeders': 0,
-                                    'byte_size': 0,
-                                    'info': [edata_name + (' DUB' if lang == 'dub' else ' SUB')],
-                                    'lang': 2 if lang == 'dub' else 0,
-                                    'subs': subs,
-                                    'skip': skip
-                                }
-                                sources.append(source)
+                                    source = {
+                                        'release_title': '{0} - Ep {1}'.format(title, episode),
+                                        'hash': parse.urljoin(srclink, qlink) + '|User-Agent=iPad',
+                                        'type': 'direct',
+                                        'quality': quality,
+                                        'debrid_provider': '',
+                                        'provider': 'h!anime',
+                                        'size': 'NA',
+                                        'seeders': -1,
+                                        'byte_size': 0,
+                                        'info': [f'{edata_name} {lang}'],
+                                        'lang': 2 if lang == 'dub' else 0,
+                                        'subs': subs,
+                                        'skip': skip
+                                    }
+                                    sources.append(source)
         return sources

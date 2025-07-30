@@ -96,7 +96,7 @@ def load_video_from_url(in_url):
 
     if found_extractor is None:
         control.log("[*E*] No extractor found for %s" % in_url, 'info')
-        return
+        return None
 
     try:
         if found_extractor['preloader'] is not None:
@@ -112,9 +112,9 @@ def load_video_from_url(in_url):
         if r.ok:
             return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
         else:
-            control.log(f'Could Not anal prob {in_url}', 'warning')
+            control.log(f'Could Not Anal Prob {in_url}', 'warning')
     except error.URLError:
-        return  # Dead link, Skip result
+        return None # Dead link, Skip result
 
 
 def __get_packed_data(html):
@@ -218,7 +218,7 @@ def __extract_vidplay(slink, page_content, referer=None):
     s = requests.get(murl, headers=headers).json()
     s = json.loads(decode_vurl(s.get("result")))
     if isinstance(s, dict):
-        uri = s.get('sources')[0].get('file')
+        uri = s['sources'][0].get('file')
         rurl = parse.urljoin(murl, '/')
         uri += '|Referer={0}&Origin={1}&User-Agent=iPad'.format(rurl, rurl[:-1])
         subs = s.get('tracks')
@@ -236,6 +236,7 @@ def __extract_kwik(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return r.group(1) + __append_headers(headers)
+    return None
 
 
 def __extract_okru(url, page_content, referer=None):
@@ -263,7 +264,7 @@ def __extract_mixdrop(url, page_content, referer=None):
             'Referer': url
         }
         return surl + __append_headers(headers)
-
+    return None
 
 def __extract_filemoon(url, page_content, referer=None):
     r = re.search(r'sources:\s*\[{\s*file:\s*"([^"]+)', __get_packed_data(page_content))
@@ -274,7 +275,7 @@ def __extract_filemoon(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return surl + __append_headers(headers)
-
+    return None
 
 def __extract_embedrise(url, page_content, referer=None):
     r = re.search(r'<source\s*src="([^"]+)', page_content)
@@ -285,14 +286,13 @@ def __extract_embedrise(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA,
                    'Referer': url}
         return surl + __append_headers(headers)
-
+    return None
 
 def __extract_fusevideo(url, page_content, referer=None):
     r = re.findall(r'<script\s*src="([^"]+)', page_content)
     if r:
         jurl = r[-1]
         headers = {'Referer': url}
-        # js = client.request(jurl, referer=url)
         js = requests.get(jurl, headers=headers).text
         match = re.search(r'n\s*=\s*atob\("([^"]+)', js)
         if match:
@@ -301,7 +301,7 @@ def __extract_fusevideo(url, page_content, referer=None):
             if surl:
                 headers = {'User-Agent': _EDGE_UA, 'Referer': url, 'Accept-Language': 'en'}
                 return surl.group(1).replace('\\/', '/') + __append_headers(headers)
-
+    return None
 
 def __extract_dood(url, page_content, referer=None):
     def dood_decode(pdata):
@@ -322,7 +322,7 @@ def __extract_dood(url, page_content, referer=None):
                 html = r.text
                 headers = {'User-Agent': _EDGE_UA, 'Referer': url}
                 return dood_decode(html) + token + str(int(time.time() * 1000)) + __append_headers(headers)
-
+    return None
 
 def __extract_streamtape(url, page_content, referer=None):
     src = re.findall(r'''ById\('.+?=\s*(["']//[^;<]+)''', page_content)
@@ -342,7 +342,7 @@ def __extract_streamtape(url, page_content, referer=None):
                    'Referer': url}
         src_url = 'https:' + src_url if src_url.startswith('//') else src_url
         return src_url + __append_headers(headers)
-
+    return None
 
 def __extract_streamwish(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
@@ -369,6 +369,7 @@ def __extract_voe(url, page_content, referer=None):
         headers = {'User-Agent': _EDGE_UA}
         stream_url = r.group(1) + __append_headers(headers)
         return stream_url
+    return None
 
 def __extract_goload(url, page_content, referer=None):
     def _encrypt(msg, key, iv_):
@@ -415,7 +416,7 @@ def __extract_goload(url, page_content, referer=None):
                            'Referer': 'https://{0}/'.format(host),
                            'Origin': 'https://{0}'.format(host)}
                 return str_url + __append_headers(headers)
-
+    return None
 
 def __register_extractor(urls, function, url_preloader=None, datas=None):
     if type(urls) is not list:

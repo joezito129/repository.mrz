@@ -50,6 +50,7 @@ class WatchlistPlayer(player):
         # process skip times
         self.process_embed('aniwave')
         self.process_embed('hianime')
+        self.process_embed('animix')
         self.process_aniskip()
         self.process_animeskip()
 
@@ -197,11 +198,13 @@ class WatchlistPlayer(player):
     def process_aniskip(self):
         if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
             skipintro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'op')
+            control.log(f'aniskip times: {skipintro_aniskip_res}')
             if skipintro_aniskip_res:
                 skip_times = skipintro_aniskip_res['results'][0]['interval']
                 self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
                 self.skipintro_end = int(skip_times['endTime']) + self.skipintro_offset
                 self.skipintro_aniskip = True
+                control.log(f'found skip times aniskip: {self.skipintro_start} - {self.skipintro_end}')
 
         if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
             skipoutro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'ed')
@@ -210,6 +213,7 @@ class WatchlistPlayer(player):
                 self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset
                 self.skipoutro_end = int(skip_times['endTime']) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
+                control.log(f'found skip times aniskip: {self.skipoutro_start} - {self.skipoutro_end}')
 
     def process_animeskip(self):
         show_meta = database.get_show_meta(self.mal_id)
@@ -238,10 +242,12 @@ class WatchlistPlayer(player):
                 self.skipintro_start = intro_start + self.skipintro_offset
                 self.skipintro_end = intro_end + self.skipintro_offset
                 self.skipintro_aniskip = True
+                control.log(f'found skip times animeskip: {self.skipintro_start} - {self.skipintro_end}')
             if outro_start is not None and outro_end is not None:
                 self.skipoutro_start = int(outro_start) + self.skipoutro_offset
                 self.skipoutro_end = int(outro_end) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
+                control.log(f'found skip times animeskip: {self.skipoutro_start} - {self.skipoutro_end}')
 
     def process_embed(self, embed):
         if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
@@ -250,12 +256,15 @@ class WatchlistPlayer(player):
                 self.skipintro_start = embed_skipintro_start + self.skipintro_offset
                 self.skipintro_end = control.getInt(f'{embed}.skipintro.end') + self.skipintro_offset
                 self.skipintro_aniskip = True
+                control.log(f'found skip times {embed}: {self.skipintro_start} - {self.skipintro_end}')
         if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
             embed_skipoutro_start = control.getInt(f'{embed}.skipoutro.start')
             if embed_skipoutro_start != -1:
                 self.skipoutro_start = embed_skipoutro_start + self.skipoutro_offset
                 self.skipoutro_end = control.getInt(f'{embed}.skipoutro.end') + self.skipoutro_offset
                 self.skipoutro_aniskip = True
+                control.log(f'found skip times {embed}: {self.skipoutro_start} - {self.skipoutro_end}')
+
 
 
 class PlayerDialogs(xbmc.Player):

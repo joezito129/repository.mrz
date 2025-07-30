@@ -168,13 +168,16 @@ def PLAY(payload: str, params: dict):
         elif context == 1:
             resume = None
     sources = pages.get_kodi_sources(mal_id, episode, 'show', rescrape, source_select)
-    _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
-    if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
-        from resources.lib.windows.source_select import SourceSelect
-        SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+    if sources:
+        _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
+        if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
+            from resources.lib.windows.source_select import SourceSelect
+            SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        else:
+            from resources.lib.windows.resolver import Resolver
+            Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
     else:
-        from resources.lib.windows.resolver import Resolver
-        Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
+        control.playList.clear()
     control.exit_code()
 
 
@@ -195,13 +198,16 @@ def PLAY_MOVIE(payload: str, params: dict):
             resume = None
 
     sources = pages.get_kodi_sources(mal_id, 1, 'movie', rescrape, source_select)
-    _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
-    if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
-        from resources.lib.windows.source_select import SourceSelect
-        SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+    if sources:
+        _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
+        if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
+            from resources.lib.windows.source_select import SourceSelect
+            SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+        else:
+            from resources.lib.windows.resolver import Resolver
+            Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
     else:
-        from resources.lib.windows.resolver import Resolver
-        Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
+        control.playList.clear()
     control.exit_code()
 
 

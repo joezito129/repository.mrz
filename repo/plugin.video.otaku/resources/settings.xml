@@ -357,8 +357,23 @@
                     </control>
                 </setting>
                 <setting id="provider.hianime" type="boolean" label="30402" help="">
+                    <level>4</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.watchnixtoons2" type="boolean" label="30403" help="">
+                    <level>4</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.animepahe" type="boolean" label="30404" help="">
+                    <level>4</level>
+                    <default>false</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="provider.animix" type="boolean" label="30405" help="">
                     <level>0</level>
-                    <default>true</default>
+                    <default>false</default>
                     <control type="toggle"/>
                 </setting>
                 <setting id="provider.aniwave" type="boolean" label="30406" help="">
@@ -617,9 +632,9 @@
                     <default>1</default>
                     <constraints>
                         <options>
-                            <option label="Dub">0</option>
+                            <option label="Sub">0</option>
                             <option label="Both">1</option>
-                            <option label="Sub">2</option>
+                            <option label="Dub">2</option>
                         </options>
                     </constraints>
                     <control type="spinner" format="string" />
@@ -629,7 +644,7 @@
                     <default>false</default>
                     <control type="toggle"/>
                 </setting>
-                <setting id="uncached.autoruninforground" type="boolean" label="30106" help="">
+                <setting id="uncached.autorun" type="boolean" label="30106" help="">
                     <level>0</level>
                     <default>true</default>
                     <control type="toggle"/>
@@ -1720,7 +1735,7 @@
                     <default>-1</default>
                 </setting>
 
-              <setting id="aniwave.skipintro.start" type="integer" label="" help="">
+                <setting id="aniwave.skipintro.start" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
                 </setting>
@@ -1733,6 +1748,23 @@
                     <default>-1</default>
                 </setting>
                 <setting id="aniwave.skipoutro.end" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                </setting>
+
+                <setting id="animix.skipintro.start" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                </setting>
+                <setting id="animix.skipintro.end" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                </setting>
+                <setting id="animix.skipoutro.start" type="integer" label="" help="">
+                    <level>4</level>
+                    <default>-1</default>
+                </setting>
+                <setting id="animix.skipoutro.end" type="integer" label="" help="">
                     <level>4</level>
                     <default>-1</default>
                 </setting>

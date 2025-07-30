@@ -22,18 +22,23 @@ class Sources(BrowserBase.BrowserBase):
         title = kodi_meta['name']
         title = self._clean_title(title)
 
+        lang_int = control.getInt('general.source')  # 0 SUB, 1 BOTH, 2 DUB
+        if lang_int == 1:
+            srcs = ['dub', 'sub']
+        elif lang_int == 2:
+            srcs = ['dub']
+        elif lang_int == 0:
+            srcs = ['sub']
+        else:
+            srcs = []
+
         all_results = []
         items = []
-        srcs = ['dub', 'sub', 's-sub']
-        if control.getSetting('general.source') == 'Sub':
-            srcs.remove('dub')
-        elif control.getSetting('general.source') == 'Dub':
-            srcs.remove('sub')
-            srcs.remove('s-sub')
 
         headers = {'Referer': self._BASE_URL}
         params = {'keyword': title}
-        r = requests.get(self._BASE_URL + 'ajax/anime/search', params=params, headers=headers).text
+        r = requests.get(f'{self._BASE_URL}ajax/anime/search', params=params, headers=headers).text
+
         if 'NOT FOUND' in r:
             r1 = requests.get(self._BASE_URL + 'filter', params=params, headers=headers).text
             mlink = SoupStrainer('div', {'class': 'ani items'})
@@ -110,14 +115,16 @@ class Sources(BrowserBase.BrowserBase):
                             skip_data = json.loads(self.decrypt_vrf(resp.get('skip_data')))
                             intro = skip_data.get('intro')
                             if intro:
+                                skip['intro'] = {}
                                 skip['intro']['start'] = intro[0]
                                 skip['intro']['end'] = intro[1]
                             outro = skip_data.get('outro')
                             if outro:
+                                skip['outro'] = {}
                                 skip['outro']['start'] = outro[0]
                                 skip['outro']['end'] = outro[1]
                         slink = self.decrypt_vrf(resp.get('url'))
-                        if self._BASE_URL in slink:
+                        if 'aniwave' in slink:
                             sresp = self.__extract_aniwave(slink)
                             if sresp:
                                 subs = sresp['subs']
@@ -125,21 +132,22 @@ class Sources(BrowserBase.BrowserBase):
                                 srclink = sresp['url']
                                 headers.update({'Origin': self._BASE_URL[:-1]})
                                 res = requests.get(srclink, headers=headers).text
-                                quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).+\n(?!#)(.+)', res)
+                                quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).*\n(?!#)(.+)', res)
+                                src_hdrs = {'User-Agent': 'iPad', 'Referer': parse.urljoin(srclink, '/')}
                                 for qual, qlink in quals:
                                     qual = int(qual)
                                     if qual > 1080:
-                                        quality = 4
+                                        quality = 4     # 4k
                                     elif qual > 720:
-                                        quality = 3
+                                        quality = 3     # 1080
                                     elif qual > 480:
-                                        quality = 2
+                                        quality = 2     # 720
                                     else:
-                                        quality = 1
+                                        quality = 1     # 480
 
                                     source = {
                                         'release_title': '{0} - Ep {1}'.format(title, episode),
-                                        'hash': parse.urljoin(srclink, qlink) + '|User-Agent=iPad',
+                                        'hash': '{0}|{1}'.format(parse.urljoin(srclink, qlink), parse.urlencode(src_hdrs)),
                                         'type': 'direct',
                                         'quality': quality,
                                         'debrid_provider': '',
@@ -147,7 +155,7 @@ class Sources(BrowserBase.BrowserBase):
                                         'size': 'NA',
                                         'seeders': -1,
                                         'byte_size': 0,
-                                        'info': [edata_name + (' DUB' if lang == 'dub' else ' SUB')],
+                                        'info': [f'{edata_name} {lang}'],
                                         'lang': 2 if lang == 'dub' else 0,
                                         'skip': skip
                                     }

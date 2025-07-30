@@ -144,16 +144,40 @@ class Premiumize:
                 link = best_match['link']
         return link
 
-    def resolve_uncached_source(self, source, runinbackground):
+    def resolve_uncached_source_background(self, source, autorun):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
-        if not runinbackground:
-            control.progressDialog.create(heading, "Caching Progress")
         stream_link = None
         torrent = self.addMagnet(source['magnet'])
-        if runinbackground:
+        if not autorun:
             control.notify(heading, "The souce is downloading to your cloud")
-            return
+            return None
 
+        status = 'running'
+        monitor = xbmc.Monitor()
+        while status != 'finished':
+            if monitor.waitForAbort(5):
+                break
+            transfer_list = self.transfer_list()
+            for i in transfer_list:
+                if i['id'] == torrent['id']:
+                    status = i['status']
+                    break
+            else:
+                control.log('Unable to find torrent', 'warning')
+                break
+        del monitor
+
+        torrent_list = self.list_folder(torrent['id'])
+        if torrent_list['transcode_status'] == 'finished':
+            stream_link = self.resolve_cloud(source, False)
+        self.delete_torrent(torrent['id'])
+        return stream_link
+
+    def resolve_uncached_source_forground(self, source, autorun):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.progressDialog.create(heading, "Caching Progress")
+        stream_link = None
+        torrent = self.addMagnet(source['magnet'])
         progress = 0
         status = 'running'
         monitor = xbmc.Monitor()
@@ -180,8 +204,5 @@ class Premiumize:
             control.ok_dialog(heading, "This file has been added to your Cloud")
         else:
             self.delete_torrent(torrent['id'])
-            # torrent_list = self.list_folder(torrent['id'])
-            # if torrent_list['transcode_status'] == 'finished':
-            #     stream_link = self.resolve_cloud(source, False)
         control.progressDialog.close()
         return stream_link

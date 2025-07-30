@@ -57,6 +57,10 @@ class BrowserBase:
         return text.replace(u'×', ' x ')
 
     @staticmethod
+    def clean_embed_title(text: str) -> str:
+        return re.sub(r'\W', '', text).lower()
+
+    @staticmethod
     def _sphinx_clean(text: str) -> str:
         text = text.replace('+', r'\+')
         text = text.replace('-', r'\-')

@@ -10,6 +10,7 @@ from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
 
 
+
 class HookMimetype:
     __MIME_HOOKS = {}
 
@@ -26,7 +27,6 @@ class HookMimetype:
         assert self._type not in self.__MIME_HOOKS.keys()
         self.__MIME_HOOKS[self._type] = func
         return func
-
 
 class Resolver(BaseWindow):
     def __init__(self, xml_file, location, *, actionArgs=None, source_select=False):
@@ -191,7 +191,7 @@ class Resolver(BaseWindow):
     @staticmethod
     def prefetch_play_link(link):
         if not link:
-            return
+            return None
         url = link
         if '|' in url:
             url, hdrs = link.split('|')
@@ -208,10 +208,10 @@ class Resolver(BaseWindow):
             if yesno == 1:
                 r = requests.get(url, headers=headers, stream=True, verify=False)
             else:
-                return
+                return None
         except Exception as e:
             control.log(repr(e), level='warning')
-            return
+            return None
 
         return {
             "url": link if '|' in link else r.url,
@@ -223,30 +223,24 @@ class Resolver(BaseWindow):
         f_string = (f"[I]{source['release_title']}[/I][CR]"
                     f"[CR]"
                     f"This source is not cached would you like to cache it now?")
-        if not control.getBool('uncached.autoruninforground'):
-            yesnocustom = control.yesnocustom_dialog(heading, f_string, "Cancel", "Run in Background", "Run in Forground")
-            if yesnocustom == -1 or yesnocustom == 2:
-                self.canceled = True
-                return
-            if yesnocustom == 0:
-                runbackground = True
-            elif yesnocustom == 1:
-                runbackground = False
-            else:
-                return
-        else:
-            runbackground = False
         api = self.resolvers[source['debrid_provider']]()
-        try:
-            resolved_cache = api.resolve_uncached_source(source, runbackground)
-        except Exception as e:
-            control.progressDialog.close()
-            import traceback
-            control.ok_dialog(control.ADDON_NAME, f'error; {e}')
-            control.log(traceback.format_exc(), 'error')
-            return
-        if not resolved_cache:
-            self.canceled = True
+
+        autorun = control.getBool('uncached.autorun')
+        if autorun:
+            resolved_cache = api.resolve_uncached_source_background(source, autorun)
+        else:
+            yesnocustom = control.yesnocustom_dialog(heading, f_string, "Cancel", "Run in Background", "Run in Forground")
+            if yesnocustom == 0:
+                resolved_cache = api.resolve_uncached_source_background(source, autorun)
+            elif yesnocustom == 1:
+                resolved_cache = api.resolve_uncached_source_forground(source, autorun)
+            else:
+                self.canceled = True
+                resolved_cache = None
+
+            if not resolved_cache:
+                self.canceled = True
+
         return resolved_cache
 
     def doModal(self, sources, args, pack_select) -> any:
@@ -283,9 +277,19 @@ def _DASH_HOOK(item):
     import inputstreamhelper
     is_helper = inputstreamhelper.Helper('mpd')
     if is_helper.check_inputstream():
+        stream_url = item.getPath()
         item.setProperty('inputstream', is_helper.inputstream_addon)
-        item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-        item.setContentLookup(False)
+        if control.kodi_version < 20.9:
+            item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
+            item.setContentLookup(False)
+        if '|' in stream_url:
+            stream_url, headers = stream_url.split('|')
+            item.setProperty('inputstream.adaptive.stream_headers', headers)
+            if control.kodi_version > 21.8:
+                item.setProperty('inputstream.adaptive.common_headers', headers)
+            else:
+                item.setProperty('inputstream.adaptive.stream_params', headers)
+                item.setProperty('inputstream.adaptive.manifest_headers', headers)
     else:
         raise Exception("InputStream Adaptive is not supported.")
     return item
@@ -293,29 +297,47 @@ def _DASH_HOOK(item):
 
 @HookMimetype('application/vnd.apple.mpegurl')
 def _HLS_HOOK(item):
-    stream_url = item.getPath()
     import inputstreamhelper
     is_helper = inputstreamhelper.Helper('hls')
-    if '|' not in stream_url and is_helper.check_inputstream():
+    if is_helper.check_inputstream():
+        stream_url = item.getPath()
         item.setProperty('inputstream', is_helper.inputstream_addon)
-        item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-    item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
-    item.setMimeType('application/vnd.apple.mpegstream_url')
-    item.setContentLookup(False)
+        if control.kodi_version < 20.9:
+            item.setProperty('inputstream.adaptive.manifest_type', 'hls')
+            item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
+            item.setMimeType('application/vnd.apple.mpegstream_url')
+            item.setContentLookup(False)
+        if '|' in stream_url:
+            stream_url, headers = stream_url.split('|')
+            item.setProperty('inputstream.adaptive.stream_headers', headers)
+            if control.kodi_version > 21.8:
+                item.setProperty('inputstream.adaptive.common_headers', headers)
+            else:
+                item.setProperty('inputstream.adaptive.stream_params', headers)
+                item.setProperty('inputstream.adaptive.manifest_headers', headers)
     return item
 
 
 @HookMimetype('video/MP2T')
 def _HLS_HOOK(item):
-    stream_url = item.getPath()
     import inputstreamhelper
     is_helper = inputstreamhelper.Helper('hls')
-    if '|' not in stream_url and is_helper.check_inputstream():
+    if is_helper.check_inputstream():
+        stream_url = item.getPath()
         item.setProperty('inputstream', is_helper.inputstream_addon)
-        item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-    item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
-    item.setMimeType('application/vnd.apple.mpegstream_url')
-    item.setContentLookup(False)
+        if control.kodi_version < 20.9:
+            item.setProperty('inputstream.adaptive.manifest_type', 'hls')
+            item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
+            item.setMimeType('application/vnd.apple.mpegstream_url')
+            item.setContentLookup(False)
+        if '|' in stream_url:
+            stream_url, headers = stream_url.split('|')
+            item.setProperty('inputstream.adaptive.stream_headers', headers)
+            if control.kodi_version > 21.8:
+                item.setProperty('inputstream.adaptive.common_headers', headers)
+            else:
+                item.setProperty('inputstream.adaptive.stream_params', headers)
+                item.setProperty('inputstream.adaptive.manifest_headers', headers)
     return item
 
 

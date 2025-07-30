@@ -115,3 +115,14 @@ class Torbox:
             for f_index, torrent_file in enumerate(source['hash']):
                 if torrent_file['short_name'] == best_match['short_name']:
                     return {'folder_id': source['id'], 'file': source['hash'][f_index]}
+
+
+    @staticmethod
+    def resolve_uncached_source_background(source, autorun):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.ok_dialog(heading, 'Cache Reolver Has not been added for Torbox')
+
+    @staticmethod
+    def resolve_uncached_source_forground(source, autorun):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.ok_dialog(heading, 'Cache Reolver Has not been added for Torbox')

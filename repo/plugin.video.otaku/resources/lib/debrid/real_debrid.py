@@ -156,15 +156,14 @@ class RealDebrid:
         if source['torrent_files']:
             best_match = source_utils.get_best_match('path', source['torrent_files'], source['episode'], pack_select)
             if not best_match or not best_match['path']:
-                return
+                return None
             for f_index, torrent_file in enumerate(source['torrent_files']):
                 if torrent_file['path'] == best_match['path']:
                     return source['torrent_info']['links'][f_index]
+        return None
 
-    def resolve_uncached_source(self, source, runinbackground):
+    def resolve_uncached_source_background(self, source, autorun):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
-        if not runinbackground:
-            control.progressDialog.create(heading, "Caching Progress")
         stream_link = None
         self.addMagnet(source['magnet'])
         torrent = self.list_torrents()[0]
@@ -172,12 +171,46 @@ class RealDebrid:
         if not self.torrentSelect(torrent['id']):
             self.deleteTorrent(torrent['id'])
             control.ok_dialog(control.ADDON_NAME, "BAD LINK")
-            if runinbackground:
-                return
+            return None
         else:
-            if runinbackground:
+            if not autorun:
                 control.notify(heading, "The souce is downloading to your cloud")
-                return
+                return None
+            monitor = xbmc.Monitor()
+            while torrent['status'] not in ['downloaded', 'error']:
+                if monitor.waitForAbort(5):
+                    break
+                torrent = self.torrentInfo(torrent['id'])
+            del monitor
+        if torrent['status'] == 'downloaded':
+            torrent_files = [selected for selected in torrent['files'] if selected['selected'] == 1]
+            if len(torrent['files']) == 1:
+                best_match = torrent_files[0]
+            else:
+                best_match = source_utils.get_best_match('path', torrent_files, source['episode_re'])
+            if not best_match or not best_match['path']:
+                self.deleteTorrent(torrent['id'])
+                return None
+            for f_index, torrent_file in enumerate(torrent_files):
+                if torrent_file['path'] == best_match['path']:
+                    hash_ = torrent['links'][f_index]
+                    stream_link = self.resolve_hoster(hash_)
+                    break
+        self.deleteTorrent(torrent['id'])
+        return stream_link
+
+    def resolve_uncached_source_forground(self, source, autorun):
+        heading = f'{control.ADDON_NAME}: Cache Resolver'
+        control.progressDialog.create(heading, "Caching Progress")
+        self.addMagnet(source['magnet'])
+        torrent = self.list_torrents()[0]
+        torrent = self.torrentInfo(torrent['id'])
+        if not self.torrentSelect(torrent['id']):
+            self.deleteTorrent(torrent['id'])
+            control.progressDialog.close()
+            control.ok_dialog(control.ADDON_NAME, "BAD LINK")
+            return None
+        else:
             monitor = xbmc.Monitor()
             while torrent['status'] != 'downloaded':
                 if control.progressDialog.iscanceled() or monitor.waitForAbort(5):
@@ -190,18 +223,7 @@ class RealDebrid:
             del monitor
         control.progressDialog.close()
         if torrent['status'] == 'downloaded':
-            torrent_files = [selected for selected in torrent['files'] if selected['selected'] == 1]
-            if len(torrent['files']) == 1:
-                best_match = torrent_files[0]
-            else:
-                best_match = source_utils.get_best_match('path', torrent_files, source['episode_re'])
-            if not best_match or not best_match['path']:
-                return
-            for f_index, torrent_file in enumerate(torrent_files):
-                if torrent_file['path'] == best_match['path']:
-                    hash_ = torrent['links'][f_index]
-                    stream_link = self.resolve_hoster(hash_)
-                    break
+            control.ok_dialog(heading, "This File has been added to your Cloud")
         else:
             self.deleteTorrent(torrent['id'])
-        return stream_link
+        return None

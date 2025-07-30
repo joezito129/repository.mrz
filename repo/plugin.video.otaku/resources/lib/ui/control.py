@@ -28,7 +28,7 @@ FANART = addonInfo('fanart')
 ADDON_PATH = ADDON.getAddonInfo('path')
 dataPath = xbmcvfs.translatePath(addonInfo('profile'))
 # sys.path.append(dataPath)
-kodi_version = xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')
+kodi_version = float(xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')[:4])
 
 cacheFile = os.path.join(dataPath, 'cache.db')
 searchHistoryDB = os.path.join(dataPath, 'search.db')

@@ -561,7 +561,7 @@ msgid "Refresh Real-Debrid Token"
 msgstr ""
 
 msgctxt "#30106"
-msgid "Run All UnCached Sources in Forground"
+msgid "AutoRun UnCached Sources"
 msgstr ""
 
 msgctxt "#30110"
@@ -728,6 +728,10 @@ msgstr ""
 
 msgctxt "#30402"
 msgid "HiAnime"
+msgstr ""
+
+msgctxt "#30403"
+msgid "WatchNixtoons2"
 msgstr ""
 
 msgctxt "#30404"

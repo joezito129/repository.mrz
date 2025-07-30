@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, aniwave, hianime, localfiles
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, aniwave, hianime, localfiles, watchnixtoons2, animepahe, animix
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -34,7 +34,7 @@ class Sources(GetSources):
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = [aniwave, hianime]
+        self.embed_func = [aniwave, hianime, watchnixtoons2, animepahe, animix]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
@@ -68,12 +68,16 @@ class Sources(GetSources):
         control.setInt('hianime.skipintro.end', -1)
         control.setInt('aniwave.skipintro.start', -1)
         control.setInt('aniwave.skipintro.end', -1)
+        control.setInt('animix.skipintro.start', -1)
+        control.setInt('animix.skipintro.end', -1)
 
         # set skipoutro times to -1 before scraping
         control.setInt('hianime.skipoutro.start', -1)
         control.setInt('hianime.skipoutro.end', -1)
         control.setInt('aniwave.skipoutro.start', -1)
         control.setInt('aniwave.skipoutro.end', -1)
+        control.setInt('animix.skipoutro.start', -1)
+        control.setInt('animix.skipoutro.end', -1)
 
         if any(control.enabled_debrid().values()):
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
@@ -148,6 +152,7 @@ class Sources(GetSources):
     def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape):
         try:
             embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, key=embed_name)
+        # embed_sources = embed_func.Sources().get_sources(mal_id, episode)
         except:
             import traceback
             control.log(traceback.format_exc(), 'error')
@@ -182,7 +187,7 @@ class Sources(GetSources):
         # Filter out sources
         if control.getBool('general.disable265'):
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
-        lang = control.getInt("general.source")
+        lang = control.getInt("general.source") # 0 SUB, 1 BOTH, 2 DUB
         if lang != 1:
             langs = [0, 1, 2]
             sortedList = [i for i in sortedList if i['lang'] != langs[lang]]
