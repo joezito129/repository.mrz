@@ -47,7 +47,7 @@ class SIMKLAPI:
         parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, None)
         return parsed
 
-    def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data):
+    def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data) -> list:
         update_time = datetime.date.today().isoformat()
 
         result = self.get_anime_info(mal_id)
@@ -65,7 +65,7 @@ class SIMKLAPI:
         control.notify("SIMKL", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
 
-    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
+    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None)-> list:
         update_time, diff = indexers.get_diff(episodes[-1])
         if diff >= int(control.getSetting('interface.check.updates')):
             result_meta = self.get_episode_meta(mal_id)

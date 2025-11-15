@@ -13,7 +13,7 @@ class Sources(BrowserBase.BrowserBase):
     _BASE_URL = 'https://hianime.to/'
     _MEGA_URL = 'https://mega-embed-2.vercel.app/'
 
-    def get_sources(self, mal_id, episode):
+    def get_sources(self, mal_id, episode)-> list:
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = self._clean_title(kodi_meta['name'])
@@ -69,7 +69,7 @@ class Sources(BrowserBase.BrowserBase):
 
         return all_results
 
-    def _process_aw(self, slug, title, episode, langs):
+    def _process_aw(self, slug, title, episode, langs) -> list:
         sources = []
         headers = {'Referer': self._BASE_URL}
         r = requests.get(f"{self._BASE_URL}ajax/v2/episode/list/{slug.split('-')[-1]}", headers=headers)

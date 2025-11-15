@@ -17,7 +17,7 @@ class Sources(BrowserBase.BrowserBase):
         self.uncached = []
         self.sources = []
 
-    def process_nyaa(self, url, params, episode_zfill, season_zfill, part=None):
+    def process_nyaa(self, url, params, episode_zfill, season_zfill, part=None) -> list:
         r = requests.get(url, params)
         html = r.text
         mlink = SoupStrainer('div', {'class': 'table-responsive'})
@@ -80,7 +80,8 @@ class Sources(BrowserBase.BrowserBase):
         else:
             part = None
 
-        season = database.get_episode(mal_id)['season']
+
+        season = database.get_episode(mal_id).get('season')
         season_zfill = str(season).zfill(2)
         episode_zfill = episode.zfill(2)
         query = f'{show} "- {episode_zfill}"'
@@ -93,7 +94,6 @@ class Sources(BrowserBase.BrowserBase):
             's': 'downloads',
             'o': 'desc'
         }
-        self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
         if status == "Finished Airing":
             query = '%s "Batch"|"Complete Series"' % show
             episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
@@ -109,14 +109,7 @@ class Sources(BrowserBase.BrowserBase):
                 's': 'seeders',
                 'o': 'desc'
             }
-            self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
-
-        params = {
-            'f': '0',
-            'c': '1_0',
-            'q': query.replace(' ', '+')
-        }
-        self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
+        self.sources = self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
 
     def get_movie_sources(self, query, mal_id) -> None:
         params = {

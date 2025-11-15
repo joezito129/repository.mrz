@@ -176,6 +176,7 @@ class Resolver(BaseWindow):
     def resolve_source(self, api, source):
         api = api()
         hash_ = source['hash']
+
         magnet = f"magnet:?xt=urn:btih:{hash_}"
         stream_link = {}
         if source['type'] == 'torrent':
@@ -190,6 +191,7 @@ class Resolver(BaseWindow):
     def prefetch_play_link(link):
         if not link:
             return None
+
         url = link
         if '|' in url:
             url, hdrs = link.split('|')
@@ -241,7 +243,7 @@ class Resolver(BaseWindow):
 
         return resolved_cache
 
-    def doModal(self, sources, args, pack_select) -> any:
+    def doModal(self, sources, args, pack_select):
         self.sources = sources
         if self.sources:
             self.args = args

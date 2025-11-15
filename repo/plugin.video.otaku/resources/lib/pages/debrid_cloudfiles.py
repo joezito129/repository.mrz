@@ -3,7 +3,7 @@ import requests
 import threading
 import difflib
 
-from resources.lib.ui import BrowserBase, source_utils
+from resources.lib.ui import BrowserBase, source_utils, control
 from resources.lib.debrid import real_debrid, premiumize, all_debrid, torbox
 
 
@@ -38,21 +38,19 @@ class Sources(BrowserBase.BrowserBase):
         torrents = api.list_torrents()
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]
         close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)
-        resp = [filenames.index(i) for i in close_matches]
-        for i in resp:
+        close_matches_filtered = source_utils.filter_sources(close_matches, 0, int(episode))
+        for x in close_matches_filtered:
+            i = filenames.index(x)
             torrent = torrents[i]
             filename = re.sub(r'\[.*?]', '', torrent['filename']).lower()
-            if source_utils.is_file_ext_valid(filename) and episode not in filename:
+            if source_utils.is_file_ext_valid(filename):
                 continue
             torrent_info = api.torrentInfo(torrent['id'])
             torrent_files = [selected for selected in torrent_info['files'] if selected['selected'] == 1]
-
             if len(torrent_files) > 1 and len(torrent_info['links']) == 1:
                 continue
-
             if not any(source_utils.is_file_ext_valid(tor_file['path'].lower()) for tor_file in torrent_files):
                 continue
-
             self.cloud_files.append(
                 {
                     'quality': source_utils.getQuality(torrent['filename']),

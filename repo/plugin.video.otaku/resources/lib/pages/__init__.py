@@ -141,7 +141,7 @@ class Sources(GetSources):
         return self.return_data
 
 #   ### Torrents ###
-    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape):
+    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape)-> None:
         all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
@@ -149,7 +149,7 @@ class Sources(GetSources):
         self.remainingProviders.remove(torrent_name)
 
 #   ### embeds ###
-    def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape):
+    def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape) -> None:
         try:
             embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, key=embed_name)
         # embed_sources = embed_func.Sources().get_sources(mal_id, episode)
@@ -170,17 +170,17 @@ class Sources(GetSources):
                     control.setInt(f'{embed_name}.skipoutro.end', int(x['skip']['outro']['end']))
         self.remainingProviders.remove(embed_name)
 
-    def localfiles_worker(self, query, mal_id, episode, rescrape):
+    def localfiles_worker(self, query, mal_id, episode, rescrape) -> None:
         self.local_files += localfiles.Sources().get_sources(query, mal_id, episode)
         self.remainingProviders.remove('Local Files')
 
-    def user_cloud_inspection(self, query, mal_id, episode):
+    def user_cloud_inspection(self, query, mal_id, episode) -> None:
         enabled_debrids = control.enabled_debrid()
         debrid = {x: enabled_debrids[x] and control.getBool(f'{x}.cloudInspection') for x in enabled_debrids}
         self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
-    def sortSources(self):
+    def sortSources(self) -> list:
         all_list = self.torrentSources + self.embedSources + self.cloud_files + self.local_files
         sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt('general.maxResolution')]
 
@@ -189,8 +189,7 @@ class Sources(GetSources):
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
         lang = control.getInt("general.source") # 0 SUB, 1 BOTH, 2 DUB
         if lang != 1:
-            langs = [0, 1, 2]
-            sortedList = [i for i in sortedList if i['lang'] != langs[lang]]
+            sortedList = [i for i in sortedList if i['lang'] == lang]
 
         # Sort Sources
         SORT_METHODS = sort_select.SORT_METHODS
@@ -201,7 +200,7 @@ class Sources(GetSources):
             sortedList = getattr(sort_select, f'sort_by_{method}')(sortedList, not reverse)
         return sortedList
 
-    def updateProgress(self):
+    def updateProgress(self) -> None:
         self.torrents_qual_len = [
             len([i for i in self.torrentSources if i['quality'] == 4]),
             len([i for i in self.torrentSources if i['quality'] == 3]),

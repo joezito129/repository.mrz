@@ -1,6 +1,5 @@
 import re
 import json
-import requests
 import xbmcvfs
 
 from resources.lib.ui import control, utils
@@ -8,10 +7,6 @@ from resources.lib.ui import control, utils
 
 class BrowserBase:
     _BASE_URL = None
-
-    @staticmethod
-    async def send_request(url, params=None):
-        return requests.get(url, params)
 
     @staticmethod
     def handle_paging(hasnextpage: bool, base_url: str, page: int) -> list:

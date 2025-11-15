@@ -1,3 +1,8 @@
+Changelog v5.1.26 (2025-11-29)
+- Fixed Dub/Sub filtering
+- Improved Scraping Speeds
+- Improved Cloud Scraping
+
 Changelog v5.1.25 (2025-11-15)
 - Added Animepahe, H!anime
 - Refresh real-debrid if token invalid

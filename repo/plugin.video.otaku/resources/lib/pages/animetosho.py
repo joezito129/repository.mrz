@@ -1,7 +1,7 @@
 import re
 import pickle
 import base64
-import asyncio
+import requests
 
 from functools import partial
 from bs4 import BeautifulSoup
@@ -13,90 +13,89 @@ class Sources(BrowserBase.BrowserBase):
     _BASE_URL = 'https://animetosho.org'
 
     def __init__(self):
-        self.sources = []
         self.cached = []
         self.uncached = []
         self.anidb_id = None
         self.anidb_ep_id = None
-        self.tasks = []
 
     def get_sources(self, show, mal_id, episode, status, media_type) -> dict:
-        asyncio.run(self.get_sources_async(show, mal_id, episode, media_type))
-        return {'cached': self.cached, 'uncached': self.uncached}
-
-    async def get_sources_async(self, show, mal_id, episode, media_type):
+        sources = []
         show_meta = database.get_show_meta(mal_id)
         if show_meta:
             meta_ids = pickle.loads(show_meta['meta_ids'])
             self.anidb_id = meta_ids.get('anidb_id')
-            if not self.anidb_id:
+            if self.anidb_id is None:
                 from resources.lib.indexers.simkl import SIMKLAPI
                 ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
                 if ids:
                     self.anidb_id = meta_ids['anidb_id'] = ids['anidb']
-                    database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
+                else:
+                    self.anidb_id = meta_ids['anidb_id'] = 0
+                database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
         if self.anidb_id:
             episode_meta = database.get_episode(mal_id, episode)
             if episode_meta:
                 self.anidb_ep_id = episode_meta['anidb_ep_id']
-            if not self.anidb_ep_id:
+            if self.anidb_ep_id is None:
                 from resources.lib.endpoint import anidb
                 anidb_meta = anidb.get_episode_meta(self.anidb_id)
                 anidb_meta = {x: v for x, v in anidb_meta.items() if x.isdigit()}
+                self.anidb_ep_id = anidb_meta.get(str(episode), {}).get('anidb_id')
+                if self.anidb_ep_id is None:
+                    self.anidb_ep_id = 0
+                    database.update_episode_column(mal_id, episode, 'anidb_ep_id', self.anidb_ep_id)
                 for anidb_ep in anidb_meta:
                     database.update_episode_column(mal_id, anidb_ep, 'anidb_ep_id', anidb_meta[anidb_ep]['anidb_id'])
 
         episode_zfill = str(episode).zfill(2)
 
         if self.anidb_ep_id:
-            self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, '')))
+            sources = self.process_animetosho(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, '')
 
-        show = self._clean_title(show)
-        if media_type != "movie":
-            season = database.get_episode(mal_id)['season']
-            season_zfill = str(season).zfill(2)
-            query = f'{show} "- {episode_zfill}"'
         else:
-            season_zfill = None
-            query = show
+            show = self._clean_title(show)
+            if media_type != "movie":
+                season = database.get_episode(mal_id)['season']
+                season_zfill = str(season).zfill(2)
+                query = f'{show} "- {episode_zfill}"'
+            else:
+                season_zfill = None
+                query = show
 
-        params = {
-            'q': self._sphinx_clean(query),
-            'qx': 1
-        }
-        if self.anidb_id:
-            params['aids'] = self.anidb_id
+            params = {
+                'q': self._sphinx_clean(query),
+                'qx': 1
+            }
+            if self.anidb_id:
+                params['aids'] = self.anidb_id
 
-        self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)))
+            sources = self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
 
-        show_lower = show.lower()
-        if 'season' in show_lower:
-            show_variations = re.split(r'season\s*\d+', show_lower)
-            cleaned_variations = [self._sphinx_clean(var.strip() + ')') for var in show_variations if var.strip()]
-            params['q'] = '|'.join(cleaned_variations)
-        else:
-            params['q'] = self._sphinx_clean(show)
-
-        self.tasks.append(asyncio.create_task(self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)))
-
-        results = await asyncio.gather(*self.tasks)
+            # show_lower = show.lower()
+            # if 'season' in show_lower:
+            #     show_variations = re.split(r'season\s*\d+', show_lower)
+            #     cleaned_variations = [self._sphinx_clean(var.strip() + ')') for var in show_variations if var.strip()]
+            #     params['q'] = '|'.join(cleaned_variations)
+            # else:
+            #     params['q'] = self._sphinx_clean(show)
+            #
+            # sources += self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
 
         # remove any duplicate sources
         seen_sources = []
-        for result in results:
-            for source in result:
-                if source not in seen_sources:
-                    seen_sources.append(source)
-                    if source['cached']:
-                        self.cached.append(source)
-                    else:
-                        self.uncached.append(source)
-
+        for source in sources:
+            if source not in seen_sources:
+                seen_sources.append(source)
+                if source['cached']:
+                    self.cached.append(source)
+                else:
+                    self.uncached.append(source)
 
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    async def process_animetosho(self, url: str, params, episode_zfill: str, season_zfill: str) -> list:
-        r = await self.send_request(url, params)
+    def process_animetosho(self, url: str, params, episode_zfill: str, season_zfill: str) -> list:
+        all_sources = []
+        r = requests.get(url, params)
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
         content = soup.find('div', id='content')
@@ -139,21 +138,11 @@ class Sources(BrowserBase.BrowserBase):
         cache_list = sorted(cache_list, key=lambda k: k['downloads'], reverse=True)
 
         mapfunc = partial(parse_animetosho_view, episode=episode_zfill)
-        all_results = list(map(mapfunc, cache_list))
+        all_sources += list(map(mapfunc, cache_list))
         if control.settingids.showuncached:
             mapfunc2 = partial(parse_animetosho_view, episode=episode_zfill, cached=False)
-            all_results += list(map(mapfunc2, uncashed_list))
-        return all_results
-
-    def append_cache_uncached_noduplicates(self):
-        seen_sources = []
-        for source in self.sources:
-            if source not in seen_sources:
-                seen_sources.append(source)
-                if source['cached']:
-                    self.cached.append(source)
-                else:
-                    self.uncached.append(source)
+            all_sources += list(map(mapfunc2, uncashed_list))
+        return all_sources
 
 def parse_animetosho_view(res, episode: str, cached=True) -> dict:
     source = {

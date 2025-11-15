@@ -14,7 +14,7 @@ class Sources(BrowserBase.BrowserBase):
     _BASE_URL = 'https://www.wcostream.tv' # wconflix.tv
     S = requests.session()
 
-    def get_sources(self, mal_id, episode):
+    def get_sources(self, mal_id, episode) -> list:
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
         title = self._clean_title(kodi_meta['name'])

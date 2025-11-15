@@ -163,23 +163,26 @@ def get_size(size=0) -> str:
 
 def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -> dict:
     regex = get_cache_check_reg(episode)
-    files = []
+    all_files = []
     for i in dictionary_list:
         path = re.sub(r'\[.*?]', '', i[dict_key].rsplit('/')[-1])
         i['regex_matches'] = regex.findall(path)
-        files.append(i)
+        all_files.append(i)
+    if not all_files:
+        return {}
     if pack_select:
-        files = user_select(files, dict_key)
+        files = user_select(all_files, dict_key)
     else:
-        files = [i for i in files if len(i['regex_matches']) > 0]
+        files = [i for i in all_files if len(i['regex_matches']) > 0]
         if not files:
-            return {}
-        files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
-        if len(files) != 1:
-            files = user_select(files, dict_key)
+            files = user_select(all_files, dict_key)
+        else:
+            files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
+            if len(files) != 1:
+                files = user_select(files, dict_key)
     return files[0]
 
-def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
+def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None) -> list:
     import itertools
 
     regex_season = r"(?i)\b(?:s(?:eason)?[ ._-]?(\d{1,2}))(?=\D|$)"
@@ -195,7 +198,8 @@ def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
 
     filtered_list= []
     for torrent in list_:
-        title = torrent['name'].lower()
+        title = torrent['name'].lower() if isinstance(torrent, dict) else torrent
+
         # filter parts
         if rex_part and 'part' in title:
             part_match = rex_part.search(title)
@@ -207,11 +211,7 @@ def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
         # filter episode number
         ep_match = rex_ep.findall(clean_text(title))
         ep_match = list(map(int, list(filter(None, itertools.chain(*ep_match)))))
-        if not ep_match:
-            pass
-            # if not difflib.get_close_matches(show.lower(), [title], cutoff=.15):
-            #     continue
-        elif ep_match and ep_match[0] != episode:
+        if ep_match and ep_match[0] != episode:
             if not (len(ep_match) > 1 and ep_match[0] <= episode <= ep_match[1]):
                 continue
 
@@ -221,12 +221,11 @@ def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None):
         else:
             season_match = rex_season.findall(title)
             season_match = list(map(int, list(filter(None, itertools.chain(season_match)))))
-            if season_match:
+            if season_match and season:
                 if season_match[0] <= season <= season_match[-1]:
                     filtered_list.append(torrent)
             else:
                 filtered_list.append(torrent)
-
     return filtered_list
 
 def clean_text(text):
@@ -259,7 +258,7 @@ def video_ext():
     return COMMON_VIDEO_EXTENSIONS
 
 
-def user_select(files, dict_key):
+def user_select(files, dict_key) -> list:
     idx = control.select_dialog('Select File', [i[dict_key].rsplit('/')[-1] for i in files])
     if idx == -1:
         file = [{'path': ''}]
