@@ -123,7 +123,7 @@ class SortSelect(BaseWindow):
         self.setProperty(f"{sort_method}", method)
 
     def save_settings(self):
-        with open(control.dataPath / 'sort_options.json', 'w') as file:
+        with open(os.path.join(control.dataPath, 'sort_options.json'), 'w') as file:
             json.dump(self.sort_options, file)
 
 

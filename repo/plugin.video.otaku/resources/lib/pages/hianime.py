@@ -1,9 +1,9 @@
+import json
 import pickle
 import re
+import urllib.parse
 import requests
 
-
-from urllib import parse
 from bs4 import BeautifulSoup, SoupStrainer
 from resources.lib.ui import control, database, BrowserBase
 from resources.lib.endpoint import malsync
@@ -16,20 +16,22 @@ class Sources(BrowserBase.BrowserBase):
     def get_sources(self, mal_id, episode):
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = kodi_meta['name']
-        title = keyword = self._clean_title(title)
+        title = self._clean_title(kodi_meta['name'])
 
         lang_int = control.getInt('general.source')  # 0 SUB, 1 BOTH, 2 DUB
         if lang_int == 1:
-            srcs = ['dub', 'sub']
+            srcs = ['dub', 'sub', 'raw']
         elif lang_int == 2:
             srcs = ['dub']
         elif lang_int == 0:
-            srcs = ['sub']
+            srcs = ['sub', 'raw']
         else:
             srcs = []
 
         all_results = []
+
+        keyword = title
+
         items = malsync.get_slugs(mal_id=mal_id, site='Zoro')
         if not items:
             if kodi_meta.get('start_date'):
@@ -38,7 +40,8 @@ class Sources(BrowserBase.BrowserBase):
 
             headers = {'Referer': self._BASE_URL}
             params = {'keyword': keyword}
-            res = requests.get(f'{self._BASE_URL}search', headers=headers, params=params).text
+            res = requests.get(self._BASE_URL + 'search', params=params, headers=headers).text
+
             mlink = SoupStrainer('div', {'class': 'flw-item'})
             mdiv = BeautifulSoup(res, "html.parser", parse_only=mlink)
             sdivs = mdiv.find_all('h3')
@@ -59,6 +62,7 @@ class Sources(BrowserBase.BrowserBase):
                 if not items and ':' in title:
                     title = title.split(':')[0]
                     items = [x.get('slug') for x in sitems if (title.lower() + '  ') in (x.get('title').lower() + '  ')]
+
         if items:
             slug = items[0]
             all_results = self._process_aw(slug, title=title, episode=episode, langs=srcs)
@@ -76,7 +80,7 @@ class Sources(BrowserBase.BrowserBase):
         e_id = [x.get('data-id') for x in items if int(x.get('data-number')) == int(episode)]
         if e_id:
             params = {'episodeId': e_id[0]}
-            r = requests.get(f"{self._BASE_URL}ajax/v2/episode/servers", headers=headers, params=params)
+            r = requests.get(f"{self._BASE_URL}ajax/v2/episode/servers", params=params, headers=headers)
             eres = r.json().get('html')
             for lang in langs:
                 elink = SoupStrainer('div', {'data-type': lang})
@@ -91,14 +95,14 @@ class Sources(BrowserBase.BrowserBase):
                         slink = r.json().get('link')
                         if edata_name == 'streamtape':
                             source = {
-                                'release_title': '{0} - Ep {1}'.format(title, episode),
+                                'release_title': f"{title} - Ep {episode}",
                                 'hash': slink,
                                 'type': 'embed',
                                 'quality': 0,
                                 'debrid_provider': '',
                                 'provider': 'h!anime',
                                 'size': 'NA',
-                                'seeders': 0,
+                                'seeders': -1,
                                 'byte_size': 0,
                                 'info': [f"{edata_name} {lang}"],
                                 'lang': 2 if lang == 'dub' else 0,
@@ -106,9 +110,14 @@ class Sources(BrowserBase.BrowserBase):
                             }
                             sources.append(source)
                         else:
+                            srclink = None
                             params = {'url': slink, 'referer': self._BASE_URL}
-                            r = requests.get(f"{self._MEGA_URL}/get", params=params)
-                            res = r.json()
+
+                            try:
+                                r = requests.get(f"{self._MEGA_URL}/get", params=params)
+                                res = r.json()
+                            except json.JSONDecodeError:
+                                continue
                             subs = res.get('tracks')
                             if subs:
                                 subs = [{'url': x.get('file'), 'lang': x.get('label')} for x in subs if x.get('kind') == 'captions']
@@ -117,26 +126,29 @@ class Sources(BrowserBase.BrowserBase):
                                 skip['intro'] = res['intro']
                             if res.get('outro'):
                                 skip['outro'] = res['outro']
-
                             if res.get('sources'):
-                                srclink = res['sources'][0].get('file')
-                                res = requests.get(srclink, headers=headers).text
-                                quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).*\n(?!#)(.+)', res)
-
+                                srclink = res.get('sources')[0].get('file')
+                            if not srclink:
+                                continue
+                            netloc = urllib.parse.urljoin(slink, '/')
+                            headers = {'Referer': netloc, 'Origin': netloc[:-1]}
+                            res = requests.get(srclink, headers=headers).text
+                            quals = re.findall(r'#EXT.+?RESOLUTION=\d+x(\d+).*\n(?!#)(.+)', res)
+                            if quals:
                                 for qual, qlink in quals:
                                     qual = int(qual)
-                                    if qual <= 480:
-                                        quality = 1
-                                    elif qual <= 720:
-                                        quality = 2
-                                    elif qual <= 1080:
-                                        quality = 3
+                                    if qual > 1080:
+                                        quality = 4     # 4k
+                                    elif qual > 720:
+                                        quality = 3     # 1080
+                                    elif qual > 480:
+                                        quality = 2     # 720
                                     else:
-                                        quality = 0
+                                        quality = 1     # 480
 
                                     source = {
-                                        'release_title': '{0} - Ep {1}'.format(title, episode),
-                                        'hash': parse.urljoin(srclink, qlink) + '|User-Agent=iPad',
+                                        'release_title': f"{title} - Ep {episode}",
+                                        'hash': urllib.parse.urljoin(srclink, qlink) + '|User-Agent=iPad&{0}'.format(urllib.parse.urlencode(headers)),
                                         'type': 'direct',
                                         'quality': quality,
                                         'debrid_provider': '',
@@ -144,10 +156,28 @@ class Sources(BrowserBase.BrowserBase):
                                         'size': 'NA',
                                         'seeders': -1,
                                         'byte_size': 0,
-                                        'info': [f'{edata_name} {lang}'],
+                                        'info': [f"{edata_name} {lang}"],
                                         'lang': 2 if lang == 'dub' else 0,
                                         'subs': subs,
                                         'skip': skip
                                     }
                                     sources.append(source)
+                            else:
+                                source = {
+                                    'release_title': f"{title} - Ep {episode}",
+                                    'hash': f"{srclink}|User-Agent=iPad&{urllib.parse.urlencode(headers)}",
+                                    'type': 'direct',
+                                    'quality': 0,
+                                    'debrid_provider': '',
+                                    'provider': 'h!anime',
+                                    'size': 'NA',
+                                    'seeders': -1,
+                                    'byte_size': 0,
+                                    'info': [f"{edata_name} {lang}"],
+                                    'lang': 2 if lang == 'dub' else 0,
+                                    'subs': subs,
+                                    'skip': skip
+                                }
+                                sources.append(source)
+
         return sources

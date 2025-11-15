@@ -357,18 +357,18 @@
                     </control>
                 </setting>
                 <setting id="provider.hianime" type="boolean" label="30402" help="">
-                    <level>4</level>
-                    <default>false</default>
+                    <level>0</level>
+                    <default>true</default>
                     <control type="toggle"/>
                 </setting>
                 <setting id="provider.watchnixtoons2" type="boolean" label="30403" help="">
-                    <level>4</level>
-                    <default>false</default>
+                    <level>0</level>
+                    <default>true</default>
                     <control type="toggle"/>
                 </setting>
                 <setting id="provider.animepahe" type="boolean" label="30404" help="">
-                    <level>4</level>
-                    <default>false</default>
+                    <level>0</level>
+                    <default>true</default>
                     <control type="toggle"/>
                 </setting>
                 <setting id="provider.animix" type="boolean" label="30405" help="">

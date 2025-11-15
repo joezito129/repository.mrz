@@ -10,7 +10,6 @@ from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
 
 
-
 class HookMimetype:
     __MIME_HOOKS = {}
 
@@ -108,7 +107,6 @@ class Resolver(BaseWindow):
                 if stream_link:
                     self.return_data['link'] = stream_link
                     break
-
             elif i['type'] == 'local_files':
                 stream_link = i['hash']
                 self.return_data = {

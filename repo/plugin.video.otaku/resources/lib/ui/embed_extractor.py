@@ -112,6 +112,17 @@ def load_video_from_url(in_url):
         if r.ok:
             return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
         else:
+            if r.status_code == 403 and r.headers.get('server') == 'cloudflare':
+                headers = {
+                    'User-Agent': randomagent(),
+                    'Accept': 'text/html,application/xhtml+xml,application/xml,application/json;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Cache-Control': 'no-cache',
+                    'Referer': in_url
+                }
+                r = requests.get(in_url, stream=True, headers=headers)
+                if r.ok:
+                    return found_extractor['parser'](r.url, r.text, r.headers.get('Referer'))
             control.log(f'Could Not Anal Prob {in_url}', 'warning')
     except error.URLError:
         return None # Dead link, Skip result
@@ -146,6 +157,7 @@ def __extract_yourupload(url, page_content, referer=None):
     }
     if r:
         return r.group(1) + __append_headers(headers)
+    return None
 
 
 def __extract_mp4upload(url, page_content, referer=None):
@@ -158,6 +170,7 @@ def __extract_mp4upload(url, page_content, referer=None):
     }
     if r:
         return r.group(1) + __append_headers(headers)
+    return None
 
 
 def __extract_lulu(url, page_content, referer=None):
@@ -169,6 +182,7 @@ def __extract_lulu(url, page_content, referer=None):
     }
     if r:
         return r.group(1) + __append_headers(headers)
+    return None
 
 
 def __extract_vidplay(slink, page_content, referer=None):
@@ -210,7 +224,6 @@ def __extract_vidplay(slink, page_content, referer=None):
         'Referer': slink
     }
 
-    # keys = json.loads(control.getSetting('keys.vidplay'))
     mid = slink.split('?')[0].split('/')[-1]
     m = generate_mid(mid)
     h = serialize_text(arc4("BvxAphQAmWO9BIJ8", mid))
@@ -227,7 +240,7 @@ def __extract_vidplay(slink, page_content, referer=None):
             if subs:
                 uri = {'url': uri, 'subs': subs}
         return uri
-
+    return None
 
 def __extract_kwik(url, page_content, referer=None):
     page_content += __get_packed_data(page_content)
@@ -248,7 +261,7 @@ def __extract_okru(url, page_content, referer=None):
     html = requests.post(aurl, data=data)
     json_data = html.json()
     if 'error' in json_data:
-        return
+        return None
     strurl = json_data.get('hlsManifestUrl')
     return strurl
 
@@ -349,6 +362,7 @@ def __extract_streamwish(url, page_content, referer=None):
     r = re.search(r'''sources:\s*\[{file:\s*["']([^"']+)''', page_content)
     if r:
         return r.group(1)
+    return None
 
 
 def __extract_voe(url, page_content, referer=None):

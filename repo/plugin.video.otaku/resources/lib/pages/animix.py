@@ -88,14 +88,14 @@ class Sources(BrowserBase.BrowserBase):
                         skip = {}
                         intro = ep_src.get('intro')
                         if intro.get('end'):
-                            skip['intro'] = {}
-                            skip['intro']['start'] = intro.get('start')
-                            skip['intro']['end'] = intro.get('end')
+                            skip['intro'] = intro
+                            # skip['intro']['start'] = intro.get('start')
+                            # skip['intro']['end'] = intro.get('end')
                         outro = ep_src.get('outro')
                         if outro.get('end'):
-                            skip['outro'] = {}
-                            skip['outro']['start'] = outro.get('start')
-                            skip['outro']['end'] = outro.get('end')
+                            skip['outro'] = outro
+                            # skip['outro']['start'] = outro.get('start')
+                            # skip['outro']['end'] = outro.get('end')
 
                         source = {
                             'release_title': f'{title} Ep{episode}',

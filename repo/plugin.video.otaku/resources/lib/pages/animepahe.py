@@ -1,4 +1,3 @@
-import json
 import pickle
 import requests
 
@@ -96,7 +95,7 @@ class Sources(BrowserBase.BrowserBase):
                         'seeders': -1,
                         'byte_size': 0,
                         'info': [source_utils.get_embedhost(item.get('data-src')) + (' DUB' if item.get('data-audio') == 'eng' else ' SUB')],
-                        'lang': 1 if item.get('data-audio') == 'eng' else 0
+                        'lang': 2 if item.get('data-audio') == 'eng' else 0
                     }
                     sources.append(source)
         return sources

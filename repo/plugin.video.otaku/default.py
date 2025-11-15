@@ -56,43 +56,43 @@ def add_last_watched(items: list) -> list:
 
 
 @Route('animes/*')
-def ANIMES_PAGE(payload: str, params: dict):
+def ANIMES_PAGE(payload: str, params: dict) -> None:
     mal_id, eps_watched = payload.split("/", 1)
     control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
 
 
 @Route('find_recommendations/*')
-def FIND_RECOMMENDATIONS(payload: str, params: dict):
+def FIND_RECOMMENDATIONS(payload: str, params: dict) -> None:
     path, mal_id, eps_watched = payload.split("/", 2)
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_recommendations(mal_id, page), 'tvshows')
 
 
 @Route('find_relations/*')
-def FIND_RELATIONS(payload: str, params: dict):
+def FIND_RELATIONS(payload: str, params: dict) -> None:
     path, mal_id, eps_watched = payload.split("/", 2)
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
 @Route('airing_anime')
-def AIRING_ANIME(payload: str, params: dict):
+def AIRING_ANIME(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_airing_anime(page), 'tvshows')
 
 
 @Route('upcoming_next_season')
-def UPCOMING_NEXT_SEASON(payload: str, params: dict):
+def UPCOMING_NEXT_SEASON(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_upcoming_next_season(page), 'tvshows')
 
 
 @Route('top_100_anime')
-def TOP_100_ANIME_PAGES(payload: str, params: dict):
+def TOP_100_ANIME_PAGES(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
     control.draw_items(BROWSER.get_top_100_anime(page), 'tvshows')
 
 @Route('airing_calendar')
-def AIRING_CALENDAR(payload: str, params: dict):
+def AIRING_CALENDAR(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
     calendar = BROWSER.get_airing_calendar(page)
     if calendar:
@@ -101,7 +101,7 @@ def AIRING_CALENDAR(payload: str, params: dict):
     control.exit_code()
 
 @Route('genres/*')
-def GENRES_PAGES(payload: str, params: dict):
+def GENRES_PAGES(payload: str, params: dict) -> None:
     genres, tags = payload.split("/", 1)
     page = int(params.get('page', 1))
     if genres or tags:
@@ -111,7 +111,7 @@ def GENRES_PAGES(payload: str, params: dict):
 
 
 @Route('search_history')
-def SEARCH_HISTORY(payload: str, params: dict):
+def SEARCH_HISTORY(payload: str, params: dict) -> None:
     history = database.getSearchHistory('show')
     if control.getInt('searchhistory') == 0:
         control.draw_items(utils.search_history(history), 'addons')
@@ -120,7 +120,7 @@ def SEARCH_HISTORY(payload: str, params: dict):
 
 
 @Route('search/*')
-def SEARCH(payload: str, params: dict):
+def SEARCH(payload: str, params: dict) -> None:
     query = payload
     page = int(params.get('page', 1))
     if not query:
@@ -133,7 +133,7 @@ def SEARCH(payload: str, params: dict):
 
 
 @Route('remove_search_item/*')
-def REMOVE_SEARCH_ITEM(payload: str, params: dict):
+def REMOVE_SEARCH_ITEM(payload: str, params: dict) -> None:
     if 'search/' in payload:
         search_item = payload.split('search/')[1]
         database.remove_search(table='show', value=search_item)
@@ -141,7 +141,7 @@ def REMOVE_SEARCH_ITEM(payload: str, params: dict):
 
 
 @Route('edit_search_item/*')
-def EDIT_SEARCH_ITEM(payload: str, params: dict):
+def EDIT_SEARCH_ITEM(payload: str, params: dict) -> None:
     if 'search/' in payload:
         search_item = payload.split('search/')[1]
         if search_item:
@@ -153,7 +153,7 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict):
 
 
 @Route('play/*')
-def PLAY(payload: str, params: dict):
+def PLAY(payload: str, params: dict) -> None:
     from resources.lib import pages
     mal_id, episode = payload.split("/", 1)
     source_select = bool(params.get('source_select'))
@@ -182,7 +182,7 @@ def PLAY(payload: str, params: dict):
 
 
 @Route('play_movie/*')
-def PLAY_MOVIE(payload: str, params: dict):
+def PLAY_MOVIE(payload: str, params: dict) -> None:
     from resources.lib import pages
     mal_id, eps_watched = payload.split("/", 1)
     source_select = bool(params.get('source_select'))
@@ -212,7 +212,7 @@ def PLAY_MOVIE(payload: str, params: dict):
 
 
 @Route('marked_as_watched/*')
-def MARKED_AS_WATCHED(payload: str, params: dict):
+def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
     from resources.lib.WatchlistFlavor import WatchlistFlavor
     from resources.lib.WatchlistIntegration import watchlist_update_episode
     payload_list = payload.split("/")
@@ -231,7 +231,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict):
 
 
 @Route('delete_anime_database/*')
-def DELETE_ANIME_DATABASE(payload: str, params: dict):
+def DELETE_ANIME_DATABASE(payload: str, params: dict) -> None:
     path, mal_id, eps_watched = payload.split("/", 2)
     database.remove_from_database('shows', mal_id)
     database.remove_from_database('episodes', mal_id)
@@ -242,7 +242,7 @@ def DELETE_ANIME_DATABASE(payload: str, params: dict):
 
 
 @Route('auth/*')
-def AUTH(payload: str, params: dict):
+def AUTH(payload: str, params: dict) -> None:
     if payload == 'realdebrid':
         from resources.lib.debrid.real_debrid import RealDebrid
         RealDebrid().auth()
@@ -261,7 +261,7 @@ def AUTH(payload: str, params: dict):
 
 
 @Route('refresh/*')
-def REFRESH(payload: str, params: dict):
+def REFRESH(payload: str, params: dict) -> None:
     if payload == 'realdebrid':
         from resources.lib.debrid.real_debrid import RealDebrid
         RealDebrid().refreshToken()
@@ -274,7 +274,7 @@ def REFRESH(payload: str, params: dict):
 
 
 @Route('fanart_select/*')
-def FANART_SELECT(payload: str, params: dict):
+def FANART_SELECT(payload: str, params: dict) -> None:
     path, mal_id, eps_watched = payload.split("/", 2)
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
@@ -286,7 +286,7 @@ def FANART_SELECT(payload: str, params: dict):
 
 
 @Route('fanart/*')
-def FANART(payload: str, params: dict):
+def FANART(payload: str, params: dict) -> None:
     mal_id, select = payload.split('/', 1)
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
@@ -301,7 +301,7 @@ def FANART(payload: str, params: dict):
 
 # ### Menu Items ###
 @Route('')
-def LIST_MENU(payload: str, params: dict):
+def LIST_MENU(payload: str, params: dict) -> None:
     MENU_ITEMS = [
         (control.lang(30001), "airing_anime", 'airing_anime.png', {}),
         (control.lang(30007), 'airing_calendar', '', {}),
@@ -321,7 +321,7 @@ def LIST_MENU(payload: str, params: dict):
 
 
 @Route('tools')
-def TOOLS_MENU(payload: str, params: dict):
+def TOOLS_MENU(payload: str, params: dict) -> None:
     TOOLS_ITEMS = [
         (control.lang(30010), "change_log", 'changelog.png', {'plot': "View Changelog"}),
         (control.lang(30011), "settings", 'open_settings_menu.png', {'plot': "Open Settings"}),
@@ -339,27 +339,26 @@ def TOOLS_MENU(payload: str, params: dict):
 
 # ### Maintenance ###
 @Route('settings')
-def SETTINGS(payload: str, params: dict):
+def SETTINGS(payload: str, params: dict) -> None:
     control.ADDON.openSettings()
 
 
 @Route('change_log')
-def CHANGE_LOG(payload: str, params: dict):
+def CHANGE_LOG(payload: str, params: dict) -> None:
     import service
     service.getChangeLog()
     if params.get('setting'):
         control.exit_code()
 
-
 @Route('clear_cache')
-def CLEAR_CACHE(payload: str, params: dict):
+def CLEAR_CACHE(payload: str, params: dict) -> None:
     database.cache_clear()
     if params.get('setting'):
         control.exit_code()
 
 
 @Route('clear_search_history')
-def CLEAR_SEARCH_HISTORY(payload: str, params: dict):
+def CLEAR_SEARCH_HISTORY(payload: str, params: dict) -> None:
     database.clearSearchHistory()
     control.refresh()
     if params.get('setting'):
@@ -367,7 +366,7 @@ def CLEAR_SEARCH_HISTORY(payload: str, params: dict):
 
 
 @Route('clear_selected_fanart')
-def CLEAR_SELECTED_FANART(payload: str, params: dict):
+def CLEAR_SELECTED_FANART(payload: str, params: dict) -> None:
     fanart_all = control.getStringList(f'fanart.all')
     for i in fanart_all:
         control.setSetting(f'fanart.select.{i}', '')
@@ -378,7 +377,7 @@ def CLEAR_SELECTED_FANART(payload: str, params: dict):
 
 
 @Route('rebuild_database')
-def REBUILD_DATABASE(payload: str, params: dict):
+def REBUILD_DATABASE(payload: str, params: dict) -> None:
     from resources.lib.ui.database_sync import SyncDatabase
     SyncDatabase().re_build_database()
     if params.get('setting'):
@@ -386,7 +385,7 @@ def REBUILD_DATABASE(payload: str, params: dict):
 
 
 @Route('completed_sync')
-def COMPLETED_SYNC(payload: str, params: dict):
+def COMPLETED_SYNC(payload: str, params: dict) -> None:
     import service
     service.sync_watchlist()
     if params.get('setting'):
@@ -394,26 +393,26 @@ def COMPLETED_SYNC(payload: str, params: dict):
 
 
 @Route('sort_select')
-def SORT_SELECT(payload: str, params: dict):
+def SORT_SELECT(payload: str, params: dict) -> None:
     from resources.lib.windows.sort_select import SortSelect
     SortSelect('sort_select.xml', control.ADDON_PATH).doModal()
 
 
 @Route('install_packages')
-def INSTALL_PACKAGES(payload: str, params: dict):
+def INSTALL_PACKAGES(payload: str, params: dict) -> None:
     from resources.lib.pages import custom_providers
     custom_providers.main()
     control.print('installed_packages')
 
 
 @Route('download_manager')
-def DOWNLOAD_MANAGER(payload: str, params: dict):
+def DOWNLOAD_MANAGER(payload: str, params: dict) -> None:
     from resources.lib.windows.download_manager import DownloadManager
     DownloadManager('download_manager.xml', control.ADDON_PATH).doModal()
 
 
 @Route('import_settings')
-def IMPORT_SETTINGS(payload: str, params: dict):
+def IMPORT_SETTINGS(payload: str, params: dict) -> None:
     import xbmcvfs
 
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
@@ -429,11 +428,11 @@ def IMPORT_SETTINGS(payload: str, params: dict):
                 control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
             else:
                 control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
-    control.exit_code()
+    return control.exit_code()
 
 
 @Route('export_settings')
-def IMPORT_SETTINGS(payload: str, params: dict):
+def IMPORT_SETTINGS(payload: str, params: dict) -> None:
     import xbmcvfs
 
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
@@ -452,7 +451,7 @@ def IMPORT_SETTINGS(payload: str, params: dict):
 
 
 @Route('toggleLanguageInvoker')
-def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict):
+def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict) -> None:
     import service
     service.toggle_reuselanguageinvoker()
 

@@ -20,7 +20,7 @@ class RealDebrid:
         self.OauthUrl = 'https://api.real-debrid.com/oauth/v2'
         self.BaseUrl = "https://api.real-debrid.com/rest/1.0"
 
-    def headers(self):
+    def headers(self) -> dict:
         return {'Authorization': f"Bearer {self.token}"}
 
     def auth_loop(self) -> bool:
@@ -97,7 +97,7 @@ class RealDebrid:
         if user_info['type'] != 'premium':
             control.ok_dialog(f'{control.ADDON_NAME}: Real-Debrid', control.lang(30024))
 
-    def refreshToken(self) -> None:
+    def refreshToken(self) -> bool:
         postData = {
             'grant_type': 'http://oauth.net/grant_type/device/1.0',
             'code': self.refresh,
@@ -118,11 +118,21 @@ class RealDebrid:
             control.log('refreshed real_debrid.token')
         else:
             control.log(f"real_debrid.refresh: {repr(r)}", 'warning')
+        return r.ok
 
-    def addMagnet(self, magnet):
+    def addMagnet(self, magnet) -> bool:
         postData = {'magnet': magnet}
         response = requests.post(f'{self.BaseUrl}/torrents/addMagnet', headers=self.headers(), data=postData).json()
-        return response
+        if response.get('error'):
+            if response['error'] == 'bad_token':
+                self.refreshToken()
+                response = requests.post(f'{self.BaseUrl}/torrents/addMagnet', headers=self.headers(), data=postData).json()
+                success = False if response.get('error') else True
+            else:
+                success = False
+        else:
+            success = True
+        return success
 
     def list_torrents(self):
         response = requests.get(f'{self.BaseUrl}/torrents', headers=self.headers()).json()
@@ -137,6 +147,13 @@ class RealDebrid:
         }
         r = requests.post(f'{self.BaseUrl}/torrents/selectFiles/{torrentid}', headers=self.headers(), data=postData)
         return r.ok
+
+    def link_check(self, link):
+        postData = {
+            'link': link
+        }
+        response = requests.post(f'{self.BaseUrl}/unrestrict/check', headers=self.headers(), data=postData).json()
+        return response
 
     def resolve_hoster(self, link):
         postData = {
@@ -165,7 +182,8 @@ class RealDebrid:
     def resolve_uncached_source_background(self, source, autorun):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
         stream_link = None
-        self.addMagnet(source['magnet'])
+        if not self.addMagnet(source['magnet']):
+            return None
         torrent = self.list_torrents()[0]
         torrent = self.torrentInfo(torrent['id'])
         if not self.torrentSelect(torrent['id']):
@@ -199,7 +217,7 @@ class RealDebrid:
         self.deleteTorrent(torrent['id'])
         return stream_link
 
-    def resolve_uncached_source_forground(self, source, autorun):
+    def resolve_uncached_source_forground(self, source, autorun) -> None:
         heading = f'{control.ADDON_NAME}: Cache Resolver'
         control.progressDialog.create(heading, "Caching Progress")
         self.addMagnet(source['magnet'])

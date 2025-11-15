@@ -26,7 +26,7 @@ def create_package(provider_name: str, p: Path) -> None:
     shutil.move(p / provider_name, proider_path)
 
 
-def main():
+def main() -> None:
     url = 'http://bit.ly/a4kScrapers'
     temp_path = Path(control.dataPath) / 'temp'
     temp_zip = temp_path / 'temp.zip'

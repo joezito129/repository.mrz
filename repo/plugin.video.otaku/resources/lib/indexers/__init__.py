@@ -6,7 +6,7 @@ from resources.lib import endpoint
 from resources.lib.ui import database, control, utils
 
 
-def parse_episodes(res, eps_watched, dub_data=None):
+def parse_episodes(res, eps_watched, dub_data=None) -> dict:
     parsed = pickle.loads(res['kodi_meta'])
     if eps_watched and int(eps_watched) >= res['number']:
         parsed['info']['playcount'] = 1
@@ -18,13 +18,13 @@ def parse_episodes(res, eps_watched, dub_data=None):
     return parsed
 
 
-def process_episodes(episodes, eps_watched, dub_data=None):
+def process_episodes(episodes, eps_watched, dub_data=None) -> list:
     mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
     all_results = list(map(mapfunc, episodes))
     return all_results
 
 
-def process_dub(mal_id, ename):
+def process_dub(mal_id, ename) -> list:
     update_time = date.today().isoformat()
     if not (show_data := database.get_show_data(mal_id)) or show_data['last_updated'] != update_time:
         if control.getInt('jz.dub.api') == 0:
@@ -42,7 +42,7 @@ def process_dub(mal_id, ename):
     return dub_data
 
 
-def get_diff(episodes_0):
+def get_diff(episodes_0) -> tuple:
     import datetime
     update_time = datetime.date.today().isoformat()
     try:
@@ -54,7 +54,7 @@ def get_diff(episodes_0):
     diff = (datetime.datetime.today() - last_updated).days
     return update_time, diff
 
-def update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id):
+def update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id)-> dict:
     filler = control.colorstr(filler, color="red") if filler == 'Filler' else filler
 
     parsed = utils.allocate_item(title, f"play/{url}", False, True, [], image, info, fanart, poster)
@@ -70,5 +70,4 @@ def update_database(mal_id, update_time, res, url, image, info, season, episode,
 
     code = endpoint.get_second_label(info, dub_data, filler)
     parsed['info']['code'] = code
-
     return parsed
