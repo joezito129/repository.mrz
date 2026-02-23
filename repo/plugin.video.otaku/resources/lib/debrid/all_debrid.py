@@ -7,7 +7,7 @@ from resources.lib.ui import control, source_utils
 class AllDebrid:
     def __init__(self):
         self.token = control.getSetting('alldebrid.token')
-        self.agent_identifier = 'Otaku'
+        self.agent_identifier = control.ADDON_NAME
         self.base_url = 'https://api.alldebrid.com/v4'
         self.cache_check_results = []
         self.OauthTimeStep = 1

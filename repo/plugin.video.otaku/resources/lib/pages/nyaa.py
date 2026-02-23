@@ -1,4 +1,3 @@
-import pickle
 import re
 import requests
 
@@ -55,16 +54,16 @@ class Sources(BrowserBase.BrowserBase):
         re_size = re.compile(r'(\d+).(\d+) (\w+)')
         mapfunc = partial(self.parse_nyaa_view, episode=episode_zfill, re_size=re_size, cached=True)
         all_results = list(map(mapfunc, cache_list))
-        if control.settingids.showuncached:
+        if control.getBool('show.uncached'):
             mapfunc2 = partial(self.parse_nyaa_view, episode=episode_zfill, re_size=re_size, cached=False)
             all_results += list(map(mapfunc2, uncashed_list))
         return all_results
 
-    def get_sources(self, query, mal_id, episode, status, media_type):
-        query = self._clean_title(query).replace('-', ' ')
+    def get_sources(self, show, mal_id, episode, status, media_type, episodes):
+        query = self._clean_title(show).replace('-', ' ')
         self.media_type = media_type
         if media_type != 'movie':
-            self.get_episode_sources(query, mal_id, episode, status)
+            self.get_episode_sources(query, mal_id, episode, status, episodes)
         else:
             self.get_movie_sources(query, mal_id)
 
@@ -72,7 +71,7 @@ class Sources(BrowserBase.BrowserBase):
         self.append_cache_uncached_noduplicates()
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def get_episode_sources(self, show: str, mal_id: int, episode: str, status: str) -> None:
+    def get_episode_sources(self, show: str, mal_id: int, episode: str, status: str, episodes: int) -> None:
         if 'part' in show.lower():
             part = re.search(r'part ?(\d+)', show.lower())
             if part:
@@ -84,9 +83,7 @@ class Sources(BrowserBase.BrowserBase):
         season = database.get_episode(mal_id).get('season')
         season_zfill = str(season).zfill(2)
         episode_zfill = episode.zfill(2)
-        query = f'{show} "- {episode_zfill}"'
-        query += f'|"S{season_zfill}E{episode_zfill}"'
-
+        query = f'{show} "- {episode_zfill}"|"S{season_zfill}E{episode_zfill}"'
         params = {
             'f': '0',
             'c': '1_0',
@@ -94,11 +91,14 @@ class Sources(BrowserBase.BrowserBase):
             's': 'downloads',
             'o': 'desc'
         }
+
+        self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
+
+        # finished airing query
         if status == "Finished Airing":
             query = '%s "Batch"|"Complete Series"' % show
-            episodes = pickle.loads(database.get_show(mal_id)['kodi_meta'])['episodes']
             if episodes:
-                query += f'|"01-{episode_zfill}"|"01~{episode_zfill}"|"01 - {episode_zfill}"|"01 ~ {episode_zfill}"'
+                query += f'|"01-{episodes}"|"01~{episodes}"|"01 - {episodes}"|"01 ~ {episodes}"'
 
             query += f'|"S{season_zfill}"|"Season {season_zfill}"|"S{season_zfill}E{episode_zfill}"|"- {episode_zfill}"'
 
@@ -109,7 +109,30 @@ class Sources(BrowserBase.BrowserBase):
                 's': 'seeders',
                 'o': 'desc'
             }
-        self.sources = self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
+            self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
+
+        query = show
+        show_lower = show.lower()
+        control.log(query)
+        if 'season' in show_lower:
+            query1_part, query2_part = show.rsplit('|', 1)
+            match_1 = re.match(r'.+?(?=season)', query1_part)
+            if match_1:
+                match_1 = match_1.group(0).strip() + ')'
+            match_2 = re.match(r'.+?(?=season)', query2_part)
+            if match_2:
+                match_2 = match_2.group(0).strip() + ')'
+            query = f'{match_1}|{match_2}'
+            control.log(query)
+
+        params = {
+            'f': '0',
+            'c': '1_0',
+            'q': query.replace(' ', '+'),
+            's': 'seeders',
+            'o': 'desc'
+        }
+        self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill, part)
 
     def get_movie_sources(self, query, mal_id) -> None:
         params = {

@@ -1,5 +1,5 @@
 import requests
-import xbmcgui
+import xbmc
 
 from resources.lib.ui import source_utils, control
 
@@ -13,13 +13,55 @@ class Torbox:
         return {'Authorization': f"Bearer {self.token}"}
 
     def auth(self) -> None:
-        self.token = control.input_dialog("Enter API KEY for Torbox:", self.token, xbmcgui.ALPHANUM_HIDE_INPUT)
-        control.setSetting('torbox.token', self.token)
-        auth_done = self.status()
-        if not auth_done:
-            control.ok_dialog(f'{control.ADDON_NAME}: Torbox Auth', "Invalid API KEY!")
-            control.setSetting('torbox.username', '')
-            control.setSetting('torbox.auth.status', '')
+        params = {'app': control.ADDON_NAME}
+        r = requests.get(f'{self.BaseUrl}/user/auth/device/start', params=params)
+        if r.ok:
+            res = control.json_res(r).get('data')
+            if res:
+                device_code = res.get('device_code', '')
+                user_code = res.get('code', '')
+                verification_url = res.get('friendly_verification_url') or res.get('verification_url', 'https://tor.box/link')
+                interval = int(res.get('interval', 5))
+
+                copied = control.copy2clip(user_code)
+                display_dialog = (f"{control.lang(30020).format(control.colorstr(verification_url))}[CR]"
+                                  f"{control.lang(30021).format(control.colorstr(user_code))}")
+                if copied:
+                    display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
+                control.progressDialog.create(f'{control.ADDON_NAME}: TorBox Auth', display_dialog)
+                control.progressDialog.update(100)
+
+                expires_at = res.get('expires_at', '')
+                timeout = total_timeout = 600
+
+                auth_done = False
+                while not auth_done and timeout > 0:
+                    timeout -= interval
+                    xbmc.sleep(interval * 1000)
+                    control.progressDialog.update(int(timeout / total_timeout * 100))
+                    auth_done, expires_in = self.auth_loop(device_code, timeout)
+                control.progressDialog.close()
+
+                if auth_done:
+                    self.status()
+                control.progressDialog.close()
+
+
+    def auth_loop(self, device_code, timeout) -> tuple:
+        if control.progressDialog.iscanceled():
+            timeout = 0
+            return False, timeout
+        data = {'device_code': device_code}
+        r = requests.post(f'{self.BaseUrl}/user/auth/device/token', json=data)
+        if r.ok:
+            r = control.json_res(r)
+            res = r.get('data')
+            if 'access_token' in res:
+                self.token = res['access_token']
+                control.setSetting('torbox.token', self.token)
+                return True, timeout
+        return False, timeout
+
 
     def status(self) -> bool:
         r = requests.get(f'{self.BaseUrl}/user/me', headers=self.headers())
@@ -39,7 +81,9 @@ class Torbox:
         return r.ok
 
     def refreshToken(self):
-        pass
+        url = f'{self.BaseUrl}/v1/api/user/refreshtoken'
+        r = requests.post(url, headers=self.headers())
+        return r.ok
 
     def hash_check(self, hash_list: list) -> dict:
         hashes = ','.join(hash_list)

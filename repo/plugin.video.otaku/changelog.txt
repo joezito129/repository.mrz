@@ -1,3 +1,15 @@
+Changelog v5.1.28 (2026-02-28)
+- add torbox sign in oath2
+- improved caching
+- Fixed filtering lang
+- Removed aniwave, Animix, animepahe, and watchnixtoons2
+
+Changelog v5.1.27 (2026-02-23)
+- Fixed append to database
+- Updated speed of database
+- Fixed cloud for Torbox
+- Added kodi caching
+
 Changelog v5.1.26 (2025-11-29)
 - Fixed Dub/Sub filtering
 - Improved Scraping Speeds

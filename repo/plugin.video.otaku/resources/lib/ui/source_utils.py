@@ -265,8 +265,3 @@ def user_select(files, dict_key) -> list:
     else:
         file = [files[idx]]
     return file
-
-
-def get_embedhost(url):
-    s = re.search(r'(?://|\.)([^.]+)\.', url)
-    return s.group(1)

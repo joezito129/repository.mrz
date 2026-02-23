@@ -39,10 +39,9 @@ class Sources(BrowserBase.BrowserBase):
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]
         close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)
         close_matches_filtered = source_utils.filter_sources(close_matches, 0, int(episode))
-        for x in close_matches_filtered:
-            i = filenames.index(x)
+        for filename in close_matches_filtered:
+            i = filenames.index(filename)
             torrent = torrents[i]
-            filename = re.sub(r'\[.*?]', '', torrent['filename']).lower()
             if source_utils.is_file_ext_valid(filename):
                 continue
             torrent_info = api.torrentInfo(torrent['id'])
@@ -102,16 +101,18 @@ class Sources(BrowserBase.BrowserBase):
             )
 
     def torbox_cloud_inspection(self, query: str, episode: str) -> None:
-        cloud_items = torbox.Torbox().list_torrents()
-        filenames = [re.sub(r'\[.*?]\s*', '', i['name'].replace(',', '')) for i in cloud_items]
-        filenames_query = ','.join(filenames)
-        r = requests.get('https://armkai.vercel.app/api/fuzzypacks', params={"dict": filenames_query, "match": query})
-        resp = r.json()
-        for i in resp:
-            torrent = cloud_items[i]
-            filename = re.sub(r'\[.*?]', '', torrent['name']).lower()
-            if not torrent['cached'] or not torrent['download_finished'] or len(torrent['files']) < 1 or episode not in filename:
+        api = torbox.Torbox()
+        torrents = api.list_torrents()
+        filenames = [re.sub(r'\[.*?]\s*', '', i['name'].replace(',', '')) for i in torrents]
+        close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)
+        close_matches_filtered = source_utils.filter_sources(close_matches, 0, int(episode))
+        for filename in close_matches_filtered:
+            i = filenames.index(filename)
+            torrent = torrents[i]
+
+            if not torrent['cached'] or not torrent['download_finished'] or len(torrent['files']) < 1:
                 continue
+
             if not any(source_utils.is_file_ext_valid(tor_file['short_name'].lower()) for tor_file in torrent['files']):
                 continue
 

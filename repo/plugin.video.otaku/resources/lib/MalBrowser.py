@@ -175,7 +175,6 @@ class MalBrowser(BrowserBase.BrowserBase):
             info['playcount'] = 1
 
         dub = True if mal_dub and mal_dub.get(str(res.get('idMal'))) else False
-
         image = res['images']['webp']['large_image_url'] if res.get('images') else None
 
         base = {

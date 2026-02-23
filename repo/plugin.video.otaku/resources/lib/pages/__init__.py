@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, aniwave, hianime, localfiles, watchnixtoons2, animepahe, animix
+from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, localfiles, hianime
 from resources.lib.ui import control, database
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -11,7 +11,6 @@ from resources.lib.windows import sort_select
 def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
     import pickle
     from resources.lib.OtakuBrowser import BROWSER
-
     if not (show := database.get_show(mal_id)):
         show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
@@ -19,6 +18,7 @@ def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=
         'query': kodi_meta['query'],
         'mal_id': mal_id,
         'episode': episode,
+        'episodes': kodi_meta['episodes'],
         'status': kodi_meta['status'],
         'media_type': media_type,
         'rescrape': rescrape,
@@ -28,13 +28,14 @@ def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=
     sources = Sources('get_sources.xml', control.ADDON_PATH, actionArgs=actionArgs).doModal()
     return sources
 
+
 class Sources(GetSources):
     def __init__(self, xml_file, location, actionArgs=None):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
         self.torrent_func = [nyaa, animetosho]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = [aniwave, hianime, watchnixtoons2, animepahe, animix]
+        self.embed_func = [hianime]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
@@ -57,27 +58,12 @@ class Sources(GetSources):
         query = args['query']
         mal_id = args['mal_id']
         episode = args['episode']
+        episodes = args['episodes']
         status = args['status']
         media_type = args['media_type']
         rescrape = args['rescrape']
         # source_select = args['source_select']
         self.setProperty('process_started', 'true')
-
-        # set skipintro times to -1 before scraping
-        control.setInt('hianime.skipintro.start', -1)
-        control.setInt('hianime.skipintro.end', -1)
-        control.setInt('aniwave.skipintro.start', -1)
-        control.setInt('aniwave.skipintro.end', -1)
-        control.setInt('animix.skipintro.start', -1)
-        control.setInt('animix.skipintro.end', -1)
-
-        # set skipoutro times to -1 before scraping
-        control.setInt('hianime.skipoutro.start', -1)
-        control.setInt('hianime.skipoutro.end', -1)
-        control.setInt('aniwave.skipoutro.start', -1)
-        control.setInt('aniwave.skipoutro.end', -1)
-        control.setInt('animix.skipoutro.start', -1)
-        control.setInt('animix.skipoutro.end', -1)
 
         if any(control.enabled_debrid().values()):
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
@@ -86,7 +72,7 @@ class Sources(GetSources):
 
             for inx, torrent_provider in enumerate(self.torrentProviders):
                 if control.getBool(f'provider.{torrent_provider}'):
-                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, query, mal_id, episode, status, media_type, rescrape))
+                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, query, mal_id, episode, status, media_type, episodes))
                     t.start()
                     self.threads.append(t)
                 else:
@@ -141,8 +127,8 @@ class Sources(GetSources):
         return self.return_data
 
 #   ### Torrents ###
-    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape)-> None:
-        all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
+    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, episodes) -> None:
+        all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type, episodes)
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
         self.torrentSources += all_sources['cached'] + all_sources['uncached']
@@ -152,7 +138,6 @@ class Sources(GetSources):
     def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape) -> None:
         try:
             embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, key=embed_name)
-        # embed_sources = embed_func.Sources().get_sources(mal_id, episode)
         except:
             import traceback
             control.log(traceback.format_exc(), 'error')
@@ -160,7 +145,7 @@ class Sources(GetSources):
         if not isinstance(embed_sources, list):
             embed_sources = []
         self.embedSources += embed_sources
-        if embed_name in ['hianime', 'aniwave']:
+        if embed_name in ['hianime']:
             for x in embed_sources:
                 if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
                     control.setInt(f'{embed_name}.skipintro.start', int(x['skip']['intro']['start']))
@@ -189,7 +174,7 @@ class Sources(GetSources):
             sortedList = [i for i in sortedList if 'HEVC' not in i['info']]
         lang = control.getInt("general.source") # 0 SUB, 1 BOTH, 2 DUB
         if lang != 1:
-            sortedList = [i for i in sortedList if i['lang'] == lang]
+            sortedList = [i for i in sortedList if i['lang'] in [1, lang]]
 
         # Sort Sources
         SORT_METHODS = sort_select.SORT_METHODS

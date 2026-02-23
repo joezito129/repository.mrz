@@ -2,6 +2,7 @@ import time
 import requests
 import json
 import os
+import xbmc
 
 from resources.lib.ui import control, database_sync
 
@@ -81,7 +82,7 @@ def update_dub_json() -> None:
         json.dump(mal_dub, file)
 
 
-def getChangeLog() -> None:
+def getchangelog() -> None:
     with open(os.path.join(control.ADDON_PATH, 'changelog.txt')) as f:
         changelog_text = f.read()
 
@@ -98,7 +99,7 @@ def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
             addon_xml_.writelines(output)
         if not forced_state:
             control.ok_dialog(control.ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
-            control.execute('LoadProfile({})'.format(control.xbmc.getInfoLabel("system.profilename")))
+            control.execute(f'LoadProfile({control.xbmc.getInfoLabel("system.profilename")})')
     file_path = os.path.join(control.ADDON_PATH, "addon.xml")
     with open(file_path) as addon_xml:
         file_lines = addon_xml.readlines()
@@ -120,7 +121,7 @@ def version_check() -> None:
     control.log(f'### {control.ADDON_ID} {control.ADDON_VERSION}')
     control.log(f'### Platform: {control.sys.platform}')
     control.log(f'### Python: {control.sys.version}')
-    control.log(f'### SQLite: {database_sync.sqlite_version}')
+    control.log(f'### SQLite: {database_sync.version}')
     control.log(f'### Kodi Version: {control.kodi_version}')
 
     if control.getSetting('otaku.version') != control.ADDON_VERSION:
@@ -130,8 +131,70 @@ def version_check() -> None:
         control.log(f"### {reuselang} Re-uselanguageinvoker")
 
 
+def load_settings():
+    bool_settings = [
+        "jz.dub", "jz.filler", "general.smart.scroll.enable", "override.meta.api",
+        "interface.viewtypes.bool", "interface.cleantitles", "interface.fanart.disable",
+        "interface.clearlogo.disable", "context.otaku.findrecommendations", "context.otaku.findrelations",
+        "context.otaku.rescrape", "context.otaku.sourceselect", "context.otaku.logout",
+        "context.otaku.deletefromdatabase", "context.otaku.watchlist", "context.otaku.markedaswatched",
+        "context.otaku.fanartselect", "widget.hide.nextpage", "provider.nyaa", "provider.animetosho", 'provider.hianime',
+        "provider.localfiles", "general.autotrynext", "general.terminate.oncloud",
+        "smartplay.skipintrodialog", "skipintro.aniskip.enable", "smartplay.playingnextdialog",
+        "skipoutro.aniskip.enable", "subtitle.enable", "general.disable265", "show.uncached",
+        "uncached.autorun", "divflavors.dubonly", "divflavors.showdub", "contentformat.bool",
+        "contentorigin.bool", "search.adult", "real_debrid.enabled", "real_debrid.cloudInspection",
+        "alldebrid.enabled", "alldebrid.cloudInspection", "debrid_link.enabled", "premiumize.enabled",
+        "premiumize.cloudInspection", "torbox.enabled", "torbox.cloudInspection", "watchlist.update.enabled",
+        "watchlist.sync.enabled", "watchlist.episode.data", "mal.enabled", "anilist.enabled",
+        "kitsu.enabled", "simkl.enabled", "menu.lastwatched", "airing_anime", "airing_calendar",
+        "upcoming_next_season", "top_100_anime", "genres//", "search_history", "tools"
+    ]
+
+    int_settings = [
+        "jz.dub.api", "titlelanguage", "searchhistory", "interface.perpage.general.anilist",
+        "interface.perpage.general.mal", "interface.perpage.watchlist", "interface.check.updates",
+        "general.playstyle.movie", "general.playstyle.episode", "general.playlist.size",
+        "general.timeout", "skipintro.aniskip.offset", "skipintro.time", "skipintro.delay",
+        "skipintro.duration", "skipoutro.aniskip.offset", "playingnext.time", "general.maxResolution",
+        "general.minResolution", "general.source", "contentformat.menu", "contentorigin.menu",
+        "real_debrid.expiry", "debrid_link.expiry", "torbox.expiry", "watchlist.update.percent",
+        "mal.expiry", "mal.sort", "anilist.sort", "kitsu.expiry", "kitsu.sort", "simkl.sort",
+        "addon.last_watched", "update.time.30", "update.time.7"
+    ]
+
+    str_settings = [
+        "download.location", "browser.api", "meta.api", "interface.viewtypes.general",
+        "interface.viewtypes.tvshows", "interface.viewtypes.episodes", "interface.icons",
+        "watchlist.update.flavor", "reuselanguageinvoker.status",
+        "otaku.version", "last_played"
+]
+
+    for s_id in bool_settings:
+        val = control.ADDON.getSettingBool(s_id)
+        control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val).lower())
+
+    for s_id in int_settings:
+        val = control.ADDON.getSettingInt(s_id)
+        control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+
+    for s_id in str_settings:
+        val = control.ADDON.getSettingString(s_id)
+        control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+
+
+class Monitor(xbmc.Monitor):
+    def __init__(self):
+        super().__init__()
+
+    def onSettingsChanged(self):
+        control.log('Setting Changed Updating Settings Cache')
+        load_settings()
+
+
 if __name__ == "__main__":
     control.log('##################  RUNNING MAINTENANCE  ######################')
+    load_settings()
     version_check()
     database_sync.SyncDatabase()
     refresh_apis()
@@ -143,3 +206,6 @@ if __name__ == "__main__":
         sync_watchlist(True)
         control.setInt('update.time.7', int(time.time()))
     control.log('##################  MAINTENANCE COMPLETE ######################')
+
+    Monitor().waitForAbort()
+

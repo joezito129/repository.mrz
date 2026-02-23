@@ -16,9 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# import time
-# t0 = time.perf_counter_ns()
-
 import pickle
 import os
 import sys
@@ -29,7 +26,6 @@ from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlists
 
 BROWSER = OtakuBrowser.BROWSER
-
 
 def add_last_watched(items: list) -> list:
     mal_id = control.getInt("addon.last_watched")
@@ -58,7 +54,7 @@ def add_last_watched(items: list) -> list:
 @Route('animes/*')
 def ANIMES_PAGE(payload: str, params: dict) -> None:
     mal_id, eps_watched = payload.split("/", 1)
-    control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
+    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60, mal_id))
 
 
 @Route('find_recommendations/*')
@@ -77,28 +73,32 @@ def FIND_RELATIONS(payload: str, params: dict) -> None:
 @Route('airing_anime')
 def AIRING_ANIME(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    control.draw_items(BROWSER.get_airing_anime(page), 'tvshows')
+    control.draw_items(database.cache(BROWSER.get_airing_anime, 60, page), 'tvshows')
 
 
 @Route('upcoming_next_season')
 def UPCOMING_NEXT_SEASON(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    control.draw_items(BROWSER.get_upcoming_next_season(page), 'tvshows')
+    control.draw_items(database.cache(BROWSER.get_upcoming_next_season, 60, page), 'tvshows')
 
 
 @Route('top_100_anime')
 def TOP_100_ANIME_PAGES(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    control.draw_items(BROWSER.get_top_100_anime(page), 'tvshows')
+    control.draw_items(database.cache(BROWSER.get_top_100_anime, 60, page), 'tvshows')
+
+
 
 @Route('airing_calendar')
 def AIRING_CALENDAR(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    calendar = BROWSER.get_airing_calendar(page)
+    calendar = database.cache(BROWSER.get_airing_calendar, 60, page)
     if calendar:
         from resources.lib.windows.anichart import Anichart
         Anichart('anichart.xml', control.ADDON_PATH, calendar=calendar).doModal()
     control.exit_code()
+
+
 
 @Route('genres/*')
 def GENRES_PAGES(payload: str, params: dict) -> None:
@@ -119,6 +119,7 @@ def SEARCH_HISTORY(payload: str, params: dict) -> None:
         SEARCH(payload, params)
 
 
+
 @Route('search/*')
 def SEARCH(payload: str, params: dict) -> None:
     query = payload
@@ -129,7 +130,8 @@ def SEARCH(payload: str, params: dict) -> None:
             return control.draw_items([], 'tvshows')
         if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
-    return control.draw_items(BROWSER.get_search(query, page), 'tvshows')
+    return control.draw_items(database.cache(BROWSER.get_search, 60, query, page), 'tvshows')
+
 
 
 @Route('remove_search_item/*')
@@ -138,6 +140,7 @@ def REMOVE_SEARCH_ITEM(payload: str, params: dict) -> None:
         search_item = payload.split('search/')[1]
         database.remove_search(table='show', value=search_item)
     control.exit_code()
+
 
 
 @Route('edit_search_item/*')
@@ -150,6 +153,7 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict) -> None:
                 database.remove_search(table='show', value=search_item)
                 database.addSearchHistory(query, 'show')
     control.exit_code()
+
 
 
 @Route('play/*')
@@ -179,6 +183,7 @@ def PLAY(payload: str, params: dict) -> None:
     else:
         control.playList.clear()
     control.exit_code()
+
 
 
 @Route('play_movie/*')
@@ -211,6 +216,7 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
     control.exit_code()
 
 
+
 @Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
     from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -228,6 +234,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
     if len(payload_list) == 2:
         control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{mal_id}/{episode})')
     control.exit_code()
+
 
 
 @Route('delete_anime_database/*')
@@ -260,6 +267,7 @@ def AUTH(payload: str, params: dict) -> None:
         Torbox().auth()
 
 
+
 @Route('refresh/*')
 def REFRESH(payload: str, params: dict) -> None:
     if payload == 'realdebrid':
@@ -268,9 +276,6 @@ def REFRESH(payload: str, params: dict) -> None:
     elif payload == 'debridlink':
         from resources.lib.debrid.debrid_link import DebridLink
         DebridLink().refreshToken()
-    elif payload == 'torbox':
-        from resources.lib.debrid.torbox import Torbox
-        Torbox().refreshToken()
 
 
 @Route('fanart_select/*')
@@ -283,6 +288,7 @@ def FANART_SELECT(payload: str, params: dict) -> None:
     fanart_display = fanart + ["None", "Random (Defualt)"]
     fanart += ["None", ""]
     control.draw_items([utils.allocate_item(f, f'fanart/{mal_id}/{i}', False, False, [], f, {}, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
+
 
 
 @Route('fanart/*')
@@ -303,20 +309,24 @@ def FANART(payload: str, params: dict) -> None:
 @Route('')
 def LIST_MENU(payload: str, params: dict) -> None:
     MENU_ITEMS = [
-        (control.lang(30001), "airing_anime", 'airing_anime.png', {}),
-        (control.lang(30007), 'airing_calendar', '', {}),
-        (control.lang(30002), "upcoming_next_season", 'upcoming.png', {}),
-        (control.lang(30003), "top_100_anime", 'top_100_anime.png', {}),
-        (control.lang(30004), "genres//", 'genres_&_tags.png', {}),
-        (control.lang(30005), "search_history", 'search.png', {}),
-        (control.lang(30006), "tools", 'tools.png', {})
+        (30001, "airing_anime", 'airing_anime.png'),
+        (30007, 'airing_calendar', ''),
+        (30002, "upcoming_next_season", 'upcoming.png'),
+        (30003, "top_100_anime", 'top_100_anime.png'),
+        (30004, "genres//", 'genres_&_tags.png'),
+        (30005, "search_history", 'search.png'),
+        (30006, "tools", 'tools.png')
     ]
+
     NEW_MENU_ITEMS = []
     NEW_MENU_ITEMS = add_watchlists(NEW_MENU_ITEMS)
-
     if control.getBool('menu.lastwatched'):
         NEW_MENU_ITEMS = add_last_watched(NEW_MENU_ITEMS)
-    [NEW_MENU_ITEMS.append(i) for i in MENU_ITEMS if control.getBool(i[1])]
+
+    for lang_id, url, image in MENU_ITEMS:
+        if control.getBool(url):
+            name = control.lang(lang_id)
+            NEW_MENU_ITEMS.append((name, url, image, {}))
     control.draw_items([utils.allocate_item(name, url, True, False, [], image, info) for name, url, image, info in NEW_MENU_ITEMS], 'addons')
 
 
@@ -346,9 +356,10 @@ def SETTINGS(payload: str, params: dict) -> None:
 @Route('change_log')
 def CHANGE_LOG(payload: str, params: dict) -> None:
     import service
-    service.getChangeLog()
+    service.getchangelog()
     if params.get('setting'):
         control.exit_code()
+
 
 @Route('clear_cache')
 def CLEAR_CACHE(payload: str, params: dict) -> None:
@@ -460,8 +471,4 @@ if __name__ == "__main__":
     plugin_url = control.get_plugin_url(sys.argv[0])
     plugin_params = control.get_plugin_params(sys.argv[2])
     router_process(plugin_url, plugin_params)
-    control.log(f'Finished Running: {plugin_url=} {plugin_params=}')
-
-# t1 = time.perf_counter_ns()
-# totaltime = (t1-t0)/1_000_000
-# control.print(totaltime, 'ms')
+    # control.log(f'Finished Running: {plugin_url=} {plugin_params=}')

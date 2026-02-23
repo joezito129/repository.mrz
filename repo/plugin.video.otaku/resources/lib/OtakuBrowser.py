@@ -26,7 +26,6 @@ def get_anime_init(mal_id) -> tuple:
         else:  # elif meta_api == 'jikanmoa':
             from resources.lib.indexers import jikanmoe
             data = jikanmoe.JikanAPI().get_episodes(mal_id, show_meta)
-
     else:
         from resources.lib.indexers import simkl
         data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)

@@ -48,9 +48,7 @@ class WatchlistPlayer(player):
         self.context = context
 
         # process skip times
-        self.process_embed('aniwave')
         self.process_embed('hianime')
-        self.process_embed('animix')
         self.process_aniskip()
         self.process_animeskip()
 
@@ -86,18 +84,21 @@ class WatchlistPlayer(player):
         control.closeAllDialogs()
         playList.clear()
 
+
     def build_playlist(self):
         episodes = database.get_episode_list(self.mal_id)
         video_data = indexers.process_episodes(episodes, '') if episodes else []
-        playlist = control.bulk_dir_list(video_data, True)[self.episode:]
+        playlist = control.bulk_dir_list(video_data)[self.episode:]
         maxplaylist = control.getInt('general.playlist.size')
         if maxplaylist > 0:
             playlist = playlist[:maxplaylist - 1]
         for i in playlist:
             control.playList.add(url=i[0], listitem=i[1])
 
+
     def getWatchedPercent(self):
         return (self.current_time / self.total_time) * 100 if self.total_time != 0 else 0
+
 
     def onWatchedPercent(self):
         if self._watchlist_update:
@@ -109,6 +110,7 @@ class WatchlistPlayer(player):
                     self.updated = True
                     break
                 xbmc.sleep(5000)
+
 
     def keepAlive(self):
         monitor = Monitor()
@@ -192,13 +194,11 @@ class WatchlistPlayer(player):
         while self.isPlaying():
             self.current_time = int(self.getTime())
             xbmc.sleep(5000)
-
         return None
 
     def process_aniskip(self):
         if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
             skipintro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'op')
-            control.log(f'aniskip times: {skipintro_aniskip_res}')
             if skipintro_aniskip_res:
                 skip_times = skipintro_aniskip_res['results'][0]['interval']
                 self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
@@ -242,12 +242,12 @@ class WatchlistPlayer(player):
                 self.skipintro_start = intro_start + self.skipintro_offset
                 self.skipintro_end = intro_end + self.skipintro_offset
                 self.skipintro_aniskip = True
-                control.log(f'found skip times animeskip: {self.skipintro_start} - {self.skipintro_end}')
+                control.log(f'found skipintro times animeskip: {self.skipintro_start} - {self.skipintro_end}')
             if outro_start is not None and outro_end is not None:
                 self.skipoutro_start = int(outro_start) + self.skipoutro_offset
                 self.skipoutro_end = int(outro_end) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
-                control.log(f'found skip times animeskip: {self.skipoutro_start} - {self.skipoutro_end}')
+                control.log(f'found skipoutro times animeskip: {self.skipoutro_start} - {self.skipoutro_end}')
 
     def process_embed(self, embed):
         if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
@@ -256,15 +256,14 @@ class WatchlistPlayer(player):
                 self.skipintro_start = embed_skipintro_start + self.skipintro_offset
                 self.skipintro_end = control.getInt(f'{embed}.skipintro.end') + self.skipintro_offset
                 self.skipintro_aniskip = True
-                control.log(f'found skip times {embed}: {self.skipintro_start} - {self.skipintro_end}')
+                control.log(f'found skipintro times {embed}: {self.skipintro_start} - {self.skipintro_end}')
         if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
             embed_skipoutro_start = control.getInt(f'{embed}.skipoutro.start')
             if embed_skipoutro_start != -1:
                 self.skipoutro_start = embed_skipoutro_start + self.skipoutro_offset
                 self.skipoutro_end = control.getInt(f'{embed}.skipoutro.end') + self.skipoutro_offset
                 self.skipoutro_aniskip = True
-                control.log(f'found skip times {embed}: {self.skipoutro_start} - {self.skipoutro_end}')
-
+                control.log(f'found skipoutro times {embed}: {self.skipoutro_start} - {self.skipoutro_end}')
 
 
 class PlayerDialogs(xbmc.Player):

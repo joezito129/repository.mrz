@@ -52,10 +52,6 @@ class BrowserBase:
         return text.replace(u'×', ' x ')
 
     @staticmethod
-    def clean_embed_title(text: str) -> str:
-        return re.sub(r'\W', '', text).lower()
-
-    @staticmethod
     def _sphinx_clean(text: str) -> str:
         text = text.replace('+', r'\+')
         text = text.replace('-', r'\-')
@@ -68,25 +64,7 @@ class BrowserBase:
         text = text.replace(':', r'\:')
         return text
 
-    @staticmethod
-    def get_quality(qual):
-        if qual > 1080:
-            quality = 4
-        elif qual > 720:
-            quality = 3
-        elif qual > 480:
-            quality = 2
-        elif qual > 360:
-            quality = 1
-        else:
-            quality = 0
-        return quality
 
     @staticmethod
     def embeds() -> list:
-        # return [
-        #     'doodstream', 'filelions', 'filemoon', 'hd-2', 'iga', 'kwik',
-        #     'megaf', 'moonf', 'mp4upload', 'mp4u', 'mycloud', 'noads', 'noadsalt',
-        #     'swish', 'streamtape', 'streamwish', 'vidcdn', 'vidplay', 'vidstream',
-        #     'yourupload', 'zto']
         return control.getStringList('embed.config')
