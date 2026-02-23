@@ -18,7 +18,7 @@ class Sources(BrowserBase.BrowserBase):
         self.anidb_id = None
         self.anidb_ep_id = None
 
-    def get_sources(self, show, mal_id, episode, status, media_type) -> dict:
+    def get_sources(self, show, mal_id, episode, status, media_type, episodes) -> dict:
         sources = []
         show_meta = database.get_show_meta(mal_id)
         if show_meta:
@@ -50,36 +50,48 @@ class Sources(BrowserBase.BrowserBase):
         episode_zfill = str(episode).zfill(2)
 
         if self.anidb_ep_id:
-            sources = self.process_animetosho(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, '')
+            sources += self.process_animetosho(f'{self._BASE_URL}/episode/{self.anidb_ep_id}', None, episode_zfill, '')
 
+        show = self._clean_title(show)
+        if media_type != "movie":
+            season = database.get_episode(mal_id)['season']
+            season_zfill = str(season).zfill(2)
+            query = f'{show} "- {episode_zfill}"'
         else:
-            show = self._clean_title(show)
-            if media_type != "movie":
-                season = database.get_episode(mal_id)['season']
-                season_zfill = str(season).zfill(2)
-                query = f'{show} "- {episode_zfill}"'
-            else:
-                season_zfill = None
-                query = show
+            season_zfill = None
+            query = show
 
+        params = {
+            'q': self._sphinx_clean(query),
+            'qx': 1
+        }
+
+        if self.anidb_id:
+            params['aids'] = self.anidb_id
+
+        sources = self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
+
+        # Batch/complete series search for finished shows
+        if status == "Finished Airing":
+            batch_terms = ["Batch", "Complete Series"]
+            episode_formats = [f'01-{episodes}', f'01~{episodes}', f'01 - {episodes}', f'01 ~ {episodes}'] if episodes else []
+            batch_query = f'{show} ("' + '"|"'.join(batch_terms + episode_formats) + '")'
             params = {
-                'q': self._sphinx_clean(query),
+                'q': self._sphinx_clean(batch_query),
                 'qx': 1
             }
-            if self.anidb_id:
-                params['aids'] = self.anidb_id
+            sources += self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
 
-            sources = self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
+        # search without season in name
+        show_lower = show.lower()
+        if 'season' in show_lower:
+            show_variations = re.split(r'season\s*\d+', show_lower)
+            cleaned_variations = [self._sphinx_clean(var.strip() + ')') for var in show_variations if var.strip()]
+            params['q'] = '|'.join(cleaned_variations)
+        else:
+            params['q'] = self._sphinx_clean(show)
 
-            # show_lower = show.lower()
-            # if 'season' in show_lower:
-            #     show_variations = re.split(r'season\s*\d+', show_lower)
-            #     cleaned_variations = [self._sphinx_clean(var.strip() + ')') for var in show_variations if var.strip()]
-            #     params['q'] = '|'.join(cleaned_variations)
-            # else:
-            #     params['q'] = self._sphinx_clean(show)
-            #
-            # sources += self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
+        sources += self.process_animetosho(f'{self._BASE_URL}/search', params, episode_zfill, season_zfill)
 
         # remove any duplicate sources
         seen_sources = []
@@ -139,7 +151,7 @@ class Sources(BrowserBase.BrowserBase):
 
         mapfunc = partial(parse_animetosho_view, episode=episode_zfill)
         all_sources += list(map(mapfunc, cache_list))
-        if control.settingids.showuncached:
+        if control.getBool('show.uncached'):
             mapfunc2 = partial(parse_animetosho_view, episode=episode_zfill, cached=False)
             all_sources += list(map(mapfunc2, uncashed_list))
         return all_sources

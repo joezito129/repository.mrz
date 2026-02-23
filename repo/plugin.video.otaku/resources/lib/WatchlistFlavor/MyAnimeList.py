@@ -126,6 +126,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "fields": ','.join(fields),
             "nsfw": True
         }
+        control.log('2')
         url = f'{self._URL}/users/@me/animelist'
         return self._process_status_view(url, params, next_up, f'watchlist_status_type_pages/mal/{status}', page)
 

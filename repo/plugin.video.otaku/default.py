@@ -58,7 +58,7 @@ def add_last_watched(items: list) -> list:
 @Route('animes/*')
 def ANIMES_PAGE(payload: str, params: dict) -> None:
     mal_id, eps_watched = payload.split("/", 1)
-    control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
+    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60, mal_id))
 
 
 @Route('find_recommendations/*')

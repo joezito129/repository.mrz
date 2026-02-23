@@ -42,7 +42,7 @@ def WATCHLIST_STATUS_TYPE(payload: str, params: dict):
     flavor, status = payload.split("/", 1)
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
-    control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up), content_type)
+    control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 60, flavor, status, next_up), content_type)
 
 
 @Route('watchlist_status_type_pages/*')
@@ -51,7 +51,7 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict):
     page = int(params.get('page', 1))
     next_up = bool(params.get('next_up'))
     content_type = 'videos' if next_up else 'tvshows'
-    control.draw_items(WatchlistFlavor.watchlist_status_request(flavor, status, next_up, offset, page), content_type)
+    control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 60, flavor, status, next_up, offset, page), content_type)
 
 
 @Route('watchlist_to_ep/*')
@@ -63,7 +63,7 @@ def WATCHLIST_TO_EP(payload: str, params: dict):
     kodi_meta = pickle.loads(show_meta['kodi_meta'])
     kodi_meta['eps_watched'] = eps_watched
     database.update_kodi_meta(mal_id, kodi_meta)
-    control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
+    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60, mal_id))
 
 
 @Route('watchlist_manager/*')

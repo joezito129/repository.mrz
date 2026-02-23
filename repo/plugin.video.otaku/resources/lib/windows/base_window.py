@@ -29,17 +29,17 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
             self.setProperty('item.art.thumb', thumb)
         fanart = self.item_information.get('fanart')
         clearlogo = self.item_information.get('clearlogo', control.LOGO_SMALL)
-        if not fanart or control.settingids.fanart_disable:
+        if not fanart or control.get_bool_cache('interface.fanart.disable'):
             fanart = control.FANART
         else:
             if isinstance(fanart, list):
-                if control.settingids.fanart_select:
+                if control.get_bool_cache('context.otaku.fanartselect'):
                     fanart_select = control.getSetting(f'fanart.select.{mal_id}')
                     fanart = fanart_select if fanart_select else random.choice(fanart)
                 else:
                     fanart = random.choice(fanart)
         if isinstance(clearlogo, list):
-            clearlogo = control.LOGO_SMALL if control.settingids.clearlogo_disable else random.choice(clearlogo)
+            clearlogo = control.LOGO_SMALL if control.get_bool_cache('interface.clearlogo.disable') else random.choice(clearlogo)
 
         if item_type != 'playing_next':
             self.setProperty('item.art.fanart', fanart)

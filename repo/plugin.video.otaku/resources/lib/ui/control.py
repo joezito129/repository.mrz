@@ -49,6 +49,15 @@ progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
 window_context = [xbmcgui.ACTION_CONTEXT_MENU]
 
+bool_cache = {}
+
+
+def get_bool_cache(setting_id: str):
+    if setting_id not in bool_cache:
+        bool_cache[setting_id] = getBool(setting_id)
+    return bool_cache[setting_id]
+
+
 def closeBusyDialog() -> None:
     if xbmc.getCondVisibility('Window.IsActive(busydialog)'):
         execute('Dialog.Close(busydialog)')
@@ -59,12 +68,12 @@ def closeBusyDialog() -> None:
 def log(msg, level="info") -> None:
     if level == 'info':
         level = xbmc.LOGINFO
+    elif level == 'debug':
+        level = xbmc.LOGDEBUG
     elif level == 'warning':
         level = xbmc.LOGWARNING
     elif level == 'error':
         level = xbmc.LOGERROR
-    elif level == 'debug':
-        level = xbmc.LOGDEBUG
     elif level == 'fatal':
         level = xbmc.LOGFATAL
         # SAVE THE KIDS THE PLANE IS GOING DOWN!!
@@ -169,7 +178,7 @@ def get_payload_params(url: str) -> tuple:
 
 def exit_code() -> None:
     if getSetting('reuselanguageinvoker.status') == 'Enabled':
-        exit_(0)
+        sys.exit(1)
 
 
 def keyboard(title: str, text: str = '') -> str:
@@ -223,11 +232,11 @@ def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
 
 
 def handle_set_fanart(art: dict, info: dict) -> dict:
-    if not art.get('fanart') or settingids.fanart_disable:
+    if not art.get('fanart') or get_bool_cache('interface.fanart.disable'):
         art['fanart'] = FANART
     else:
         if isinstance(art['fanart'], list):
-            if settingids.fanart_select:
+            if get_bool_cache('context.otaku.fanartselect'):
                 if info.get('UniqueIDs', {}).get('mal_id'):
                     fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
                     art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
@@ -292,7 +301,7 @@ def jsonrpc(json_data: dict) -> dict:
     return json.loads(xbmc.executeJSONRPC(json.dumps(json_data)))
 
 
-def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: bool, isfolder: bool, isplayable: bool):
+def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, isfolder: bool, isplayable: bool) -> tuple:
     u = addon_url(url)
     liz = xbmcgui.ListItem(name, offscreen=True)
     if info:
@@ -303,40 +312,35 @@ def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, bulk_add: 
 
     art = handle_set_fanart(art, info)
 
-    if settingids.clearlogo_disable:
+    if get_bool_cache('interface.clearlogo.disable'):
         art['clearlogo'] = ICONS_PATH
     if isplayable:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
     liz.setArt(art)
-    return u, liz, isfolder if bulk_add else xbmcplugin.addDirectoryItem(HANDLE, u, liz, isfolder)
+    return u, liz, isfolder
 
 
 def bulk_draw_items(video_data: list) -> bool:
-    list_items = bulk_dir_list(video_data, True)
+    list_items = bulk_dir_list(video_data)
     return xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
 
 def draw_items(video_data: list, content_type: str = '') -> None:
-    if len(video_data) > 99:
-        bulk_draw_items(video_data)
-    else:
-        for vid in video_data:
-            if vid:
-                xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], False, vid['isfolder'], vid['isplayable'])
+    bulk_draw_items(video_data)
     if content_type:
         xbmcplugin.setContent(HANDLE, content_type)
     if content_type == 'episodes':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%H. %T", "%R | %P")
     elif content_type == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
-    xbmcplugin.endOfDirectory(HANDLE, True, False, True)
-    xbmc.sleep(100)
+    xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=True)
+    xbmc.sleep(50)
     if content_type == 'episodes':
-        for _ in range(20):
+        for _ in range(15):
             if xbmc.getCondVisibility("Container.HasFiles"):
                 break
-            xbmc.sleep(100)
+            xbmc.sleep(50)
     if getBool('interface.viewtypes.bool'):
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
@@ -362,8 +366,8 @@ def draw_items(video_data: list, content_type: str = '') -> None:
                 xbmc.executebuiltin('Action(Down)')
 
 
-def bulk_dir_list(video_data: list, bulk_add: bool = True) -> list:
-    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], bulk_add, vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
+def bulk_dir_list(video_data: list) -> list:
+    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
 
 
 def get_view_type(viewtype: str) -> int:
@@ -381,11 +385,6 @@ def get_view_type(viewtype: str) -> int:
     }
     return viewTypes[viewtype]
 
-
-def exit_(code: int) -> None:
-    sys.exit(code)
-
-
 def is_addon_visible() -> bool:
     return xbmc.getInfoLabel('Container.PluginName') == 'plugin.video.otaku'
 
@@ -395,26 +394,3 @@ def print(string, *args) -> None:
         string = f'{string} {i}'
     textviewer_dialog('print', f'{string}')
     del args, string
-
-def movie_types():
-    return ['MOVIE', 'ONA', 'OVA', 'SPECIAL', 'Movie', "Special"]
-
-class SettingIDs:
-    def __init__(self):
-        # Bools
-        self.showuncached = getBool('show.uncached')
-        self.clearlogo_disable = getBool('interface.clearlogo.disable')
-        self.fanart_disable = getBool('interface.fanart.disable')
-        self.filler = getBool('jz.filler')
-        self.clean_titles = getBool('interface.cleantitles')
-        self.dubonly = getBool("divflavors.dubonly")
-        self.showdub = getBool("divflavors.showdub")
-        self.watchlist_data = getBool('watchlist.episode.data')
-        self.fanart_select = getBool('context.otaku.fanartselect')
-
-        # Ints
-
-        # Str
-
-
-settingids = SettingIDs()

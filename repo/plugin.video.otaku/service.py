@@ -120,7 +120,7 @@ def version_check() -> None:
     control.log(f'### {control.ADDON_ID} {control.ADDON_VERSION}')
     control.log(f'### Platform: {control.sys.platform}')
     control.log(f'### Python: {control.sys.version}')
-    control.log(f'### SQLite: {database_sync.sqlite_version}')
+    control.log(f'### SQLite: {database_sync.version}')
     control.log(f'### Kodi Version: {control.kodi_version}')
 
     if control.getSetting('otaku.version') != control.ADDON_VERSION:

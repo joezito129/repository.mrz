@@ -97,7 +97,7 @@ class JikanAPI:
         return all_results
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
-        update_time, diff = indexers.get_diff(episodes[-1])
+        update_time, diff = indexers.get_diff(episodes[0])
         if diff > int(control.getSetting('interface.check.updates')):
             result = self.get_episode_meta(mal_id)
             season = episodes[-1]['season']
@@ -115,7 +115,9 @@ class JikanAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
-        if not (eps_watched := kodi_meta.get('eps_watched')) and control.settingids.watchlist_data:
+
+        eps_watched = kodi_meta.get('eps_watched')
+        if control.getBool('watchlist.episode.data'):
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor and flavor.flavor_name in control.enabled_watchlists():
@@ -123,6 +125,7 @@ class JikanAPI:
                 if data.get('eps_watched'):
                     eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
                     database.update_kodi_meta(mal_id, kodi_meta)
+
         episodes = database.get_episode_list(mal_id)
         dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
         if episodes:

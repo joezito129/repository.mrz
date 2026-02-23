@@ -78,7 +78,7 @@ class ANIZIPAPI:
         return all_results
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
-        update_time, diff = indexers.get_diff(episodes[-1])
+        update_time, diff = indexers.get_diff(episodes[0])
         if diff > int(control.getSetting('interface.check.updates')):
             result = self.get_anime_info(mal_id)
             result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
@@ -97,7 +97,9 @@ class ANIZIPAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
-        if not (eps_watched := kodi_meta.get('eps_watched')) and control.settingids.watchlist_data:
+        eps_watched = kodi_meta.get('eps_watched')
+
+        if control.getBool('watchlist.episode.data'):
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor and flavor.flavor_name in control.enabled_watchlists():

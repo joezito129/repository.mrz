@@ -89,7 +89,7 @@ class WatchlistPlayer(player):
     def build_playlist(self):
         episodes = database.get_episode_list(self.mal_id)
         video_data = indexers.process_episodes(episodes, '') if episodes else []
-        playlist = control.bulk_dir_list(video_data, True)[self.episode:]
+        playlist = control.bulk_dir_list(video_data)[self.episode:]
         maxplaylist = control.getInt('general.playlist.size')
         if maxplaylist > 0:
             playlist = playlist[:maxplaylist - 1]

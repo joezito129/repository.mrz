@@ -66,7 +66,7 @@ class SIMKLAPI:
         return all_results
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None)-> list:
-        update_time, diff = indexers.get_diff(episodes[-1])
+        update_time, diff = indexers.get_diff(episodes[0])
         if diff >= int(control.getSetting('interface.check.updates')):
             result_meta = self.get_episode_meta(mal_id)
             result_ep = [x for x in result_meta if x['type'] == 'episode']
@@ -86,7 +86,9 @@ class SIMKLAPI:
         fanart = kodi_meta.get('fanart')
         poster = kodi_meta.get('poster')
         tvshowtitle = kodi_meta['title_userPreferred']
-        if not (eps_watched := kodi_meta.get('eps_watched')) and control.settingids.watchlist_data:
+        eps_watched = kodi_meta.get('eps_watched')
+
+        if control.getBool('watchlist.episode.data'):
             from resources.lib.WatchlistFlavor import WatchlistFlavor
             flavor = WatchlistFlavor.get_update_flavor()
             if flavor and flavor.flavor_name in control.enabled_watchlists():
@@ -146,6 +148,7 @@ class SIMKLAPI:
         if r:
             anime_id = r[0]['ids']['simkl']
             return anime_id
+        return None
 
     def get_mapping_ids(self, send_id, anime_id):
         # return_id = anidb, ann, mal, offjp, wikien, wikijp, instagram, imdb, tmdb, tw, tvdbslug, anilist, animeplanet, anisearch, kitsu, livechart, traktslug
@@ -158,3 +161,4 @@ class SIMKLAPI:
         if r.ok:
             r = r.json()
             return r.get('ids')
+        return None

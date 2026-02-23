@@ -47,11 +47,11 @@ def search_history(search_array):
 
 
 def parse_view(base: dict, isfolder: bool, isplayable: bool, dub: bool = False) -> dict:
-    if control.settingids.showdub and dub:
+    if control.getBool("divflavors.showdub") and dub:
         base['name'] += ' [COLOR blue](Dub)[/COLOR]'
         base['info']['title'] = base['name']
     parsed_view = allocate_item(base["name"], base["url"], isfolder, isplayable, [], base["image"], base["info"], base.get("fanart"), base["image"], base.get("landscape"), base.get("banner"), base.get("clearart"), base.get("clearlogo"))
-    if control.settingids.dubonly and not dub:
+    if control.getBool("divflavors.dubonly") and not dub:
         parsed_view = None
     return parsed_view
 

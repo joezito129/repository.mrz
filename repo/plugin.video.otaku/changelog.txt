@@ -1,3 +1,9 @@
+Changelog v5.1.27 (2026-02-23)
+- Fixed append to database
+- Updated speed of database
+- Fixed cloud for Torbox
+- Added kodi caching
+
 Changelog v5.1.26 (2025-11-29)
 - Fixed Dub/Sub filtering
 - Improved Scraping Speeds

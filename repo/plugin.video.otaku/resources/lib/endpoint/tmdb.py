@@ -1,10 +1,13 @@
 import requests
+from requests.adapters import HTTPAdapter
 
 apiKey = "6974ec27debf5cce1218136e2a36f64b"
 baseUrl = "https://api.themoviedb.org/3/"
 thumbPath = "https://image.tmdb.org/t/p/w500"
 backgroundPath = "https://image.tmdb.org/t/p/original"
 
+S = requests.Session()
+S.mount("https://api.themoviedb.org/3/", HTTPAdapter(pool_connections=100, pool_maxsize=100))
 
 def getArt(meta_ids, mtype):
     art = {}
@@ -16,7 +19,7 @@ def getArt(meta_ids, mtype):
                 'external_source': 'tvdb_id',
                 "api_key": apiKey
             }
-            r = requests.get(f'{baseUrl}find/{tvdb}', params=params)
+            r = S.get(f'{baseUrl}find/{tvdb}', params=params)
             res = r.json() if r.ok else {}
             res = res.get('tv_results')
             if res:

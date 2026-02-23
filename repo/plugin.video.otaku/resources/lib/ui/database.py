@@ -5,10 +5,65 @@ import re
 import time
 import threading
 import xbmcvfs
+import xbmcgui
 
 from sqlite3 import OperationalError, dbapi2
 from resources.lib.ui import control
 
+_window = xbmcgui.Window(10000)
+
+def _mem_get(key):
+    """Get cached value from Kodi window property (RAM). Returns None on miss."""
+    try:
+        raw = _window.getProperty(f'otaku_cache_{key}')
+        if raw:
+            data = eval(raw)
+            if data[0] > int(time.time()):
+                return data[1]
+    except:
+        pass
+    return None
+
+def _mem_set(key, value, expires):
+    """Store value in Kodi window property (RAM) with expiration timestamp."""
+    try:
+        _window.setProperty(f'otaku_cache_{key}', repr((expires, value)))
+    except Exception:
+        pass
+
+def _mem_del(key):
+    """Remove value from Kodi window property."""
+    try:
+        _window.clearProperty(f'otaku_cache_{key}')
+    except Exception:
+        pass
+
+def cache(function, duration, *args, **kwargs):
+    """
+    Gets cached value for provided function with optional arguments, or executes and stores the result
+
+    :param function: Function to be executed
+    :param duration: Duration of validity of cache in minutes
+    :param args: Optional arguments for the provided function
+    :param kwargs: Optional keyword arguments for the provided function
+    """
+    key = hash_function(function, args, kwargs)
+
+    # get kodi cache
+
+    cache_result = _mem_get(key)
+    if cache_result is not None:
+        return cache_result
+
+    # no cache found perform new query
+    fresh_result = repr(function(*args, **kwargs))
+    cache_insert(key, fresh_result)
+    data = ast.literal_eval(fresh_result)
+
+    if data is not None:
+        expires = int(time.time()) + int(duration * 60)
+        _mem_set(key, data, expires)
+    return data
 
 def get_(function, duration, *args, **kwargs):
     """
@@ -22,24 +77,41 @@ def get_(function, duration, *args, **kwargs):
     key = hash_function(function, args, kwargs)
     if 'key' in kwargs:
         key += kwargs.pop('key')
+
+    # kodi cache
+    mem_result = _mem_get(key)
+    if mem_result is not None:
+        return mem_result
+
+    # SQL cache
     cache_result = cache_get(key)
     if cache_result and is_cache_valid(cache_result['date'], duration):
         try:
             return_data = ast.literal_eval(cache_result['value'])
         except:
             import traceback
-            control.log('database.get_error', 'fatal')
             control.log(traceback.format_exc(), 'error')
             return_data = None
+
+        if return_data is not None:
+            # Promote to memory cache for next access
+            expires = cache_result['date'] + int(duration * 3600)
+            _mem_set(key, return_data, expires)
         return return_data
 
+    # no cache found perform new query
     fresh_result = repr(function(*args, **kwargs))
     cache_insert(key, fresh_result)
+
+    # if no result use old found cache result
     if not fresh_result:
         return cache_result if cache_result else fresh_result
     data = ast.literal_eval(fresh_result)
-    return data
 
+    if data is not None:
+        expires = int(time.time()) + int(duration * 3600)
+        _mem_set(key, data, expires)
+    return data
 
 def hash_function(function_instance, *args) -> str:
     function_name = re.sub(r'.+\smethod\s|.+function\s|\sat\s.+|\sof\s.+', '', repr(function_instance))
@@ -74,6 +146,7 @@ def cache_clear() -> None:
         cursor.execute("VACUUM")
         cursor.connection.commit()
         cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
+        _window.clearProperty('otaku_cache_cleared')
         control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
 
 
@@ -246,23 +319,35 @@ class SQL:
 
     def __enter__(self):
         self.lock.acquire()
-        xbmcvfs.mkdir(control.dataPath)
-        conn = dbapi2.connect(self.path, timeout=self.timeout)
-        conn.row_factory = dict_factory
-        conn.execute("PRAGMA FOREIGN_KEYS=1")
-        self.cursor = conn.cursor()
+        try:
+            xbmcvfs.mkdir(control.dataPath)
+            conn = dbapi2.connect(self.path, timeout=self.timeout, isolation_level=None)
+            conn.row_factory = dict_factory
+            # conn.execute("PRAGMA synchronous = NORMAL")
+            conn.execute("PRAGMA synchronous = OFF")
+            conn.execute("PRAGMA journal_mode = OFF")
+            conn.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O
+            conn.execute("PRAGMA FOREIGN_KEYS=1")
+            self.cursor = conn.cursor()
+        except:
+            self.lock.release()  # Release if connection fails
+            raise "SQL Error"
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cursor.close()
-        if self.lock.locked():
-            self.lock.release()
-
-        if exc_type:
-            import traceback
-            control.log('database error')
-            control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
-            if exc_type is OperationalError:
-                return True
+        try:
+            if hasattr(self, 'cursor'):
+                self.cursor.close()
+            if hasattr(self, 'conn'):
+                self.conn.close()
+            if exc_type:
+                import traceback
+                control.log('database error')
+                control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
+                if exc_type is OperationalError:
+                    return True
+        finally:
+            if self.lock.locked():
+                self.lock.release()
 
 

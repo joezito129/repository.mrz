@@ -1,9 +1,8 @@
 from resources.lib.ui import control
-from sqlite3 import version
+from sqlite3 import sqlite_version
 from resources.lib.ui.database import SQL
 
-sqlite_version = version
-
+version = sqlite_version
 
 class SyncDatabase:
     def __init__(self):
@@ -19,7 +18,7 @@ class SyncDatabase:
         # You will need to update the below version number to match the new addon version
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
-        self.last_meta_update = '1.0.1'
+        self.last_meta_update = '1.0.2'
         self.refresh_activites()
         self.check_database_version()
 

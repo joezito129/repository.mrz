@@ -11,7 +11,6 @@ from resources.lib.windows import sort_select
 def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
     import pickle
     from resources.lib.OtakuBrowser import BROWSER
-
     if not (show := database.get_show(mal_id)):
         show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
@@ -19,6 +18,7 @@ def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=
         'query': kodi_meta['query'],
         'mal_id': mal_id,
         'episode': episode,
+        'episodes': kodi_meta['episodes'],
         'status': kodi_meta['status'],
         'media_type': media_type,
         'rescrape': rescrape,
@@ -57,6 +57,7 @@ class Sources(GetSources):
         query = args['query']
         mal_id = args['mal_id']
         episode = args['episode']
+        episodes = args['episodes']
         status = args['status']
         media_type = args['media_type']
         rescrape = args['rescrape']
@@ -86,7 +87,7 @@ class Sources(GetSources):
 
             for inx, torrent_provider in enumerate(self.torrentProviders):
                 if control.getBool(f'provider.{torrent_provider}'):
-                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, query, mal_id, episode, status, media_type, rescrape))
+                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, query, mal_id, episode, status, media_type, episodes))
                     t.start()
                     self.threads.append(t)
                 else:
@@ -141,8 +142,9 @@ class Sources(GetSources):
         return self.return_data
 
 #   ### Torrents ###
-    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, rescrape)-> None:
-        all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type)
+    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, episodes) -> None:
+
+        all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type, episodes)
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
         self.torrentSources += all_sources['cached'] + all_sources['uncached']
