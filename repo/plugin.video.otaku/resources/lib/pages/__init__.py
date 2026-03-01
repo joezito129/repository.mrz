@@ -65,6 +65,15 @@ class Sources(GetSources):
         # source_select = args['source_select']
         self.setProperty('process_started', 'true')
 
+        # set skipintro times to -1 before scraping
+        control.setInt('hianime.skipintro.start', -1)
+        control.setInt('hianime.skipintro.end', -1)
+
+        # set skipintro times to -1 before scraping
+        control.setInt('hianime.skipoutro.start', -1)
+        control.setInt('hianime.skipoutro.end', -1)
+
+
         if any(control.enabled_debrid().values()):
             t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
             t.start()

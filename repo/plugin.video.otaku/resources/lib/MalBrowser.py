@@ -291,7 +291,7 @@ class MalBrowser(BrowserBase.BrowserBase):
                 except TypeError:
                     import time
                     control.log('Unsupported strptime using fromtimestamp', 'warning')
-                    time_format = datetime.datetime.fromtimestamp(time.mktime(time.strptime(string_time, '%Y-%m-%dT%H:%M%z')))
+                    time_format = datetime.datetime.fromtimestamp(time.mktime(time.strptime(string_time, '%Y-%m-%d at %H:%M%z')))
                 info['properties'] = {
                     "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
                     "date": f"{time_format:%A[CR]%B %d, %Y}",
