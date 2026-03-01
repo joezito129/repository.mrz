@@ -3,7 +3,7 @@ import datetime
 import re
 
 from dateutil.tz import tzlocal
-from resources.lib.ui import database
+from resources.lib.ui import database, control
 from bs4 import BeautifulSoup
 
 base_url = "https://animeschedule.net/api/v3"
@@ -38,13 +38,23 @@ def get_dub_time(mal_id) -> list:
                 ep_begin = int(match.group(1))
                 ep_end = int(match.group(2))
                 for ep_number in range(ep_begin, ep_end):
-                    dub_time = datetime.datetime.strptime(date_time, '%Y-%m-%dT%H:%M%z')
+                    try:
+                        dub_time = datetime.datetime.strptime(date_time, '%Y-%m-%dT%H:%M%z')
+                    except TypeError:
+                        import time
+                        control.log('Unsupported strptime using fromtimestamp', 'warning')
+                        dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(date_time, '%Y-%m-%dT%H:%M%z')))
                     dub_time = str(dub_time.astimezone(tzlocal()))[:16]
                     dub_list.append({"season": 0, "episode": ep_number, "release_time": dub_time})
             else:
                 match = re.match(r'Episode (\d+)', dub_text)
                 ep_number = int(match.group(1))
-                dub_time = datetime.datetime.strptime(date_time, '%Y-%m-%dT%H:%M%z')
+                try:
+                    dub_time = datetime.datetime.strptime(date_time, '%Y-%m-%dT%H:%M%z')
+                except TypeError:
+                    import time
+                    control.log('Unsupported strptime using fromtimestamp', 'warning')
+                    dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(date_time, '%Y-%m-%dT%H:%M%z')))
                 dub_time = str(dub_time.astimezone(tzlocal()))[:16]
                 dub_list.append({"season": 0, "episode": ep_number, "release_time": dub_time})
             return dub_list

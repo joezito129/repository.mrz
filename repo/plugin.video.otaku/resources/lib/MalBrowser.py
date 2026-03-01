@@ -286,8 +286,12 @@ class MalBrowser(BrowserBase.BrowserBase):
                 string_time = f"{airingat[:10]} at {time_}"
                 if timezone == 'Asia/Tokyo':
                     string_time += "+09:00"
-
-                time_format = datetime.datetime.strptime(string_time, f"%Y-%m-%d at %H:%M%z")
+                try:
+                    time_format = datetime.datetime.strptime(string_time, f"%Y-%m-%d at %H:%M%z")
+                except TypeError:
+                    import time
+                    control.log('Unsupported strptime using fromtimestamp', 'warning')
+                    time_format = datetime.datetime.fromtimestamp(time.mktime(time.strptime(string_time, '%Y-%m-%dT%H:%M%z')))
                 info['properties'] = {
                     "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
                     "date": f"{time_format:%A[CR]%B %d, %Y}",

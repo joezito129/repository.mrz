@@ -47,7 +47,7 @@ def get_diff(episodes_0) -> tuple:
     update_time = datetime.date.today().isoformat()
     try:
         last_updated = datetime.datetime.strptime(episodes_0.get('last_updated'), "%Y-%m-%d")
-    except:
+    except TypeError:
         import time
         control.log('Unsupported strptime using fromtimestamp', 'warning')
         last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes_0.get('last_updated'), '%Y-%m-%d')))

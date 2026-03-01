@@ -2,6 +2,7 @@ import datetime
 import re
 import requests
 
+from resources.lib.ui import control
 from dateutil.tz import tzlocal
 
 api_key = '7d05c918d14d9a89347492f8916e3a76457de61dd3303e9a31aecb971d6c8149'
@@ -40,14 +41,24 @@ def get_dub_data(en_title):
                 # More than one episode in teamup_dat
                 if len(episode) == 2:
                     ep_number1 , ep_number2 = episode
-                    dub_time = datetime.datetime.strptime(end_dt, '%Y-%m-%dT%H:%M:%S%z')
+                    try:
+                        dub_time = datetime.datetime.strptime(end_dt, '%Y-%m-%dT%H:%M:%S%z')
+                    except TypeError:
+                        import time
+                        control.log('Unsupported strptime using fromtimestamp', 'warning')
+                        dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(end_dt, '%Y-%m-%dT%H:%M%z')))
                     dub_time = str(dub_time.astimezone(tzlocal()))[:16]
                     dub_list = [{"season": season, "episode": f'{i}', "release_time": dub_time} for i in range(int(ep_number1), int(ep_number2) + 1)]
 
                 # Only one episode in teamup_dat
                 elif len(episode) == 1:
                     ep_number = episode[0]
-                    dub_time = datetime.datetime.strptime(end_dt, '%Y-%m-%dT%H:%M:%S%z')
+                    try:
+                        dub_time = datetime.datetime.strptime(end_dt, '%Y-%m-%dT%H:%M:%S%z')
+                    except TypeError:
+                        import time
+                        control.log('Unsupported strptime using fromtimestamp', 'warning')
+                        dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(end_dt, '%Y-%m-%dT%H:%M%z')))
                     dub_time = str(dub_time.astimezone(tzlocal()))[:16]
                     dub_list.append({"season": season, "episode": ep_number, "release_time": dub_time})
         return dub_list
