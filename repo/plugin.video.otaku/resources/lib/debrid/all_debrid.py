@@ -9,35 +9,68 @@ class AllDebrid:
         self.token = control.getSetting('alldebrid.token')
         self.agent_identifier = control.ADDON_NAME
         self.base_url = 'https://api.alldebrid.com/v4'
-        self.cache_check_results = []
-        self.OauthTimeStep = 1
-        self.OauthTimeout = 0
-        self.OauthTotalTimeout = 0
+        self.dialog = None
 
     def auth(self):
+        import pyqrcode
+        import os
+        from resources.lib.windows.progress_dialog import Progress_dialog
+        url = f'{self.base_url}/pin/get'
         params = {'agent': self.agent_identifier}
-        resp = requests.get(f'{self.base_url}/pin/get', params=params).json()['data']
-        self.OauthTotalTimeout = self.OauthTimeout = int(resp['expires_in'])
+        resp = requests.get(url, params=params).json()['data']
+        OauthTotalTimeout = OauthTimeout = int(resp['expires_in'])
+        OauthTimeStep = 1
+
         copied = control.copy2clip(resp['pin'])
         display_dialog = (f"{control.lang(30020).format(control.colorstr(resp['base_url']))}[CR]"
                           f"{control.lang(30021).format(control.colorstr(resp['pin']))}")
         if copied:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
-        control.progressDialog.create(f'{control.ADDON_NAME}: AllDebrid Auth', display_dialog)
-        control.progressDialog.update(100)
+
+        qr_path = os.path.join(control.dataPath, 'qr_code.png')
+        qr = pyqrcode.create(resp['base_url'])
+        qr.png(qr_path, scale=20)
+        config = {
+            'heading': f'{control.ADDON_NAME}: AllDebrid Auth',
+            'text': display_dialog,
+            'image': qr_path,
+            'percent': 100
+        }
+        self.dialog = Progress_dialog('progress_dialog.xml', control.ADDON_PATH, config=config)
+        self.dialog.show()
 
         # Seems the All Debrid servers need some time do something with the pin before polling
         # Polling too early will cause an invalid pin error
         xbmc.sleep(5000)
 
+        params = {
+            'check': resp['check'],
+            'pin': resp['pin'],
+            'agent': self.agent_identifier
+        }
         auth_done = False
-        while not auth_done and self.OauthTimeout > 0:
-            self.OauthTimeout -= self.OauthTimeStep
-            xbmc.sleep(self.OauthTimeStep * 1000)
-            auth_done = self.auth_loop(check=resp['check'], pin=resp['pin'])
-        control.progressDialog.close()
+        while not auth_done and OauthTimeout > 0:
+            OauthTimeout -= OauthTimeStep
+            xbmc.sleep(OauthTimeStep * 1000)
+            auth_done, OauthTimeout = self.auth_loop(params, OauthTimeout)
+            self.dialog.update(int(OauthTimeout / OauthTotalTimeout * 100))
+        self.dialog.close()
         if auth_done:
             self.status()
+
+    def auth_loop(self, params, OauthTimeout) -> tuple:
+        if self.dialog.iscanceled():
+            OauthTimeout = 0
+            return False, OauthTimeout
+        url = f'{self.base_url}/pin/check'
+        r = requests.get(url, params=params)
+        resp = r.json()['data']
+        if resp['activated']:
+            self.token = resp['apikey']
+            control.setSetting('alldebrid.token', self.token)
+            return True, OauthTimeout
+        return False, OauthTimeout
+
 
     def status(self) -> None:
         params = {
@@ -55,20 +88,6 @@ class AllDebrid:
             control.ok_dialog(f'{control.ADDON_NAME}: AllDebrid', control.lang(30024))
         else:
             control.setSetting('alldebrid.auth.status', 'Premium')
-
-    def auth_loop(self, **params) -> bool:
-        if control.progressDialog.iscanceled():
-            self.OauthTimeout = 0
-            return False
-        control.progressDialog.update(int(self.OauthTimeout / self.OauthTotalTimeout * 100))
-        params['agent'] = self.agent_identifier
-        r = requests.get(f'{self.base_url}/pin/check', params=params)
-        resp = r.json()['data']
-        if resp['activated']:
-            self.token = resp['apikey']
-            control.setSetting('alldebrid.token', self.token)
-            return True
-        return False
 
     def addMagnet(self, magnet_hash):
         params = {
@@ -129,7 +148,7 @@ class AllDebrid:
         selected_file = folder_details[0]['link']
 
         if selected_file is None:
-            return
+            return None
 
         self.delete_magnet(magnet_id)
         return self.resolve_hoster(selected_file)

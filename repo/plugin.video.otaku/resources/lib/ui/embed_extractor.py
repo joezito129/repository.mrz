@@ -69,7 +69,7 @@ def load_video_from_url(in_url):
 
     try:
         if found_extractor['preloader'] is not None:
-            control.log("Modifying Url: %s" % in_url)
+            control.log("Modifying Url: %s" % in_url, 'debug')
             in_url = found_extractor['preloader'](in_url)
 
         data = found_extractor['data']

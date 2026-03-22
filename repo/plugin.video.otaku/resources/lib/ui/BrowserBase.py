@@ -1,6 +1,7 @@
 import re
 import json
 import xbmcvfs
+import unicodedata
 
 from resources.lib.ui import control, utils
 
@@ -47,9 +48,12 @@ class BrowserBase:
 
         return total_seconds
 
+
     @staticmethod
-    def _clean_title(text: str) -> str:
-        return text.replace(u'×', ' x ')
+    def remove_non_ascii(text: str) -> str:
+        text = unicodedata.normalize('NFKD', text)
+        text = re.sub(r'[^\x00-\x7F]+', ' ', text)
+        return re.sub(r'\s+', ' ', text).strip()
 
     @staticmethod
     def _sphinx_clean(text: str) -> str:

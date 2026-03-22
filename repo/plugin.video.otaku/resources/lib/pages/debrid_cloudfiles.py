@@ -12,30 +12,31 @@ class Sources(BrowserBase.BrowserBase):
         self.cloud_files = []
         self.threads = []
 
-    def get_sources(self, debrid: dict, query: str, episode: str) -> list:
+    def get_sources(self, debrid: dict, title: str, title_en: str, episode: str) -> list:
         if debrid.get('real_debrid'):
-            t = threading.Thread(target=self.rd_cloud_inspection, args=(query, episode,))
+            t = threading.Thread(target=self.rd_cloud_inspection, args=(title, title_en, episode,))
             t.start()
             self.threads.append(t)
         if debrid.get('premiumize'):
-            t = threading.Thread(target=self.premiumize_cloud_inspection, args=(query, episode,))
+            t = threading.Thread(target=self.premiumize_cloud_inspection, args=(title, title_en, episode,))
             t.start()
             self.threads.append(t)
         if debrid.get('alldebrid'):
-            t = threading.Thread(target=self.alldebrid_cloud_inspection, args=(query, episode,))
+            t = threading.Thread(target=self.alldebrid_cloud_inspection, args=(title, title_en, episode,))
             t.start()
             self.threads.append(t)
         if debrid.get('torbox'):
-            t = threading.Thread(target=self.torbox_cloud_inspection, args=(query, episode,))
+            t = threading.Thread(target=self.torbox_cloud_inspection, args=(title, title_en, episode,))
             t.start()
             self.threads.append(t)
         for i in self.threads:
             i.join()
         return self.cloud_files
 
-    def rd_cloud_inspection(self, query: str, episode: str) -> None:
+    def rd_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
         api = real_debrid.RealDebrid()
         torrents = api.list_torrents()
+        query = f'("{title}"|"{title_en}")'
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]
         close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)
         close_matches_filtered = source_utils.filter_sources(close_matches, 0, int(episode))
@@ -69,19 +70,16 @@ class Sources(BrowserBase.BrowserBase):
                 }
             )
 
-    def premiumize_cloud_inspection(self, query: str, episode: str) -> None:
-        query1, query2 = query.replace('(', '').replace(')', '').split('|', 1)
-        cloud_items = premiumize.Premiumize().search_folder(query1)
-        cloud_items += premiumize.Premiumize().search_folder(query2)
+    def premiumize_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
+        cloud_items = premiumize.Premiumize().search_folder(title)
+        cloud_items += premiumize.Premiumize().search_folder(title_en)
         unique_cloud_items = []
         [unique_cloud_items.append(i) for i in cloud_items if i not in unique_cloud_items]
         for torrent in unique_cloud_items:
             filename = re.sub(r'\[.*?]', '', torrent['name']).lower()
-
             if torrent['type'] == 'file':
                 if source_utils.is_file_ext_valid(filename) and episode.zfill(2) not in filename.split('-', 1)[1]:
                     continue
-
             self.cloud_files.append(
                 {
                     'id': torrent['id'],
@@ -100,22 +98,20 @@ class Sources(BrowserBase.BrowserBase):
                 }
             )
 
-    def torbox_cloud_inspection(self, query: str, episode: str) -> None:
+    def torbox_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
         api = torbox.Torbox()
         torrents = api.list_torrents()
+        query = f'("{title}"|"{title_en}")'
         filenames = [re.sub(r'\[.*?]\s*', '', i['name'].replace(',', '')) for i in torrents]
         close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)
         close_matches_filtered = source_utils.filter_sources(close_matches, 0, int(episode))
         for filename in close_matches_filtered:
             i = filenames.index(filename)
             torrent = torrents[i]
-
             if not torrent['cached'] or not torrent['download_finished'] or len(torrent['files']) < 1:
                 continue
-
             if not any(source_utils.is_file_ext_valid(tor_file['short_name'].lower()) for tor_file in torrent['files']):
                 continue
-
             self.cloud_files.append(
                 {
                     'id': torrent['id'],
@@ -134,9 +130,10 @@ class Sources(BrowserBase.BrowserBase):
                 }
             )
 
-    def alldebrid_cloud_inspection(self, query: str, episode: str) -> None:
+    def alldebrid_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
         api = all_debrid.AllDebrid()
         torrents = api.list_torrents()['links']
+        query = f"({title}|{title_en})"
         filenames = [re.sub(r'\[.*?]\s*', '', i['filename'].replace(',', '')) for i in torrents]
         filenames_query = ','.join(filenames)
         r = requests.get('https://armkai.vercel.app/api/fuzzypacks', params={"dict": filenames_query, "match": query})
@@ -146,16 +143,12 @@ class Sources(BrowserBase.BrowserBase):
             filename = re.sub(r'\[.*?]', '', torrent['filename']).lower()
             if source_utils.is_file_ext_valid(filename) and episode not in filename:
                 continue
-
             torrent_info = api.link_info(torrent['link'])
             torrent_files = torrent_info['infos']
-
             if len(torrent_files) > 1 and len(torrent_info['links']) == 1:
                 continue
-
             if not any(source_utils.is_file_ext_valid(tor_file['filename'].lower()) for tor_file in torrent_files):
                 continue
-
             url = api.resolve_hoster(torrent['link'])
             self.cloud_files.append(
                 {

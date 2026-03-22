@@ -1,3 +1,11 @@
+Changelog v5.1.30 (2026-03-22)
+- Improved scrapping query
+- Improved scrapping filtering
+- Added nekobt scaper
+- Added QR Code to Debrid
+- Added copy2clip for linux and mac
+- Removed dateutil dependency
+
 Changelog v5.1.28 (2026-02-28)
 - add torbox sign in oath2
 - improved caching

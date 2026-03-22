@@ -1,5 +1,4 @@
 import xbmc
-import xbmcgui
 import pickle
 
 from resources.lib.ui import control, database
@@ -81,6 +80,7 @@ class WatchlistPlayer(player):
         control.closeAllDialogs()
 
     def onPlayBackError(self):
+        control.log('onPlayBackError', 'warning')
         control.closeAllDialogs()
         playList.clear()
 
@@ -116,14 +116,16 @@ class WatchlistPlayer(player):
         monitor = Monitor()
         for _ in range(20):
             if monitor.playbackerror:
-                return control.log('playbackerror', 'warning')
+                control.log('playbackerror', 'warning')
+                return None
             if self.isPlayingVideo() and self.getTotalTime() != 0:
                 break
             monitor.waitForAbort(0.25)
         del monitor
 
         if not self.isPlayingVideo():
-            return control.log('Not playing Video', 'warning')
+            control.log('Not playing Video', 'warning')
+            return None
 
         if self.resume:
             self.seekTime(self.resume)
@@ -176,7 +178,7 @@ class WatchlistPlayer(player):
                     self.current_time = int(self.getTime())
                     if self.current_time > self.skipintro_end:
                         break
-                    elif self.current_time > self.skipintro_start:
+                    elif self.current_time > self.skipintro_start and control.is_video_window_open():
                         PlayerDialogs().show_skip_intro(self.skipintro_aniskip, self.skipintro_end)
                         break
                     xbmc.sleep(1000)
@@ -274,7 +276,7 @@ class PlayerDialogs(xbmc.Player):
     def display_dialog(self, skipoutro_aniskip, skipoutro_end):
         if playList.size() == 0 or playList.getposition() == (playList.size() - 1):
             return
-        if self.playing_file != self.getPlayingFile() or not self.isPlayingVideo() or not self._is_video_window_open():
+        if self.playing_file != self.getPlayingFile() or not self.isPlayingVideo() or not control.is_video_window_open():
             return
         self._show_playing_next(skipoutro_aniskip, skipoutro_end)
 
@@ -307,10 +309,6 @@ class PlayerDialogs(xbmc.Player):
             'name': _next_info.getLabel()
         }
         return next_info
-
-    @staticmethod
-    def _is_video_window_open():
-        return False if xbmcgui.getCurrentWindowId() != 12005 else True
 
 
 class Monitor(xbmc.Monitor):

@@ -9,6 +9,7 @@ import xbmcvfs
 from sqlite3 import OperationalError, dbapi2
 from resources.lib.ui import control
 
+
 def _mem_get(key):
     """Get cached value from Kodi window property."""
     try:
@@ -46,7 +47,6 @@ def cache(function, duration, *args, **kwargs):
 
     # no cache found perform new query
     fresh_result = repr(function(*args, **kwargs))
-    cache_insert(key, fresh_result)
     data = ast.literal_eval(fresh_result)
 
     if data is not None:
@@ -113,13 +113,13 @@ def cache_insert(key: str, value: str) -> None:
 
 
 def cache_clear() -> None:
+    control.window.clearProperties()
     with SQL(control.cacheFile) as cursor:
         cursor.execute("DROP TABLE IF EXISTS cache")
         cursor.execute("VACUUM")
         cursor.connection.commit()
         cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
-
-        control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
+    control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
 
 
 def is_cache_valid(cached_time: int, cache_timeout: int) -> bool:
@@ -170,7 +170,7 @@ def update_show_data(mal_id: int, data: dict, last_updated: str = ''):
 
 def create_episode(mal_id: int, number: int, update_time: str, season: int, kodi_meta, filler: str, anidb_ep_id) -> None:
     with SQL(control.malSyncDB) as cursor:
-        cursor.execute('REPLACE INTO episodes (mal_id, number, last_updated, season, kodi_meta, filler, anidb_ep_id) VALUES (?, ?, ?, ?, ?, ?, ?)', (mal_id, number, update_time, season, kodi_meta, filler, anidb_ep_id))
+        cursor.execute('REPLACE INTO episodes (mal_id, number, last_updated, season, kodi_meta, filler, anidb_ep_id, nekobt_ep_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (mal_id, number, update_time, season, kodi_meta, filler, anidb_ep_id, ''))
         cursor.connection.commit()
 
 def update_episode_column(mal_id: int, episode: int, column: str, value):
@@ -230,51 +230,41 @@ def get_mappings(anime_id, send_id):
         return mappings[0] if mappings else {}
 
 
-def getSearchHistory(media_type: str = 'show'):
+def getSearchHistory(media_type: str) -> list:
     with SQL(control.searchHistoryDB) as cursor:
-        cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
-        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
-        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON show (value)")
+        cursor.execute(f'CREATE TABLE IF NOT EXISTS {media_type} (value TEXT)')
+        cursor.execute(f"CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON {media_type} (value)")
         cursor.execute("SELECT * FROM %s" % media_type)
         history = cursor.fetchall()
-        history.reverse()
-        history = history[:50]
-        filter_ = []
-        for i in history:
-            if i['value'] not in filter_:
-                filter_.append(i['value'])
-        return filter_
-
+    history.reverse()
+    return list(dict.fromkeys(i['value'] for i in history))
 
 def addSearchHistory(search_string: str, media_type: str) -> None:
     with SQL(control.searchHistoryDB) as cursor:
-        cursor.execute('CREATE TABLE IF NOT EXISTS show (value TEXT)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS movie (value TEXT)')
-        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON movie (value)")
-        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON show (value)")
+        cursor.execute(f'CREATE TABLE IF NOT EXISTS {media_type} (value TEXT)')
+        cursor.execute(f"CREATE UNIQUE INDEX IF NOT EXISTS ix_history ON {media_type} (value)")
         cursor.execute("REPLACE INTO %s Values (?)" % media_type, (search_string,))
         cursor.connection.commit()
 
 
-def clearSearchHistory() -> None:
+def clearSearchHistory(media_type: str) -> None:
     confirmation = control.yesno_dialog(control.ADDON_NAME, "Clear search history?")
     if not confirmation:
         return
     with SQL(control.searchHistoryDB) as cursor:
-        cursor.execute("DROP TABLE IF EXISTS movie")
-        cursor.execute("DROP TABLE IF EXISTS show")
-        cursor.execute("VACCUM")
+        cursor.execute(f"DROP TABLE IF EXISTS {media_type}")
+        cursor.execute("VACUUM")
+        cursor.execute(f"CREATE TABLE IF NOT EXISTS {media_type} (value TEXT)")
         cursor.connection.commit()
-        control.refresh()
-        control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
+    control.refresh()
+    control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
 
 
 def remove_search(table: str, value: str) -> None:
     with SQL(control.searchHistoryDB) as cursor:
         cursor.execute(f'DELETE FROM {table} WHERE value=?', (value,))
         cursor.connection.commit()
-        control.refresh()
+    control.refresh()
 
 
 def dict_factory(cursor, row):
@@ -295,7 +285,6 @@ class SQL:
             xbmcvfs.mkdir(control.dataPath)
             conn = dbapi2.connect(self.path, timeout=self.timeout, isolation_level=None)
             conn.row_factory = dict_factory
-            # conn.execute("PRAGMA synchronous = NORMAL")
             conn.execute("PRAGMA synchronous = OFF")
             conn.execute("PRAGMA journal_mode = OFF")
             conn.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O

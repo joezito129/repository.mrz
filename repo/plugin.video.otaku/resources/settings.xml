@@ -319,6 +319,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="provider.nekobt" type="boolean" label="30405" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
             </group>
             <group id="2" label="30333" help="">
                 <setting id="embed.config" type="list[string]" label="30644" help="">
@@ -714,6 +719,7 @@
                 </setting>
             </group>
         </category>
+
         <category id="Accounts" label="30365" help="">
             <!-- Real-Debrid -->
             <group id="1" label="30100" help="">
@@ -1568,6 +1574,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="test" type="boolean" label="" help="">
+                    <level>4</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
             </group>
         </category>
 
@@ -1666,7 +1677,6 @@
                         <allowempty>true</allowempty>
                     </constraints>
                 </setting>
-
                 <setting id="fanart.all" type="list[String]" help="">
                     <level>4</level>
                     <default/>

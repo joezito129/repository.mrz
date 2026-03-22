@@ -5,7 +5,6 @@ import datetime
 import time
 
 from functools import partial
-from dateutil.tz import tzlocal
 from resources.lib.ui import BrowserBase, database, get_meta, utils, control
 from resources.lib.ui.divide_flavors import div_flavor
 
@@ -735,7 +734,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
 
         if airingat:
             info['episode'] = episode
-            time_format = datetime.datetime.fromtimestamp(airingat, tzlocal())
+            time_format = datetime.datetime.fromtimestamp(airingat).astimezone()
             info['properties'] = {
                 "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
                 "date": f"{time_format:%A[CR]%B %d, %Y}",
@@ -785,8 +784,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
         title_userPreferred = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
         name = res['title']['romaji']
-        ename = res['title']['english']
-        titles = f"({name})|({ename})"
+        ename = res['title']['english'] or name
+        titles = f"({name}|{ename})"
 
         if desc := res.get('description'):
             desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')

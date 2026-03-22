@@ -334,15 +334,14 @@ class MalBrowser(BrowserBase.BrowserBase):
         title_userPreferred = res[self._TITLE_LANG] or res['title']
 
         name = res['title']
-        ename = res['title_english']
-        titles = f"({name})|({ename})"
+        ename = res['title_english'] or res['title']
 
         kodi_meta = {
             'name': name,
             'ename': ename,
+            'synonyms': res['title_synonyms'],
             'title_userPreferred': title_userPreferred,
             'start_date': start_date,
-            'query': titles,
             'episodes': res['episodes'],
             'poster': res['images']['webp']['large_image_url'],
             'status': res.get('status'),

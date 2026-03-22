@@ -2,7 +2,6 @@ import requests
 import datetime
 import re
 
-from dateutil.tz import tzlocal
 from resources.lib.ui import database, control
 from bs4 import BeautifulSoup
 
@@ -44,7 +43,8 @@ def get_dub_time(mal_id) -> list:
                         import time
                         control.log('Unsupported strptime using fromtimestamp', 'warning')
                         dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(date_time, '%Y-%m-%dT%H:%M%z')))
-                    dub_time = str(dub_time.astimezone(tzlocal()))[:16]
+
+                    dub_time = str(dub_time.astimezone())[:16]
                     dub_list.append({"season": 0, "episode": ep_number, "release_time": dub_time})
             else:
                 match = re.match(r'Episode (\d+)', dub_text)
@@ -55,7 +55,7 @@ def get_dub_time(mal_id) -> list:
                     import time
                     control.log('Unsupported strptime using fromtimestamp', 'warning')
                     dub_time = datetime.datetime.fromtimestamp(time.mktime(time.strptime(date_time, '%Y-%m-%dT%H:%M%z')))
-                dub_time = str(dub_time.astimezone(tzlocal()))[:16]
+                dub_time = str(dub_time.astimezone())[:16]
                 dub_list.append({"season": 0, "episode": ep_number, "release_time": dub_time})
             return dub_list
     return []

@@ -19,7 +19,7 @@ addonInfo = xbmcaddon.Addon().getAddonInfo
 ADDON_ID = addonInfo('id')
 ADDON = xbmcaddon.Addon(ADDON_ID)
 Settings = ADDON.getSettings()
-language = ADDON.getLocalizedString
+lang = ADDON.getLocalizedString
 addonInfo = ADDON.getAddonInfo
 ADDON_NAME = addonInfo('name')
 ADDON_VERSION = addonInfo('version')
@@ -44,7 +44,10 @@ LOGO_SMALL = os.path.join(COMMON_PATH, 'trans-goku-small.png')
 LOGO_MEDIUM = os.path.join(COMMON_PATH, 'trans-goku.png')
 ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
 
-execute, progressDialog, playList, window = xbmc.executebuiltin, xbmcgui.DialogProgress(), xbmc.PlayList(xbmc.PLAYLIST_VIDEO), xbmcgui.Window(10000)
+execute = xbmc.executebuiltin
+progressDialog = xbmcgui.DialogProgress()
+playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+window = xbmcgui.Window(10000)
 
 bool_cache = {}
 
@@ -98,14 +101,25 @@ def watchlist_to_update() -> str:
 
 
 def copy2clip(txt: str) -> bool:
+    import subprocess
     platform = sys.platform
-    if platform == 'win32':
-        try:
-            import os
-            os.system('echo %s|clip' % txt)
+    log(platform)
+    try:
+        if platform == 'win32':
+            process = subprocess.Popen(['clip'], stdin=subprocess.PIPE, text=True)
+            process.communicate(input=txt)
             return True
-        except AttributeError:
-            pass
+        elif platform == 'darwin':  # macOS
+            process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE, text=True)
+            process.communicate(input=txt)
+            return True
+        elif platform == 'linux':
+            # Linux requires xclip or xsel to be installed
+            process = subprocess.Popen(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE, text=True)
+            process.communicate(input=txt)
+            return True
+    except Exception as e:
+        log(e)
     return False
 
 
@@ -124,21 +138,20 @@ def getSetting(key: str) -> str:
 
 def getBool(key: str) -> bool:
     cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return cache == 'true' if cache else ADDON.getSettingBool(key)
-
+    return cache == 'true' if cache else Settings.getBool(key)
 
 
 def getInt(key: str) -> int:
     cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return int(cache) if cache else ADDON.getSettingInt(key)
+    return int(cache) if cache else Settings.getInt(key)
 
 
 def getString(key: str) -> str:
     cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return cache if cache else ADDON.getSettingString(key)
+    return cache if cache else Settings.getString(key)
 
 
-def getStringList(settingid: str):
+def getStringList(settingid: str) -> list:
     return Settings.getStringList(settingid)
 
 
@@ -146,20 +159,16 @@ def setSetting(settingid: str, value: str) -> None:
     ADDON.setSetting(settingid, value)
 
 
-def setBool(settingid: str, value: bool) -> bool:
-    return ADDON.setSettingBool(settingid, value)
+def setBool(settingid: str, value: bool) -> None:
+    Settings.setBool(settingid, value)
 
 
-def setInt(settingid: str, value: int) -> bool:
-    return ADDON.setSettingInt(settingid, value)
+def setInt(settingid: str, value: int) -> None:
+    Settings.setInt(settingid, value)
 
 
 def setStringList(settingid: str, value: list):
-    return Settings.setStringList(settingid, value)
-
-
-def lang(x: int) -> str:
-    return language(x)
+    Settings.setStringList(settingid, value)
 
 
 def addon_url(url: str) -> str:
@@ -396,12 +405,17 @@ def is_addon_visible() -> bool:
     return xbmc.getInfoLabel('Container.PluginName') == 'plugin.video.otaku'
 
 
+def is_video_window_open():
+    return False if xbmcgui.getCurrentWindowId() != 12005 else True
+
+
 def json_res(response):
     try:
         response = response.json()
     except:
         response = {}
     return response
+
 
 def print(string, *args) -> None:
     for i in list(args):

@@ -10,34 +10,47 @@ class Premiumize:
         self.client_id = '807831898'        # Otaku
         self.token = control.getSetting('premiumize.token')
         self.base_url = 'https://www.premiumize.me/api'
-        self.OauthTimeStep = 0
-        self.OauthTimeout = 0
-        self.OauthTotalTimeout = 0
+        self.dialog = None
 
     def headers(self) -> dict:
         return {'Authorization': f"Bearer {self.token}"}
 
     def auth(self):
+        import pyqrcode
+        import os
+        from resources.lib.windows.progress_dialog import Progress_dialog
+        url = 'https://www.premiumize.me/token'
         data = {'client_id': self.client_id, 'response_type': 'device_code'}
-        r = requests.post('https://www.premiumize.me/token', data=data)
+        r = requests.post(url, data=data)
         resp = r.json()
-        self.OauthTotalTimeout = self.OauthTimeout = resp['expires_in']
-        self.OauthTimeStep = int(resp['interval'])
+        OauthTotalTimeout = OauthTimeout = resp['expires_in']
+        OauthTimeStep = int(resp['interval'])
         copied = control.copy2clip(resp['user_code'])
         display_dialog = (f"{control.lang(30020).format(control.colorstr(resp['verification_uri']))}[CR]"
                           f"{control.lang(30021).format(control.colorstr(resp['user_code']))}")
         if copied:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
-        control.progressDialog.create(f'{control.ADDON_NAME}: Premiumize Auth', display_dialog)
-        control.progressDialog.update(100)
+
+        qr_path = os.path.join(control.dataPath, 'qr_code.png')
+        qr = pyqrcode.create(resp['base_url'])
+        qr.png(qr_path, scale=20)
+        config = {
+            'heading': f'{control.ADDON_NAME}: Premiumize Auth',
+            'text': display_dialog,
+            'image': qr_path,
+            'percent': 100
+        }
+        self.dialog = Progress_dialog('progress_dialog.xml', control.ADDON_PATH, config=config)
+        self.dialog.show()
 
         auth_done = False
-        while not auth_done and self.OauthTimeout > 0:
-            self.OauthTimeout -= self.OauthTimeStep
-            xbmc.sleep(self.OauthTimeStep * 1000)
-            auth_done = self.auth_loop(resp['device_code'])
-        control.progressDialog.close()
-
+        data = {'client_id': self.client_id, 'code': resp['device_code'], 'grant_type': 'device_code'}
+        while not auth_done and OauthTimeout > 0:
+            OauthTimeout -= OauthTimeStep
+            xbmc.sleep(OauthTimeStep * 1000)
+            auth_done = self.auth_loop(data, OauthTimeout)
+            self.dialog.update(int(OauthTimeout / OauthTotalTimeout * 100))
+        self.dialog.close()
         if auth_done:
             self.status()
 
@@ -53,24 +66,22 @@ class Premiumize:
         else:
             control.setSetting('premiumize.auth.status', 'Premium')
 
-    def auth_loop(self, device_code):
-        if control.progressDialog.iscanceled():
-            self.OauthTimeout = 0
-            return False
-        control.progressDialog.update(int(self.OauthTimeout / self.OauthTotalTimeout * 100))
-        data = {'client_id': self.client_id, 'code': device_code, 'grant_type': 'device_code'}
+    def auth_loop(self, data, OauthTimeout) -> tuple:
+        if self.dialog.iscanceled():
+            OauthTimeout = 0
+            return False,OauthTimeout
         r = requests.post('https://www.premiumize.me/token', data=data)
         token = r.json()
         if r.ok:
             self.token = token['access_token']
             control.setSetting('premiumize.token', self.token)
-            return True
+            return True, OauthTimeout
         else:
             if token.get('error') == 'access_denied':
-                self.OauthTimeout = 0
+                OauthTimeout = 0
             if token.get('error') == 'slow_down':
                 xbmc.sleep(1000)
-        return False
+        return False, OauthTimeout
 
     def search_folder(self, query):
         params = {'q': query}

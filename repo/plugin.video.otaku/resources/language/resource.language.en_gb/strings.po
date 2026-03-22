@@ -726,6 +726,10 @@ msgctxt "#30401"
 msgid "AnimeTosho"
 msgstr ""
 
+msgctxt "#30405"
+msgid "Nekobt"
+msgstr ""
+
 msgctxt "#30402"
 msgid "HiAnime"
 msgstr ""
@@ -737,10 +741,6 @@ msgstr ""
 
 msgctxt "#30404"
 msgid "Animepahe"
-msgstr ""
-
-msgctxt "#30405"
-msgid "Animix"
 msgstr ""
 
 msgctxt "#30406"

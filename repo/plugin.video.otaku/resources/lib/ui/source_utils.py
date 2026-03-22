@@ -1,8 +1,10 @@
 import re
 import string
 import xbmc
+import difflib
 
 from resources.lib.ui import control
+
 
 res = ['EQ', '480p', '720p', '1080p', '4k']
 
@@ -118,6 +120,32 @@ def getInfo(release_title):
     return info
 
 
+def convert_to_bytes(size, units):
+    unit = units.upper()
+    multiplier = {
+        'B': 1,
+        'KIB': 1024,
+        'MIB': 1024 ** 2,
+        'GIB': 1024 ** 3,
+        'TIB': 1024 ** 4,
+        'KB': 1024,
+        'MB': 1024 ** 2,
+        'GB': 1024 ** 3,
+        'TB': 1024 ** 4
+    }
+    return size * multiplier.get(unit, 1)
+
+
+def get_size(size=0) -> str:
+    power = 1024.0
+    n = 0
+    power_labels = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB'}
+    while size > power:
+        size /= power
+        n += 1
+    return '{0:.2f} {1}'.format(size, power_labels[n])
+
+
 def get_cache_check_reg(episode: str):
     season = ''
     reg_string = r'''(?ix)                              # Ignore case (i), and use verbose regex (x)
@@ -136,37 +164,15 @@ def get_cache_check_reg(episode: str):
     return re.compile(reg_string)
 
 
-def convert_to_bytes(size, units):
-    unit = units.upper()
-    if unit == 'KB':
-        byte_size = size * 2 ** 10
-    elif unit == 'MB':
-        byte_size = size * 2 ** 20
-    elif unit == 'GB':
-        byte_size = size * 2 ** 30
-    elif unit == 'TB':
-        byte_size = size * 2 ** 40
-    else:
-        raise ValueError("Unit must be 'KB', 'MB', 'GB', 'TB' ")
-    return byte_size
-
-
-def get_size(size=0) -> str:
-    power = 1024.0
-    n = 0
-    power_labels = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB'}
-    while size > power:
-        size /= power
-        n += 1
-    return '{0:.2f} {1}'.format(size, power_labels[n])
-
-
 def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -> dict:
     regex = get_cache_check_reg(episode)
     all_files = []
-    for i in dictionary_list:
-        path = re.sub(r'\[.*?]', '', i[dict_key].rsplit('/')[-1])
+    pattern = re.compile(r'\[.*?\]')
+    for item in dictionary_list:
+        i = item.copy()
+        path = pattern.sub('', i[dict_key].rsplit('/')[-1])
         i['regex_matches'] = regex.findall(path)
+        i['short_name'] = i.get('short_name', '').removeprefix('[CR]').strip()
         all_files.append(i)
     if not all_files:
         return {}
@@ -177,61 +183,78 @@ def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -
         if not files:
             files = user_select(all_files, dict_key)
         else:
-            files = sorted(files, key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
+            files.sort(key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
             if len(files) != 1:
                 files = user_select(files, dict_key)
     return files[0]
 
-def filter_sources(list_, season: int, episode: int, anidb_id=None, part=None) -> list:
-    import itertools
 
-    regex_season = r"(?i)\b(?:s(?:eason)?[ ._-]?(\d{1,2}))(?=\D|$)"
+def filter_sources(list_, season: int, episode: int, _id=None, titles=None) -> list:
+    regex_season = r"(?i)\b(?:s(?:eason)?[\s._-]?(\d{1,2})|(\d{1,2})(?:st|nd|rd|th)?[\s._-]?s(?:eason)?)(?:(?=[^0-9a-z])|(?=[ex])|$)"
     rex_season = re.compile(regex_season)
 
     regex_ep = r"(?i)(?:s(?:eason)?\s?\d{1,2})?[ ._-]?(?:e(?:p)?\s?(\d{1,4})(?:v\d+)?)?(?:[ ._-]?[-~][ ._-]?e?(?:p)?\s?(\d{1,4}))?|(?:-\s?(\d{1,4})\b)"
     rex_ep = re.compile(regex_ep)
-    if part:
-        regex_part = r"part ?(\d+)"
-        rex_part = re.compile(regex_part)
-    else:
-        rex_part = None
 
     filtered_list= []
-    for torrent in list_:
-        title = torrent['name'].lower() if isinstance(torrent, dict) else torrent
 
-        # filter parts
-        if rex_part and 'part' in title:
-            part_match = rex_part.search(title)
-            if part_match:
-                part_match = int(part_match.group(1).strip())
-                if part_match != part:
-                    continue
+    if titles:
+        fuzz_titles = [t.lower() for t in titles]
+    else:
+        fuzz_titles = None
+    for torrent in list_:
+        title = torrent['name'] if isinstance(torrent, dict) else torrent
+        title = clean_torrent(title)
 
         # filter episode number
-        ep_match = rex_ep.findall(clean_text(title))
-        ep_match = list(map(int, list(filter(None, itertools.chain(*ep_match)))))
+        ep_match = [int(g) for m in rex_ep.finditer(title) for g in m.groups() if g]
         if ep_match and ep_match[0] != episode:
             if not (len(ep_match) > 1 and ep_match[0] <= episode <= ep_match[1]):
                 continue
 
         # filter season
-        if anidb_id:
-            filtered_list.append(torrent)
-        else:
-            season_match = rex_season.findall(title)
-            season_match = list(map(int, list(filter(None, itertools.chain(season_match)))))
+        if not _id:
+            season_match = [int(g) for m in rex_season.finditer(title) for g in m.groups() if g]
             if season_match and season:
-                if season_match[0] <= season <= season_match[-1]:
-                    filtered_list.append(torrent)
-            else:
-                filtered_list.append(torrent)
+                if not (season_match[0] <= int(season) <= season_match[-1]):
+                    continue
+
+        # filter out junk
+        if fuzz_titles:
+            best_ratio = max(difflib.SequenceMatcher(None, title, t).ratio() for t in fuzz_titles)
+            if best_ratio < 0.3:
+                continue
+        filtered_list.append(torrent)
     return filtered_list
 
-def clean_text(text):
-    text = re.sub(r"\[.*?\]|\(.*?\)", "", text).strip()  # Remove brackets
-    text = re.sub(r"\b(?:480p|720p|1080p|2160p|4k|h\.264|x264|x265|hevc|web-dl|webrip|bluray|hdr)\b", "", text, flags=re.I)  # Remove resolutions
+
+def clean_title(text: str) -> str:
+    text = re.sub(r'\s*\([^)]*\)', '', text.lower())
     return text
+
+
+def clean_torrent(text):
+    text = text.lower()
+    patterns = [
+        r"\b(?:360p|480p|720p|1080p|2160p|4k)(?!\d)",
+        r"\b10\s?bits?\b",
+        r"\b(?:h\.?\s?264|x\.?\s?264|h\.?\s?265|x\.?\s?265|hevc|avc|hls)(?!\d)",
+        r"\b(?:web-dl|webrip|bluray|hdrip|dvdrip|hdtv|pdtv|cam|screener)\b",
+        r"\b(?:hdr10|hdr|sdr|dv|dolby vision|dovi)\b",
+        r"\b(?:mp4|vp9|av1|mpeg|xvid|divx|wmv|flac)\b",
+        r"\b(?:aac|mp3|opus|ddp|dd(?:\s?(?:2|5|7))|ac3|dts(?:-hdma|-hdhr|-x)?|atmos|truehd)(?:\d+(?:\.\d+)?)?\b",
+        r"\b(?:1\.0|2\.0|5\.1|7\.1|2ch|5ch|7ch|8ch)\b",
+        r"\b(?:3d|60[-\s]?fps)\b",
+        r"\b(?:multi audio|dual audio|dub(?:bed)?|multi sub|batch|complete series)\b"
+    ]
+    combined_pattern = "|".join(patterns)
+    text = re.sub(combined_pattern, '', text)
+    text = re.sub(r"\[.*?\]|\(.*?\)", "", text)
+    # text = re.sub(r"[:/,!?()'\"\\\[\]_.]", " ", text)
+    text = re.sub(r"[:/,!?()'\"\\\[\]_.|~-]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
 
 def cleanTitle(title: str) -> str:
     title = title.lower()

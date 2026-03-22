@@ -9,7 +9,8 @@ PATH = control.getSetting('download.location')
 
 
 class Sources(BrowserBase.BrowserBase):
-    def get_sources(self, query, mal_id, episode):
+    def get_sources(self, titles: list, mal_id, episode):
+        query = '"' + '"|"'.join(titles) + '"'
         filenames = []
         for root, dirs, files in os.walk(PATH):
             for file in files:

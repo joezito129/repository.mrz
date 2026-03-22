@@ -22,7 +22,7 @@ def create_package(provider_name: str, p: Path) -> None:
     source_providers = proider_path / provider_name
     if source_providers.exists():
         shutil.rmtree(source_providers)
-        control.log(f'deleted {provider_name} from {p.name}')
+        control.log(f'deleted {provider_name} from {p.name}', 'debug')
     shutil.move(p / provider_name, proider_path)
 
 

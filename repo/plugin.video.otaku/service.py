@@ -171,16 +171,25 @@ def load_settings():
 ]
 
     for s_id in bool_settings:
-        val = control.ADDON.getSettingBool(s_id)
-        control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val).lower())
+        try:
+            val = control.ADDON.getSettingBool(s_id)
+            control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val).lower())
+        except:
+            control.log(s_id, 'error')
 
     for s_id in int_settings:
-        val = control.ADDON.getSettingInt(s_id)
-        control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+        try:
+            val = control.ADDON.getSettingInt(s_id)
+            control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+        except:
+            control.log(s_id, 'error')
 
     for s_id in str_settings:
-        val = control.ADDON.getSettingString(s_id)
-        control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+        try:
+            val = control.ADDON.getSettingString(s_id)
+            control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+        except:
+            control.log(s_id, 'error')
 
 
 class Monitor(xbmc.Monitor):

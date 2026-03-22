@@ -25,6 +25,7 @@ from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib.WatchlistIntegration import add_watchlists
 
+
 BROWSER = OtakuBrowser.BROWSER
 
 def add_last_watched(items: list) -> list:
@@ -119,7 +120,6 @@ def SEARCH_HISTORY(payload: str, params: dict) -> None:
         SEARCH(payload, params)
 
 
-
 @Route('search/*')
 def SEARCH(payload: str, params: dict) -> None:
     query = payload
@@ -127,7 +127,7 @@ def SEARCH(payload: str, params: dict) -> None:
     if not query:
         query = control.keyboard(control.lang(30005))
         if not query:
-            return control.draw_items([], 'tvshows')
+            return control.refresh()
         if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
     return control.draw_items(database.cache(BROWSER.get_search, 60, query, page), 'tvshows')
@@ -214,7 +214,6 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
     else:
         control.playList.clear()
     control.exit_code()
-
 
 
 @Route('marked_as_watched/*')
@@ -316,6 +315,7 @@ def LIST_MENU(payload: str, params: dict) -> None:
         (30004, "genres//", 'genres_&_tags.png'),
         (30005, "search_history", 'search.png'),
         (30006, "tools", 'tools.png')
+        # ("test", "test", 'tools.png')
     ]
 
     NEW_MENU_ITEMS = []
@@ -370,7 +370,7 @@ def CLEAR_CACHE(payload: str, params: dict) -> None:
 
 @Route('clear_search_history')
 def CLEAR_SEARCH_HISTORY(payload: str, params: dict) -> None:
-    database.clearSearchHistory()
+    database.clearSearchHistory('show')
     control.refresh()
     if params.get('setting'):
         control.exit_code()
@@ -465,6 +465,11 @@ def IMPORT_SETTINGS(payload: str, params: dict) -> None:
 def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict) -> None:
     import service
     service.toggle_reuselanguageinvoker()
+
+
+@Route('test')
+def TEST(payload: str, params: dict) -> None:
+    pass
 
 
 if __name__ == "__main__":

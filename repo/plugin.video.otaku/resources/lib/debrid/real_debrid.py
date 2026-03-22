@@ -13,35 +13,18 @@ class RealDebrid:
         self.ClientSecret = control.getSetting('real_debrid.secret')
         self.token = control.getSetting('real_debrid.token')
         self.refresh = control.getSetting('real_debrid.refresh')
-        self.DeviceCode = ''
-        self.OauthTimeout = 0
-        self.OauthTimeStep = 0
-        self.OauthTotalTimeout = 0
         self.OauthUrl = 'https://api.real-debrid.com/oauth/v2'
         self.BaseUrl = "https://api.real-debrid.com/rest/1.0"
+        self.dialog = None
 
     def headers(self) -> dict:
         return {'Authorization': f"Bearer {self.token}"}
 
-    def auth_loop(self) -> bool:
-        if control.progressDialog.iscanceled():
-            self.OauthTimeout = 0
-            return False
-        control.progressDialog.update(int(self.OauthTimeout/self.OauthTotalTimeout * 100))
-        params = {
-            'client_id': self.ClientID,
-            'code': self.DeviceCode
-        }
-        r = requests.get(f'{self.OauthUrl}/device/credentials', params=params)
-        if r.ok:
-            response = r.json()
-            control.setSetting('real_debrid.client_id', response['client_id'])
-            control.setSetting('real_debrid.secret', response['client_secret'])
-            self.ClientSecret = response['client_secret']
-            self.ClientID = response['client_id']
-        return r.ok
 
     def auth(self) -> None:
+        from resources.lib.windows.progress_dialog import Progress_dialog
+        import pyqrcode
+        import os
         self.ClientID = 'X245A4XAIBGVM'
         self.ClientSecret = ''
         params = {
@@ -54,29 +37,58 @@ class RealDebrid:
                           f"{control.lang(30021).format(control.colorstr(resp['user_code']))}")
         if copied:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
-        control.progressDialog.create(f'{control.ADDON_NAME}: Real-Debrid Auth', display_dialog)
-        control.progressDialog.update(100)
-        self.OauthTotalTimeout = self.OauthTimeout = int(resp['expires_in'])
-        self.OauthTimeStep = int(resp['interval'])
-        self.DeviceCode = resp['device_code']
+
+        qr_path = os.path.join(control.dataPath, 'qr_code.png')
+        qr = pyqrcode.create('https://real-debrid.com/device')
+        qr.png(qr_path, scale=20)
+        config = {
+            'heading': f'{control.ADDON_NAME}: Real-Debrid Auth',
+            'text': display_dialog,
+            'image': qr_path,
+            'percent': 100
+        }
+        self.dialog = Progress_dialog('progress_dialog.xml', control.ADDON_PATH, config=config)
+        self.dialog.show()
+
+        OauthTotalTimeout = OauthTimeout = int(resp['expires_in'])
+        OauthTimeStep = int(resp['interval'])
+        params = {
+            'client_id': self.ClientID,
+            'code': resp['device_code']
+        }
         auth_done = False
-        while not auth_done and self.OauthTimeout > 0:
-            self.OauthTimeout -= self.OauthTimeStep
-            xbmc.sleep(self.OauthTimeStep * 1000)
-            auth_done = self.auth_loop()
-        control.progressDialog.close()
+        while not auth_done and OauthTimeout > 0:
+            OauthTimeout -= OauthTimeStep
+            xbmc.sleep(OauthTimeStep * 1000)
+            auth_done, OauthTimeout = self.auth_loop(params, OauthTimeout)
+            self.dialog.update(int(OauthTimeout / OauthTotalTimeout * 100))
+        self.dialog.close()
         if auth_done:
-            self.token_request()
+            self.token_request(resp['device_code'])
             self.status()
 
-    def token_request(self) -> None:
+    def auth_loop(self, params, OauthTimeout) -> tuple:
+        if self.dialog.iscanceled():
+            OauthTimeout = 0
+            return False, OauthTimeout
+        r = requests.get(f'{self.OauthUrl}/device/credentials', params=params)
+        if r.ok:
+            response = r.json()
+            control.setSetting('real_debrid.client_id', response['client_id'])
+            control.setSetting('real_debrid.secret', response['client_secret'])
+            self.ClientSecret = response['client_secret']
+            self.ClientID = response['client_id']
+        return r.ok, OauthTimeout
+
+
+    def token_request(self, device_code) -> None:
         if self.ClientSecret == '':
-            return
+            return None
 
         postData = {
             'client_id': self.ClientID,
             'client_secret': self.ClientSecret,
-            'code': self.DeviceCode,
+            'code': device_code,
             'grant_type': 'http://oauth.net/grant_type/device/1.0'
         }
 
@@ -88,6 +100,7 @@ class RealDebrid:
         control.setInt('real_debrid.expiry', int(time.time()) + int(response['expires_in']))
         self.token = response['access_token']
         self.refresh = response['refresh_token']
+        return None
 
     def status(self) -> None:
         user_info = requests.get(f'{self.BaseUrl}/user', headers=self.headers()).json()

@@ -8,11 +8,15 @@ class Torbox:
     def __init__(self):
         self.token = control.getSetting('torbox.token')
         self.BaseUrl = "https://api.torbox.app/v1/api"
+        self.dialog = None
 
     def headers(self):
         return {'Authorization': f"Bearer {self.token}"}
 
     def auth(self) -> None:
+        from resources.lib.windows.progress_dialog import Progress_dialog
+        import pyqrcode
+        import os
         params = {'app': control.ADDON_NAME}
         r = requests.get(f'{self.BaseUrl}/user/auth/device/start', params=params)
         if r.ok:
@@ -21,37 +25,45 @@ class Torbox:
                 device_code = res.get('device_code', '')
                 user_code = res.get('code', '')
                 verification_url = res.get('friendly_verification_url') or res.get('verification_url', 'https://tor.box/link')
-                interval = int(res.get('interval', 5))
 
                 copied = control.copy2clip(user_code)
                 display_dialog = (f"{control.lang(30020).format(control.colorstr(verification_url))}[CR]"
                                   f"{control.lang(30021).format(control.colorstr(user_code))}")
                 if copied:
                     display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
-                control.progressDialog.create(f'{control.ADDON_NAME}: TorBox Auth', display_dialog)
-                control.progressDialog.update(100)
 
-                expires_at = res.get('expires_at', '')
-                timeout = total_timeout = 600
+                qr_path = os.path.join(control.dataPath, 'qr_code.png')
+                qr = pyqrcode.create(verification_url)
+                qr.png(qr_path, scale=20)
+                config = {
+                    'heading': f'{control.ADDON_NAME}: TorBox Auth',
+                    'text': display_dialog,
+                    'image': qr_path,
+                    'percent': 100
+                }
+                self.dialog = Progress_dialog('progress_dialog.xml', control.ADDON_PATH, config=config)
+                self.dialog.show()
 
+                OauthTotalTimeout = res.get('expires_at', '')
+                OauthTimeStep = int(res.get('interval', 5))
+                OauthTotalTimeout = OauthTimeout = 600
+
+                data = {'device_code': device_code}
                 auth_done = False
-                while not auth_done and timeout > 0:
-                    timeout -= interval
-                    xbmc.sleep(interval * 1000)
-                    control.progressDialog.update(int(timeout / total_timeout * 100))
-                    auth_done, expires_in = self.auth_loop(device_code, timeout)
-                control.progressDialog.close()
-
+                while not auth_done and OauthTimeout > 0:
+                    OauthTimeout -= OauthTimeStep
+                    xbmc.sleep(OauthTimeStep * 1000)
+                    auth_done, expires_in = self.auth_loop(data, OauthTimeout)
+                    self.dialog.update(int(OauthTimeout / OauthTotalTimeout * 100))
+                self.dialog.close()
                 if auth_done:
                     self.status()
-                control.progressDialog.close()
 
 
-    def auth_loop(self, device_code, timeout) -> tuple:
-        if control.progressDialog.iscanceled():
+    def auth_loop(self, data, timeout) -> tuple:
+        if self.dialog.iscanceled():
             timeout = 0
             return False, timeout
-        data = {'device_code': device_code}
         r = requests.post(f'{self.BaseUrl}/user/auth/device/token', json=data)
         if r.ok:
             r = control.json_res(r)
@@ -141,24 +153,27 @@ class Torbox:
         folder_details = [{'fileId': x['id'], 'path': x['name']} for x in torrent_info['files']]
         if episode:
             selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select)
-            if selected_file and selected_file['fileId'] is not None:
+            if selected_file and selected_file.get('fileId') is not None:
                 stream_link = self.request_dl_link(torrentId, selected_file['fileId'])
                 self.delete_torrent(torrentId)
                 return stream_link
         self.delete_torrent(torrentId)
+        return None
 
     def resolve_hoster(self, source):
         return self.request_dl_link(source['folder_id'], source['file']['id'])
 
     @staticmethod
     def resolve_cloud(source, pack_select):
+        match = {}
         if source['hash']:
             best_match = source_utils.get_best_match('short_name', source['hash'], source['episode'], pack_select)
-            if not best_match or not best_match['short_name']:
-                return
-            for f_index, torrent_file in enumerate(source['hash']):
-                if torrent_file['short_name'] == best_match['short_name']:
-                    return {'folder_id': source['id'], 'file': source['hash'][f_index]}
+            if best_match and best_match.get('short_name'):
+                for f_index, torrent_file in enumerate(source['hash']):
+                    if torrent_file['short_name'].removeprefix('[CR]').strip() == best_match['short_name']:
+                        match = {'folder_id': source['id'], 'file': source['hash'][f_index]}
+                        break
+        return match
 
 
     @staticmethod

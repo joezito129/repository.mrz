@@ -181,7 +181,7 @@ class Resolver(BaseWindow):
         stream_link = {}
         if source['type'] == 'torrent':
             stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select)
-        elif source['type'] == 'cloud' or source['type'] == 'hoster':
+        elif source['type'] in ['cloud', 'hoster']:
             hash_ = api.resolve_cloud(source, self.pack_select)
             if hash_:
                 stream_link = api.resolve_hoster(hash_)

@@ -1,3 +1,4 @@
+import json
 import re
 import time
 import requests
@@ -131,9 +132,15 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
     def _process_status_view(self, url, params, next_up, base_plugin_url, page):
         r = requests.get(url, headers=self.__headers(), params=params)
-        results = r.json()
-        all_results = list(map(self._base_next_up_view, results['data'])) if next_up else list(map(self._base_watchlist_status_view, results['data']))
-        all_results += self.handle_paging(results['paging'].get('next'), base_plugin_url, page)
+        if r.ok:
+            results = r.json()
+            all_results = list(map(self._base_next_up_view, results['data'])) if next_up else list(map(self._base_watchlist_status_view, results['data']))
+            all_results += self.handle_paging(results['paging'].get('next'), base_plugin_url, page)
+        else:
+            results = json.loads(r.text)
+            if results.get('error'):
+                control.ok_dialog(control.ADDON_NAME, results['error'])
+            all_results = []
         return all_results
 
     @div_flavor

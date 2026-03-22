@@ -2,8 +2,8 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, debrid_cloudfiles, localfiles, hianime
-from resources.lib.ui import control, database
+from resources.lib.pages import nyaa, animetosho, nekobt, debrid_cloudfiles, localfiles, hianime
+from resources.lib.ui import control, database, source_utils
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
 
@@ -15,7 +15,9 @@ def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=
         show = BROWSER.get_anime(mal_id)
     kodi_meta = pickle.loads(show['kodi_meta'])
     actionArgs = {
-        'query': kodi_meta['query'],
+        'name': kodi_meta['name'],
+        'ename': kodi_meta['ename'],
+        'synonyms': kodi_meta['synonyms'],
         'mal_id': mal_id,
         'episode': episode,
         'episodes': kodi_meta['episodes'],
@@ -33,7 +35,7 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionArgs=None):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
-        self.torrent_func = [nyaa, animetosho]
+        self.torrent_func = [animetosho, nyaa, nekobt]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
         self.embed_func = [hianime]
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
@@ -55,7 +57,9 @@ class Sources(GetSources):
         self.local_files = []
 
     def getSources(self, args):
-        query = args['query']
+        title = args['name']
+        title_en = args['ename']
+        titles = [title, title_en] + args.get('synonyms', [])
         mal_id = args['mal_id']
         episode = args['episode']
         episodes = args['episodes']
@@ -75,13 +79,13 @@ class Sources(GetSources):
 
 
         if any(control.enabled_debrid().values()):
-            t = threading.Thread(target=self.user_cloud_inspection, args=(query, mal_id, episode))
+            t = threading.Thread(target=self.user_cloud_inspection, args=(title, title_en, mal_id, episode))
             t.start()
             self.threads.append(t)
 
             for inx, torrent_provider in enumerate(self.torrentProviders):
                 if control.getBool(f'provider.{torrent_provider}'):
-                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, query, mal_id, episode, status, media_type, episodes))
+                    t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, titles, mal_id, episode, status, media_type, episodes))
                     t.start()
                     self.threads.append(t)
                 else:
@@ -103,7 +107,7 @@ class Sources(GetSources):
 
 #       ###  Other ###
         if control.getBool('provider.localfiles'):
-            t = threading.Thread(target=self.localfiles_worker, args=(query, mal_id, episode, rescrape))
+            t = threading.Thread(target=self.localfiles_worker, args=(title, title_en, mal_id, episode, rescrape))
             t.start()
             self.threads.append(t)
         else:
@@ -136,8 +140,9 @@ class Sources(GetSources):
         return self.return_data
 
 #   ### Torrents ###
-    def torrent_worker(self, torrent_func, torrent_name, query, mal_id, episode, status, media_type, episodes) -> None:
-        all_sources = torrent_func.Sources().get_sources(query, mal_id, episode, status, media_type, episodes)
+    def torrent_worker(self, torrent_func, torrent_name, titles, mal_id, episode, status, media_type, episodes) -> None:
+        titles = list({source_utils.clean_title(t) for t in titles})
+        all_sources = torrent_func.Sources().get_sources(titles, mal_id, episode, status, media_type, episodes)
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
         self.torrentSources += all_sources['cached'] + all_sources['uncached']
@@ -164,14 +169,14 @@ class Sources(GetSources):
                     control.setInt(f'{embed_name}.skipoutro.end', int(x['skip']['outro']['end']))
         self.remainingProviders.remove(embed_name)
 
-    def localfiles_worker(self, query, mal_id, episode, rescrape) -> None:
-        self.local_files += localfiles.Sources().get_sources(query, mal_id, episode)
+    def localfiles_worker(self, title, title_en, mal_id, episode, rescrape) -> None:
+        self.local_files += localfiles.Sources().get_sources(title, title_en, mal_id, episode)
         self.remainingProviders.remove('Local Files')
 
-    def user_cloud_inspection(self, query, mal_id, episode) -> None:
+    def user_cloud_inspection(self, title, title_en, mal_id, episode) -> None:
         enabled_debrids = control.enabled_debrid()
         debrid = {x: enabled_debrids[x] and control.getBool(f'{x}.cloudInspection') for x in enabled_debrids}
-        self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, query, episode)
+        self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, title, title_en, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
     def sortSources(self) -> list:

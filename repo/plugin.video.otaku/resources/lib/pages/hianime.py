@@ -16,7 +16,7 @@ class Sources(BrowserBase.BrowserBase):
     def get_sources(self, mal_id, episode)-> list:
         show = database.get_show(mal_id)
         kodi_meta = pickle.loads(show['kodi_meta'])
-        title = self._clean_title(kodi_meta['name'])
+        title = self.remove_non_ascii(kodi_meta['name'])
 
         lang_int = control.getInt('general.source')  # 0 SUB, 1 BOTH, 2 DUB
         if lang_int == 1:
