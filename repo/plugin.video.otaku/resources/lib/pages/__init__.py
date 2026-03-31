@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, nekobt, debrid_cloudfiles, localfiles, hianime
+from resources.lib.pages import nyaa, animetosho, nekobt, debrid_cloudfiles, localfiles
 from resources.lib.ui import control, database, source_utils
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -37,7 +37,7 @@ class Sources(GetSources):
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
         self.torrent_func = [animetosho, nyaa, nekobt]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = [hianime]
+        self.embed_func = []
         self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
         self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
@@ -69,13 +69,13 @@ class Sources(GetSources):
         # source_select = args['source_select']
         self.setProperty('process_started', 'true')
 
-        # set skipintro times to -1 before scraping
-        control.setInt('hianime.skipintro.start', -1)
-        control.setInt('hianime.skipintro.end', -1)
-
-        # set skipintro times to -1 before scraping
-        control.setInt('hianime.skipoutro.start', -1)
-        control.setInt('hianime.skipoutro.end', -1)
+        # # set skipintro times to -1 before scraping
+        # control.setInt('hianime.skipintro.start', -1)
+        # control.setInt('hianime.skipintro.end', -1)
+        #
+        # # set skipintro times to -1 before scraping
+        # control.setInt('hianime.skipoutro.start', -1)
+        # control.setInt('hianime.skipoutro.end', -1)
 
 
         if any(control.enabled_debrid().values()):
@@ -107,7 +107,7 @@ class Sources(GetSources):
 
 #       ###  Other ###
         if control.getBool('provider.localfiles'):
-            t = threading.Thread(target=self.localfiles_worker, args=(title, title_en, mal_id, episode, rescrape))
+            t = threading.Thread(target=self.localfiles_worker, args=(titles, mal_id, episode, rescrape))
             t.start()
             self.threads.append(t)
         else:
@@ -159,18 +159,18 @@ class Sources(GetSources):
         if not isinstance(embed_sources, list):
             embed_sources = []
         self.embedSources += embed_sources
-        if embed_name in ['hianime']:
-            for x in embed_sources:
-                if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
-                    control.setInt(f'{embed_name}.skipintro.start', int(x['skip']['intro']['start']))
-                    control.setInt(f'{embed_name}.skipintro.end', int(x['skip']['intro']['end']))
-                if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
-                    control.setInt(f'{embed_name}.skipoutro.start', int(x['skip']['outro']['start']))
-                    control.setInt(f'{embed_name}.skipoutro.end', int(x['skip']['outro']['end']))
+        # if embed_name in []:
+        #     for x in embed_sources:
+        #         if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
+        #             control.setInt(f'{embed_name}.skipintro.start', int(x['skip']['intro']['start']))
+        #             control.setInt(f'{embed_name}.skipintro.end', int(x['skip']['intro']['end']))
+        #         if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
+        #             control.setInt(f'{embed_name}.skipoutro.start', int(x['skip']['outro']['start']))
+        #             control.setInt(f'{embed_name}.skipoutro.end', int(x['skip']['outro']['end']))
         self.remainingProviders.remove(embed_name)
 
-    def localfiles_worker(self, title, title_en, mal_id, episode, rescrape) -> None:
-        self.local_files += localfiles.Sources().get_sources(title, title_en, mal_id, episode)
+    def localfiles_worker(self, titles, mal_id, episode, rescrape) -> None:
+        self.local_files += localfiles.Sources().get_sources(titles, mal_id, episode)
         self.remainingProviders.remove('Local Files')
 
     def user_cloud_inspection(self, title, title_en, mal_id, episode) -> None:

@@ -117,6 +117,11 @@ msgctxt "#30032"
 msgid "[COLOR red]WARNING[/COLOR]\nThis will reset all meta information, are you sure?"
 msgstr ""
 
+
+msgctxt "#30033"
+msgid "Enable Kodi Cache"
+msgstr ""
+
 ######SKINS DIRECTORY######
 msgctxt "#30040"
 msgid "[B]Open this link in a browser: [COLOR deepskyblue]https://armkai.vercel.app/api/mal[/COLOR][/B]"

@@ -1,3 +1,6 @@
+Changelog v1.0.24 (2026-03-31)
+- Removed Service and moved to main Otaku
+
 Changelog v1.0.23 (2025-06-01)
 - Fixed Marked as Watched (WatchList) for movies
 

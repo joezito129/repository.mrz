@@ -9,6 +9,7 @@ import sys
 import os
 
 from urllib import parse
+from concurrent.futures import ThreadPoolExecutor
 
 try:
     HANDLE = int(sys.argv[1])
@@ -103,7 +104,6 @@ def watchlist_to_update() -> str:
 def copy2clip(txt: str) -> bool:
     import subprocess
     platform = sys.platform
-    log(platform)
     try:
         if platform == 'win32':
             process = subprocess.Popen(['clip'], stdin=subprocess.PIPE, text=True)
@@ -182,7 +182,6 @@ def get_plugin_url(url: str) -> str:
 
 def get_plugin_params(param: str) -> dict:
     return dict(parse.parse_qsl(param.replace('?', '')))
-    # return dict(item.split("=") for item in param.lstrip('?').split("&") if "=" in item)
 
 
 def get_payload_params(url: str) -> tuple:
@@ -224,7 +223,7 @@ def yesnocustom_dialog(title: str, text: str, customlabel: str = '', nolabel: st
     return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
-def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 5000, sound: bool = True) -> None:
+def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 1000, sound: bool = True) -> None:
     xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -249,18 +248,18 @@ def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
 
 
 def handle_set_fanart(art: dict, info: dict) -> dict:
-    if not art.get('fanart') or get_bool_cache('interface.fanart.disable'):
+    if not (image := art.get('fanart')) or get_bool_cache('interface.fanart.disable'):
         art['fanart'] = FANART
     else:
-        if isinstance(art['fanart'], list):
+        if isinstance(image, list):
             if get_bool_cache('context.otaku.fanartselect'):
                 if info.get('UniqueIDs', {}).get('mal_id'):
                     fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
-                    art['fanart'] = fanart_select if fanart_select else random.choice(art['fanart'])
+                    art['fanart'] = fanart_select if fanart_select else random.choice(image)
                 else:
                     art['fanart'] = FANART
             else:
-                art['fanart'] = random.choice(art['fanart'])
+                art['fanart'] = random.choice(image)
     return art
 
 
@@ -342,6 +341,26 @@ def bulk_draw_items(video_data: list) -> bool:
     list_items = bulk_dir_list(video_data)
     return xbmcplugin.addDirectoryItems(HANDLE, list_items)
 
+def wait_loop(step: int, timeout: int, path: str, path2: str=''):
+    """
+    :param step: Step wait time in ms
+    :param timeout: max timeout time in ms
+    :param path: path to match Container.FolderPath
+    :param path2: path2 to match Container.FolderPath
+
+    """
+    max_loop = int(timeout / step)
+    for i in range(max_loop):
+        xbmc.sleep(step)
+        if xbmcgui.getCurrentWindowId() == 10025:
+            kodi_path = xbmc.getInfoLabel('Container.FolderPath')
+            if path in kodi_path or path2 in kodi_path:
+                if not xbmc.getCondVisibility("Container.IsUpdating"):
+                    log(f"Waited ({(i + 1) * step}ms) for path {kodi_path}")
+                    break
+
+    else:
+        log(f"Waited ({step * max_loop}ms) for path {xbmc.getInfoLabel('Container.FolderPath')}")
 
 def draw_items(video_data: list, content_type: str = '') -> None:
     bulk_draw_items(video_data)
@@ -352,8 +371,9 @@ def draw_items(video_data: list, content_type: str = '') -> None:
     elif content_type == 'tvshows':
         xbmcplugin.addSortMethod(HANDLE, xbmcplugin.SORT_METHOD_NONE, "%L", "%R")
     xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=True)
+    closeAllDialogs()
     if getBool('interface.viewtypes.bool'):
-        xbmc.sleep(100)
+        wait_loop(100, 250, 'plugin://plugin.video.otaku/')
         if content_type == 'tvshows':
             xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
         elif content_type == 'episodes':
@@ -363,27 +383,27 @@ def draw_items(video_data: list, content_type: str = '') -> None:
 
     # move to episode position currently watching
     if content_type == "episodes" and getBool('general.smart.scroll.enable'):
-        for _ in range(15):
-            if xbmc.getCondVisibility("Container.HasFiles"):
-                break
-            xbmc.sleep(50)
+        wait_loop(10, 250, "plugin://plugin.video.otaku/animes", 'plugin://plugin.video.otaku/watchlist_to_ep')
+        wid = xbmcgui.getCurrentWindowId()
+        current_window = xbmcgui.Window(wid)
+        active_id = current_window.getFocusId()
         try:
             num_watched = int(xbmc.getInfoLabel("Container.TotalWatched"))
-            total_ep = int(xbmc.getInfoLabel('Container(id).NumItems'))
-            total_items = int(xbmc.getInfoLabel('Container(id).NumAllItems'))
-            if total_items == total_ep + 1:
-                num_watched += 1
-                total_ep += 1
+            total_ep = int(xbmc.getInfoLabel('Container.NumItems'))
+            all_items = int(xbmc.getInfoLabel('Container.NumAllItems'))
+            offset = 1 if all_items > total_ep else 0
+            target_index = num_watched + offset
         except ValueError:
             return
-        if total_ep > num_watched > 0:
+        if 0 < target_index < all_items:
             xbmc.executebuiltin('Action(firstpage)')
-            for _ in range(num_watched):
-                xbmc.executebuiltin('Action(Down)')
+            xbmc.executebuiltin(f'Control.SetFocus({active_id}, {target_index})')
 
 
 def bulk_dir_list(video_data: list) -> list:
-    return [xbmc_add_dir(vid['name'], vid['url'], vid['image'], vid['info'], vid['cm'], vid['isfolder'], vid['isplayable']) for vid in video_data if vid]
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        list_items = list(executor.map(lambda x: xbmc_add_dir(x['name'], x['url'], x['image'], x['info'], x['cm'], x['isfolder'], x['isplayable']), [v for v in video_data if v]))
+    return list_items
 
 
 def get_view_type(viewtype: str) -> int:
@@ -415,6 +435,27 @@ def json_res(response):
     except:
         response = {}
     return response
+
+def process_context():
+    context_settings = [
+        "context.otaku.findrecommendations",
+        "context.otaku.findrelations",
+        "context.otaku.rescrape",
+        "context.otaku.sourceselect",
+        "context.otaku.logout",
+        'context.otaku.deletefromdatabase',
+        'context.otaku.watchlist',
+        'context.otaku.markedaswatched',
+        'context.otaku.fanartselect'
+    ]
+    for s_id in context_settings:
+        try:
+            cache_val = window.getProperty(s_id)
+            val = ADDON.getSettingBool(s_id)
+            if cache_val != val:
+                window.setProperty(s_id, str(val))
+        except:
+            log(s_id, 'error')
 
 
 def print(string, *args) -> None:

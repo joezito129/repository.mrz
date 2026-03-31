@@ -8,6 +8,7 @@ class SyncDatabase:
     def __init__(self):
         self.activites = None
 
+        self.build_cache_table()
         self.build_sync_activities()
         self.build_show_table()
         self.build_showmeta_table()
@@ -18,9 +19,21 @@ class SyncDatabase:
         # You will need to update the below version number to match the new addon version
         # This will ensure that the metadata required for operations is available
         # You may also update this version number to force a rebuild of the database after updating Otaku
-        self.last_meta_update = '1.0.3'
+        self.last_meta_update = '1.0.4'
         self.refresh_activites()
         self.check_database_version()
+
+    @staticmethod
+    def build_cache_table():
+        with SQL(control.cacheFile) as cursor:
+            cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
+            cursor.connection.commit()
+
+    @staticmethod
+    def build_sync_activities():
+        with SQL(control.malSyncDB) as cursor:
+            cursor.execute('CREATE TABLE IF NOT EXISTS activities (sync_id INTEGER PRIMARY KEY, otaku_version TEXT NOT NULL)')
+            cursor.connection.commit()
 
     def refresh_activites(self):
         with SQL(control.malSyncDB) as cursor:
@@ -88,12 +101,6 @@ class SyncDatabase:
             cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_episodes ON episodes (mal_id ASC, season ASC, number ASC)')
             cursor.connection.commit()
 
-    @staticmethod
-    def build_sync_activities():
-        with SQL(control.malSyncDB) as cursor:
-            cursor.execute('CREATE TABLE IF NOT EXISTS activities (sync_id INTEGER PRIMARY KEY, otaku_version TEXT NOT NULL)')
-            cursor.connection.commit()
-
     def re_build_database(self, silent=False):
         import service
 
@@ -107,6 +114,7 @@ class SyncDatabase:
 
         with open(control.malSyncDB, 'w'):
             pass
+
 
         self.build_sync_activities()
         self.build_show_table()

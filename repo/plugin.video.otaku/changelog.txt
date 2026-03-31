@@ -1,3 +1,17 @@
+Changelog v5.1.31 (2026-03-31)
+- Fixed Clear Cache removing context menus
+- Fixed Search with '/' in search query
+- Fixed getbestmatch to autoselect if only one file
+- Improved Caching & Speeds
+- Improved finding Season#
+- Added setting for kodi caching
+
+Changelog v5.1.31 (2026-03-25)
+- Fixed dub for relations
+- Fixed jikanmoe rate limits failing
+- Fixed opening text clearing window properties
+- Deleting windows after used
+
 Changelog v5.1.30 (2026-03-22)
 - Improved scrapping query
 - Improved scrapping filtering

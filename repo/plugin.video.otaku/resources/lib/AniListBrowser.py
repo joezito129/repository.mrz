@@ -18,6 +18,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
         self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else ''
 
+
     @staticmethod
     def get_season_year(period='current'):
         date = datetime.datetime.today()
@@ -119,7 +120,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             for i in search_adult["ANIME"]:
                 i['title']['english'] = f'{i["title"]["english"]} - {control.colorstr("Adult", "red")}'
             search['ANIME'] += search_adult['ANIME']
-        return self.process_anilist_view(search, f"search/{query}?page=%d", page)
+        return self.process_anilist_view(search, f"search?q={query}&page=%d", page)
 
     def get_recommendations(self, mal_id, page: int):
         variables = {
@@ -237,6 +238,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         results = r.json()
         json_res = results['data']['Page']
         return json_res
+
 
     def get_airing_calendar_res(self, variables: dict):
         query = '''
@@ -604,7 +606,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
         results = r.json()
         if "errors" in results.keys():
-            return
+            return None
         json_res = results['data']['Media']
         return json_res
 
@@ -771,9 +773,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
 
     def database_update_show(self, res: dict):
         mal_id = res.get('idMal')
-
         if not mal_id:
-            return
+            return None
 
         try:
             start_date = res.get('startDate')
@@ -784,8 +785,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         title_userPreferred = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
         name = res['title']['romaji']
-        ename = res['title']['english'] or name
-        titles = f"({name}|{ename})"
+        ename = res['title']['english']
 
         if desc := res.get('description'):
             desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
@@ -796,9 +796,9 @@ class AniListBrowser(BrowserBase.BrowserBase):
         kodi_meta = {
             'name': name,
             'ename': ename,
+            'synonyms': res.get('synonyms', []),
             'title_userPreferred': title_userPreferred,
             'start_date': start_date,
-            'query': titles,
             'episodes': res.get('episodes'),
             'poster': res['coverImage']['extraLarge'],
             'status': "Finished Airing" if res.get('status') == "FINISHED" else res.get('status'),

@@ -1,5 +1,6 @@
 import pickle
 import xbmcgui
+import xbmcplugin
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
@@ -14,7 +15,6 @@ class SourceSelect(BaseWindow):
         self.sources = sources
         self.rescrape = rescrape
         self.position = -1
-        self.canceled = False
         self.display_list = None
         self.stream_link = None
 
@@ -79,7 +79,7 @@ class SourceSelect(BaseWindow):
 
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
-            control.playList.clear()
+            xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
             self.stream_link = False
             self.close()
 
@@ -101,7 +101,9 @@ class SourceSelect(BaseWindow):
                     self.close()
                     source = [self.sources[self.display_list.getSelectedPosition()]]
                     self.actionArgs['play'] = False
-                    return_data = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True).doModal(source, {}, False)
+                    window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True)
+                    return_data = window.doModal(source, {}, False)
+                    del window
                     if isinstance(return_data, dict):
                         from resources.lib.windows.download_manager import Manager
                         Manager().download_file(return_data['link'])
@@ -127,6 +129,8 @@ class SourceSelect(BaseWindow):
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
         self.actionArgs['close'] = self.close
-        self.stream_link = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True).doModal(sources, {}, pack_select)
+        window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True)
+        self.stream_link = window.doModal(sources, {}, pack_select)
+        del window
         if isinstance(self.stream_link, dict):
             self.close()

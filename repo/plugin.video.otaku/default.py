@@ -19,11 +19,13 @@
 import pickle
 import os
 import sys
+import xbmcplugin
+import xbmcgui
 
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
-from resources.lib.WatchlistIntegration import add_watchlists
+from resources.lib import WatchlistIntegration
 
 
 BROWSER = OtakuBrowser.BROWSER
@@ -48,21 +50,25 @@ def add_last_watched(items: list) -> list:
             else:
                 info['mediatype'] = 'tvshow'
                 url = f'animes/{mal_id}/'
-            items.append((last_watched, url, kodi_meta['poster'], info))
+            item = utils.allocate_item(last_watched, url, True, False, [], kodi_meta['poster'], info)
+            items.append(item)
     return items
 
 
 @Route('animes/*')
 def ANIMES_PAGE(payload: str, params: dict) -> None:
     mal_id, eps_watched = payload.split("/", 1)
-    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60, mal_id))
+    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60 * 8, False, mal_id))
 
 
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload: str, params: dict) -> None:
     path, mal_id, eps_watched = payload.split("/", 2)
     page = int(params.get('page', 1))
-    control.draw_items(BROWSER.get_recommendations(mal_id, page), 'tvshows')
+    recommendations = BROWSER.get_recommendations(mal_id, page)
+    control.draw_items(recommendations, 'tvshows')
+    if recommendations and "Next Page" in recommendations[-1].get('name'):
+        database.background_cache(BROWSER.recommendations, 60 * 8, mal_id, page + 1)
 
 
 @Route('find_relations/*')
@@ -74,31 +80,39 @@ def FIND_RELATIONS(payload: str, params: dict) -> None:
 @Route('airing_anime')
 def AIRING_ANIME(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    control.draw_items(database.cache(BROWSER.get_airing_anime, 60, page), 'tvshows')
+    airing_anime = database.cache(BROWSER.get_airing_anime, 60 * 8, False, page)
+    control.draw_items(airing_anime, 'tvshows')
+    if airing_anime and "Next Page" in airing_anime[-1].get('name'):
+        database.background_cache(BROWSER.get_airing_anime, 60 * 8, page + 1)
 
 
 @Route('upcoming_next_season')
 def UPCOMING_NEXT_SEASON(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    control.draw_items(database.cache(BROWSER.get_upcoming_next_season, 60, page), 'tvshows')
+    next_season = database.cache(BROWSER.get_upcoming_next_season, 60 * 8, False, page)
+    control.draw_items(next_season, 'tvshows')
+    if next_season and "Next Page" in next_season[-1].get('name'):
+        database.background_cache(BROWSER.get_upcoming_next_season, 60 * 8, page + 1)
 
 
 @Route('top_100_anime')
 def TOP_100_ANIME_PAGES(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    control.draw_items(database.cache(BROWSER.get_top_100_anime, 60, page), 'tvshows')
-
+    top_100 = database.cache(BROWSER.get_top_100_anime, 60 * 8, False, page)
+    control.draw_items(top_100, 'tvshows')
+    if top_100 and "Next Page" in top_100[-1].get('name'):
+        database.background_cache(BROWSER.get_top_100_anime, 60 * 8, page + 1)
 
 
 @Route('airing_calendar')
 def AIRING_CALENDAR(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    calendar = database.cache(BROWSER.get_airing_calendar, 60, page)
+    calendar = database.cache(BROWSER.get_airing_calendar, 60 * 8, False, page)
     if calendar:
         from resources.lib.windows.anichart import Anichart
-        Anichart('anichart.xml', control.ADDON_PATH, calendar=calendar).doModal()
-    control.exit_code()
-
+        window = Anichart('anichart.xml', control.ADDON_PATH, calendar=calendar)
+        window.doModal()
+        del window
 
 
 @Route('genres/*')
@@ -106,7 +120,10 @@ def GENRES_PAGES(payload: str, params: dict) -> None:
     genres, tags = payload.split("/", 1)
     page = int(params.get('page', 1))
     if genres or tags:
-        control.draw_items(BROWSER.genres_payload(genres, tags, page), 'tvshows')
+        genre_page = BROWSER.genres_payload(genres, tags, page)
+        control.draw_items(genre_page, 'tvshows')
+        if genre_page and "Next Page" in genre_page[-1].get('name'):
+            database.background_cache(BROWSER.genres_payload, 60 * 8, genres, tags, page + 1)
     else:
         control.draw_items(BROWSER.get_genres(), 'tvshows')
 
@@ -115,46 +132,46 @@ def GENRES_PAGES(payload: str, params: dict) -> None:
 def SEARCH_HISTORY(payload: str, params: dict) -> None:
     history = database.getSearchHistory('show')
     if control.getInt('searchhistory') == 0:
-        control.draw_items(utils.search_history(history), 'addons')
+        control.draw_items(utils.search_history(history), '')
     else:
         SEARCH(payload, params)
 
 
-@Route('search/*')
+@Route('search')
 def SEARCH(payload: str, params: dict) -> None:
-    query = payload
+    query = params.get('q')
     page = int(params.get('page', 1))
     if not query:
         query = control.keyboard(control.lang(30005))
         if not query:
-            return control.refresh()
+            xbmcplugin.endOfDirectory(control.HANDLE, succeeded=False, updateListing=False)
+            return None
         if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
-    return control.draw_items(database.cache(BROWSER.get_search, 60, query, page), 'tvshows')
-
+    search_page = database.cache(BROWSER.get_search, 60 * 8, False, query, page)
+    control.draw_items(search_page, 'tvshows')
+    if search_page and "Next Page" in search_page[-1].get('name'):
+        database.background_cache(BROWSER.get_search, 60 * 8, query, page + 1)
+    return None
 
 
 @Route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload: str, params: dict) -> None:
-    if 'search/' in payload:
-        search_item = payload.split('search/')[1]
-        database.remove_search(table='show', value=search_item)
+    query = params.get('q')
+    if query:
+        database.remove_search(table='show', value=query)
     control.exit_code()
-
 
 
 @Route('edit_search_item/*')
 def EDIT_SEARCH_ITEM(payload: str, params: dict) -> None:
-    if 'search/' in payload:
-        search_item = payload.split('search/')[1]
-        if search_item:
-            query = control.keyboard(control.lang(30005), search_item)
-            if query and query != search_item:
-                database.remove_search(table='show', value=search_item)
-                database.addSearchHistory(query, 'show')
+    query = params.get('q')
+    if query:
+        new_query = control.keyboard(control.lang(30005), query)
+        if new_query and new_query != query:
+            database.remove_search(table='show', value=query)
+            database.addSearchHistory(new_query, 'show')
     control.exit_code()
-
-
 
 @Route('play/*')
 def PLAY(payload: str, params: dict) -> None:
@@ -176,14 +193,18 @@ def PLAY(payload: str, params: dict) -> None:
         _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
         if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
             from resources.lib.windows.source_select import SourceSelect
-            SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+            window = SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape)
+            window.doModal()
+            del window
         else:
             from resources.lib.windows.resolver import Resolver
-            Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
+            window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args)
+            window.doModal(sources, {}, False)
+            del window
     else:
-        control.playList.clear()
+        control.notify(control.ADDON_NAME, "No Sources Found!")
+        xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
     control.exit_code()
-
 
 
 @Route('play_movie/*')
@@ -207,19 +228,23 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
         _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
         if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
             from resources.lib.windows.source_select import SourceSelect
-            SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape).doModal()
+            window = SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape)
+            window.doModal()
+            del window
         else:
             from resources.lib.windows.resolver import Resolver
-            Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args).doModal(sources, {}, False)
+            window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args)
+            window.doModal(sources, {}, False)
+            del window
     else:
-        control.playList.clear()
+        control.notify(control.ADDON_NAME, "No Sources Found!")
+        xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
     control.exit_code()
 
 
 @Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
     from resources.lib.WatchlistFlavor import WatchlistFlavor
-    from resources.lib.WatchlistIntegration import watchlist_update_episode
     payload_list = payload.split("/")
     if len(payload_list) == 2:
         mal_id, episode = payload_list
@@ -228,7 +253,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
         episode = 1
 
     flavor = WatchlistFlavor.get_update_flavor()
-    watchlist_update_episode(mal_id, episode)
+    WatchlistIntegration.watchlist_update_episode(mal_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
     if len(payload_list) == 2:
         control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{mal_id}/{episode})')
@@ -289,7 +314,6 @@ def FANART_SELECT(payload: str, params: dict) -> None:
     control.draw_items([utils.allocate_item(f, f'fanart/{mal_id}/{i}', False, False, [], f, {}, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
 
 
-
 @Route('fanart/*')
 def FANART(payload: str, params: dict) -> None:
     mal_id, select = payload.split('/', 1)
@@ -308,26 +332,25 @@ def FANART(payload: str, params: dict) -> None:
 @Route('')
 def LIST_MENU(payload: str, params: dict) -> None:
     MENU_ITEMS = [
-        (30001, "airing_anime", 'airing_anime.png'),
-        (30007, 'airing_calendar', ''),
-        (30002, "upcoming_next_season", 'upcoming.png'),
-        (30003, "top_100_anime", 'top_100_anime.png'),
-        (30004, "genres//", 'genres_&_tags.png'),
-        (30005, "search_history", 'search.png'),
-        (30006, "tools", 'tools.png')
+        (30001, "airing_anime", True, 'airing_anime.png'),
+        (30007, 'airing_calendar', False, 'airing_anime_calendar.png'),
+        (30002, "upcoming_next_season", True, 'upcoming.png'),
+        (30003, "top_100_anime", True, 'top_100_anime.png'),
+        (30004, "genres//", True, 'genres_&_tags.png'),
+        (30005, "search_history", True, 'search.png'),
+        (30006, "tools", True, 'tools.png')
         # ("test", "test", 'tools.png')
     ]
 
-    NEW_MENU_ITEMS = []
-    NEW_MENU_ITEMS = add_watchlists(NEW_MENU_ITEMS)
+    items = []
+    items = WatchlistIntegration.add_watchlists(items)
     if control.getBool('menu.lastwatched'):
-        NEW_MENU_ITEMS = add_last_watched(NEW_MENU_ITEMS)
-
-    for lang_id, url, image in MENU_ITEMS:
+        items = add_last_watched(items)
+    for lang_id, url, isfolder, image  in MENU_ITEMS:
         if control.getBool(url):
             name = control.lang(lang_id)
-            NEW_MENU_ITEMS.append((name, url, image, {}))
-    control.draw_items([utils.allocate_item(name, url, True, False, [], image, info) for name, url, image, info in NEW_MENU_ITEMS], 'addons')
+            items.append(utils.allocate_item(name, url, isfolder, False, [], image, {}))
+    control.draw_items(items, '')
 
 
 @Route('tools')
@@ -340,11 +363,11 @@ def TOOLS_MENU(payload: str, params: dict) -> None:
         (control.lang(30014), "rebuild_database", 'rebuild_database.png', {'plot': "Rebuild Database"}),
         (control.lang(30015), "completed_sync", "sync_completed.png", {'plot': "Sync Completed Anime with Otaku"}),
         (control.lang(30016), 'download_manager', 'download_manager.png', {'plot': "Open Download Manager"}),
-        (control.lang(30017), 'sort_select', '', {'plot': "Choose Sorting..."}),
-        (control.lang(30018), 'clear_selected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"}),
+        (control.lang(30017), 'sort_select', 'sort_select.png', {'plot': "Choose Sorting..."}),
+        (control.lang(30018), 'clear_selected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"})
         # ("install Packages", 'install_packages', '', {'plot': "Install Custom Packages"})
     ]
-    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], 'addons')
+    control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], '')
 
 
 # ### Maintenance ###
@@ -360,7 +383,6 @@ def CHANGE_LOG(payload: str, params: dict) -> None:
     if params.get('setting'):
         control.exit_code()
 
-
 @Route('clear_cache')
 def CLEAR_CACHE(payload: str, params: dict) -> None:
     database.cache_clear()
@@ -372,17 +394,6 @@ def CLEAR_CACHE(payload: str, params: dict) -> None:
 def CLEAR_SEARCH_HISTORY(payload: str, params: dict) -> None:
     database.clearSearchHistory('show')
     control.refresh()
-    if params.get('setting'):
-        control.exit_code()
-
-
-@Route('clear_selected_fanart')
-def CLEAR_SELECTED_FANART(payload: str, params: dict) -> None:
-    fanart_all = control.getStringList(f'fanart.all')
-    for i in fanart_all:
-        control.setSetting(f'fanart.select.{i}', '')
-    control.setStringList('fanart.all', [])
-    control.ok_dialog(control.ADDON_NAME, "Completed")
     if params.get('setting'):
         control.exit_code()
 
@@ -403,11 +414,35 @@ def COMPLETED_SYNC(payload: str, params: dict) -> None:
         control.exit_code()
 
 
+@Route('download_manager')
+def DOWNLOAD_MANAGER(payload: str, params: dict) -> None:
+    from resources.lib.windows.download_manager import DownloadManager
+    window = DownloadManager('download_manager.xml', control.ADDON_PATH)
+    window.doModal()
+    del window
+    if params.get('setting'):
+        control.exit_code()
+
+
+@Route('clear_selected_fanart')
+def CLEAR_SELECTED_FANART(payload: str, params: dict) -> None:
+    fanart_all = control.getStringList(f'fanart.all')
+    for i in fanart_all:
+        control.setSetting(f'fanart.select.{i}', '')
+    control.setStringList('fanart.all', [])
+    control.ok_dialog(control.ADDON_NAME, "Completed")
+    if params.get('setting'):
+        control.exit_code()
+
+
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict) -> None:
     from resources.lib.windows.sort_select import SortSelect
-    SortSelect('sort_select.xml', control.ADDON_PATH).doModal()
-
+    window = SortSelect('sort_select.xml', control.ADDON_PATH)
+    window.doModal()
+    del window
+    if params.get('setting'):
+        control.exit_code()
 
 @Route('install_packages')
 def INSTALL_PACKAGES(payload: str, params: dict) -> None:
@@ -416,10 +451,10 @@ def INSTALL_PACKAGES(payload: str, params: dict) -> None:
     control.print('installed_packages')
 
 
-@Route('download_manager')
-def DOWNLOAD_MANAGER(payload: str, params: dict) -> None:
-    from resources.lib.windows.download_manager import DownloadManager
-    DownloadManager('download_manager.xml', control.ADDON_PATH).doModal()
+@Route('toggleLanguageInvoker')
+def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict) -> None:
+    import service
+    service.toggle_reuselanguageinvoker()
 
 
 @Route('import_settings')
@@ -428,27 +463,23 @@ def IMPORT_SETTINGS(payload: str, params: dict) -> None:
 
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
     import_location = control.browse(1, f"{control.ADDON_NAME}:  Import Setting", 'files', 'settings.xml')
-    if not import_location:
-        return control.exit_code()
-    if not import_location.endswith('settings.xml'):
-        control.ok_dialog(control.ADDON_NAME, "Invalid File!")
-    else:
-        yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
-        if yesno:
-            if xbmcvfs.delete(setting_xml) and xbmcvfs.copy(import_location, setting_xml):
-                control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
-            else:
-                control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
-    return control.exit_code()
-
+    if import_location:
+        if not import_location.endswith('settings.xml'):
+            control.ok_dialog(control.ADDON_NAME, "Invalid File!")
+        else:
+            yesno = control.yesno_dialog(control.ADDON_NAME, "Are you sure you want to replace settings.xml?")
+            if yesno:
+                if xbmcvfs.delete(setting_xml) and xbmcvfs.copy(import_location, setting_xml):
+                    control.ok_dialog(control.ADDON_NAME, "Replaced settings.xml")
+                else:
+                    control.ok_dialog(control.ADDON_NAME, "Could Not Import File!")
+    control.exit_code()
 
 @Route('export_settings')
 def IMPORT_SETTINGS(payload: str, params: dict) -> None:
     import xbmcvfs
-
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
     export_location = control.browse(3, f"{control.ADDON_NAME}: Export Location", 'files')
-
     if not export_location:
         control.ok_dialog(control.ADDON_NAME, "Please Select Export Location!")
     else:
@@ -459,12 +490,6 @@ def IMPORT_SETTINGS(payload: str, params: dict) -> None:
             else:
                 control.ok_dialog(control.ADDON_NAME, "Could Not Export File!")
     control.exit_code()
-
-
-@Route('toggleLanguageInvoker')
-def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict) -> None:
-    import service
-    service.toggle_reuselanguageinvoker()
 
 
 @Route('test')

@@ -54,6 +54,11 @@ class WatchlistFlavorBase:
         raise 'Should Not be called Directly'
 
     @staticmethod
+    def action_statuses():
+        raise 'Should Not be called Directly'
+
+
+    @staticmethod
     def _get_next_up_meta(mal_id, next_up):
         next_up_meta = {}
         show = database.get_show(mal_id)

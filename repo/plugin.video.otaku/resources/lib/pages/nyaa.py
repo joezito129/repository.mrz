@@ -11,6 +11,7 @@ from resources.lib.ui import BrowserBase, database, source_utils, control
 class Sources(BrowserBase.BrowserBase):
     _BASE_URL = 'https://nyaa.si'
     feedparser.SANITIZE_HTML = 0
+    feedparser.RESOLVE_RELATIVE_URIS = 0
 
     def __init__(self):
         self.media_type = None
@@ -92,10 +93,11 @@ class Sources(BrowserBase.BrowserBase):
 
     def get_episode_sources(self, show: str, mal_id: int, episode: str, status: str, episodes: int) -> None:
         episode_zfill = str(episode).zfill(2)
-        season = database.get_episode(mal_id).get('season')
-
         episode_query = {f'- {episode_zfill}'}
+
+        season = database.get_episode(mal_id)
         if season:
+            season = season.get('season', 1)
             season_zfill = str(season).zfill(2)
             episode_query.add(f'S{season_zfill}E{episode_zfill}')
         else:
@@ -103,7 +105,8 @@ class Sources(BrowserBase.BrowserBase):
 
         if int(episode) > 100:
             episode_query.add(f'{episode[:-1]}*')
-        episode_query.add("batch|series")
+
+        # episode_query.add("batch|series")
         query = f'({show}) {episode_zfill}|' + "|".join(episode_query)
         params = {
             'f': '0',

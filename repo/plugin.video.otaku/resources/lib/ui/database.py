@@ -3,11 +3,19 @@ import hashlib
 import pickle
 import re
 import time
-import threading
 import xbmcvfs
 
 from sqlite3 import OperationalError, dbapi2
 from resources.lib.ui import control
+
+
+def background_cache(func, duration, *args, **kwargs):
+    if not control.getBool('general.kodi.cache'):
+        return None
+    try:
+        cache(func, duration, True, *args, **kwargs)
+    except Exception as e:
+        control.log(f"Background Cache Error: {e}", 'warning')
 
 
 def _mem_get(key):
@@ -18,40 +26,60 @@ def _mem_get(key):
             data = eval(raw)
             if data[0] > int(time.time()):
                 return data[1]
-    except:
-        pass
+    except Exception as e:
+        control.log(f"Cache Error: {e}", 'warning')
     return None
 
 def _mem_set(key, value, expires):
     """Store value in Kodi window property"""
+    if not control.getBool('general.kodi.cache'):
+        return None
     try:
         control.window.setProperty(f'otaku_cache_{key}', repr((expires, value)))
-    except:
-        pass
+    except Exception as e:
+        control.log(f"Cache Error: {e}", 'warning')
 
-def cache(function, duration, *args, **kwargs):
+
+def cache(function, duration: int, disk: bool, *args, **kwargs):
     """
     Gets cached value for provided function with optional arguments, or executes and stores the result
 
     :param function: Function to be executed
     :param duration: Duration of validity of cache in minutes
+    :param disk: Optional save response to cache.db file
     :param args: Optional arguments for the provided function
     :param kwargs: Optional keyword arguments for the provided function
     """
+
     key = hash_function(function, args, kwargs)
 
-    # get kodi cache
+    # 1. Check Kodi Window Property
     cache_result = _mem_get(key)
-    if cache_result is not None:
+    if cache_result:
         return cache_result
 
-    # no cache found perform new query
-    fresh_result = repr(function(*args, **kwargs))
-    data = ast.literal_eval(fresh_result)
+    # 2. Check Cache.db
+    if disk:
+        db_result = cache_get(key)
+        if db_result and is_cache_valid(db_result['date'], duration):
+            try:
+                data = ast.literal_eval(db_result['value'])
+                expires = int(time.time()) + duration
+                _mem_set(key, data, expires)
+                return data
+            except Exception as e:
+                control.log(f"Cache Error: {e}", 'warning')
 
-    if data is not None:
-        expires = int(time.time()) + int(duration * 60)
+    # 3. API call
+    fresh_result_raw = repr(function(*args, **kwargs))
+    data = ast.literal_eval(fresh_result_raw)
+
+    if data:
+        expires = int(time.time()) + (duration * 60)
         _mem_set(key, data, expires)
+        if disk:
+            cache_insert(key, fresh_result_raw)
+
     return data
 
 def get_(function, duration, *args, **kwargs):
@@ -71,9 +99,8 @@ def get_(function, duration, *args, **kwargs):
     if cache_result and is_cache_valid(cache_result['date'], duration):
         try:
             return_data = ast.literal_eval(cache_result['value'])
-        except:
-            import traceback
-            control.log(traceback.format_exc(), 'error')
+        except Exception as e:
+            control.log(f"Cache Error: {e}", 'warning')
             return_data = None
         return return_data
 
@@ -84,6 +111,7 @@ def get_(function, duration, *args, **kwargs):
         return cache_result if cache_result else fresh_result
     data = ast.literal_eval(fresh_result)
     return data
+
 
 def hash_function(function_instance, *args) -> str:
     function_name = re.sub(r'.+\smethod\s|.+function\s|\sat\s.+|\sof\s.+', '', repr(function_instance))
@@ -106,7 +134,6 @@ def cache_get(key):
 def cache_insert(key: str, value: str) -> None:
     now = int(time.time())
     with SQL(control.cacheFile) as cursor:
-        cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS ix_cache ON cache (key)')
         cursor.execute('REPLACE INTO cache (key, value, date) VALUES (?, ?, ?)', (key, value, now))
         cursor.connection.commit()
@@ -114,18 +141,19 @@ def cache_insert(key: str, value: str) -> None:
 
 def cache_clear() -> None:
     control.window.clearProperties()
+    control.process_context()
     with SQL(control.cacheFile) as cursor:
         cursor.execute("DROP TABLE IF EXISTS cache")
         cursor.execute("VACUUM")
-        cursor.connection.commit()
         cursor.execute('CREATE TABLE IF NOT EXISTS cache (key TEXT, value TEXT, date INTEGER, UNIQUE(key))')
-    control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031), time=5000, sound=False)
+        cursor.connection.commit()
+    control.notify(f'{control.ADDON_NAME}: {control.lang(30030)}', control.lang(30031))
 
 
 def is_cache_valid(cached_time: int, cache_timeout: int) -> bool:
     now = int(time.time())
     diff = now - cached_time
-    return (cache_timeout * 3600) > diff
+    return (cache_timeout * 60) > diff
 
 
 def update_show(mal_id: int, kodi_meta, anime_schedule_route: str = '') -> None:
@@ -257,7 +285,7 @@ def clearSearchHistory(media_type: str) -> None:
         cursor.execute(f"CREATE TABLE IF NOT EXISTS {media_type} (value TEXT)")
         cursor.connection.commit()
     control.refresh()
-    control.notify(control.ADDON_NAME, "Search History has been cleared", time=5000)
+    control.notify(control.ADDON_NAME, "Search History has been cleared")
 
 
 def remove_search(table: str, value: str) -> None:
@@ -275,31 +303,75 @@ def dict_factory(cursor, row):
 
 class SQL:
     def __init__(self, path: str, timeout: int = 60):
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
         self.path = path
         self.timeout = timeout
+        self.conn = None
+        self.cursor = None
+
+    # def __enter__(self):
+    #     self.lock.acquire()
+    #     if not xbmcvfs.exists(control.dataPath):
+    #         xbmcvfs.mkdirs(control.dataPath)
+    #     for i in range(3):
+    #         try:
+    #             self.conn = dbapi2.connect(self.path, timeout=self.timeout, isolation_level=None)
+    #             self.conn.row_factory = dict_factory
+    #             self.conn.execute("PRAGMA synchronous = OFF")
+    #             self.conn.execute("PRAGMA journal_mode = OFF")
+    #             self.conn.execute("PRAGMA mmap_size = 168435456")  # 156MB memory-mapped I/O
+    #             self.conn.execute("PRAGMA FOREIGN_KEYS=1")
+    #             self.cursor = self.conn.cursor()
+    #             break
+    #         except dbapi2.OperationalError as e:
+    #             if "locked" in str(e).lower():
+    #                 control.log("Database Locked retry in 1 second")
+    #                 xbmc.sleep(1000)
+    #                 continue
+    #             else:
+    #                 self._abort(e)
+    #                 break
+    #     else:
+    #         self._abort("Database remained locked after 3 attempts")
+    #     return self.cursor
+    #
+    # def __exit__(self, exc_type, exc_val, exc_tb):
+    #     try:
+    #         if self.cursor is not None:
+    #             self.cursor.close()
+    #         if self.conn is not None:
+    #             self.conn.close()
+    #         if exc_type:
+    #             import traceback
+    #             control.log('database error')
+    #             control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
+    #             if exc_type is OperationalError:
+    #                 return True
+    #     finally:
+    #         if self.lock.locked():
+    #             self.lock.release()
 
     def __enter__(self):
-        self.lock.acquire()
+        if not xbmcvfs.exists(control.dataPath):
+            xbmcvfs.mkdirs(control.dataPath)
         try:
-            xbmcvfs.mkdir(control.dataPath)
-            conn = dbapi2.connect(self.path, timeout=self.timeout, isolation_level=None)
-            conn.row_factory = dict_factory
-            conn.execute("PRAGMA synchronous = OFF")
-            conn.execute("PRAGMA journal_mode = OFF")
-            conn.execute("PRAGMA mmap_size = 268435456")  # 256MB memory-mapped I/O
-            conn.execute("PRAGMA FOREIGN_KEYS=1")
-            self.cursor = conn.cursor()
-        except:
-            self.lock.release()  # Release if connection fails
-            raise "SQL Error"
+            self.conn = dbapi2.connect(self.path, timeout=self.timeout, isolation_level=None)
+            self.conn.row_factory = dict_factory
+            self.conn.execute("PRAGMA synchronous = OFF")
+            self.conn.execute("PRAGMA journal_mode = WAL")
+            self.conn.execute("PRAGMA mmap_size = 168435456")  # 156MB memory-mapped I/O
+            self.conn.execute("PRAGMA FOREIGN_KEYS=1")
+            self.cursor = self.conn.cursor()
+        except dbapi2.OperationalError as e:
+            control.notify(control.ADDON_NAME, "Failed To Load Database")
+            control.log(e, 'error')
         return self.cursor
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
-            if hasattr(self, 'cursor'):
+            if self.cursor is not None:
                 self.cursor.close()
-            if hasattr(self, 'conn'):
+            if self.conn is not None:
                 self.conn.close()
             if exc_type:
                 import traceback
@@ -307,8 +379,5 @@ class SQL:
                 control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
                 if exc_type is OperationalError:
                     return True
-        finally:
-            if self.lock.locked():
-                self.lock.release()
-
-
+        except Exception as e:
+            control.log(e, 'error')

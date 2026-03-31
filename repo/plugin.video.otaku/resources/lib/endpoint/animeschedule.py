@@ -7,10 +7,9 @@ from bs4 import BeautifulSoup
 
 base_url = "https://animeschedule.net/api/v3"
 
+
 def get_route(mal_id) -> str:
-    params = {
-        "mal-ids": mal_id
-    }
+    params = {"mal-ids": mal_id}
     r = requests.get(f"{base_url}/anime", params=params)
     return r.json()['anime'][0]['route'] if r.ok else ''
 

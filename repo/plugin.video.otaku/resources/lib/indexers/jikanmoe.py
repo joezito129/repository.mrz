@@ -3,14 +3,17 @@ import pickle
 import datetime
 import xbmc
 
+
 from functools import partial
 from resources.lib.ui import utils, database, control
 from resources.lib import indexers
 
 
+
 class JikanAPI:
     def __init__(self):
         self.baseUrl = "https://api.jikan.moe/v4"
+        self.S = requests.Session()
 
     def get_anime_info(self, mal_id):
         r = requests.get(f'{self.baseUrl}/anime/{mal_id}')
@@ -19,26 +22,23 @@ class JikanAPI:
     def get_episode_meta(self, mal_id):
         # url = f'{self.baseUrl}/anime/{mal_id}/videos/episodes'
         url = f'{self.baseUrl}/anime/{mal_id}/episodes'  # no pictures but can handle 100 per page
-        r = requests.get(url)
+        r = self.S.get(url)
         res = r.json()
-        if not res['pagination']['has_next_page']:
-            res_data = res['data']
-        else:
-            res_data = res['data']
-            for i in range(2, res['pagination']['last_visible_page'] + 1):
-                params = {
-                    'page': i
-                }
-                r = requests.get(url, params=params)
-                if not r.ok:
-                    control.ok_dialog(control.ADDON_NAME, f"{r.json()}")
-                    return res_data
-                res = r.json()
-                res_data += res['data']
-                if not res['pagination']['has_next_page']:
-                    break
-                if i % 3 == 0:
-                    xbmc.sleep(2)
+        res_data = res['data']
+        for i in range(1, res['pagination']['last_visible_page']):
+            if i > 50:
+                break
+            params = {'page': i + 1}
+            if i % 3 == 0:
+                xbmc.sleep(1800)
+            r = requests.get(url, params=params)
+            res = control.json_res(r)
+            if r.status_code == 429:
+                control.ok_dialog(control.ADDON_NAME, "Rate Limit Exceeded: Please wait 60 seconds before next request")
+                return res_data
+            res_data += res['data']
+            if not res['pagination']['has_next_page']:
+                break
         return res_data
 
     @staticmethod
@@ -89,7 +89,7 @@ class JikanAPI:
 
         title_list = [name['title'] for name in result['titles']]
 
-        season = utils.get_season(title_list)
+        season = utils.get_season(title_list, mal_id)
         result_ep = self.get_episode_meta(mal_id)
         mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
         all_results = sorted(list(map(mapfunc, result_ep)), key=lambda x: x['info']['episode'])

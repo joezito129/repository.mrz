@@ -27,6 +27,10 @@ class WatchlistFlavor:
         return WatchlistFlavor.__instance_flavor(name).watchlist()
 
     @staticmethod
+    def watchlist_action_statuses(name):
+        return WatchlistFlavor.__instance_flavor(name).action_statuses()
+
+    @staticmethod
     def watchlist_status_request(name, status, next_up, offset=0, page=1):
         return WatchlistFlavor.__instance_flavor(name).get_watchlist_status(status, next_up, offset, page)
 

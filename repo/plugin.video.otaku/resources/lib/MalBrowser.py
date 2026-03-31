@@ -4,6 +4,7 @@ import random
 import pickle
 import datetime
 
+
 from functools import partial
 from resources.lib.ui import BrowserBase, database, control, utils, get_meta
 from resources.lib.ui.divide_flavors import div_flavor
@@ -69,21 +70,31 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     def get_relations(self, mal_id) -> list:
         relations = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime/{mal_id}/relations')
+        relation_res = self.process_relations(relations)
+        mapfunc = partial(self.base_mal_view, completed=self.open_completed())
+        all_results = list(map(mapfunc, relation_res))
+        return all_results
+
+    def process_relations(self, relations: dict) -> list:
         relation_res = []
         count = 1
         for relation in relations['data']:
             for entry in relation['entry']:
                 if entry['type'] == 'anime':
-                    res_data = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{entry['mal_id']}")['data']
-                    res_data['relation'] = relation['relation']
-                    relation_res.append(res_data)
-                    count += 1
                     if count % 3 == 0:
-                        xbmc.sleep(2)
-
-        mapfunc = partial(self.base_mal_view, completed=self.open_completed())
-        all_results = list(map(mapfunc, relation_res))
-        return all_results
+                        xbmc.sleep(1800)
+                    count += 1
+                    if count > 50:
+                        return relation_res
+                    res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{entry['mal_id']}")
+                    if res.get('data'):
+                        res_data = res['data']
+                        res_data['relation'] = relation['relation']
+                        relation_res.append(res_data)
+                    elif res.get('status') == '429':
+                        control.notify(control.ADDON_NAME, "Rate Limit Exceeded: Please wait 60 seconds before next request")
+                        return relation_res
+        return relation_res
 
     def get_search(self, query, page: int) -> list:
         params = {
@@ -97,7 +108,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             params['type'] = self.format_in_type
 
         search = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime", params)
-        return self.process_mal_view(search, f"search/{query}?page=%d", page)
+        return self.process_mal_view(search, f"search?q={query}&page=%d", page)
 
     def get_airing_calendar(self, page: int) -> list:
         params = {
@@ -153,6 +164,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         r = requests.get(url, params=params)
         return r.json()
 
+
     @div_flavor
     def recommendation_relation_view(self, res, completed=None, mal_dub=None) -> dict:
         if res.get('entry'):
@@ -161,7 +173,9 @@ class MalBrowser(BrowserBase.BrowserBase):
             completed = {}
 
         mal_id = res['mal_id']
+        control.log(res)
         title = res['title']
+
         if res.get('relation'):
             title += ' [I]%s[/I]' % control.colorstr(res['relation'], 'limegreen')
 
@@ -174,7 +188,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         if completed.get(str(mal_id)):
             info['playcount'] = 1
 
-        dub = True if mal_dub and mal_dub.get(str(res.get('idMal'))) else False
+        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
         image = res['images']['webp']['large_image_url'] if res.get('images') else None
 
         base = {

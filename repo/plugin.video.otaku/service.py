@@ -42,7 +42,6 @@ def refresh_apis() -> None:
 
 def update_mappings_db() -> None:
     control.log("### Updating Mappings")
-    # url = 'https://github.com/Goldenfreddy0703/Otaku/raw/main/script.otaku.mappings/resources/data/anime_mappings.db'
     url = 'https://github.com/Goldenfreddy0703/Otaku-Mappings/raw/main/anime_mappings.db'
     r = requests.get(url)
     with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
@@ -50,6 +49,7 @@ def update_mappings_db() -> None:
 
 
 def sync_watchlist(silent: bool = False) -> None:
+    control.log('### Syncing Watchlist')
     if control.getBool('watchlist.sync.enabled'):
         control.log('### Updating Completed Sync')
         from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -89,7 +89,7 @@ def getchangelog() -> None:
     heading = '[B]%s -  v%s - ChangeLog[/B]' % (control.ADDON_NAME, control.ADDON_VERSION)
     from resources.lib.windows.textviewer import TextViewerXML
     windows = TextViewerXML('textviewer.xml', control.ADDON_PATH, heading=heading, text=changelog_text)
-    windows.run()
+    windows.doModal()
     del windows
 
 
@@ -135,20 +135,16 @@ def load_settings():
     bool_settings = [
         "jz.dub", "jz.filler", "general.smart.scroll.enable", "override.meta.api",
         "interface.viewtypes.bool", "interface.cleantitles", "interface.fanart.disable",
-        "interface.clearlogo.disable", "context.otaku.findrecommendations", "context.otaku.findrelations",
-        "context.otaku.rescrape", "context.otaku.sourceselect", "context.otaku.logout",
-        "context.otaku.deletefromdatabase", "context.otaku.watchlist", "context.otaku.markedaswatched",
-        "context.otaku.fanartselect", "widget.hide.nextpage", "provider.nyaa", "provider.animetosho", 'provider.hianime',
+        "interface.clearlogo.disable", "widget.hide.nextpage", "provider.nyaa", "provider.animetosho",
         "provider.localfiles", "general.autotrynext", "general.terminate.oncloud",
         "smartplay.skipintrodialog", "skipintro.aniskip.enable", "smartplay.playingnextdialog",
-        "skipoutro.aniskip.enable", "subtitle.enable", "general.disable265", "show.uncached",
-        "uncached.autorun", "divflavors.dubonly", "divflavors.showdub", "contentformat.bool",
-        "contentorigin.bool", "search.adult", "real_debrid.enabled", "real_debrid.cloudInspection",
-        "alldebrid.enabled", "alldebrid.cloudInspection", "debrid_link.enabled", "premiumize.enabled",
-        "premiumize.cloudInspection", "torbox.enabled", "torbox.cloudInspection", "watchlist.update.enabled",
-        "watchlist.sync.enabled", "watchlist.episode.data", "mal.enabled", "anilist.enabled",
-        "kitsu.enabled", "simkl.enabled", "menu.lastwatched", "airing_anime", "airing_calendar",
-        "upcoming_next_season", "top_100_anime", "genres//", "search_history", "tools"
+        "skipoutro.aniskip.enable", "subtitle.enable", "general.disable265", "show.uncached", "uncached.autorun",
+        "divflavors.dubonly", "divflavors.showdub", "contentformat.bool", "contentorigin.bool", "search.adult",
+        "real_debrid.enabled", "real_debrid.cloudInspection", "alldebrid.enabled", "alldebrid.cloudInspection",
+        "debrid_link.enabled", "premiumize.enabled", "premiumize.cloudInspection", "torbox.enabled",
+        "torbox.cloudInspection", "watchlist.update.enabled", "watchlist.sync.enabled", "watchlist.episode.data",
+        "mal.enabled", "anilist.enabled", "kitsu.enabled", "simkl.enabled", "menu.lastwatched", "airing_anime",
+        "airing_calendar", "upcoming_next_season", "top_100_anime", "genres//", "search_history", "tools"
     ]
 
     int_settings = [
@@ -172,22 +168,28 @@ def load_settings():
 
     for s_id in bool_settings:
         try:
+            cache_val = control.window.getProperty(s_id)
             val = control.ADDON.getSettingBool(s_id)
-            control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val).lower())
+            if cache_val != val:
+                control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val).lower())
         except:
             control.log(s_id, 'error')
 
     for s_id in int_settings:
         try:
+            cache_val = control.window.getProperty(s_id)
             val = control.ADDON.getSettingInt(s_id)
-            control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+            if cache_val != val:
+                control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
         except:
             control.log(s_id, 'error')
 
     for s_id in str_settings:
         try:
+            cache_val = control.window.getProperty(s_id)
             val = control.ADDON.getSettingString(s_id)
-            control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
+            if cache_val != val:
+                control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
         except:
             control.log(s_id, 'error')
 
@@ -199,11 +201,14 @@ class Monitor(xbmc.Monitor):
     def onSettingsChanged(self):
         control.log('Setting Changed Updating Settings Cache')
         load_settings()
+        control.process_context()
 
 
 if __name__ == "__main__":
     control.log('##################  RUNNING MAINTENANCE  ######################')
-    load_settings()
+    if control.getBool('general.kodi.cache'):
+        load_settings()
+        control.process_context()
     version_check()
     database_sync.SyncDatabase()
     refresh_apis()
@@ -215,6 +220,6 @@ if __name__ == "__main__":
         sync_watchlist(True)
         control.setInt('update.time.7', int(time.time()))
     control.log('##################  MAINTENANCE COMPLETE ######################')
-
-    Monitor().waitForAbort()
+    if control.getBool('general.kodi.cache'):
+        Monitor().waitForAbort()
 

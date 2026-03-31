@@ -1,5 +1,6 @@
 from resources.lib.ui import control, database
 
+
 if control.getSetting('browser.api') == 'mal':
     from resources.lib.MalBrowser import MalBrowser
     BROWSER = MalBrowser()

@@ -3,7 +3,7 @@ import requests
 import threading
 import difflib
 
-from resources.lib.ui import BrowserBase, source_utils, control
+from resources.lib.ui import BrowserBase, source_utils
 from resources.lib.debrid import real_debrid, premiumize, all_debrid, torbox
 
 

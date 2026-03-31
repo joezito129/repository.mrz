@@ -1,5 +1,6 @@
 import pickle
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from functools import partial
 from resources.lib import endpoint
@@ -20,7 +21,8 @@ def parse_episodes(res, eps_watched, dub_data=None) -> dict:
 
 def process_episodes(episodes, eps_watched, dub_data=None) -> list:
     mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
-    all_results = list(map(mapfunc, episodes))
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        all_results = list(executor.map(mapfunc, episodes))
     return all_results
 
 

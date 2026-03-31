@@ -8,10 +8,6 @@ class TextViewerXML(WindowXMLDialog):
         self.heading = kwargs.get('heading')
         self.text = kwargs.get('text')
 
-    def run(self):
-        self.doModal()
-        self.clearProperties()
-
     def onInit(self):
         self.set_properties()
         self.setFocusId(self.window_id)

@@ -53,21 +53,3 @@ def get_time_stamps(id_list):
         if res:
             break
     return res
-
-
-def convert_time_stamps(time_stamp, intro, outro):
-    if not time_stamp:
-        return
-    skip_times = {}
-    for skip in time_stamp:
-        if intro:
-            if skip['type']['name'] in ['Intro', 'Branding', 'New Intro']:
-                skip_times['intro'] = {'start': skip['at']}
-            elif skip_times.get('intro') and not skip_times['intro'].get('end') and skip['type']['name'] == 'Canon':
-                skip_times['intro']['end'] = skip['at']
-        if outro:
-            if skip['type']['name'] in ['Credits', 'Mixed Credits']:
-                skip_times['outro'] = {'start': skip['at']}
-            elif skip_times.get('outro') and skip['type']['name'] == 'Preview':
-                skip_times['outro']['end'] = skip['at']
-    return skip_times

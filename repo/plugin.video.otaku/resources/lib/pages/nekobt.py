@@ -19,6 +19,7 @@ class Sources(BrowserBase.BrowserBase):
         self.show_meta = None
         self.meta_ids = None
         self.episode = None
+        self.titles = None
 
 
     def process_similarity_nekobt_id(self, similar_media: list) -> None:
@@ -51,10 +52,11 @@ class Sources(BrowserBase.BrowserBase):
 
 
     def get_sources(self, titles: list, mal_id: int, episode: int, status: str, media_type: str, episodes: int) -> dict:
-        titles.sort(key=len)
-        show = titles[0]
         self.mal_id = mal_id
         self.episode = episode
+        self.titles = titles
+        titles.sort(key=len)
+        show = titles[0]
         sources = []
         self.show_meta = database.get_show_meta(mal_id)
         if self.show_meta:
@@ -74,7 +76,7 @@ class Sources(BrowserBase.BrowserBase):
         if media_type != "movie":
             season = database.get_episode(mal_id)['season']
             season_zfill = str(season).zfill(2)
-            query = f'{show} S{season_zfill}E{episode_zfill}'
+            query = f'"{show}" S{season_zfill}E{episode_zfill}'
         else:
             season_zfill = None
             query = show
@@ -114,11 +116,11 @@ class Sources(BrowserBase.BrowserBase):
 
     def process_nekobt(self, url: str, params: dict, episode_zfill: str, season_zfill: str) -> list:
         all_sources = []
-        r = self.S.get(url, params=params, timeout=5)
+        r = self.S.get(url, json=params, timeout=10)
+        res = control.json_res(r)
         if not r.ok:
-            control.log(r, 'warning')
-        r = control.json_res(r)
-        resp = r.get('data', {})
+            control.log(res, 'warning')
+        resp = res.get('data', {})
         if not resp.get('results') and not self.nekobt_id:
             resp = resp.get('similar_media')
             if resp:
@@ -140,7 +142,7 @@ class Sources(BrowserBase.BrowserBase):
         } for res in resp['results']]
 
         if season_zfill:
-            filtered_list = source_utils.filter_sources(list_, int(season_zfill), int(episode_zfill))
+            filtered_list = source_utils.filter_sources(list_, int(season_zfill), int(episode_zfill), titles=self.titles)
         else:
             filtered_list = list_
 

@@ -1,12 +1,11 @@
 import os
 
 from functools import partial
-from resources.lib.ui import control
+from resources.lib.ui import control, database
 
 
 def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: list, image: str, info: dict,
                   fanart='', poster='', landscape='', banner='', clearart='', clearlogo='') -> dict:
-
     if image and '/' not in image:
         image = os.path.join(control.ICONS_PATH, image)
     if fanart and not isinstance(fanart, list) and '/' not in fanart:
@@ -33,13 +32,13 @@ def allocate_item(name: str, url: str, isfolder: bool, isplayable: bool, cm: lis
     }
 
 
-def parse_history_view(res: str, cm: list) -> dict:
-    return allocate_item(res, f'search/{res}', True, False, cm, 'new_search.png', {})
+def parse_history_view(q: str, cm: list) -> dict:
+    return allocate_item(q, f'search?q={q}', True, False, cm, 'new_search.png', {})
 
 
 def search_history(search_array):
     cm = [('Remove from Item', 'remove_search_item'), ("Edit Search Item...", "edit_search_item")]
-    result = [allocate_item("New Search", "search/", True, False, [], 'new_search.png', {})]
+    result = [allocate_item("New Search", "search", True, False, [], 'new_search.png', {})]
     mapfun = partial(parse_history_view, cm=cm)
     result += list(map(mapfun, search_array))
     result.append(allocate_item("Clear Search History...", "clear_search_history", False, False, [], 'clear_search_history.png', {}))
@@ -56,38 +55,43 @@ def parse_view(base: dict, isfolder: bool, isplayable: bool, dub: bool = False) 
     return parsed_view
 
 
-def get_season(titles_list: list) -> int:
+def get_season(titles_list: list, mal_id) -> int:
     import re
-    regexes = [r'season\s(\d+)', r'\s(\d+)st\sseason\s', r'\s(\d+)nd\sseason\s', r'\s(\d+)rd\sseason\s', r'\s(\d+)th\sseason\s']
-    s_ids = []
-    for regex in regexes:
-        s_ids += [re.findall(regex, name, re.IGNORECASE) for name in titles_list]
-    s_ids = [s[0] for s in s_ids if s]
-    if not s_ids:
-        regex = r'\s(\d+)$'
-        cour = False
-        for name in titles_list:
-            if name is not None and (' part ' in name.lower() or ' cour ' in name.lower()):
-                cour = True
-                break
-        if not cour:
+    meta_ids = database.get_mappings(mal_id, 'mal_id')
+    if season := meta_ids.get('thetvdb_season'):
+        if not isinstance(season, int):
+            season = 1
+    else:
+        regexes = [r'season\s(\d+)', r'\s(\d+)st\sseason\s', r'\s(\d+)nd\sseason\s', r'\s(\d+)rd\sseason\s', r'\s(\d+)th\sseason\s']
+        s_ids = []
+        for regex in regexes:
             s_ids += [re.findall(regex, name, re.IGNORECASE) for name in titles_list]
-    s_ids = [s[0] for s in s_ids if s]
-    if not s_ids:
-        seasonnum = 1
-        try:
-            for title in titles_list:
-                try:
-                    seasonnum = re.search(r' (\d)[ rnt][ sdh(]', f' {title[1]}  ').group(1)
+        s_ids = [s[0] for s in s_ids if s]
+        if not s_ids:
+            regex = r'\s(\d+)$'
+            cour = False
+            for name in titles_list:
+                if name is not None and (' part ' in name.lower() or ' cour ' in name.lower()):
+                    cour = True
                     break
-                except AttributeError:
-                    pass
-        except AttributeError:
-            pass
-        s_ids = [seasonnum]
-    season = int(s_ids[0])
-    if season > 10:
-        season = 1
+            if not cour:
+                s_ids += [re.findall(regex, name, re.IGNORECASE) for name in titles_list]
+        s_ids = [s[0] for s in s_ids if s]
+        if not s_ids:
+            seasonnum = 1
+            try:
+                for title in titles_list:
+                    try:
+                        seasonnum = re.search(r' (\d)[ rnt][ sdh(]', f' {title[1]}  ').group(1)
+                        break
+                    except AttributeError:
+                        pass
+            except AttributeError:
+                pass
+            s_ids = [seasonnum]
+        season = int(s_ids[0])
+        if season > 10:
+            season = 1
     return season
 
 

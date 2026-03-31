@@ -47,7 +47,7 @@ class Sources(BrowserBase.BrowserBase):
                 with database.SQL(control.malSyncDB) as cursor:
                     for anidb_ep in anidb_meta:
                         cursor.execute('UPDATE episodes SET %s=? WHERE mal_id=? AND number=?' % 'anidb_ep_id', (anidb_meta[anidb_ep]['anidb_id'], mal_id, anidb_ep))
-                cursor.connection.commit()
+                    cursor.connection.commit()
 
         episode_zfill = str(episode).zfill(2)
 

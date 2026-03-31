@@ -100,13 +100,6 @@ class Resolver(BaseWindow):
                         self.return_data['link'] = stream_link
                         self.return_data['sub'] = i['subs']
                     break
-
-            elif i['type'] == 'embed':
-                from resources.lib.ui import embed_extractor
-                stream_link = embed_extractor.load_video_from_url(i['hash'])
-                if stream_link:
-                    self.return_data['link'] = stream_link
-                    break
             elif i['type'] == 'local_files':
                 stream_link = i['hash']
                 self.return_data = {
@@ -128,7 +121,7 @@ class Resolver(BaseWindow):
                 self.source_select_close()
             linkInfo = self.return_data['linkinfo']
 
-            item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=False)
+            item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
             if self.return_data.get('sub'):
                 from resources.lib.ui import embed_extractor
                 embed_extractor.del_subs()

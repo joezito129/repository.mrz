@@ -2,6 +2,7 @@ import requests
 import pickle
 import datetime
 
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from resources.lib.ui import database, utils, control
 from resources.lib import indexers
@@ -55,12 +56,14 @@ class SIMKLAPI:
             return []
 
         title_list = [name['name'] for name in result.get('alt_titles', [])]
-        season = utils.get_season(title_list)
+        season = utils.get_season(title_list, mal_id)
 
         result_meta = self.get_episode_meta(mal_id)
         result_ep = [x for x in result_meta if x['type'] == 'episode']
+
         mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
-        all_results = list(map(mapfunc, result_ep))
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            all_results = list(executor.map(mapfunc, result_ep))
 
         control.notify("SIMKL", f'{tvshowtitle} Added to Database', icon=poster)
         return all_results
@@ -73,11 +76,13 @@ class SIMKLAPI:
 
             season = episodes[0]['season']
             mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, episodes=episodes)
-            all_results = list(map(mapfunc2, result_ep))
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                all_results = list(executor.map(mapfunc2, result_ep))
             control.notify("SIMKL Appended", f'{tvshowtitle} Appended to Database', icon=poster)
         else:
             mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
-            all_results = list(map(mapfunc1, episodes))
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                all_results = list(executor.map(mapfunc1, episodes))
         return all_results
 
     def get_episodes(self, mal_id, show_meta) -> list:

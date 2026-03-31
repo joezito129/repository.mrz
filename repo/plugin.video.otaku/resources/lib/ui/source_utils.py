@@ -179,13 +179,16 @@ def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -
     if pack_select:
         files = user_select(all_files, dict_key)
     else:
-        files = [i for i in all_files if len(i['regex_matches']) > 0]
-        if not files:
-            files = user_select(all_files, dict_key)
+        if len(all_files) == 1:
+            files = all_files
         else:
-            files.sort(key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
-            if len(files) != 1:
-                files = user_select(files, dict_key)
+            files = [i for i in all_files if len(i['regex_matches']) > 0]
+            if not files:
+                files = user_select(all_files, dict_key)
+            else:
+                files.sort(key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
+                if len(files) != 1:
+                    files = user_select(files, dict_key)
     return files[0]
 
 
@@ -198,10 +201,8 @@ def filter_sources(list_, season: int, episode: int, _id=None, titles=None) -> l
 
     filtered_list= []
 
-    if titles:
-        fuzz_titles = [t.lower() for t in titles]
-    else:
-        fuzz_titles = None
+    fuzz_titles = [t.lower() for t in titles] if titles else None
+
     for torrent in list_:
         title = torrent['name'] if isinstance(torrent, dict) else torrent
         title = clean_torrent(title)
@@ -222,7 +223,7 @@ def filter_sources(list_, season: int, episode: int, _id=None, titles=None) -> l
         # filter out junk
         if fuzz_titles:
             best_ratio = max(difflib.SequenceMatcher(None, title, t).ratio() for t in fuzz_titles)
-            if best_ratio < 0.3:
+            if best_ratio < .2:
                 continue
         filtered_list.append(torrent)
     return filtered_list
@@ -250,8 +251,7 @@ def clean_torrent(text):
     combined_pattern = "|".join(patterns)
     text = re.sub(combined_pattern, '', text)
     text = re.sub(r"\[.*?\]|\(.*?\)", "", text)
-    # text = re.sub(r"[:/,!?()'\"\\\[\]_.]", " ", text)
-    text = re.sub(r"[:/,!?()'\"\\\[\]_.|~-]", " ", text)
+    text = re.sub(r"[:/,!?()'\"\\\[\]_.]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
@@ -283,8 +283,4 @@ def video_ext():
 
 def user_select(files, dict_key) -> list:
     idx = control.select_dialog('Select File', [i[dict_key].rsplit('/')[-1] for i in files])
-    if idx == -1:
-        file = [{'path': ''}]
-    else:
-        file = [files[idx]]
-    return file
+    return [{'path': ''}] if idx == -1 else [files[idx]]
