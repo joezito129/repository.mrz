@@ -8,32 +8,31 @@ from resources.lib import OtakuBrowser
 BROWSER = OtakuBrowser.BROWSER
 
 
-def get_auth_dialog(flavor):
+def get_auth_dialog(flavor: str) -> bool:
     from resources.lib.windows import wlf_auth
-    platform = control.sys.platform
-    if 'linux' in platform:
-        auth = wlf_auth.AltWatchlistFlavorAuth(flavor).set_settings()
-    else:
-        auth = wlf_auth.WatchlistFlavorAuth('wlf_auth_%s.xml' % flavor, control.ADDON_PATH, flavor=flavor).doModal()
-    return WatchlistFlavor.login_request(flavor) if auth else None
+    window = wlf_auth.WatchlistFlavorAuth(f"wlf_auth_{flavor}.xml", control.ADDON_PATH, flavor=flavor)
+    auth = window.doModal()
+    del window
+    return auth
 
 
 @Route('watchlist_login/*')
-def WL_LOGIN(payload: str, params: dict):
-    auth_dialog = bool(params.get('auth_dialog'))
-    get_auth_dialog(payload) if auth_dialog else WatchlistFlavor.login_request(payload)
+def WL_LOGIN(payload: str, params: dict) -> None:
+    auth_dialog = params.get('auth_dialog')
+    auth = True if auth_dialog is None else get_auth_dialog(payload)
+    if auth:
+        WatchlistFlavor.login_request(payload)
     control.exit_code()
 
 
 @Route('watchlist_logout/*')
-def WL_LOGOUT(payload: str, params: dict):
+def WL_LOGOUT(payload: str, params: dict) -> None:
     WatchlistFlavor.logout_request(payload)
-    control.refresh()
     control.exit_code()
 
 
 @Route('watchlist/*')
-def WATCHLIST(payload: str, params: dict):
+def WATCHLIST(payload: str, params: dict) -> None:
     watchlist_page = WatchlistFlavor.watchlist_request(payload)
     control.draw_items(watchlist_page, 'addons')
 
@@ -47,47 +46,55 @@ def WATCHLIST(payload: str, params: dict):
 
 
 @Route('watchlist_status_type/*')
-def WATCHLIST_STATUS_TYPE(payload: str, params: dict):
+def WATCHLIST_STATUS_TYPE(payload: str, params: dict) -> None:
     flavor, status = payload.split("/", 1)
-    next_up = bool(params.get('next_up'))
-    content_type = 'videos' if next_up else 'tvshows'
+    next_up = params.get('next_up')
+    content_type = 'tvshows' if next_up is None else 'videos'
     control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 60, False, flavor, status, next_up), content_type)
 
 
 @Route('watchlist_status_type_pages/*')
-def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict):
+def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict) -> None:
     flavor, status, offset = payload.split("/", 2)
     page = int(params.get('page', 1))
-    next_up = bool(params.get('next_up'))
-    content_type = 'videos' if next_up else 'tvshows'
+    next_up = params.get('next_up')
+    content_type = 'tvshows' if next_up is None else 'videos'
     control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 60, False, flavor, status, next_up, offset, page), content_type)
 
 
 @Route('watchlist_to_ep/*')
-@control.timeIt
-def WATCHLIST_TO_EP(payload: str, params: dict):
-    mal_id, eps_watched = payload.split("/", 1)
-    show_meta = database.get_show(mal_id)
-    if not show_meta:
-        show_meta = BROWSER.get_anime(mal_id)
-    kodi_meta = pickle.loads(show_meta['kodi_meta'])
+def WATCHLIST_TO_EP(payload: str, params: dict) -> None:
+    payload_list = payload.split("/", 1)
+    mal_id = int(payload_list[0])
+    eps_watched = int(payload_list[1])
+
+    if (show := database.get_show(mal_id)) is None:
+        show = BROWSER.get_anime(mal_id)
+    kodi_meta = pickle.loads(show['kodi_meta'])
     kodi_meta['eps_watched'] = eps_watched
     database.update_kodi_meta(mal_id, kodi_meta)
     control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60, False, mal_id))
 
 
 @Route('watchlist_manager/*')
-def CONTEXT_MENU(payload: str, params: dict):
+def CONTEXT_MENU(payload: str, params: dict) -> None:
     if not control.getBool('watchlist.update.enabled'):
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
-        return control.exit_code()
-    path, mal_id, eps_watched  = payload.split('/', 2)
-    if not (show := database.get_show(mal_id)):
+        control.exit_code()
+        return None
+
+    payload_list = payload.split("/", 2)
+    # path = int(payload_list[0])
+    mal_id = int(payload_list[1])
+    # eps_watched = int(payload_list[2])
+
+    if (show := database.get_show(mal_id)) is None:
         show = BROWSER.get_anime(mal_id)
 
-    if not (flavor := WatchlistFlavor.get_update_flavor()):
+    if (flavor := WatchlistFlavor.get_update_flavor()) is None:
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
-        return control.exit_code()
+        control.exit_code()
+        return None
 
     actions = WatchlistFlavor.context_statuses()
 
@@ -136,41 +143,37 @@ def CONTEXT_MENU(payload: str, params: dict):
                 control.ok_dialog(heading, f'[I]{title}[/I]  was added to [B]{status}[/B]')
             else:
                 control.ok_dialog(heading, 'Unable to Set Watchlist')
-    return control.exit_code()
+    control.exit_code()
+    return None
 
 
 def add_watchlists(items: list) -> list:
-    flavors = WatchlistFlavor.get_enabled_watchlists()
-    if flavors:
+    if (flavors := WatchlistFlavor.get_enabled_watchlists()) is not None:
         for flavor in flavors:
             item = utils.allocate_item(f"{flavor.username}'s {flavor.title}", f"watchlist/{flavor.flavor_name}", True, False, [], flavor.image, {})
             items.append(item)
     return items
 
 
-def watchlist_update_episode(mal_id, episode):
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor:
+def watchlist_update_episode(mal_id: int, episode: int):
+    if WatchlistFlavor.get_update_flavor() is not None:
         return WatchlistFlavor.watchlist_update_episode(mal_id, episode)
     return None
 
 
-def set_watchlist_status(mal_id, status):
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor:
+def set_watchlist_status(mal_id: int, status: str):
+    if WatchlistFlavor.get_update_flavor() is not None:
         return WatchlistFlavor.watchlist_set_status(mal_id, status)
     return None
 
 
-def set_watchlist_score(mal_id, score):
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor:
+def set_watchlist_score(mal_id: int, score: int):
+    if WatchlistFlavor.get_update_flavor() is not None:
         return WatchlistFlavor.watchlist_set_score(mal_id, score)
     return None
 
 
-def delete_watchlist_anime(mal_id):
-    flavor = WatchlistFlavor.get_update_flavor()
-    if flavor:
+def delete_watchlist_anime(mal_id: int):
+    if WatchlistFlavor.get_update_flavor() is not None:
         return WatchlistFlavor.watchlist_delete_anime(mal_id)
     return None

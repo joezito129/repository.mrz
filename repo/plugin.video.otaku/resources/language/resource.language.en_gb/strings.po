@@ -356,6 +356,10 @@ msgctxt "#30356"
 msgid "Enable Skip Intro Dialog"
 msgstr ""
 
+msgctxt "#30700"
+msgid "Auto Skip Intro on Chapters"
+msgstr ""
+
 msgctxt "#30357"
 msgid "Seconds to skip"
 msgstr ""
@@ -637,6 +641,10 @@ msgctxt "#30134"
 msgid "Authorize Premiumize..."
 msgstr ""
 
+msgctxt "#30135"
+msgid "APIKEY Needed for Torrentio!"
+msgstr ""
+
 msgctxt "#30140"
 msgid "TorBox"
 msgstr ""
@@ -736,21 +744,22 @@ msgid "Nekobt"
 msgstr ""
 
 msgctxt "#30402"
-msgid "HiAnime"
+msgid "External Scrapers"
 msgstr ""
 
 
 msgctxt "#30403"
-msgid "WatchNixtoons2"
+msgid "Torrentio"
 msgstr ""
 
 msgctxt "#30404"
-msgid "Animepahe"
+msgid "Torrentio Sources"
 msgstr ""
 
 msgctxt "#30406"
 msgid "Aniwave"
 msgstr ""
+
 
 msgctxt "#30410"
 msgid "Local Files"

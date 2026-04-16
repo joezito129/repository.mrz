@@ -57,13 +57,19 @@ def add_last_watched(items: list) -> list:
 
 @Route('animes/*')
 def ANIMES_PAGE(payload: str, params: dict) -> None:
-    mal_id, eps_watched = payload.split("/", 1)
+    payload_split = payload.split("/", 1)
+    mal_id = int(payload_split[0])
+    # eps_watched = int(payload_split[1])
     control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60 * 8, False, mal_id))
 
 
 @Route('find_recommendations/*')
 def FIND_RECOMMENDATIONS(payload: str, params: dict) -> None:
-    path, mal_id, eps_watched = payload.split("/", 2)
+    payload_split = payload.split("/", 2)
+    # path = int(payload_split[0])
+    mal_id = int(payload_split[1])
+    # eps_watched = int(payload_split[2])
+
     page = int(params.get('page', 1))
     recommendations = BROWSER.get_recommendations(mal_id, page)
     control.draw_items(recommendations, 'tvshows')
@@ -73,7 +79,11 @@ def FIND_RECOMMENDATIONS(payload: str, params: dict) -> None:
 
 @Route('find_relations/*')
 def FIND_RELATIONS(payload: str, params: dict) -> None:
-    path, mal_id, eps_watched = payload.split("/", 2)
+    payload_split = payload.split("/", 2)
+    # path = int(payload_split[0])
+    mal_id = int(payload_split[1])
+    # eps_watched = int(payload_split[2])
+
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
 
@@ -157,7 +167,7 @@ def SEARCH(payload: str, params: dict) -> None:
 
 @Route('remove_search_item/*')
 def REMOVE_SEARCH_ITEM(payload: str, params: dict) -> None:
-    query = params.get('q')
+    query = params.get('q', '')
     if query:
         database.remove_search(table='show', value=query)
     control.exit_code()
@@ -165,7 +175,7 @@ def REMOVE_SEARCH_ITEM(payload: str, params: dict) -> None:
 
 @Route('edit_search_item/*')
 def EDIT_SEARCH_ITEM(payload: str, params: dict) -> None:
-    query = params.get('q')
+    query = params.get('q', '')
     if query:
         new_query = control.keyboard(control.lang(30005), query)
         if new_query and new_query != query:
@@ -176,12 +186,14 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict) -> None:
 @Route('play/*')
 def PLAY(payload: str, params: dict) -> None:
     from resources.lib import pages
-    mal_id, episode = payload.split("/", 1)
+
+    payload_split = payload.split("/", 1)
+    mal_id = int(payload_split[0])
+    episode = int(payload_split[1])
+
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
-    resume = params.get('resume')
-    params['path'] = f"{control.addon_url(f'play/{payload}')}"
-    if resume:
+    if resume := params.get('resume', 0):
         resume = float(resume)
         context = control.context_menu([f'Resume from {utils.format_time(resume)}', 'Play from beginning'])
         if context == -1:
@@ -190,8 +202,8 @@ def PLAY(payload: str, params: dict) -> None:
             resume = None
     sources = pages.get_kodi_sources(mal_id, episode, 'show', rescrape, source_select)
     if sources:
-        _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
-        if control.getSetting('general.playstyle.episode') == '1' or source_select or rescrape:
+        _mock_args = {"mal_id": mal_id, "episode": episode, 'play': True, 'resume': resume, 'context': rescrape or source_select}
+        if control.getInt('general.playstyle.episode') == 1 or source_select or rescrape:
             from resources.lib.windows.source_select import SourceSelect
             window = SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape)
             window.doModal()
@@ -199,7 +211,7 @@ def PLAY(payload: str, params: dict) -> None:
         else:
             from resources.lib.windows.resolver import Resolver
             window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args)
-            window.doModal(sources, {}, False)
+            window.doModal(sources)
             del window
     else:
         control.notify(control.ADDON_NAME, "No Sources Found!")
@@ -210,11 +222,14 @@ def PLAY(payload: str, params: dict) -> None:
 @Route('play_movie/*')
 def PLAY_MOVIE(payload: str, params: dict) -> None:
     from resources.lib import pages
-    mal_id, eps_watched = payload.split("/", 1)
+
+    payload_split = payload.split("/", 1)
+    mal_id = int(payload_split[0])
+    # episode = int(payload_split[1])
+
     source_select = bool(params.get('source_select'))
     rescrape = bool(params.get('rescrape'))
-    resume = params.get('resume')
-    params['path'] = f"{control.addon_url(f'play_movie/{payload}')}"
+    resume = params.get('resume', 0)
     if resume:
         resume = float(resume)
         context = control.context_menu([f'Resume from {utils.format_time(resume)}', 'Play from beginning'])
@@ -225,8 +240,8 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
 
     sources = pages.get_kodi_sources(mal_id, 1, 'movie', rescrape, source_select)
     if sources:
-        _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select, 'params': params}
-        if control.getSetting('general.playstyle.movie') == '1' or source_select or rescrape:
+        _mock_args = {'mal_id': mal_id, 'play': True, 'resume': resume, 'context': rescrape or source_select}
+        if control.getInt('general.playstyle.movie') == 1 or source_select or rescrape:
             from resources.lib.windows.source_select import SourceSelect
             window = SourceSelect('source_select.xml', control.ADDON_PATH, actionArgs=_mock_args, sources=sources, rescrape=rescrape)
             window.doModal()
@@ -234,7 +249,7 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
         else:
             from resources.lib.windows.resolver import Resolver
             window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=_mock_args)
-            window.doModal(sources, {}, False)
+            window.doModal(sources)
             del window
     else:
         control.notify(control.ADDON_NAME, "No Sources Found!")
@@ -247,23 +262,27 @@ def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
     from resources.lib.WatchlistFlavor import WatchlistFlavor
     payload_list = payload.split("/")
     if len(payload_list) == 2:
-        mal_id, episode = payload_list
+        mal_id = int(payload_list[0])
+        episode = int(payload_list[1])
     else:
-        mal_id = payload_list[1]
+        mal_id = int(payload_list[0])
         episode = 1
 
     flavor = WatchlistFlavor.get_update_flavor()
     WatchlistIntegration.watchlist_update_episode(mal_id, episode)
     control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
-    if len(payload_list) == 2:
-        control.execute(f'ActivateWindow(Videos,plugin://{control.ADDON_ID}/watchlist_to_ep/{mal_id}/{episode})')
+    control.refresh()
     control.exit_code()
 
 
 
 @Route('delete_anime_database/*')
 def DELETE_ANIME_DATABASE(payload: str, params: dict) -> None:
-    path, mal_id, eps_watched = payload.split("/", 2)
+    payload_split = payload.split("/", 2)
+    # path = int(payload_split[0])
+    mal_id = int(payload_split[1])
+    # eps_watched = int(payload_split[2])
+
     database.remove_from_database('shows', mal_id)
     database.remove_from_database('episodes', mal_id)
     database.remove_from_database('show_data', mal_id)
@@ -304,7 +323,11 @@ def REFRESH(payload: str, params: dict) -> None:
 
 @Route('fanart_select/*')
 def FANART_SELECT(payload: str, params: dict) -> None:
-    path, mal_id, eps_watched = payload.split("/", 2)
+    payload_split = payload.split("/", 2)
+    # path = int(payload_split[0])
+    mal_id = int(payload_split[1])
+    # eps_watched = int(payload_split[2])
+
     if not (episode := database.get_episode(mal_id)):
         OtakuBrowser.get_anime_init(mal_id)
         episode = database.get_episode(mal_id)
@@ -316,16 +339,19 @@ def FANART_SELECT(payload: str, params: dict) -> None:
 
 @Route('fanart/*')
 def FANART(payload: str, params: dict) -> None:
-    mal_id, select = payload.split('/', 1)
+    payload_list = payload.split("/", 1)
+    mal_id = int(payload_list[0])
+    select = int(payload_list[1])
+
     episode = database.get_episode(mal_id)
     fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
     fanart_display = fanart + ["None", "Random"]
     fanart += ["None", ""]
     fanart_all = control.getStringList(f'fanart.all')
     fanart_all.append(str(mal_id))
-    control.setSetting(f'fanart.select.{mal_id}', fanart[int(select)])
+    control.setSetting(f'fanart.select.{mal_id}', fanart[select])
     control.setStringList(f'fanart.all', fanart_all)
-    control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[int(select)]}")
+    control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[select]}")
 
 
 # ### Menu Items ###

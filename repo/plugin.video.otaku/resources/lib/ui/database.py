@@ -92,8 +92,6 @@ def get_(function, duration, *args, **kwargs):
     :param kwargs: Optional keyword arguments for the provided function
     """
     key = hash_function(function, args, kwargs)
-    if 'key' in kwargs:
-        key += kwargs.pop('key')
 
     cache_result = cache_get(key)
     if cache_result and is_cache_valid(cache_result['date'], duration):
@@ -120,9 +118,10 @@ def hash_function(function_instance, *args) -> str:
 
 def generate_md5(*args) -> str:
     md5_hash = hashlib.md5()
-    [md5_hash.update(str(arg).encode()) for arg in args]
-    return str(md5_hash.hexdigest())
-
+    for arg in args:
+        md5_hash.update(str(arg).encode('utf-8'))
+        md5_hash.update(b'|')
+    return md5_hash.hexdigest()
 
 def cache_get(key):
     with SQL(control.cacheFile) as cursor:
@@ -156,7 +155,7 @@ def is_cache_valid(cached_time: int, cache_timeout: int) -> bool:
     return (cache_timeout * 60) > diff
 
 
-def update_show(mal_id: int, kodi_meta, anime_schedule_route: str = '') -> None:
+def update_show(mal_id, kodi_meta, anime_schedule_route: str = '') -> None:
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
         cursor.execute('REPLACE INTO shows (mal_id, kodi_meta, anime_schedule_route) VALUES (?, ?, ?)', (mal_id, kodi_meta, anime_schedule_route))
@@ -165,11 +164,11 @@ def update_show(mal_id: int, kodi_meta, anime_schedule_route: str = '') -> None:
 
 
 def update_show_meta(mal_id: int, meta_ids: dict, art: dict) -> None:
-    meta_ids = pickle.dumps(meta_ids)
-    art = pickle.dumps(art)
+    meta_ids_ = pickle.dumps(meta_ids)
+    art_ = pickle.dumps(art)
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute("REPLACE INTO shows_meta (mal_id, meta_ids, art) VALUES (?, ?, ?)", (mal_id, meta_ids, art))
+        cursor.execute("REPLACE INTO shows_meta (mal_id, meta_ids, art) VALUES (?, ?, ?)", (mal_id, meta_ids_, art_))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
 
@@ -180,23 +179,23 @@ def add_mapping_id(mal_id: int, column: str, value: str):
         cursor.connection.commit()
 
 
-def update_kodi_meta(mal_id, kodi_meta: dict):
-    kodi_meta = pickle.dumps(kodi_meta)
+def update_kodi_meta(mal_id, kodi_meta):
+    kodi_meta_ = pickle.dumps(kodi_meta)
     with SQL(control.malSyncDB) as cursor:
-        cursor.execute('UPDATE shows SET kodi_meta=? WHERE mal_id=?', (kodi_meta, mal_id))
+        cursor.execute('UPDATE shows SET kodi_meta=? WHERE mal_id=?', (kodi_meta_, mal_id))
         cursor.connection.commit()
 
 
 def update_show_data(mal_id: int, data: dict, last_updated: str = ''):
-    data = pickle.dumps(data)
+    data_ = pickle.dumps(data)
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('PRAGMA foreign_keys=OFF')
-        cursor.execute('REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)', (mal_id, data, last_updated))
+        cursor.execute('REPLACE INTO show_data (mal_id, data, last_updated) VALUES (?, ?, ?)', (mal_id, data_, last_updated))
         cursor.execute('PRAGMA foreign_keys=ON')
         cursor.connection.commit()
 
 
-def create_episode(mal_id: int, number: int, update_time: str, season: int, kodi_meta, filler: str, anidb_ep_id) -> None:
+def create_episode(mal_id: int, number: int, update_time: str, season: int, kodi_meta, filler, anidb_ep_id) -> None:
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('REPLACE INTO episodes (mal_id, number, last_updated, season, kodi_meta, filler, anidb_ep_id, nekobt_ep_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (mal_id, number, update_time, season, kodi_meta, filler, anidb_ep_id, ''))
         cursor.connection.commit()
@@ -221,9 +220,9 @@ def get_episode_list(mal_id: int):
         return episodes
 
 
-def get_episode(mal_id, episode: int=None):
+def get_episode(mal_id: int, episode: int=None):
     with SQL(control.malSyncDB) as cursor:
-        if episode:
+        if episode is not None:
             cursor.execute('SELECT * FROM episodes WHERE mal_id=? AND number=?', (mal_id, episode))
         else:
             cursor.execute('SELECT * FROM episodes WHERE mal_id=?', (mal_id,))
@@ -231,14 +230,14 @@ def get_episode(mal_id, episode: int=None):
         return episode
 
 
-def get_show(mal_id):
+def get_show(mal_id) -> dict:
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()
         return shows
 
 
-def get_show_meta(mal_id: int):
+def get_show_meta(mal_id):
     with SQL(control.malSyncDB) as cursor:
         cursor.execute('SELECT * FROM shows_meta WHERE mal_id IN (%s)' % mal_id)
         shows = cursor.fetchone()
@@ -277,15 +276,14 @@ def addSearchHistory(search_string: str, media_type: str) -> None:
 
 def clearSearchHistory(media_type: str) -> None:
     confirmation = control.yesno_dialog(control.ADDON_NAME, "Clear search history?")
-    if not confirmation:
-        return
-    with SQL(control.searchHistoryDB) as cursor:
-        cursor.execute(f"DROP TABLE IF EXISTS {media_type}")
-        cursor.execute("VACUUM")
-        cursor.execute(f"CREATE TABLE IF NOT EXISTS {media_type} (value TEXT)")
-        cursor.connection.commit()
-    control.refresh()
-    control.notify(control.ADDON_NAME, "Search History has been cleared")
+    if confirmation:
+        with SQL(control.searchHistoryDB) as cursor:
+            cursor.execute(f"DROP TABLE IF EXISTS {media_type}")
+            cursor.execute("VACUUM")
+            cursor.execute(f"CREATE TABLE IF NOT EXISTS {media_type} (value TEXT)")
+            cursor.connection.commit()
+        control.refresh()
+        control.notify(control.ADDON_NAME, "Search History has been cleared")
 
 
 def remove_search(table: str, value: str) -> None:
@@ -303,53 +301,10 @@ def dict_factory(cursor, row):
 
 class SQL:
     def __init__(self, path: str, timeout: int = 60):
-        # self.lock = threading.Lock()
         self.path = path
         self.timeout = timeout
         self.conn = None
         self.cursor = None
-
-    # def __enter__(self):
-    #     self.lock.acquire()
-    #     if not xbmcvfs.exists(control.dataPath):
-    #         xbmcvfs.mkdirs(control.dataPath)
-    #     for i in range(3):
-    #         try:
-    #             self.conn = dbapi2.connect(self.path, timeout=self.timeout, isolation_level=None)
-    #             self.conn.row_factory = dict_factory
-    #             self.conn.execute("PRAGMA synchronous = OFF")
-    #             self.conn.execute("PRAGMA journal_mode = OFF")
-    #             self.conn.execute("PRAGMA mmap_size = 168435456")  # 156MB memory-mapped I/O
-    #             self.conn.execute("PRAGMA FOREIGN_KEYS=1")
-    #             self.cursor = self.conn.cursor()
-    #             break
-    #         except dbapi2.OperationalError as e:
-    #             if "locked" in str(e).lower():
-    #                 control.log("Database Locked retry in 1 second")
-    #                 xbmc.sleep(1000)
-    #                 continue
-    #             else:
-    #                 self._abort(e)
-    #                 break
-    #     else:
-    #         self._abort("Database remained locked after 3 attempts")
-    #     return self.cursor
-    #
-    # def __exit__(self, exc_type, exc_val, exc_tb):
-    #     try:
-    #         if self.cursor is not None:
-    #             self.cursor.close()
-    #         if self.conn is not None:
-    #             self.conn.close()
-    #         if exc_type:
-    #             import traceback
-    #             control.log('database error')
-    #             control.log(f"{''.join(traceback.format_exception(exc_type, exc_val, exc_tb))}", 'error')
-    #             if exc_type is OperationalError:
-    #                 return True
-    #     finally:
-    #         if self.lock.locked():
-    #             self.lock.release()
 
     def __enter__(self):
         if not xbmcvfs.exists(control.dataPath):
@@ -359,9 +314,13 @@ class SQL:
             self.conn.row_factory = dict_factory
             self.conn.execute("PRAGMA synchronous = OFF")
             self.conn.execute("PRAGMA journal_mode = WAL")
-            self.conn.execute("PRAGMA mmap_size = 168435456")  # 156MB memory-mapped I/O
+            self.conn.execute("PRAGMA mmap_size = 168435456")
             self.conn.execute("PRAGMA FOREIGN_KEYS=1")
+            if self.conn is None:
+                raise Exception("Connection Not Found")
             self.cursor = self.conn.cursor()
+            if self.cursor is None:
+                raise Exception("Cursor Not Found")
         except dbapi2.OperationalError as e:
             control.notify(control.ADDON_NAME, "Failed To Load Database")
             control.log(e, 'error')

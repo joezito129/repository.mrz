@@ -8,7 +8,7 @@ class Premiumize:
     def __init__(self):
         # self.client_id = "855400527"      # Swag
         self.client_id = '807831898'        # Otaku
-        self.token = control.getSetting('premiumize.token')
+        self.token = control.getString('premiumize.token')
         self.base_url = 'https://www.premiumize.me/api'
         self.dialog = None
 
@@ -32,7 +32,7 @@ class Premiumize:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
 
         qr_path = os.path.join(control.dataPath, 'qr_code.png')
-        qr = pyqrcode.create(resp['base_url'])
+        qr = pyqrcode.create(resp['verification_uri'])
         qr.png(qr_path, scale=20)
         config = {
             'heading': f'{control.ADDON_NAME}: Premiumize Auth',
@@ -48,7 +48,7 @@ class Premiumize:
         while not auth_done and OauthTimeout > 0:
             OauthTimeout -= OauthTimeStep
             xbmc.sleep(OauthTimeStep * 1000)
-            auth_done = self.auth_loop(data, OauthTimeout)
+            auth_done, OauthTimeout = self.auth_loop(data, OauthTimeout)
             self.dialog.update(int(OauthTimeout / OauthTotalTimeout * 100))
         self.dialog.close()
         if auth_done:
@@ -58,23 +58,23 @@ class Premiumize:
         r = requests.get(f'{self.base_url}/account/info', headers=self.headers())
         user_information = r.json()
         premium = user_information['premium_until'] > 0
-        control.setSetting('premiumize.username', user_information['customer_id'])
+        control.setString('premiumize.username', user_information['customer_id'])
         control.ok_dialog(f'{control.ADDON_NAME}: Premiumize', control.lang(30023))
         if not premium:
-            control.setSetting('premiumize.auth.status', 'Expired')
+            control.setString('premiumize.auth.status', 'Expired')
             control.ok_dialog(f'{control.ADDON_NAME}: Premiumize', control.lang(30024))
         else:
-            control.setSetting('premiumize.auth.status', 'Premium')
+            control.setString('premiumize.auth.status', 'Premium')
 
     def auth_loop(self, data, OauthTimeout) -> tuple:
         if self.dialog.iscanceled():
             OauthTimeout = 0
-            return False,OauthTimeout
+            return False, OauthTimeout
         r = requests.post('https://www.premiumize.me/token', data=data)
         token = r.json()
         if r.ok:
             self.token = token['access_token']
-            control.setSetting('premiumize.token', self.token)
+            control.setString('premiumize.token', self.token)
             return True, OauthTimeout
         else:
             if token.get('error') == 'access_denied':
@@ -121,11 +121,10 @@ class Premiumize:
         directLink = self.direct_download(source)
         return directLink['location'] if directLink['status'] == 'success' else None
 
-    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select, filename):
         folder_details = self.direct_download(magnet)['content']
         folder_details = sorted(folder_details, key=lambda i: int(i['size']), reverse=True)
-        folder_details = [i for i in folder_details if source_utils.is_file_ext_valid(i['link'])]
-        filter_list = [i for i in folder_details]
+        filter_list = [i for i in folder_details if source_utils.is_file_ext_valid(i['link'])]
 
         stream_link = None
         dict_key = 'path'
@@ -139,7 +138,7 @@ class Premiumize:
             stream_link = filter_list[0]['link']
 
         elif len(filter_list) >= 1:
-            identified_file = source_utils.get_best_match('path', folder_details, episode)
+            identified_file = source_utils.get_best_match('path', folder_details, episode, pack_select, filename)
             stream_link = identified_file.get('link')
 
         return stream_link

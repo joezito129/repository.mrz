@@ -11,11 +11,9 @@ class WatchlistFlavorBase:
     _TITLE = None
     _IMAGE = None
 
-    def __init__(self, auth_var=None, username=None, password=None, user_id=None, token=None, refresh=None, sort=None):
+    def __init__(self, auth_var=None, username=None, token=None, refresh=None, sort=None):
         self.auth_var = auth_var
         self.username = username
-        self.password = password
-        self.user_id = user_id
         self.token = token
         self.refresh = refresh
         self.sort = sort
@@ -43,53 +41,51 @@ class WatchlistFlavorBase:
 
     @staticmethod
     def login():
-        raise 'Should Not be called Directly'
+        raise Exception('Should Not be called Directly')
 
     @staticmethod
     def get_watchlist_status(status, next_up, offset, page):
-        raise 'Should Not be called Directly'
+        raise Exception('Should Not be called Directly')
 
     @staticmethod
     def watchlist():
-        raise 'Should Not be called Directly'
+        raise Exception('Should Not be called Directly')
 
     @staticmethod
     def action_statuses():
-        raise 'Should Not be called Directly'
+        raise Exception('Should Not be called Directly')
 
 
     @staticmethod
-    def _get_next_up_meta(mal_id, next_up):
+    def _get_next_up_meta(mal_id, next_up: int):
         next_up_meta = {}
         show = database.get_show(mal_id)
-        if show:
-            if show_meta := database.get_show_meta(mal_id):
+        if show is not None:
+            if (show_meta := database.get_show_meta(mal_id)) is not None:
                 art = pickle.loads(show_meta['art'])
-                if art.get('fanart'):
+                if art.get('fanart') is not None:
                     next_up_meta['image'] = random.choice(art['fanart'])
-            if episodes := database.get_episode_list(mal_id):
-                try:
-                    if episode_meta := pickle.loads(episodes[next_up]['kodi_meta']):
+            if (episodes := database.get_episode_list(mal_id)) is not None:
+                if len(episodes) > next_up:
+                    if (episode_meta := pickle.loads(episodes[next_up]['kodi_meta'])) is not None:
                         if control.getBool('interface.cleantitles'):
                             next_up_meta['title'] = f'Episode {episode_meta["info"]["episode"]}'
                         else:
                             next_up_meta['title'] = episode_meta['info']['title']
-                            next_up_meta['plot'] = episode_meta['info']['plot']
+                            next_up_meta['plot'] = episode_meta['info'].get('plot')
                         next_up_meta['image'] = episode_meta['image']['thumb']
                         next_up_meta['aired'] = episode_meta['info'].get('aired')
-                except IndexError:
-                    pass
         return mal_id, next_up_meta, show
 
-    def _get_mapping_id(self, mal_id, flavor):
+    def _get_mapping_id(self, mal_id: int, flavor: str):
         show = database.get_show(mal_id)
-        mapping_id = show[flavor] if show and show.get(flavor) else self.get_flavor_id_vercel(mal_id, flavor)
-        if not mapping_id:
+        mapping_id = show[flavor] if show is not None and show.get(flavor) else self.get_flavor_id_vercel(mal_id, flavor)
+        if mapping_id is None:
             mapping_id = self.get_flavor_id_findmyanime(mal_id, flavor)
         return mapping_id
 
     @staticmethod
-    def get_flavor_id_vercel(mal_id, flavor):
+    def get_flavor_id_vercel(mal_id: int, flavor: str):
         params = {
             'type': "mal",
             "id": mal_id
@@ -101,7 +97,7 @@ class WatchlistFlavorBase:
         return flavor_id
 
     @staticmethod
-    def get_flavor_id_findmyanime(mal_id, flavor):
+    def get_flavor_id_findmyanime(mal_id: int, flavor: str):
         if flavor == 'anilist_id':
             mapping = 'Anilist'
         elif flavor == 'mal_id':
@@ -120,7 +116,7 @@ class WatchlistFlavorBase:
         return flavor_id
 
     @staticmethod
-    def get_flavor_id_simkl(mal_id, flavor):
+    def get_flavor_id_simkl(mal_id: int, flavor: str):
         from resources.lib.indexers.simkl import SIMKLAPI
         ids = SIMKLAPI().get_mapping_ids(mal_id, flavor)
         flavor_id = ids[flavor]

@@ -19,11 +19,12 @@ class Sources(BrowserBase.BrowserBase):
         self.uncached = []
         self.sources = []
         self.titles = None
+        self.S = requests.Session()
 
     def process_nyaa(self, url, params, episode_zfill, season_zfill) -> list:
         params['page'] = 'rss'
 
-        r = requests.get(url, params)
+        r = self.S.get(url, params=params)
         feed = feedparser.parse(r.content)
 
         list_ = []
@@ -91,7 +92,7 @@ class Sources(BrowserBase.BrowserBase):
         self.append_cache_uncached_noduplicates()
         return {'cached': self.cached, 'uncached': self.uncached}
 
-    def get_episode_sources(self, show: str, mal_id: int, episode: str, status: str, episodes: int) -> None:
+    def get_episode_sources(self, show: str, mal_id: int, episode: int, status: str, episodes: int) -> None:
         episode_zfill = str(episode).zfill(2)
         episode_query = {f'- {episode_zfill}'}
 
@@ -103,8 +104,8 @@ class Sources(BrowserBase.BrowserBase):
         else:
             season_zfill = None
 
-        if int(episode) > 100:
-            episode_query.add(f'{episode[:-1]}*')
+        if episode > 100:
+            episode_query.add(f'{str(episode)[:-1]}*')
 
         # episode_query.add("batch|series")
         query = f'({show}) {episode_zfill}|' + "|".join(episode_query)
@@ -114,10 +115,9 @@ class Sources(BrowserBase.BrowserBase):
             'q': query
         }
 
-        self.sources = self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill)
-        if not self.sources:
-            params['q'] = show
-            self.sources = self.sources = self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill)
+        self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill)
+        params['q'] = show
+        self.sources += self.process_nyaa(self._BASE_URL, params, episode_zfill, season_zfill)
 
 
     def get_movie_sources(self, query, mal_id) -> None:

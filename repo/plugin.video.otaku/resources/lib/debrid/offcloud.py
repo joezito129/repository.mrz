@@ -5,12 +5,12 @@ from resources.lib.ui import control
 
 class OffCloud:
     def __init__(self):
-        self.token = control.getSetting('offcloud.token')
-        self.refresh = control.getSetting('offcloud.refresh')
-        self.connectionsid = control.getSetting('offcloud.connectsid')
+        self.token = control.getString('offcloud.token')
+        self.refresh = control.getString('offcloud.refresh')
+        self.connectionsid = control.getString('offcloud.connectsid')
         self.api_url = "https://offcloud.com/api"
-        self.email = control.getSetting('offcloud.username')
-        self.password = control.getSetting('offcloud.password')
+        self.email = control.getString('offcloud.username')
+        self.password = control.getString('offcloud.password')
 
 
     def auth(self):
@@ -26,6 +26,6 @@ class OffCloud:
             user_information = r.json()
             self.connectionsid = r.cookies.get_dict()['connect.sid']
             self.email = user_information['email']
-            control.setSetting('offcloud.username', self.email)
-            control.setSetting('offcloud.password', self.password)
+            control.setString('offcloud.username', self.email)
+            control.setString('offcloud.password', self.password)
             # self.userId = user_information['userId']

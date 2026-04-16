@@ -3,7 +3,7 @@ import requests
 import threading
 import difflib
 
-from resources.lib.ui import BrowserBase, source_utils
+from resources.lib.ui import BrowserBase, source_utils, control
 from resources.lib.debrid import real_debrid, premiumize, all_debrid, torbox
 
 
@@ -12,28 +12,18 @@ class Sources(BrowserBase.BrowserBase):
         self.cloud_files = []
         self.threads = []
 
-    def get_sources(self, debrid: dict, title: str, title_en: str, episode: str) -> list:
-        if debrid.get('real_debrid'):
-            t = threading.Thread(target=self.rd_cloud_inspection, args=(title, title_en, episode,))
-            t.start()
-            self.threads.append(t)
-        if debrid.get('premiumize'):
-            t = threading.Thread(target=self.premiumize_cloud_inspection, args=(title, title_en, episode,))
-            t.start()
-            self.threads.append(t)
-        if debrid.get('alldebrid'):
-            t = threading.Thread(target=self.alldebrid_cloud_inspection, args=(title, title_en, episode,))
-            t.start()
-            self.threads.append(t)
-        if debrid.get('torbox'):
-            t = threading.Thread(target=self.torbox_cloud_inspection, args=(title, title_en, episode,))
-            t.start()
-            self.threads.append(t)
+    def get_sources(self, title: str, title_en: str, episode: str) -> list:
+        for debrid in control.enabled_debrid():
+            worker = getattr(self, f'{debrid}_cloud_inspection', None)
+            if worker:
+                t = threading.Thread(target=worker, args=(title, title_en, episode,))
+                t.start()
+                self.threads.append(t)
         for i in self.threads:
             i.join()
         return self.cloud_files
 
-    def rd_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
+    def real_debrid_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
         api = real_debrid.RealDebrid()
         torrents = api.list_torrents()
         query = f'("{title}"|"{title_en}")'

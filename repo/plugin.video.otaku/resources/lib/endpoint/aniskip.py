@@ -1,9 +1,9 @@
 import requests
 
 
-def get_skip_times(mal_id, episodenum, skip_type):
+def get_skip_times(mal_id, episodenum, skip_type) -> dict:
     # skip_types = op, recap, mixed-ed, mixed-op, ed
-    url = 'https://api.aniskip.com/v2/skip-times/%s/%d' % (mal_id, episodenum)
+    url = f"https://api.aniskip.com/v2/skip-times/{mal_id}/{episodenum}"
     params = {
         'types': skip_type,
         'episodeLength': 0
@@ -11,6 +11,6 @@ def get_skip_times(mal_id, episodenum, skip_type):
     r = requests.get(url, params=params, timeout=10)
     if r.ok:
         res = r.json()
-        return res
     else:
-        return None
+        res = {}
+    return res

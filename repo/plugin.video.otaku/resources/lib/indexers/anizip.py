@@ -1,3 +1,5 @@
+from concurrent.futures.thread import ThreadPoolExecutor
+
 import requests
 import pickle
 import datetime
@@ -9,6 +11,7 @@ from resources.lib import indexers
 
 class ANIZIPAPI:
     def __init__(self):
+        self.kodi_meta = None
         self.baseUrl = "https://api.ani.zip"
 
     def get_anime_info(self, mal_id):
@@ -18,49 +21,69 @@ class ANIZIPAPI:
         r = requests.get(f'{self.baseUrl}/mappings', params=params)
         return r.json()
 
-    @staticmethod
-    def parse_episode_view(res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data, episodes=None):
+    def parse_episode_view(self, res, mal_id, season, poster, fanart, eps_watched, update_time, dub_data, filler_data, episodes=None):
         episode = int(res['episode'])
 
         url = f"{mal_id}/{episode}"
 
-        title = res['title']['en']
-        if not title:
-            title = f'Episode {episode}'
+        title = res['title']['en'] or f'Episode {episode}'
 
-        image = res['image'] if res.get('image') else poster
+        try:
+            image = res['image']
+        except KeyError:
+            image = poster
 
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
-            'plot': res.get('overview', res.get('summary')),
             'title': title,
             'season': season,
             'episode': episode,
-            'tvshowtitle': tvshowtitle,
             'mediatype': 'episode',
-            'duration': res.get('runtime', res.get('length', 0)) * 60,
             'rating': {'score': float(res.get('rating', 0))}
         }
-
-        if eps_watched and int(eps_watched) >= episode:
-            info['playcount'] = 1
-
+        try:
+            info['tvshowtitle'] = self.kodi_meta['title_userPreferred']
+        except KeyError:
+            pass
+        try:
+            info['cast'] = self.kodi_meta['cast']
+        except KeyError:
+            pass
+        try:
+            info['genres'] = self.kodi_meta['genres']
+        except KeyError:
+            pass
+        try:
+            try:
+                info['duration'] = res['runtime'] * 60
+            except KeyError:
+                info['duration'] = res['length'] * 60
+        except KeyError:
+            pass
+        try:
+            try:
+                info['plot'] = res['overview']
+            except KeyError:
+                info['plot'] = res['summary']
+        except KeyError:
+            pass
         try:
             info['aired'] = res['airDate'][:10]
         except KeyError:
             pass
+        if eps_watched and int(eps_watched) >= episode:
+            info['playcount'] = 1
 
-        try:
+        if filler_data is not None and len(filler_data) >= episode:
             filler = filler_data[episode - 1]
-        except (IndexError, TypeError):
-            filler = ''
+        else:
+            filler = None
 
         anidb_ep_id = res.get('anidbEid')
-
         parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id)
         return parsed
 
-    def process_episode_view(self, mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data=None):
+    def process_episode_view(self, mal_id, poster, fanart, eps_watched, dub_data, filler_data=None):
         update_time = datetime.date.today().isoformat()
 
         result = self.get_anime_info(mal_id)
@@ -71,33 +94,43 @@ class ANIZIPAPI:
             return []
         season = result_ep[0].get('seasonNumber', 1)
 
-        mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=filler_data)
-        all_results = list(map(mapfunc, result_ep))
+        mapfunc = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, dub_data=dub_data, filler_data=filler_data)
+        with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
+            all_results = list(executor.map(mapfunc, result_ep))
 
-        control.notify("Anizip", f'{tvshowtitle} Added to Database', icon=poster)
+        try:
+            text = f"{self.kodi_meta['title_userPreferred']} Added to Database"
+        except KeyError:
+            text = f"{self.kodi_meta['title']} Added to Database"
+        control.notify("Anizip", text, icon=poster)
         return all_results
 
-    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
+    def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, dub_data=None):
         update_time, diff = indexers.get_diff(episodes[0])
-        if diff > int(control.getSetting('interface.check.updates')):
+        if diff > control.getInt('interface.check.updates'):
             result = self.get_anime_info(mal_id)
             result_ep = [result['episodes'][res] for res in result['episodes'] if res.isdigit()]
             season = episodes[0]['season']
-            mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=None, episodes=episodes)
-            all_results = list(map(mapfunc2, result_ep))
-            control.notify("ANIZIP Appended", f'{tvshowtitle} Appended to Database', icon=poster)
+            mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, dub_data=dub_data, filler_data=None, episodes=episodes)
+            with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
+                all_results = list(executor.map(mapfunc2, result_ep))
+            try:
+                text = f"{self.kodi_meta['title_userPreferred']} Appended to Database"
+            except KeyError:
+                text = f"{self.kodi_meta['title']} Appended to Database"
+            control.notify("ANIZIP Appended", text, icon=poster)
         else:
             mapfunc1 = partial(indexers.parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
-            all_results = list(map(mapfunc1, episodes))
+            with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
+                all_results = list(executor.map(mapfunc1, episodes))
         return all_results
 
-    def get_episodes(self, mal_id, show_meta) -> list:
-        kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
-        kodi_meta.update(pickle.loads(show_meta['art']))
-        fanart = kodi_meta.get('fanart')
-        poster = kodi_meta.get('poster')
-        tvshowtitle = kodi_meta['title_userPreferred']
-        eps_watched = kodi_meta.get('eps_watched')
+    def get_episodes(self, mal_id: int, show_meta) -> list:
+        self.kodi_meta = pickle.loads(database.get_show(mal_id)['kodi_meta'])
+        self.kodi_meta.update(pickle.loads(show_meta['art']))
+        fanart = self.kodi_meta.get('fanart')
+        poster = self.kodi_meta.get('poster')
+        eps_watched = int(self.kodi_meta.get('eps_watched', 0))
 
         if control.getBool('watchlist.episode.data'):
             from resources.lib.WatchlistFlavor import WatchlistFlavor
@@ -105,18 +138,19 @@ class ANIZIPAPI:
             if flavor and flavor.flavor_name in control.enabled_watchlists():
                 data = flavor.get_watchlist_anime_entry(mal_id)
                 if data.get('eps_watched'):
-                    eps_watched = kodi_meta['eps_watched'] = data['eps_watched']
-                    database.update_kodi_meta(mal_id, kodi_meta)
+                    eps_watched = data['eps_watched']
+                    self.kodi_meta['eps_watched'] = eps_watched
+                    database.update_kodi_meta(mal_id, self.kodi_meta)
         episodes = database.get_episode_list(mal_id)
-        dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
+        dub_data = indexers.process_dub(mal_id, self.kodi_meta['ename']) if control.getBool('jz.dub') else None
 
         if episodes:
-            if kodi_meta['status'] != "Finished Airing":
-                return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data)
+            if self.kodi_meta['status'] != "Finished Airing":
+                return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, dub_data)
             return indexers.process_episodes(episodes, eps_watched, dub_data)
-        if kodi_meta['episodes'] is None or kodi_meta['episodes'] > 99:
+        if self.kodi_meta['episodes'] is None or self.kodi_meta['episodes'] > 99:
             from resources.lib.endpoint import anime_filler
-            filler_data = anime_filler.get_data(kodi_meta['ename'])
+            filler_data = anime_filler.get_data(self.kodi_meta['ename'])
         else:
             filler_data = None
-        return self.process_episode_view(mal_id, poster, fanart, eps_watched, tvshowtitle, dub_data, filler_data)
+        return self.process_episode_view(mal_id, poster, fanart, eps_watched, dub_data, filler_data)

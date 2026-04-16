@@ -22,6 +22,7 @@ class WatchlistPlayer(player):
         self.resume = None
         self.path = ''
         self.context = False
+        self.episodeLength = None
 
         self.total_time = None
 
@@ -46,8 +47,8 @@ class WatchlistPlayer(player):
         self.context = context
 
         # process skip times
-        self.process_aniskip()
         self.process_animeskip()
+        self.process_aniskip()
 
         self.keepAlive()
 
@@ -57,7 +58,7 @@ class WatchlistPlayer(player):
     def onPlayBackStopped(self):
         control.closeAllDialogs()
         playList.clear()
-        if self.context and self.path:
+        if self.path:
             if 20 < self.getWatchedPercent() < 80:
                 query = {
                     'jsonrpc': '2.0',
@@ -125,6 +126,13 @@ class WatchlistPlayer(player):
             control.log('Not playing Video', 'warning')
             return None
 
+        if self.episodeLength:
+            offset = self.getTotalTime() - self.episodeLength
+            padding_shift = offset / 2
+            self.skipintro_start = max(0, self.skipintro_start + padding_shift)
+            self.skipintro_end = max(self.skipintro_start, self.skipintro_end + padding_shift)
+            self.skipoutro_start = max(self.skipintro_end, self.skipoutro_start + padding_shift)
+            self.skipoutro_end = min(self.getTotalTime(), self.skipoutro_end + padding_shift)
         if self.resume:
             self.seekTime(self.resume)
 
@@ -157,12 +165,12 @@ class WatchlistPlayer(player):
             if enable_subtitles:
                 self.showSubtitles(enable_subtitles)
 
-        control.setSetting('addon.last_watched', self.mal_id)
+        control.setInt('addon.last_watched', self.mal_id)
         control.closeAllDialogs()
 
         self.vtag = self.getVideoInfoTag()
         self.media_type = self.vtag.getMediaType()
-        self.total_time = int(self.getTotalTime())
+        self.total_time = self.getTotalTime()
 
         if self.media_type == 'movie':
             self.onWatchedPercent()
@@ -170,13 +178,29 @@ class WatchlistPlayer(player):
             if self.media_type == 'episode' and playList.size() == 1:
                 self.build_playlist()
             if control.getBool('smartplay.skipintrodialog'):
-                if self.skipintro_start < 1:
-                    self.skipintro_start = 1
+                self.skipintro_start = max(1, self.skipintro_start)
+                last_chapter_index = -1
+                intro_chapter = False
                 while self.isPlaying():
-                    self.current_time = int(self.getTime())
+                    self.current_time = self.getTime()
+                    current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
+                    if current_chapter_idx != last_chapter_index:
+                        current_chapter_label = xbmc.getInfoLabel('Player.ChapterName').lower()
+                        last_chapter_index = current_chapter_idx
+                        intro_chapter = any(x in current_chapter_label for x in control.intro_keywords)
+                        if intro_chapter and last_chapter_index != 0:
+                            # we are waiting because kodi or streams sets chapter too early
+                            xbmc.sleep(9000)
+                            # ensure the chapter has not changed again after waiting
+                            current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
+                            if current_chapter_idx != last_chapter_index:
+                                intro_chapter = False
                     if self.current_time > self.skipintro_end:
                         break
-                    elif self.current_time > self.skipintro_start and control.is_video_window_open():
+                    elif control.getBool('smartplay.autoskip.intro') and intro_chapter:
+                        xbmc.executebuiltin("Action(ChapterOrBigStepForward)")
+                        break
+                    elif (self.current_time > self.skipintro_start or intro_chapter) and control.is_video_window_open():
                         PlayerDialogs().show_skip_intro(self.skipintro_aniskip, self.skipintro_end)
                         break
                     xbmc.sleep(1000)
@@ -184,9 +208,16 @@ class WatchlistPlayer(player):
 
             endpoint = control.getInt('playingnext.time') if control.getBool('smartplay.playingnextdialog') else 0
             if endpoint != 0:
+                last_chapter_index = -1
+                outro_chapter = False
                 while self.isPlaying():
-                    self.current_time = int(self.getTime())
-                    if (not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0:
+                    self.current_time = self.getTime()
+                    current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
+                    if current_chapter_idx != last_chapter_index:
+                        current_chapter_label = xbmc.getInfoLabel('Player.ChapterName').lower()
+                        last_chapter_index = current_chapter_idx
+                        outro_chapter = any(x in current_chapter_label for x in control.outro_keywords)
+                    if outro_chapter or ((not self.skipoutro_aniskip and self.total_time - self.current_time <= endpoint) or self.current_time > self.skipoutro_start != 0):
                         PlayerDialogs().display_dialog(self.skipoutro_aniskip, self.skipoutro_end)
                         break
                     xbmc.sleep(5000)
@@ -200,6 +231,7 @@ class WatchlistPlayer(player):
         if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
             skipintro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'op')
             if skipintro_aniskip_res:
+                self.episodeLength = int(skipintro_aniskip_res['results'][0]['episodeLength'])
                 skip_times = skipintro_aniskip_res['results'][0]['interval']
                 self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
                 self.skipintro_end = int(skip_times['endTime']) + self.skipintro_offset
@@ -220,7 +252,7 @@ class WatchlistPlayer(player):
         anilist_id = pickle.loads(show_meta['meta_ids'])['anilist_id']
 
         if (self.skipintro_aniskip_enable and not self.skipintro_aniskip) or (self.skipoutro_aniskip_enable and not self.skipoutro_aniskip):
-            skip_times = anime_skip.get_time_stamps(anime_skip.get_episode_ids(str(anilist_id), int(self.episode)))
+            skip_times = anime_skip.get_time_stamps(anime_skip.get_episode_ids(str(anilist_id), self.episode))
             intro_start = None
             intro_end = None
             outro_start = None
@@ -228,7 +260,7 @@ class WatchlistPlayer(player):
             if skip_times:
                 for skip in skip_times:
                     if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
-                        if intro_start is None and skip['type']['name'] in ['Intro', 'New Intro', 'Branding']:
+                        if intro_start is None and skip['type']['name'] in ['Intro', 'New Intro']:
                             intro_start = int(skip['at'])
                         elif intro_end is None and intro_start is not None and skip['type']['name'] in ['Canon']:
                             intro_end = int(skip['at'])
@@ -237,33 +269,16 @@ class WatchlistPlayer(player):
                             outro_start = int(skip['at'])
                         elif outro_end is None and outro_start is not None and skip['type']['name'] in ['Canon', 'Preview']:
                             outro_end = int(skip['at'])
-
             if intro_start is not None and intro_end is not None:
                 self.skipintro_start = intro_start + self.skipintro_offset
                 self.skipintro_end = intro_end + self.skipintro_offset
                 self.skipintro_aniskip = True
                 control.log(f'found skipintro times animeskip: {self.skipintro_start} - {self.skipintro_end}')
             if outro_start is not None and outro_end is not None:
-                self.skipoutro_start = int(outro_start) + self.skipoutro_offset
-                self.skipoutro_end = int(outro_end) + self.skipoutro_offset
+                self.skipoutro_start = outro_start + self.skipoutro_offset
+                self.skipoutro_end = outro_end + self.skipoutro_offset
                 self.skipoutro_aniskip = True
                 control.log(f'found skipoutro times animeskip: {self.skipoutro_start} - {self.skipoutro_end}')
-
-    # def process_embed(self, embed):
-    #     if self.skipintro_aniskip_enable and not self.skipintro_aniskip:
-    #         embed_skipintro_start = control.getInt(f'{embed}.skipintro.start')
-    #         if embed_skipintro_start != -1:
-    #             self.skipintro_start = embed_skipintro_start + self.skipintro_offset
-    #             self.skipintro_end = control.getInt(f'{embed}.skipintro.end') + self.skipintro_offset
-    #             self.skipintro_aniskip = True
-    #             control.log(f'found skipintro times {embed}: {self.skipintro_start} - {self.skipintro_end}')
-    #     if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
-    #         embed_skipoutro_start = control.getInt(f'{embed}.skipoutro.start')
-    #         if embed_skipoutro_start != -1:
-    #             self.skipoutro_start = embed_skipoutro_start + self.skipoutro_offset
-    #             self.skipoutro_end = control.getInt(f'{embed}.skipoutro.end') + self.skipoutro_offset
-    #             self.skipoutro_aniskip = True
-    #             control.log(f'found skipoutro times {embed}: {self.skipoutro_start} - {self.skipoutro_end}')
 
 
 class PlayerDialogs(xbmc.Player):
@@ -307,7 +322,6 @@ class PlayerDialogs(xbmc.Player):
             'name': _next_info.getLabel()
         }
         return next_info
-
 
 class Monitor(xbmc.Monitor):
     def __init__(self):

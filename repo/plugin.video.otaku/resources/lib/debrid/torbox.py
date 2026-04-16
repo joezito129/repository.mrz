@@ -6,7 +6,7 @@ from resources.lib.ui import source_utils, control
 
 class Torbox:
     def __init__(self):
-        self.token = control.getSetting('torbox.token')
+        self.token = control.getString('torbox.token')
         self.BaseUrl = "https://api.torbox.app/v1/api"
         self.dialog = None
 
@@ -70,7 +70,7 @@ class Torbox:
             res = r.get('data')
             if 'access_token' in res:
                 self.token = res['access_token']
-                control.setSetting('torbox.token', self.token)
+                control.setString('torbox.token', self.token)
                 return True, timeout
         return False, timeout
 
@@ -79,16 +79,16 @@ class Torbox:
         r = requests.get(f'{self.BaseUrl}/user/me', headers=self.headers())
         if r.ok:
             user_info = r.json()['data']
-            control.setSetting('torbox.username', user_info['email'])
+            control.setString('torbox.username', user_info['email'])
             if user_info['plan'] == 0:
-                control.setSetting('torbox.auth.status', 'Free')
+                control.setString('torbox.auth.status', 'Free')
                 control.ok_dialog(f'{control.ADDON_NAME}: Torbox', control.lang(30024))
             elif user_info['plan'] == 1:
-                control.setSetting('torbox.auth.status', 'Essential')
+                control.setString('torbox.auth.status', 'Essential')
             elif user_info['plan'] == 3:
-                control.setSetting('torbox.auth.status', 'Standard')
+                control.setString('torbox.auth.status', 'Standard')
             elif user_info['plan'] == 2:
-                control.setSetting('torbox.auth.status', 'Pro')
+                control.setString('torbox.auth.status', 'Pro')
             control.ok_dialog(control.ADDON_NAME, 'Torbox %s' % control.lang(30023))
         return r.ok
 
@@ -129,9 +129,11 @@ class Torbox:
         r = requests.get(url, headers=self.headers())
         return r.json()['data']
 
-    def get_torrent_info(self, torrent_id: str):
+    def get_torrent_info(self, torrent_id: str, bypass_cache=False):
         url = f'{self.BaseUrl}/torrents/mylist'
         params = {'id': torrent_id}
+        if bypass_cache:
+            params['bypass_cache'] = 'true'
         r = requests.get(url, headers=self.headers(), params=params)
         return r.json()['data']
 
@@ -146,13 +148,13 @@ class Torbox:
         r = requests.get(url, params=params)
         return r.json()['data']
 
-    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select, filename):
         torrent = self.addMagnet(magnet)
         torrentId = torrent['torrent_id']
         torrent_info = self.get_torrent_info(torrentId)
         folder_details = [{'fileId': x['id'], 'path': x['name']} for x in torrent_info['files']]
         if episode:
-            selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select)
+            selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select, filename)
             if selected_file and selected_file.get('fileId') is not None:
                 stream_link = self.request_dl_link(torrentId, selected_file['fileId'])
                 self.delete_torrent(torrentId)
@@ -176,12 +178,36 @@ class Torbox:
         return match
 
 
-    @staticmethod
-    def resolve_uncached_source_background(source, autorun):
+    def resolve_uncached_source_background(self, source, autorun):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
-        control.ok_dialog(heading, 'Cache Reolver Has not been added for Torbox')
+        torrent = self.addMagnet(source['magnet'])
+        torrent_info = self.get_torrent_info(torrent['torrent_id'])
+        control.ok_dialog(heading, f"{torrent_info['name']} has been added to your Torbox")
 
-    @staticmethod
-    def resolve_uncached_source_forground(source, autorun):
+
+    def resolve_uncached_source_forground(self, source, autorun):
         heading = f'{control.ADDON_NAME}: Cache Resolver'
-        control.ok_dialog(heading, 'Cache Reolver Has not been added for Torbox')
+        control.progressDialog.create(heading, "Caching Progress")
+        torrent = self.addMagnet(source['magnet'])
+        torrent_id = torrent['torrent_id']
+        torrent = self.get_torrent_info(torrent_id, bypass_cache=True)
+        monitor = xbmc.Monitor()
+        while not torrent['download_finished']:
+            if control.progressDialog.iscanceled() or monitor.waitForAbort(5):
+                break
+            torrent = self.get_torrent_info(torrent_id, bypass_cache=True)
+            if not torrent:
+                break
+            if torrent['download_state'] == 'stalled':
+                control.ok_dialog(heading, "No Seeders Found")
+                break
+            f_body = (f"Progress: {torrent['progress'] * 100} %[CR]"
+                      f"Seeders: {torrent['seeds']}[CR]"
+                      f"Speed: {source_utils.get_size(torrent['download_speed'])}")
+            control.progressDialog.update(int(torrent['progress']), f_body)
+        del monitor
+        control.progressDialog.close()
+        if torrent['download_finished']:
+            control.ok_dialog(heading, f"{torrent['name']} has been added to your Torbox")
+        else:
+            self.delete_torrent(torrent_id)

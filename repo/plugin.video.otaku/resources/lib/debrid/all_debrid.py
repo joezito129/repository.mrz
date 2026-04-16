@@ -6,7 +6,7 @@ from resources.lib.ui import control, source_utils
 
 class AllDebrid:
     def __init__(self):
-        self.token = control.getSetting('alldebrid.token')
+        self.token = control.getString('alldebrid.token')
         self.agent_identifier = control.ADDON_NAME
         self.base_url = 'https://api.alldebrid.com/v4'
         self.dialog = None
@@ -67,7 +67,7 @@ class AllDebrid:
         resp = r.json()['data']
         if resp['activated']:
             self.token = resp['apikey']
-            control.setSetting('alldebrid.token', self.token)
+            control.setString('alldebrid.token', self.token)
             return True, OauthTimeout
         return False, OauthTimeout
 
@@ -81,13 +81,13 @@ class AllDebrid:
         res = r.json()['data']
         user_information = res['user']
         premium = user_information['isPremium']
-        control.setSetting('alldebrid.username', user_information['username'])
+        control.setString('alldebrid.username', user_information['username'])
         control.ok_dialog(f'{control.ADDON_NAME}: AllDebrid', control.lang(30023))
         if not premium:
-            control.setSetting('alldebrid.auth.status', 'Expired')
+            control.setString('alldebrid.auth.status', 'Expired')
             control.ok_dialog(f'{control.ADDON_NAME}: AllDebrid', control.lang(30024))
         else:
-            control.setSetting('alldebrid.auth.status', 'Premium')
+            control.setString('alldebrid.auth.status', 'Premium')
 
     def addMagnet(self, magnet_hash):
         params = {
@@ -134,13 +134,13 @@ class AllDebrid:
         r = requests.get(f'{self.base_url}/link/infos', params=params)
         return r.json()['data']
 
-    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select, filename):
         magnet_id = self.addMagnet(magnet)['magnets'][0]['id']
         folder_details = self.magnet_status(magnet_id)['magnets']['links']
         folder_details = [{'link': x['link'], 'path': x['filename']} for x in folder_details]
 
         if episode:
-            selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select)
+            selected_file = source_utils.get_best_match('path', folder_details, str(episode), pack_select, filename)
             self.delete_magnet(magnet_id)
             if selected_file is not None:
                 return self.resolve_hoster(selected_file['link'])

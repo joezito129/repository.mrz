@@ -6,7 +6,7 @@ from resources.lib.ui import control, database
 
 
 class BaseWindow(xbmcgui.WindowXMLDialog):
-    def __init__(self, xml_file, location, *, actionArgs=None):
+    def __init__(self, xml_file, location, *args, actionArgs=None):
         super().__init__(xml_file, location)
 
         control.closeBusyDialog()
@@ -29,17 +29,17 @@ class BaseWindow(xbmcgui.WindowXMLDialog):
             self.setProperty('item.art.thumb', thumb)
         fanart = self.item_information.get('fanart')
         clearlogo = self.item_information.get('clearlogo', control.LOGO_SMALL)
-        if not fanart or control.get_bool_cache('interface.fanart.disable'):
+        if not fanart or control.getBool('interface.fanart.disable'):
             fanart = control.FANART
         else:
             if isinstance(fanart, list):
-                if control.get_bool_cache('context.otaku.fanartselect'):
+                if control.getBool('context.otaku.fanartselect'):
                     fanart_select = control.getSetting(f'fanart.select.{mal_id}')
                     fanart = fanart_select if fanart_select else random.choice(fanart)
                 else:
                     fanart = random.choice(fanart)
         if isinstance(clearlogo, list):
-            clearlogo = control.LOGO_SMALL if control.get_bool_cache('interface.clearlogo.disable') else random.choice(clearlogo)
+            clearlogo = control.LOGO_SMALL if control.getBool('interface.clearlogo.disable') else random.choice(clearlogo)
 
         if item_type != 'playing_next':
             self.setProperty('item.art.fanart', fanart)

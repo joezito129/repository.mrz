@@ -4,64 +4,80 @@ import xbmc
 from urllib import parse
 
 def get_video_info(li) -> dict:
-    params = {}
+    video_info = {}
     vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
     if title := vinfo.getTitle():
-        params['title'] = title
+        video_info['title'] = title
     if mediatype := vinfo.getMediaType():
-        params['mediatype'] = mediatype
+        video_info['mediatype'] = mediatype
     if season := vinfo.getSeason():
-        params['season'] = str(season)
+        video_info['season'] = season
     if episode := vinfo.getEpisode():
-        params['episode'] = str(episode)
+        video_info['episode'] = episode
     if plot := vinfo.getPlot():
-        params['plot'] = str(plot)
+        video_info['plot'] = plot
     if tvshowtitle := vinfo.getTVShowTitle():
-        params['tvshowtitle'] = tvshowtitle
-    # if premiered := vinfo.getPremieredAsW3C():
-    #     params['premiered'] = premiered
+        video_info['tvshowtitle'] = tvshowtitle
+    if premiered := vinfo.getPremieredAsW3C():
+        video_info['premiered'] = premiered
     if year := vinfo.getYear():
-        params['year'] = str(year)
+        video_info['year'] = year
     if resume := vinfo.getResumeTime():
-        params['resume'] = str(resume)
+        video_info['resume'] = resume
 
+    art = {}
     if tvshowposter := li.getArt('tvshow.poster'):
-        params['tvshow.poster'] = tvshowposter
+        art['tvshow.poster'] = tvshowposter
     if poster := li.getArt('thumb'):
-        params['thumb'] = poster
+        art['thumb'] = poster
     if fanart := li.getArt('fanart'):
-        params['fanart'] = fanart
+        art['fanart'] = fanart
     if banner := li.getArt('banner'):
-        params['banner'] = banner
+        art['banner'] = banner
     if clearart := li.getArt('clearart'):
-        params['clearart'] = clearart
+        art['clearart'] = clearart
     if clearlogo := li.getArt('clearlogo'):
-        params['clearlogo'] = clearlogo
+        art['clearlogo'] = clearlogo
     if landscape := li.getArt('landscape'):
-        params['landscape'] = landscape
+        art['landscape'] = landscape
     if icon := li.getArt('icon'):
-        params['icon'] = icon
-    return params
+        art['icon'] = icon
+    video_info['art'] = art
+    return video_info
+
+def set_video_info(video_info):
+    import json
+    import xbmcgui
+    window = xbmcgui.Window(10000)
+    window.setProperty('otaku.player.video_info', json.dumps(video_info))
 
 def main():
     arg = sys.argv[1]
     item = sys.listitem
     path = item.getPath()
+    params = {}
     plugin = 'plugin://plugin.video.otaku'
     if arg == 'findrecommendations':
         path = path.split(plugin, 1)[1]
-        xbmc.executebuiltin(f"ActivateWindow(Videos,{plugin}/find_recommendations{path})")
+        xbmc.executebuiltin(f"Container.Update({plugin}/find_recommendations{path})")
     elif arg == 'findrelations':
         path = path.split(plugin, 1)[1]
-        xbmc.executebuiltin(f"ActivateWindow(Videos,{plugin}/find_relations{path})")
+        xbmc.executebuiltin(f"Container.Update({plugin}/find_relations{path})")
     elif arg == 'rescrape':
-        params = get_video_info(item)
-        params['rescrape'] = 'true'
+        video_info = get_video_info(item)
+        video_info['path'] = path
+        set_video_info(video_info)
+        if video_info.get('resume'):
+            params['resume'] = video_info['resume']
         path = f"{path}?{parse.urlencode(params)}"
         xbmc.executebuiltin(f"PlayMedia({path})")
     elif arg == 'sourceselect':
-        params = get_video_info(item)
+        video_info = get_video_info(item)
+        video_info['path'] = path
+        set_video_info(video_info)
         params['source_select'] = 'true'
+        if video_info.get('resume'):
+            params['resume'] = video_info['resume']
         path = f"{path}?{parse.urlencode(params)}"
         xbmc.executebuiltin(f"PlayMedia({path})")
     elif arg == 'logout':
@@ -78,9 +94,9 @@ def main():
         xbmc.executebuiltin(f"RunPlugin({plugin}/marked_as_watched{path})")
     elif arg == 'fanartselect':
         path = path.split(plugin, 1)[1]
-        xbmc.executebuiltin(f"ActivateWindow(Videos,{plugin}/fanart_select{path})")
+        xbmc.executebuiltin(f"Container.Update({plugin}/fanart_select{path})")
     else:
-        raise KeyError("Could Not find %s in Context Menu Action" % arg)
+        raise KeyError(f"Could Not find {arg} in Context Menu Action")
 
 
 if __name__ == "__main__":

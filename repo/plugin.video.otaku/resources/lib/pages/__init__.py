@@ -2,7 +2,7 @@ import threading
 import time
 import xbmc
 
-from resources.lib.pages import nyaa, animetosho, nekobt, debrid_cloudfiles, localfiles
+from resources.lib.pages import nyaa, animetosho, nekobt, debrid_cloudfiles, localfiles, torrentio
 from resources.lib.ui import control, database, source_utils
 from resources.lib.windows.get_sources_window import GetSources
 from resources.lib.windows import sort_select
@@ -35,12 +35,10 @@ class Sources(GetSources):
     def __init__(self, xml_file, location, actionArgs=None):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.terminate_on_cloud = control.getBool('general.terminate.oncloud')
-        self.torrent_func = [animetosho, nyaa, nekobt]
+        self.torrent_func = [animetosho, nyaa, nekobt, torrentio]
         self.torrentProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.torrent_func]
-        self.embed_func = []
-        self.embedProviders = [x.__name__.replace('resources.lib.pages.', '') for x in self.embed_func]
         self.otherProviders = ['Local Files', 'Cloud Inspection']
-        self.remainingProviders = self.torrentProviders + self.embedProviders + self.otherProviders
+        self.remainingProviders = self.torrentProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
         self.embeds_qual_len = [0, 0, 0, 0]
@@ -60,6 +58,7 @@ class Sources(GetSources):
         title = args['name']
         title_en = args['ename']
         titles = [title, title_en] + args.get('synonyms', [])
+        titles = [title, title_en]
         mal_id = args['mal_id']
         episode = args['episode']
         episodes = args['episodes']
@@ -69,20 +68,10 @@ class Sources(GetSources):
         # source_select = args['source_select']
         self.setProperty('process_started', 'true')
 
-        # # set skipintro times to -1 before scraping
-        # control.setInt('hianime.skipintro.start', -1)
-        # control.setInt('hianime.skipintro.end', -1)
-        #
-        # # set skipintro times to -1 before scraping
-        # control.setInt('hianime.skipoutro.start', -1)
-        # control.setInt('hianime.skipoutro.end', -1)
-
-
-        if any(control.enabled_debrid().values()):
+        if control.enabled_debrid():
             t = threading.Thread(target=self.user_cloud_inspection, args=(title, title_en, mal_id, episode))
             t.start()
             self.threads.append(t)
-
             for inx, torrent_provider in enumerate(self.torrentProviders):
                 if control.getBool(f'provider.{torrent_provider}'):
                     t = threading.Thread(target=self.torrent_worker, args=(self.torrent_func[inx], torrent_provider, titles, mal_id, episode, status, media_type, episodes))
@@ -94,16 +83,6 @@ class Sources(GetSources):
             self.remainingProviders.remove('Cloud Inspection')
             for torrent_provider in self.torrentProviders:
                 self.remainingProviders.remove(torrent_provider)
-
-
-#       ### embeds ###
-        for inx, embed_provider in enumerate(self.embedProviders):
-            if control.getBool(f'provider.{embed_provider}'):
-                t = threading.Thread(target=self.embed_worker, args=(self.embed_func[inx], embed_provider, mal_id, episode, rescrape))
-                t.start()
-                self.threads.append(t)
-            else:
-                self.remainingProviders.remove(embed_provider)
 
 #       ###  Other ###
         if control.getBool('provider.localfiles'):
@@ -141,42 +120,20 @@ class Sources(GetSources):
 
 #   ### Torrents ###
     def torrent_worker(self, torrent_func, torrent_name, titles, mal_id, episode, status, media_type, episodes) -> None:
-        titles = list({source_utils.clean_title(t) for t in titles})
+        cleaned_titles = (source_utils.clean_title(t) for t in titles)
+        titles = list(dict.fromkeys(cleaned_titles))
         all_sources = torrent_func.Sources().get_sources(titles, mal_id, episode, status, media_type, episodes)
         self.torrentUnCacheSources += all_sources['uncached']
         self.torrentCacheSources += all_sources['cached']
         self.torrentSources += all_sources['cached'] + all_sources['uncached']
         self.remainingProviders.remove(torrent_name)
 
-#   ### embeds ###
-    def embed_worker(self, embed_func, embed_name, mal_id, episode, rescrape) -> None:
-        try:
-            embed_sources = database.get_(embed_func.Sources().get_sources, 8, mal_id, episode, key=embed_name)
-        except:
-            import traceback
-            control.log(traceback.format_exc(), 'error')
-            embed_sources = []
-        if not isinstance(embed_sources, list):
-            embed_sources = []
-        self.embedSources += embed_sources
-        # if embed_name in []:
-        #     for x in embed_sources:
-        #         if x and x['skip'].get('intro') and x['skip']['intro']['start'] != 0:
-        #             control.setInt(f'{embed_name}.skipintro.start', int(x['skip']['intro']['start']))
-        #             control.setInt(f'{embed_name}.skipintro.end', int(x['skip']['intro']['end']))
-        #         if x and x['skip'].get('outro') and x['skip']['outro']['start'] != 0:
-        #             control.setInt(f'{embed_name}.skipoutro.start', int(x['skip']['outro']['start']))
-        #             control.setInt(f'{embed_name}.skipoutro.end', int(x['skip']['outro']['end']))
-        self.remainingProviders.remove(embed_name)
-
     def localfiles_worker(self, titles, mal_id, episode, rescrape) -> None:
         self.local_files += localfiles.Sources().get_sources(titles, mal_id, episode)
         self.remainingProviders.remove('Local Files')
 
     def user_cloud_inspection(self, title, title_en, mal_id, episode) -> None:
-        enabled_debrids = control.enabled_debrid()
-        debrid = {x: enabled_debrids[x] and control.getBool(f'{x}.cloudInspection') for x in enabled_debrids}
-        self.cloud_files += debrid_cloudfiles.Sources().get_sources(debrid, title, title_en, episode)
+        self.cloud_files += debrid_cloudfiles.Sources().get_sources(title, title_en, episode)
         self.remainingProviders.remove('Cloud Inspection')
 
     def sortSources(self) -> list:

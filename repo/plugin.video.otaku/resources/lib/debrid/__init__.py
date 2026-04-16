@@ -21,32 +21,12 @@ class Debrid:
         self.threads = []
 
     def torrentCacheCheck(self, torrent_list):
-        enabled_debrids = control.enabled_debrid()
-        if enabled_debrids['real_debrid']:
-            t = threading.Thread(target=self.real_debrid_worker, args=(deepcopy(torrent_list),))
-            t.start()
-            self.threads.append(t)
-
-        if enabled_debrids['debrid_link']:
-            t = threading.Thread(target=self.debrid_link_worker, args=(deepcopy(torrent_list),))
-            self.threads.append(t)
-            t.start()
-
-        if enabled_debrids['premiumize']:
-            t = threading.Thread(target=self.premiumize_worker, args=(deepcopy(torrent_list),))
-            t.start()
-            self.threads.append(t)
-
-        if enabled_debrids['alldebrid']:
-            t = threading.Thread(target=self.all_debrid_worker, args=(deepcopy(torrent_list),))
-            t.start()
-            self.threads.append(t)
-
-        if enabled_debrids['torbox']:
-            t = threading.Thread(target=self.torbox_worker, args=(deepcopy(torrent_list),))
-            t.start()
-            self.threads.append(t)
-
+        for debrid in control.enabled_debrid():
+            worker = getattr(self, f'{debrid}_worker', None)
+            if worker:
+                t = threading.Thread(target=worker, args=(deepcopy(torrent_list),))
+                t.start()
+                self.threads.append(t)
         for i in self.threads:
             i.join()
 
@@ -54,7 +34,7 @@ class Debrid:
         uncached_list = self.realdebridUnCached + self.premiumizeUnCached + self.all_debridUnCached + self.debrid_linkUnCached + self.torboxUnCached
         return cached_list, uncached_list
 
-    def all_debrid_worker(self, torrent_list: list):
+    def alldebrid_worker(self, torrent_list: list):
         if torrent_list:
             for i in torrent_list:
                 i['debrid_provider'] = 'alldebrid'

@@ -9,7 +9,7 @@ from resources.lib import OtakuBrowser
 
 
 class SourceSelect(BaseWindow):
-    def __init__(self, xml_file, location, *, actionArgs=None, sources=None, rescrape=False):
+    def __init__(self, xml_file, location, *args, actionArgs=None, sources=None, rescrape=False):
         super().__init__(xml_file, location, actionArgs=actionArgs)
         self.actionArgs = actionArgs
         self.sources = sources
@@ -101,10 +101,11 @@ class SourceSelect(BaseWindow):
                     self.close()
                     source = [self.sources[self.display_list.getSelectedPosition()]]
                     self.actionArgs['play'] = False
-                    window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True)
-                    return_data = window.doModal(source, {}, False)
+                    self.actionArgs['source_select'] = True
+                    window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs)
+                    return_data = window.doModal(source)
                     del window
-                    if isinstance(return_data, dict):
+                    if return_data:
                         from resources.lib.windows.download_manager import Manager
                         Manager().download_file(return_data['link'])
 
@@ -129,8 +130,10 @@ class SourceSelect(BaseWindow):
             selected_source = self.sources[self.position]
             selected_source['name'] = selected_source['release_title']
         self.actionArgs['close'] = self.close
-        window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs, source_select=True)
-        self.stream_link = window.doModal(sources, {}, pack_select)
+        self.actionArgs['pack_select'] = pack_select
+        self.actionArgs['source_select'] = True
+        window = Resolver('resolver.xml', control.ADDON_PATH, actionArgs=self.actionArgs)
+        self.stream_link = window.doModal(sources)
         del window
-        if isinstance(self.stream_link, dict):
+        if self.stream_link:
             self.close()

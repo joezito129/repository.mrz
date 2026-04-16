@@ -1,7 +1,6 @@
 import re
 import json
 import xbmcvfs
-import unicodedata
 
 from resources.lib.ui import control, utils
 
@@ -48,13 +47,6 @@ class BrowserBase:
 
         return total_seconds
 
-
-    @staticmethod
-    def remove_non_ascii(text: str) -> str:
-        text = unicodedata.normalize('NFKD', text)
-        text = re.sub(r'[^\x00-\x7F]+', ' ', text)
-        return re.sub(r'\s+', ' ', text).strip()
-
     @staticmethod
     def _sphinx_clean(text: str) -> str:
         text = text.replace('+', r'\+')
@@ -67,8 +59,3 @@ class BrowserBase:
         text = text.replace('?', r'\?')
         text = text.replace(':', r'\:')
         return text
-
-
-    @staticmethod
-    def embeds() -> list:
-        return control.getStringList('embed.config')

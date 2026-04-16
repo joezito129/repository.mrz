@@ -5,7 +5,7 @@ from resources.lib.windows.base_window import BaseWindow
 
 
 class SkipIntro(BaseWindow):
-    def __init__(self, xml_file, xml_location, *, actionArgs=None):
+    def __init__(self, xml_file, xml_location, *args, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = xbmc.Player()
         self.total_time = int(self.player.getTotalTime())
@@ -20,9 +20,9 @@ class SkipIntro(BaseWindow):
         self.background_tasks()
 
     def background_tasks(self):
-        self.current_time = int(self.player.getTime())
+        self.current_time = self.player.getTime()
         while self.total_time - self.current_time > 2 and not self.closed and self.playing_file == self.player.getPlayingFile():
-            self.current_time = int(self.player.getTime())
+            self.current_time = self.player.getTime()
             if self.current_time > self.skipintro_end_skip_time:
                 self.close()
                 break
@@ -42,10 +42,13 @@ class SkipIntro(BaseWindow):
     def handle_action(self, controlId):
         if controlId == 3001:
             self.actioned = True
-            if self.skipintro_aniskip:
+            current_chapter = xbmc.getInfoLabel('Player.ChapterName').lower()
+            if any(x in current_chapter for x in control.intro_keywords):
+                xbmc.executebuiltin("Action(ChapterOrBigStepForward)")
+            elif self.skipintro_aniskip:
                 self.player.seekTime(self.skipintro_end_skip_time)
             else:
-                self.player.seekTime(int(self.player.getTime()) + int(control.getSetting('skipintro.time')))
+                self.player.seekTime(self.player.getTime() + control.getInt('skipintro.time'))
             self.close()
 
         elif controlId == 3002:

@@ -18,7 +18,6 @@ class Sources(BrowserBase.BrowserBase):
 
     def get_sources(self, titles: list, mal_id, episode, status, media_type, episodes) -> dict:
         show = '"' + '"|"'.join(titles) + '"'
-
         sources = []
         show_meta = database.get_show_meta(mal_id)
         if show_meta:
@@ -63,7 +62,7 @@ class Sources(BrowserBase.BrowserBase):
             season_zfill = str(season).zfill(2)
             query = f'{show} {episode_zfill}|- {episode_zfill}|S{season_zfill}E{episode_zfill}'
         else:
-            season_zfill = None
+            season_zfill = ''
             query = show
 
         params = {
@@ -75,6 +74,9 @@ class Sources(BrowserBase.BrowserBase):
             params['aids'] = self.anidb_id
 
         params['q'] = self._sphinx_clean(query)
+        sources += self.process_animetosho(self._BASE_URL, params, episode_zfill, season_zfill)
+
+        params['q'] = self._sphinx_clean(show)
         sources += self.process_animetosho(self._BASE_URL, params, episode_zfill, season_zfill)
 
         # remove any duplicate sources

@@ -19,8 +19,11 @@ def get_episode_meta(anidb_id: int) -> dict:
         root = ET.fromstring(r.text)
         # namespaces = {'xml': 'http://www.w3.org/XML/1998/namespace'}
         for episode in root.findall('.//episode'):
-            episode_num = episode.find('epno').text
-            anidb_id = episode.get('id')
+            epno = episode.find('epno')
+            if not epno:
+                continue
+            episode_num = epno.text
+            anidb_id = int(episode.get('id', 0))
             # en_title = episode.find("title[@xml:lang='en']", namespaces).text if episode.find("title[@xml:lang='en']", namespaces) is not None else None
             # xjat_title = episode.find("title[@xml:lang='x-jat']", namespaces).text if episode.find("title[@xml:lang='x-jat']", namespaces) is not None else None
             # airdate = episode.find('airdate').text if episode.find('airdate') is not None else None

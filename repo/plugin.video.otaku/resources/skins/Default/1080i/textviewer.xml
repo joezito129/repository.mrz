@@ -1,5 +1,11 @@
 <window>
 	<controls>
+		<!-- Background Texture -->
+        <control type="image">
+            <texture>white.png</texture>
+            <colordiffuse>aa000000</colordiffuse>
+        </control>
+
 		<control type="group">
 			<left>110</left>
 			<top>90</top>
@@ -13,6 +19,18 @@
 					<height>100</height>
 					<texture>texture.png</texture>
 				</control>
+				<control type="button" id="3001">
+					<left>1560</left>
+					<top>0</top>
+					<width>100</width>
+					<height>100</height>
+					<label>X</label>
+					<font>font16</font>
+					<align>center</align>
+					<textcolor>white</textcolor>
+					<focusedcolor>red</focusedcolor>
+					<ondown>2060</ondown>
+				</control>
 				<control type="label">
 					<top>40</top>
 					<left>0</left>
@@ -24,13 +42,11 @@
 					<aligny>center</aligny>
 					<label>$INFO[Window().Property(otaku.heading)]</label>
 				</control>
-				<control type="textbox" id="2000">
+				<control type="textbox" id="3002">
 					<left>0</left>
 					<top>100</top>
 					<width>1670</width>
 					<height>800</height>
-					<onup>2000</onup>
-					<ondown>2000</ondown>
 					<scrolltime tween="sine">400</scrolltime>
 					<font>font14</font>
 					<textcolor>white</textcolor>
@@ -47,10 +63,7 @@
 					<texturesliderbarfocus border="15">scrollbars/scrollbaruni-bar-focus.png</texturesliderbarfocus>
 					<textureslidernib>scrollbars/scrollbaruni-nib.png</textureslidernib>
 					<textureslidernibfocus>scrollbars/scrollbaruni-nib.png</textureslidernibfocus>
-					<onleft>2060</onleft>
-					<onright>2060</onright>
-					<onup>2060</onup>
-					<ondown>2060</ondown>
+					<onup>3001</onup>
 					<showonepage>false</showonepage>
 					<orientation>vertical</orientation>
 					<hitrect x="0" y="100" w="1700" h="800">None</hitrect>

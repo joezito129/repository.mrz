@@ -1,9 +1,23 @@
-Changelog v5.1.31 (2026-03-31)
+Changelog v5.1.33 (2026-04-15)
+- Fixed Teamup for dubs release schedule
+- Changed mal_ids to ints
+- Changed getSetting to getstr|getint|getbool
+- Added QR codes to Watchlists Logins
+- Updated Watchlist Logins
+- Fixed Nekobt scrapping
+- Added Torrentio
+- Improved skipintro and skipoutro
+- Added Chapter skipstimes
+- Fixed Teamup
+- Added Uncached for Torbox
+
+Changelog v5.1.32 (2026-03-31)
 - Fixed Clear Cache removing context menus
 - Fixed Search with '/' in search query
 - Fixed getbestmatch to autoselect if only one file
-- Improved Caching & Speeds
+- Improved Speeds
 - Improved finding Season#
+- Improved Caching
 - Added setting for kodi caching
 
 Changelog v5.1.31 (2026-03-25)

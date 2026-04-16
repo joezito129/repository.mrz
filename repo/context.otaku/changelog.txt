@@ -1,3 +1,7 @@
+Changelog v1.0.25 (2026-04-08)
+- Fixed menu navigation
+- Replaced params with window property json type
+
 Changelog v1.0.24 (2026-03-31)
 - Removed Service and moved to main Otaku
 

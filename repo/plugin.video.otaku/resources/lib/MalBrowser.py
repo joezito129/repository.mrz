@@ -2,8 +2,6 @@ import xbmc
 import requests
 import random
 import pickle
-import datetime
-
 
 from functools import partial
 from resources.lib.ui import BrowserBase, database, control, utils, get_meta
@@ -16,7 +14,7 @@ class MalBrowser(BrowserBase.BrowserBase):
     def __init__(self):
         self._TITLE_LANG = ['title', 'title_english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.mal')
-        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
+        self.format_in_type = ['tv', 'movie', 'tv_special', 'special', 'ova', 'ona', 'music'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else None
         self.adult = 'true' if not control.getBool('search.adult') else 'false'
 
     def process_mal_view(self, res, base_plugin_url, page) -> list:
@@ -55,6 +53,9 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     def get_anime(self, mal_id):
         res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")
+        if res.get('data') is None:
+            control.notify(control.ADDON_NAME, res.get('message'))
+            return None
         return self.process_res(res['data'])
 
     def get_recommendations(self, mal_id, page: int) -> list:
@@ -82,13 +83,12 @@ class MalBrowser(BrowserBase.BrowserBase):
             for entry in relation['entry']:
                 if entry['type'] == 'anime':
                     if count % 3 == 0:
-                        xbmc.sleep(1800)
+                        xbmc.sleep(1900)
                     count += 1
                     if count > 50:
                         return relation_res
                     res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{entry['mal_id']}")
-                    if res.get('data'):
-                        res_data = res['data']
+                    if (res_data := res.get('data')) is not None:
                         res_data['relation'] = relation['relation']
                         relation_res.append(res_data)
                     elif res.get('status') == '429':
@@ -104,7 +104,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             'sfw': self.adult
         }
 
-        if self.format_in_type:
+        if self.format_in_type is not None:
             params['type'] = self.format_in_type
 
         search = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime", params)
@@ -116,7 +116,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             'limit': self.perpage,
             'sfw': self.adult
         }
-        if self.format_in_type:
+        if self.format_in_type is not None:
             params['filter'] = self.format_in_type
 
         calendar = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/now", params)
@@ -128,7 +128,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             'limit': self.perpage,
             'sfw': self.adult
         }
-        if self.format_in_type:
+        if self.format_in_type is not None:
             params['filter'] = self.format_in_type
 
         airing = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/now", params)
@@ -141,7 +141,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             'limit': self.perpage,
             'sfw': self.adult
         }
-        if self.format_in_type:
+        if self.format_in_type is not None:
             params['filter'] = self.format_in_type
 
         upcoming = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/{year}/{season}", params)
@@ -153,7 +153,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             'limit': self.perpage,
             'sfw': self.adult
         }
-        if self.format_in_type:
+        if self.format_in_type is not None:
             params['type'] = self.format_in_type
 
         top_100_anime = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/top/anime", params)
@@ -167,17 +167,17 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     @div_flavor
     def recommendation_relation_view(self, res, completed=None, mal_dub=None) -> dict:
-        if res.get('entry'):
-            res = res['entry']
-        if not completed:
+        if completed is None:
             completed = {}
 
+        if (entry :=  res.get('entry')) is not None:
+            res = entry
+
         mal_id = res['mal_id']
-        control.log(res)
         title = res['title']
 
-        if res.get('relation'):
-            title += ' [I]%s[/I]' % control.colorstr(res['relation'], 'limegreen')
+        if (relation := res.get('relation')) is not None:
+            title += ' [I]%s[/I]' % control.colorstr(relation, 'limegreen')
 
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
@@ -185,11 +185,14 @@ class MalBrowser(BrowserBase.BrowserBase):
             'mediatype': 'tvshow'
         }
 
-        if completed.get(str(mal_id)):
+        if completed.get(str(mal_id)) is not None:
             info['playcount'] = 1
 
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
-        image = res['images']['webp']['large_image_url'] if res.get('images') else None
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        try:
+            image = res['images']['webp']['large_image_url']
+        except KeyError:
+            image = None
 
         base = {
             "name": title,
@@ -233,7 +236,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             'order_by': 'popularity'
         }
 
-        if self.format_in_type:
+        if self.format_in_type is not None:
             params['type'] = self.format_in_type
 
         genres = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime', params)
@@ -241,77 +244,105 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     @div_flavor
     def base_mal_view(self, res: dict, completed=None, mal_dub=None) -> dict:
-        if not completed:
+        if completed is None:
             completed = {}
 
         mal_id = res['mal_id']
 
-        if not database.get_show(mal_id):
+        if database.get_show(mal_id) is None:
             self.database_update_show(res)
 
         show_meta = database.get_show_meta(mal_id)
-        kodi_meta = pickle.loads(show_meta.get('art')) if show_meta else {}
+        try:
+            kodi_meta= pickle.loads(show_meta['art'])
+        except KeyError:
+            kodi_meta = {}
 
         title = res[self._TITLE_LANG] or res['title']
-        rating = res.get('rating')
-        if rating == 'Rx - Hentai':
+
+
+        if (mpaa := res.get('rating')) == 'Rx - Hentai':
             title += ' - ' + control.colorstr("Adult", 'red')
 
-        if res.get('relation'):
-            title += ' [I]%s[/I]' % control.colorstr(res['relation'], 'limegreen')
+        if (relation := res.get('relation')) is not None:
+            title += ' [I]%s[/I]' % control.colorstr(relation, 'limegreen')
 
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
             'title': title,
-            'plot': res.get('synopsis'),
-            'mpaa': rating,
-            'duration': self.duration_to_seconds(res.get('duration')),
-            'genre': [x['name'] for x in res.get('genres', [])],
-            'studio': [x['name'] for x in res.get('studios', [])],
-            'status': res.get('status'),
+            'mpaa': mpaa,
             'mediatype': 'tvshow'
         }
-        if completed.get(str(mal_id)):
-            info['playcount'] = 1
+        try:
+            info['plot'] = res['synopsis']
+        except KeyError:
+            pass
+
+        try:
+            info['genre'] = [x['name'] for x in res['genres']]
+        except KeyError:
+            pass
+
+        try:
+            info['studio'] = [x['name'] for x in res['studios']]
+        except KeyError:
+            pass
+        try:
+            info['duration'] = self.duration_to_seconds(res['duration'])
+        except KeyError:
+            pass
+
+        try:
+            info['status'] = res['status']
+        except KeyError:
+            pass
 
         try:
             start_date = res['aired']['from']
             info['premiered'] = start_date[:10]
             info['year'] = res.get('year', int(start_date[:3]))
-        except TypeError:
+        except KeyError:
             pass
 
-        if isinstance(res.get('score'), float):
-            info['rating'] = {'score': res['score']}
-            if isinstance(res.get('scored_by'), int):
-                info['rating']['votes'] = res['scored_by']
+        try:
+            info['rating'] = {'score': res['score'] or 0}
+            try:
+                info['rating']['votes'] = res['scored_by'] or 0
+            except KeyError:
+                pass
+        except KeyError:
+            pass
 
-        if res.get('trailer'):
+        try:
             info['trailer'] = f"plugin://plugin.video.youtube/play/?video_id={res['trailer']['youtube_id']}"
+        except KeyError:
+            pass
 
-        if res.get('broadcast'):
-            airingat = res.get('aired', {}).get('from')
-            broadcast = res['broadcast']
-            day = broadcast.get('day')
-            time_ = broadcast.get('time')
-            timezone = broadcast.get('timezone')
+        if (broadcast := res.get('broadcast')) is not None:
+            try:
+                airingat = res['aired']['from']
+                broadcast = broadcast
+                day = broadcast['day']
+                time_ = broadcast['time']
+                timezone = broadcast['timezone']
+                if day and time_ and airingat:
+                    string_time = f"{airingat[:10]} at {time_}"
+                    if timezone == 'Asia/Tokyo':
+                        string_time += "+09:00"
+                    time_format = utils.strp_time(string_time, '%Y-%m-%d at %H:%M%z')
+                    if time_format is not None:
+                        info['properties'] = {
+                            "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
+                            "date": f"{time_format:%A[CR]%B %d, %Y}",
+                            "time": f"{time_format:%I:%M %p}",
+                        }
+            except KeyError:
+                pass
 
-            if day and time_ and airingat:
-                string_time = f"{airingat[:10]} at {time_}"
-                if timezone == 'Asia/Tokyo':
-                    string_time += "+09:00"
-                try:
-                    time_format = datetime.datetime.strptime(string_time, f"%Y-%m-%d at %H:%M%z")
-                except TypeError:
-                    import time
-                    control.log('Unsupported strptime using fromtimestamp', 'warning')
-                    time_format = datetime.datetime.fromtimestamp(time.mktime(time.strptime(string_time, '%Y-%m-%d at %H:%M%z')))
-                info['properties'] = {
-                    "airingat": f"{time_format:%Y-%m-%d %H:%M:%S%z}",
-                    "date": f"{time_format:%A[CR]%B %d, %Y}",
-                    "time": f"{time_format:%I:%M %p}",
-                }
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
+        if completed.get(str(mal_id)) is not None:
+            info['playcount'] = 1
+
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
 
         image = res['images']['webp']['large_image_url']
         base = {
@@ -319,16 +350,19 @@ class MalBrowser(BrowserBase.BrowserBase):
             "url": f'animes/{mal_id}/',
             "image": image,
             "poster": image,
-            'fanart': kodi_meta['fanart'] if kodi_meta.get('fanart') else image,
             "banner": image,
             "info": info
         }
+        try:
+            base['fanart'] = kodi_meta['fanart']
+        except KeyError:
+            base['fanart'] = image
 
-        if kodi_meta.get('thumb'):
+        if kodi_meta.get('thumb') is not None:
             base['landscape'] = random.choice(kodi_meta['thumb'])
         if kodi_meta.get('clearart'):
             base['clearart'] = random.choice(kodi_meta['clearart'])
-        if kodi_meta.get('clearlogo'):
+        if kodi_meta.get('clearlogo') is not None:
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
 
         if res.get('type') in ['Movie', 'ONA', 'Special', 'TV Special'] and res['episodes'] == 1:
@@ -342,11 +376,10 @@ class MalBrowser(BrowserBase.BrowserBase):
 
         try:
             start_date = res['aired']['from']
-        except TypeError:
+        except KeyError:
             start_date = None
 
         title_userPreferred = res[self._TITLE_LANG] or res['title']
-
         name = res['title']
         ename = res['title_english'] or res['title']
 
@@ -357,16 +390,32 @@ class MalBrowser(BrowserBase.BrowserBase):
             'title_userPreferred': title_userPreferred,
             'start_date': start_date,
             'episodes': res['episodes'],
-            'poster': res['images']['webp']['large_image_url'],
-            'status': res.get('status'),
-            'format': res.get('type'),
-            'plot': res.get('synopsis')
+            'poster': res['images']['webp']['large_image_url']
         }
 
-        if isinstance(res.get('score'), float):
-            kodi_meta['rating'] = {'score': res['score']}
-            if isinstance(res.get('scored_by'), int):
-                kodi_meta['rating']['votes'] = res['scored_by']
+        try:
+            kodi_meta['plot'] = res['synopsis']
+        except KeyError:
+            pass
+
+        try:
+            kodi_meta['format'] = res['type']
+        except KeyError:
+            pass
+
+        try:
+            kodi_meta['status'] = res['status']
+        except KeyError:
+            pass
+
+        try:
+            kodi_meta['rating'] = {'score': res['score'] or 0}
+            try:
+                kodi_meta['rating']['votes'] = res['scored_by'] or 0
+            except KeyError:
+                pass
+        except KeyError:
+            pass
 
         database.update_show(mal_id, pickle.dumps(kodi_meta))
 

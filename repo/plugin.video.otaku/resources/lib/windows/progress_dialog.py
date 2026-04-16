@@ -16,7 +16,6 @@ class Progress_dialog(xbmcgui.WindowXMLDialog):
         self.getControl(3005).setLabel(self.text)
         self.setProperty('qr_code', self.image)
         self.getControl(3003).setPercent(self.percent)
-        # self.getControl(3001).setImage(self.image)
 
     def onAction(self, action):
         actionID = action.getId()
@@ -26,7 +25,7 @@ class Progress_dialog(xbmcgui.WindowXMLDialog):
             self.close()
 
     def onClick(self, controlId):
-        if controlId == 4001:  # Cancel button ID
+        if controlId == 3001:  # Cancel button ID
             self._cancelled = True
             self.close()
 

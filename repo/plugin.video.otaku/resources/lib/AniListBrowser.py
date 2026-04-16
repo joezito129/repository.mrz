@@ -15,8 +15,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
     def __init__(self):
         self._TITLE_LANG = ["romaji", 'english'][control.getInt("titlelanguage")]
         self.perpage = control.getInt('interface.perpage.general.anilist')
-        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else ''
-        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else ''
+        self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else None
+        self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else None
 
 
     @staticmethod
@@ -62,9 +62,9 @@ class AniListBrowser(BrowserBase.BrowserBase):
             'sort': "TRENDING_DESC"
         }
 
-        if self.format_in_type:
+        if self.format_in_type is not None:
             variables['format'] = self.format_in_type
-        if self.countryOfOrigin_type:
+        if self.countryOfOrigin_type is not None:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
         airing = database.get_(self.get_base_res, 24, variables)
@@ -81,9 +81,9 @@ class AniListBrowser(BrowserBase.BrowserBase):
             'sort': "TRENDING_DESC"
         }
 
-        if self.format_in_type:
+        if self.format_in_type is not None:
             variables['format'] = self.format_in_type
-        if self.countryOfOrigin_type:
+        if self.countryOfOrigin_type is not None:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
         upcoming = database.get_(self.get_base_res, 24, variables)
@@ -97,9 +97,9 @@ class AniListBrowser(BrowserBase.BrowserBase):
             'sort': "SCORE_DESC"
         }
 
-        if self.format_in_type:
+        if self.format_in_type is not None:
             variables['format'] = self.format_in_type
-        if self.countryOfOrigin_type:
+        if self.countryOfOrigin_type is not None:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
         top_100_anime = database.get_(self.get_base_res, 24, variables)
@@ -610,10 +610,13 @@ class AniListBrowser(BrowserBase.BrowserBase):
         json_res = results['data']['Media']
         return json_res
 
+
     def process_anilist_view(self, json_res: dict, base_plugin_url: str, page: int):
         hasNextPage = json_res['pageInfo']['hasNextPage']
         get_meta.collect_meta(json_res['ANIME'])
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
+        # with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
+        #     all_results = list(executor.map(mapfunc, json_res['ANIME']))
         all_results = list(map(mapfunc, json_res['ANIME']))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
@@ -623,6 +626,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
         res = [edge['node']['mediaRecommendation'] for edge in json_res['edges'] if edge['node']['mediaRecommendation']]
         get_meta.collect_meta(res)
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
+        # with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
+        #     all_results = list(executor.map(mapfunc, res))
         all_results = list(map(mapfunc, res))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
@@ -636,6 +641,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
                 res.append(tnode)
         get_meta.collect_meta(res)
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
+        # with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
+        #     all_results = list(executor.map(mapfunc, res))x_threads) as executor:
         all_results = list(map(mapfunc, res))
         return all_results
 
@@ -646,10 +653,10 @@ class AniListBrowser(BrowserBase.BrowserBase):
 
     @div_flavor
     def base_anilist_view(self, res: dict, completed=None, mal_dub=None):
-        if not completed:
+        if completed is None:
             completed = {}
 
-        if res.get('media'):
+        if res.get('media') is not None:
             airingat = res.get('airingAt')
             episode = res.get('episode')
             res = res['media']
@@ -657,84 +664,105 @@ class AniListBrowser(BrowserBase.BrowserBase):
             airingat = None
             episode = None
 
+        if (mal_id := res.get('idMal')) is None:
+            return None
         anilist_id = res['id']
-        mal_id = res.get('idMal')
 
-        if not mal_id:
-            return
-
-        if not database.get_show(mal_id):
+        if database.get_show(mal_id) is None:
             self.database_update_show(res)
 
         show_meta = database.get_show_meta(mal_id)
-        kodi_meta = pickle.loads(show_meta.get('art')) if show_meta else {}
+        try:
+            kodi_meta = pickle.loads(show_meta['art'])
+        except (KeyError, TypeError):
+            kodi_meta = {}
 
         title = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
-        if res.get('relationType'):
+        if res.get('relationType') is not None:
             title += ' [I]%s[/I]' % control.colorstr(res['relationType'], 'limegreen')
-
-        if desc := res.get('description'):
-            desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
-            desc = desc.replace('<b>', '[B]').replace('</b>', '[/B]')
-            desc = desc.replace('<br>', '[CR]')
-            desc = desc.replace('\n', '')
 
         info = {
             'UniqueIDs': {'anilist_id': str(anilist_id), 'mal_id': str(mal_id)},
-            'genre': res.get('genres'),
             'title': title,
-            'plot': desc,
-            'status': res.get('status'),
             'mediatype': 'tvshow',
-            'country': res.get('countryOfOrigin', '')
         }
 
-        if completed.get(str(mal_id)):
-            info['playcount'] = 1
+        try:
+            desc = res['description']
+            if desc:
+                desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
+                desc = desc.replace('<b>', '[B]').replace('</b>', '[/B]')
+                desc = desc.replace('<br>', '[CR]')
+                desc = desc.replace('\n', '')
+                info['plot'] = desc
+        except KeyError:
+            pass
 
         try:
-            start_date = res.get('startDate')
+            info['status'] = res['status']
+        except KeyError:
+            pass
+
+        try:
+            info['genre'] = res['genre']
+        except KeyError:
+            pass
+
+        try:
+            start_date = res['startDate']
             info['premiered'] = '{}-{:02}-{:02}'.format(start_date['year'], start_date['month'], start_date['day'])
             info['year'] = start_date['year']
-        except TypeError:
+        except (KeyError, TypeError):
             pass
 
         try:
             cast = []
             for i, x in enumerate(res['characters']['edges']):
-                role = x['node']['name']['userPreferred']
-                actor = x['voiceActors'][0]['name']['userPreferred']
-                actor_hs = x['voiceActors'][0]['image']['large']
-                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
+                try:
+                    role = x['node']['name']['userPreferred']
+                    actor = x['voiceActors'][0]['name']['userPreferred']
+                    actor_hs = x['voiceActors'][0]['image']['large']
+                    cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
+                except (KeyError, IndexError):
+                    continue
             info['cast'] = cast
-        except (KeyError, IndexError):
+        except KeyError:
             pass
 
+        if (country := res.get('countryOfOrigin')) is not None:
+            info['country'] = country
+
+        if completed.get(str(mal_id)):
+            info['playcount'] = 1
+
         try:
-            info['studio'] = [x['node'].get('name') for x in res['studios']['edges']]
+            info['studio'] = [x['node']['name'] for x in res['studios']['edges']]
         except KeyError:
             pass
 
         try:
-            info['rating'] = {'score': res.get('averageScore') / 10.0}
-        except TypeError:
+            if (averageScore := res['averageScore']) is not None:
+                info['rating'] = {'score': averageScore / 10.0}
+        except KeyError:
             pass
 
         try:
-            info['duration'] = res['duration'] * 60
-        except TypeError:
+            if (duration := res['duration']) is not None:
+                info['duration'] = duration * 60
+        except KeyError:
             pass
 
         try:
-            if res['trailer']['site'] == 'youtube':
-                info['trailer'] = f"plugin://plugin.video.youtube/play/?video_id={res['trailer']['id']}"
-            else:
-                info['trailer'] = f"plugin://plugin.video.dailymotion_com/?url={res['trailer']['id']}&mode=playVideo"
-        except (KeyError, TypeError):
+            if (trailer := res['trailer']) is not None:
+                if trailer['site'] == 'youtube':
+                    info['trailer'] = f"plugin://plugin.video.youtube/play/?video_id={trailer['id']}"
+                else:
+                    info['trailer'] = f"plugin://plugin.video.dailymotion_com/?url={trailer['id']}&mode=playVideo"
+        except KeyError:
             pass
 
-        if airingat:
+        if airingat is not None:
             info['episode'] = episode
             time_format = datetime.datetime.fromtimestamp(airingat).astimezone()
             info['properties'] = {
@@ -744,9 +772,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             }
             # info['premiered'] = f"{time_format:%Y-%m-%d}"
 
-
-
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
 
         image = res['coverImage']['extraLarge']
         base = {
@@ -754,16 +780,20 @@ class AniListBrowser(BrowserBase.BrowserBase):
             "url": f'animes/{mal_id}/',
             "image": image,
             "poster": image,
-            'fanart': kodi_meta['fanart'] if kodi_meta.get('fanart') else image,
             "banner": res.get('bannerImage'),
             "info": info
         }
 
-        if kodi_meta.get('thumb'):
+        try:
+            base['fanart'] = kodi_meta['fanart']
+        except KeyError:
+            base['fanart'] = image
+
+        if kodi_meta.get('thumb') is not None:
             base['landscape'] = random.choice(kodi_meta['thumb'])
         if kodi_meta.get('clearart'):
             base['clearart'] = random.choice(kodi_meta['clearart'])
-        if kodi_meta.get('clearlogo'):
+        if kodi_meta.get('clearlogo') is not None:
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
         if res['format'] in ['MOVIE', 'ONA', 'SPECIAL'] and res['episodes'] == 1:
             base['url'] = f'play_movie/{mal_id}/'
@@ -771,47 +801,78 @@ class AniListBrowser(BrowserBase.BrowserBase):
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    def database_update_show(self, res: dict):
-        mal_id = res.get('idMal')
-        if not mal_id:
-            return None
-
+    def database_update_show(self, res: dict) -> None:
         try:
-            start_date = res.get('startDate')
-            start_date = f"{start_date['year']}-{start_date['month']:02}-{start_date['day']:02}"
-        except TypeError:
-            start_date = None
+            mal_id = res['idMal']
+        except KeyError:
+            return None
 
         title_userPreferred = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
         name = res['title']['romaji']
         ename = res['title']['english']
 
-        if desc := res.get('description'):
-            desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
-            desc = desc.replace('<b>', '[B]').replace('</b>', '[/B]')
-            desc = desc.replace('<br>', '[CR]')
-            desc = desc.replace('\n', '')
-
         kodi_meta = {
             'name': name,
             'ename': ename,
-            'synonyms': res.get('synonyms', []),
             'title_userPreferred': title_userPreferred,
-            'start_date': start_date,
-            'episodes': res.get('episodes'),
             'poster': res['coverImage']['extraLarge'],
             'status': "Finished Airing" if res.get('status') == "FINISHED" else res.get('status'),
-            'format': res.get('format'),
-            'plot': desc
         }
 
         try:
-            kodi_meta['rating'] = {'score': res.get('averageScore') / 10.0}
-        except TypeError:
+            kodi_meta['episodes'] = res['episodes']
+        except KeyError:
+            pass
+        try:
+            kodi_meta['synonyms'] = res['synonyms']
+        except KeyError:
+            pass
+        try:
+            kodi_meta['format'] = res['format']
+        except KeyError:
+            pass
+        try:
+            kodi_meta['genres'] = res['genres']
+        except KeyError:
+            pass
+        try:
+            if desc := res['description']:
+                desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
+                desc = desc.replace('<b>', '[B]').replace('</b>', '[/B]')
+                desc = desc.replace('<br>', '[CR]').replace('<BR>', '[CR]')
+                desc = desc.replace('\n', '')
+                kodi_meta['plot'] = desc
+        except KeyError:
+            pass
+
+        try:
+            if (averageScore := res['averageScore']) is not None:
+                kodi_meta['rating'] = {'score': averageScore / 10.0}
+        except KeyError:
+            pass
+
+        try:
+            start_date = res['startDate']
+            kodi_meta['start_date'] = f"{start_date['year']}-{start_date['month']:02}-{start_date['day']:02}"
+        except (KeyError, TypeError):
+            pass
+
+        try:
+            cast = []
+            for i, x in enumerate(res['characters']['edges']):
+                if not x['voiceActors']:
+                    continue
+                role = x['node']['name']['userPreferred']
+                actor = x['voiceActors'][0]['name']['userPreferred']
+                actor_hs = x['voiceActors'][0]['image']['large']
+                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
+            kodi_meta['cast'] = cast
+        except KeyError:
             pass
 
         database.update_show(mal_id, pickle.dumps(kodi_meta))
+        return None
 
     def get_genres(self):
         query = '''

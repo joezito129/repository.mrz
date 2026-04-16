@@ -8,7 +8,8 @@ headers = {'Api-Key': "dfe6380e34f49f9b2b9518184922b49c"}
 S = requests.Session()
 S.mount("https://webservice.fanart.tv/v3", HTTPAdapter(pool_connections=100, pool_maxsize=100))
 
-def getArt(meta_ids, mtype):
+
+def getArt(meta_ids: dict, mtype: str) -> dict:
     art = {}
     if mid := meta_ids.get('themoviedb_id') if mtype == 'movies' else meta_ids.get('thetvdb_id'):
         r = S.get(f'{baseUrl}/{mtype}/{mid}', headers=headers)

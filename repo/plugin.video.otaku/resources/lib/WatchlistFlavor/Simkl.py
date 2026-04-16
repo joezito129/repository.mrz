@@ -26,7 +26,10 @@ class SimklWLF(WatchlistFlavorBase):
         }
         return headers
 
-    def login(self):
+    def login(self) -> bool:
+        import pyqrcode
+        import os
+        from resources.lib.windows.progress_dialog import Progress_dialog
         params = {
             'client_id': self.client_id,
         }
@@ -39,33 +42,46 @@ class SimklWLF(WatchlistFlavorBase):
                           f"{control.lang(30021).format(control.colorstr(device_code['user_code']))}")
         if copied:
             display_dialog = f"{display_dialog}[CR]{control.lang(30022)}"
-        control.progressDialog.create('SIMKL Auth', display_dialog)
-        control.progressDialog.update(100)
+
+        qr_path = os.path.join(control.dataPath, 'qr_code.png')
+        qr = pyqrcode.create("https://simkl.com/pin")
+        qr.png(qr_path, scale=20)
+        config = {
+            'heading': f'{control.ADDON_NAME}: SIMKL Auth',
+            'text': display_dialog,
+            'image': qr_path,
+            'percent': 100
+        }
+        dialog = Progress_dialog('progress_dialog.xml', control.ADDON_PATH, config=config)
+        dialog.show()
+
         inter = int(device_code['expires_in'] / device_code['interval'])
         for i in range(inter):
-            if control.progressDialog.iscanceled():
-                control.progressDialog.close()
-                return
+            if dialog.iscanceled():
+                dialog.close()
+                return False
             xbmc.sleep(device_code['interval'] * 1000)
 
             r = requests.get(f'{self._URL}/oauth/pin/{device_code["user_code"]}', params=params)
             r = r.json()
             if r['result'] == 'OK':
                 self.token = r['access_token']
-                login_data = {'token': self.token}
+                control.setString('simkl.token', self.token)
                 r = requests.post(f'{self._URL}/users/settings', headers=self.__headers())
                 if r.ok:
                     user = r.json()['user']
-                    login_data['username'] = user['name']
-                return login_data
+                    self.username = user['name']
+                    control.setString('simkl.username', self.username)
+                return True
             new_display_dialog = f"{display_dialog}[CR]Code Valid for {control.colorstr(device_code['expires_in'] - i * device_code['interval'])} Seconds"
-            control.progressDialog.update(int((inter - i) / inter * 100), new_display_dialog)
+            dialog.update(int((inter - i) / inter * 100), new_display_dialog)
+        return False
 
     def __get_sort(self):
         sort_types = ['anime_title', 'list_updated_at', 'last_added', 'user_rating']
         return sort_types[int(self.sort)]
 
-    def watchlist(self):
+    def watchlist(self) -> list:
         statuses = [
             ("Next Up", "watching?next_up=true", 'nextup.png'),
             ("Currently Watching", "watching", 'watching.png'),
@@ -79,8 +95,8 @@ class SimklWLF(WatchlistFlavorBase):
         return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, [], res[2], {}) for res in statuses]
 
     @staticmethod
-    def action_statuses():
-        actions = [
+    def action_statuses() -> list:
+        return [
             ("Add to On Currently Watching", "watching"),
             ("Add to Completed", "completed"),
             ("Add to On Hold", "hold"),
@@ -90,7 +106,6 @@ class SimklWLF(WatchlistFlavorBase):
             ("Set Score", "set_score"),
             ("Delete", "DELETE")
         ]
-        return actions
 
     def _base_watchlist_view(self, res):
         url = f'watchlist_status_type/{self._NAME}/{res[1]}'
@@ -101,7 +116,8 @@ class SimklWLF(WatchlistFlavorBase):
         if not results:
             return []
 
-        all_results = list(map(self._base_next_up_view, results['anime'])) if next_up else list(map(self._base_watchlist_status_view, results['anime']))
+        all_results = map(self._base_watchlist_status_view, results['anime']) if next_up is None else map(self._base_next_up_view, results['anime'])
+        all_results = list(all_results)
         sort_pref = self.__get_sort()
 
         if sort_pref == '2':  # anime_title
@@ -118,18 +134,15 @@ class SimklWLF(WatchlistFlavorBase):
     def _base_watchlist_status_view(self, res: dict, mal_dub=None):
         show_ids = res['show']['ids']
 
-        mal_id = show_ids.get('mal')
-        if not mal_id:
+        if (mal_id := show_ids.get('mal')) is None:
             control.log(f"mal_id not found for simkl={show_ids['simkl']}", 'warning')
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
         show = database.get_show(mal_id)
-        kodi_meta = pickle.loads(show['kodi_meta']) if show else {}
+        kodi_meta = {} if show is None else pickle.loads(show['kodi_meta'])
 
-        if self.title_lang == 'english':
-            title = kodi_meta.get('ename') or res['show']['title']
-        else:
-            title = res['show']['title']
+
+        title = kodi_meta.get('ename', res['show']['title']) if self.title_lang == 'english' else res['show']['title']
 
         info = {
             'title': title,
@@ -163,6 +176,8 @@ class SimklWLF(WatchlistFlavorBase):
         show_ids = res['show']['ids']
 
         mal_id = show_ids.get('mal')
+        if mal_id is None:
+            return None
 
         dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
@@ -171,7 +186,7 @@ class SimklWLF(WatchlistFlavorBase):
         episode_count = res["total_episodes_count"]
 
         if 0 < episode_count < next_up:
-            return
+            return None
 
         base_title = res['show']['title']
 

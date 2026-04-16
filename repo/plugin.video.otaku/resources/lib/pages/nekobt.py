@@ -22,32 +22,44 @@ class Sources(BrowserBase.BrowserBase):
         self.titles = None
 
 
+    def get_nekobt_ids(self):
+        url = f'{self._BASE_URL}/media/search'
+        params = {
+            "query": self.titles[0]
+        }
+        r = self.S.get(url, params=params, timeout=10)
+        res = control.json_res(r)
+        if not r.ok:
+            control.log(res, 'warning')
+            return None
+        resp = res.get('data', {}).get('results')
+        if resp:
+            self.process_similarity_nekobt_id(resp)
+        return None
+
     def process_similarity_nekobt_id(self, similar_media: list) -> None:
         for x in similar_media:
-            self.nekobt_id = x['id']
-            break
+            if x['similarity'] > 0.2:
+                self.nekobt_id = x['id']
+                break
         self.meta_ids['nekobt_id'] = self.nekobt_id
         database.update_show_meta(self.mal_id, self.meta_ids, pickle.loads(self.show_meta['art']))
 
 
     def get_episode_ids(self) -> None:
-        episode_meta = database.get_episode(self.mal_id, self.episode)
-        if episode_meta:
-            self.anidb_ep_id = episode_meta.get('nekobt_ep_id')
-        if self.nekobt_ep_id is None:
-            r = self.S.get(f'{self._BASE_URL}/media/{self.nekobt_id}')
-            if r.ok:
-                r = control.json_res(r)
-                episodes = r.get('data', {}).get('episodes', [])
+        r = self.S.get(f'{self._BASE_URL}/media/{self.nekobt_id}')
+        if r.ok:
+            r = control.json_res(r)
+            episodes = r.get('data', {}).get('episodes', [])
+            for x in episodes:
+                if x['episode'] == self.episode or x.get('absolute') == self.episode:
+                    self.nekobt_ep_id = x['id']
+                    break
+            with database.SQL(control.malSyncDB) as cursor:
                 for x in episodes:
                     if x['episode'] == self.episode:
                         self.nekobt_ep_id = x['id']
-                        break
-                with database.SQL(control.malSyncDB) as cursor:
-                    for x in episodes:
-                        if x['episode'] == self.episode:
-                            self.nekobt_ep_id = x['id']
-                        cursor.execute('UPDATE episodes SET %s=? WHERE mal_id=? AND number=?' % 'nekobt_ep_id', (x['id'], self.mal_id, x['episode']))
+                    cursor.execute('UPDATE episodes SET %s=? WHERE mal_id=? AND number=?' % 'nekobt_ep_id', (x['id'], self.mal_id, x['episode']))
                 cursor.connection.commit()
 
 
@@ -55,30 +67,29 @@ class Sources(BrowserBase.BrowserBase):
         self.mal_id = mal_id
         self.episode = episode
         self.titles = titles
-        titles.sort(key=len)
-        show = titles[0]
+        show = self.titles[0]
         sources = []
         self.show_meta = database.get_show_meta(mal_id)
         if self.show_meta:
             self.meta_ids = pickle.loads(self.show_meta['meta_ids'])
             self.nekobt_id = self.meta_ids.get('nekobt_id')
             if self.nekobt_id is None:
-                #todo get show id
-                pass
+                self.get_nekobt_ids()
         if self.nekobt_id:
             episode_meta = database.get_episode(mal_id, episode)
             if episode_meta:
                 self.nekobt_ep_id = episode_meta.get('nekobt_ep_id')
-            if self.nekobt_ep_id is None:
+            if not self.nekobt_ep_id:
                 self.get_episode_ids()
 
+        control.log(f'{self.nekobt_id=}, {self.nekobt_ep_id=}')
         episode_zfill = str(episode).zfill(2)
         if media_type != "movie":
             season = database.get_episode(mal_id)['season']
             season_zfill = str(season).zfill(2)
             query = f'"{show}" S{season_zfill}E{episode_zfill}'
         else:
-            season_zfill = None
+            season_zfill = ''
             query = show
 
         params = {
@@ -87,8 +98,6 @@ class Sources(BrowserBase.BrowserBase):
             'sort_by': 'best'
         }
 
-        sources += self.process_nekobt(f'{self._BASE_URL}/torrents/search', params, episode_zfill, season_zfill)
-
         if self.nekobt_id:
             params['media_id'] = self.nekobt_id
             if not self.nekobt_ep_id:
@@ -96,11 +105,10 @@ class Sources(BrowserBase.BrowserBase):
 
         if self.nekobt_ep_id:
             params['episode_ids'] = self.nekobt_ep_id
-            params['episode_match_any'] = True
+            params['episode_match_any'] = 'true'
+            params.pop('query')
 
-        if self.nekobt_id or self.nekobt_ep_id:
-            params['query'] = query
-            sources += self.process_nekobt(f'{self._BASE_URL}/torrents/search', params, episode_zfill, season_zfill)
+        sources += self.process_nekobt(f'{self._BASE_URL}/torrents/search', params, episode_zfill, season_zfill)
 
         # remove any duplicate sources
         seen_sources = []
@@ -116,15 +124,13 @@ class Sources(BrowserBase.BrowserBase):
 
     def process_nekobt(self, url: str, params: dict, episode_zfill: str, season_zfill: str) -> list:
         all_sources = []
-        r = self.S.get(url, json=params, timeout=10)
+        r = self.S.get(url, params=params, timeout=10)
         res = control.json_res(r)
         if not r.ok:
             control.log(res, 'warning')
         resp = res.get('data', {})
-        if not resp.get('results') and not self.nekobt_id:
-            resp = resp.get('similar_media')
-            if resp:
-                self.process_similarity_nekobt_id(resp)
+        if not resp:
+            control.log(r.url)
             return []
         list_ = [{
             'name': res['title'],

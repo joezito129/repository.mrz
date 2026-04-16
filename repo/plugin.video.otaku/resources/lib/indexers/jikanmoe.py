@@ -30,7 +30,7 @@ class JikanAPI:
                 break
             params = {'page': i + 1}
             if i % 3 == 0:
-                xbmc.sleep(1800)
+                xbmc.sleep(1900)
             r = requests.get(url, params=params)
             res = control.json_res(r)
             if r.status_code == 429:
@@ -45,22 +45,23 @@ class JikanAPI:
     def parse_episode_view(res, mal_id, season, poster, fanart, eps_watched, update_time, tvshowtitle, dub_data, filler_data=None, episodes=None):
         episode = res['mal_id']
         url = f"{mal_id}/{episode}"
-        title = res.get('title')
-        if not title:
-            title = res["episode"]
-        image = res['images']['jpg']['image_url'] if res.get('images') else poster
+        try:
+            title = res['title']
+        except KeyError:
+            title = f'Episode {episode}'
+        image = res['images']['jpg']['image_url'] if res.get('images') is not None else poster
+
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
             'title': title,
             'season': season,
             'episode': episode,
-            'plot': '',
             'tvshowtitle': tvshowtitle,
             'mediatype': 'episode'
         }
 
         try:
-            info['rating'] = {'score': float(res['score'])}
+            info['rating'] = {'score': res['score']}
         except (KeyError, TypeError):
             pass
 
@@ -72,10 +73,10 @@ class JikanAPI:
         if eps_watched and int(eps_watched) >= episode:
             info['playcount'] = 1
 
-        try:
+        if filler_data is not None and len(filler_data) >= episode:
             filler = filler_data[episode - 1]
-        except (IndexError, TypeError):
-            filler = ''
+        else:
+            filler = None
 
         parsed = indexers.update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, None)
         return parsed
@@ -98,7 +99,7 @@ class JikanAPI:
 
     def append_episodes(self, mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data=None):
         update_time, diff = indexers.get_diff(episodes[0])
-        if diff > int(control.getSetting('interface.check.updates')):
+        if diff > control.getInt('interface.check.updates'):
             result = self.get_episode_meta(mal_id)
             season = episodes[-1]['season']
             mapfunc2 = partial(self.parse_episode_view, mal_id=mal_id, season=season, poster=poster, fanart=fanart, eps_watched=eps_watched, update_time=update_time, tvshowtitle=tvshowtitle, dub_data=dub_data, filler_data=None, episodes=episodes)
@@ -127,7 +128,7 @@ class JikanAPI:
                     database.update_kodi_meta(mal_id, kodi_meta)
 
         episodes = database.get_episode_list(mal_id)
-        dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getSetting('jz.dub') == 'true' else None
+        dub_data = indexers.process_dub(mal_id, kodi_meta['ename']) if control.getBool('jz.dub') else None
         if episodes:
             if kodi_meta['status'] != "Finished Airing":
                 return self.append_episodes(mal_id, episodes, eps_watched, poster, fanart, tvshowtitle, dub_data)

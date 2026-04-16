@@ -14,6 +14,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
     _TITLE = "MyAnimeList"
     _IMAGE = "myanimelist.png"
 
+
     def __headers(self):
         headers = {
             'Authorization': f'Bearer {self.token}',
@@ -21,7 +22,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         }
         return headers
 
-    def login(self):
+    def login(self) -> bool:
         from urllib import parse
         parsed = parse.urlparse(self.auth_var)
         params = dict(parse.parse_qsl(parsed.query))
@@ -37,37 +38,36 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         }
         r = requests.post(oauth_url, data=data)
         if not r.ok:
-            return
+            return False
         res = r.json()
-
         self.token = res['access_token']
+        self.refresh = res['refresh_token']
+        control.setString('mal.token', self.token)
+        control.setString('mal.refresh', self.refresh)
+        control.setInt('mal.expiry', int(time.time()) + int(res['expires_in']))
+
         user = requests.get(f'{self._URL}/users/@me', headers=self.__headers(), params={'fields': 'name'})
         user = user.json()
-
-        login_data = {
-            'token': res['access_token'],
-            'refresh': res['refresh_token'],
-            'expiry': int(time.time()) + int(res['expires_in']),
-            'username': user['name']
-        }
-        return login_data
+        self.username = user['name']
+        control.setString('mal.username', self.username)
+        return True
 
     @staticmethod
-    def refresh_token():
+    def refresh_token() -> None:
         oauth_url = 'https://myanimelist.net/v1/oauth2/token'
         data = {
             'client_id': 'a8d85a4106b259b8c9470011ce2f76bc',
             'grant_type': 'refresh_token',
-            'refresh_token': control.getSetting('mal.refresh')
+            'refresh_token': control.getString('mal.refresh')
         }
         r = requests.post(oauth_url, data=data)
         res = r.json()
-        control.setSetting('mal.token', res['access_token'])
-        control.setSetting('mal.refresh', res['refresh_token'])
+        control.setString('mal.token', res['access_token'])
+        control.setString('mal.refresh', res['refresh_token'])
         control.setInt('mal.expiry', int(time.time()) + int(res['expires_in']))
 
     @staticmethod
-    def handle_paging(hasnextpage, base_url, page):
+    def handle_paging(hasnextpage, base_url: str, page: int) -> list:
         if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
@@ -77,7 +77,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
     def __get_sort(self):
         sort_types = ['list_score', 'list_updated_at', 'anime_start_date', 'anime_title']
-        return sort_types[int(self.sort)]
+        return sort_types[self.sort]
 
     def watchlist(self):
         statuses = [
@@ -92,8 +92,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, [], res[2], {}) for res in statuses]
 
     @staticmethod
-    def action_statuses():
-        actions = [
+    def action_statuses() -> list:
+        return [
             ("Add to On Currently Watching", "watching"),
             ("Add to Completed", "completed"),
             ("Add to On Hold", "on_hold"),
@@ -102,7 +102,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             ("Set Score", "set_score"),
             ("Delete", "DELETE")
         ]
-        return actions
 
     def get_watchlist_status(self, status, next_up, offset, page):
         fields = [
@@ -122,7 +121,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         params = {
             "status": status,
             "sort": self.__get_sort(),
-            "limit": int(control.getSetting('interface.perpage.watchlist')),
+            "limit": control.getInt('interface.perpage.watchlist'),
             "offset": offset,
             "fields": ','.join(fields),
             "nsfw": True
@@ -134,7 +133,8 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         r = requests.get(url, headers=self.__headers(), params=params)
         if r.ok:
             results = r.json()
-            all_results = list(map(self._base_next_up_view, results['data'])) if next_up else list(map(self._base_watchlist_status_view, results['data']))
+            all_results = map(self._base_watchlist_status_view, results['data']) if next_up is None else map(self._base_next_up_view, results['data'])
+            all_results = list(all_results)
             all_results += self.handle_paging(results['paging'].get('next'), base_plugin_url, page)
         else:
             results = json.loads(r.text)
@@ -145,89 +145,107 @@ class MyAnimeListWLF(WatchlistFlavorBase):
 
     @div_flavor
     def _base_watchlist_status_view(self, res, mal_dub=None):
-        mal_id = res['node']['id']
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
-
-        title = res['node'].get('title')
-        if self.title_lang == 'english':
-            title = res['node']['alternative_titles'].get('en') or title
+        node = res['node']
+        mal_id = node['id']
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        title = node['title']
+        try:
+            if self.title_lang == 'english':
+                title = node['alternative_titles']['en'] or title
+        except KeyError:
+            pass
 
         eps_watched = res['list_status']["num_episodes_watched"]
-        eps = res['node']["num_episodes"]
-        image = res['node']['main_picture'].get('large', res['node']['main_picture']['medium'])
+        episodes = node["num_episodes"]
+        image = node['main_picture'].get('large', node['main_picture']['medium'])
 
         info = {
             'title': title,
-            'plot': res['node']['synopsis'],
-            'rating': {'score': res['node'].get('mean', 0)},
-            'duration': res['node']['average_episode_duration'],
-            'genre': [x.get('name') for x in res['node']['genres']],
-            'status': res['node']['status'],
-            'mpaa': res['node'].get('rating'),
-            'mediatype': 'tvshow',
-            'studio': [x.get('name') for x in res['node']['studios']]
+            'plot': node['synopsis'],
+            'duration': node['average_episode_duration'],
+            'status': node['status'],
+            'mediatype': 'tvshow'
         }
 
-        if start_date := res['node'].get('start_date'):
-            info['premiered'] = start_date
-            info['year'] = int(start_date[:4])
+        try:
+            info['genre'] = [x['name'] for x in node['genres']]
+        except KeyError:
+            pass
 
-        if eps_watched == eps and eps != 0:
+        try:
+            info['studio'] = [x['name'] for x in node['studios']]
+        except KeyError:
+            pass
+        try:
+            info['rating'] = {'score': node['mean']}
+        except KeyError:
+            pass
+
+        try:
+            info['mpaa'] = node['rating']
+        except KeyError:
+            pass
+
+        try:
+            info['premiered'] = node['start_date']
+            info['year'] = int(node['start_date'][:4])
+        except KeyError:
+            pass
+
+        if eps_watched == episodes and episodes != 0:
             info['playcount'] = 1
 
         base = {
-            "name": f"{title} - {eps_watched}/{eps}",
+            "name": f"{title} - {eps_watched}/{episodes}",
             "url": f'watchlist_to_ep/{mal_id}/{eps_watched}',
             "image": image,
             "info": info,
             'fanart': image
         }
 
-        if res['node']['media_type'] == 'movie' and eps == 1:
+        if node['media_type'] == 'movie' and episodes == 1:
             base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
+
     @div_flavor
     def _base_next_up_view(self, res, mal_dub=None):
-        mal_id = res['node']['id']
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
+        node = res['node']
+        mal_id = node['id']
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
 
         eps_watched = res['list_status']["num_episodes_watched"]
         next_up = eps_watched + 1
-        eps_total = res['node']["num_episodes"]
+        episodes = node["num_episodes"]
 
-        if 0 < eps_total < next_up:
-            return
+        if 0 < episodes < next_up:
+            return None
 
-        base_title = res['node']['title']
-        if self.title_lang == 'english':
-            base_title = res['node']['alternative_titles'].get('en') or base_title
+        base_title = res['node']['alternative_titles'].get('en', node['title']) if self.title_lang == 'english' else node['title']
 
-        title = f"{base_title} - {next_up}/{eps_total}"
-        poster = image = res['node']['main_picture'].get('large', res['node']['main_picture']['medium'])
-
-        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, eps_watched)
-        if next_up_meta:
-            if next_up_meta.get('title'):
-                title = f'{title} - {next_up_meta["title"]}'
-            if next_up_meta.get('image'):
-                image = next_up_meta['image']
-            plot = next_up_meta.get('plot')
-            aired = next_up_meta.get('aired')
-        else:
-            plot = aired = None
+        title = f"{base_title} - {next_up}/{episodes}"
+        poster = image = node['main_picture'].get('large', node['main_picture']['medium'])
 
         info = {
             'episode': next_up,
             'title': title,
             'tvshowtitle': base_title,
-            'duration': res['node']['average_episode_duration'],
-            'plot': plot,
+            'duration': node['average_episode_duration'],
             'mediatype': 'episode',
-            'aired': aired
         }
+
+        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, eps_watched)
+        if next_up_meta is not None:
+            if (title_ := next_up_meta.get('title')) is not None:
+                info['title'] = f"{title} - {title_}"
+            if (image_ := next_up_meta.get('image')) is not None:
+                image = image_
+            if (plot := next_up_meta.get('plot')) is not None:
+                info['plot'] = plot
+            if (aired := next_up_meta.get('aired')) is not None:
+                info['aired'] = aired
 
         base = {
             "name": title,
@@ -238,7 +256,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             "poster": poster
         }
 
-        if res['node']['media_type'] == 'movie' and eps_total == 1:
+        if res['node']['media_type'] == 'movie' and episodes == 1:
             base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
@@ -272,11 +290,10 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         data = self.get_user_anime_list('completed')
         completed_ids = {}
         for dat in data:
-            mal_id = dat['node']['id']
-            try:
-                completed_ids[str(mal_id)] = int(dat['node']['num_episodes'])
-            except KeyError:
-                pass
+            node = dat['node']
+            mal_id = node['id']
+            if (episodes := node.get('num_episodes')) is not None:
+                completed_ids[str(mal_id)] = int(episodes)
 
         with open(control.completed_json, 'w') as file:
             json.dump(completed_ids, file)

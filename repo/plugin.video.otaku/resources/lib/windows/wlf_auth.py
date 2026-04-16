@@ -1,4 +1,5 @@
-import xbmcgui
+import pyqrcode
+import os
 
 from resources.lib.ui import control
 from resources.lib.windows.base_window import BaseWindow
@@ -9,10 +10,19 @@ class WatchlistFlavorAuth(BaseWindow):
         super().__init__(xml_file, location)
         self.flavor = flavor
         self.authorized = False
-        control.closeBusyDialog()
 
     def onInit(self):
-        self.setFocusId(1000)
+        qr_path = os.path.join(control.dataPath, 'qr_code.png')
+        url = f"https://armkai.vercel.app/api/{self.flavor}"
+        copy = control.copy2clip(url)
+        if copy:
+            self.setProperty('copy2clip', control.lang(30022))
+        else:
+            self.clearProperty('copy2clip')
+        qr = pyqrcode.create(url)
+        qr.png(qr_path, scale=20)
+        self.setProperty('qr_code', qr_path)
+        control.closeBusyDialog()
 
     def doModal(self) -> bool:
         super(WatchlistFlavorAuth, self).doModal()
@@ -22,9 +32,10 @@ class WatchlistFlavorAuth(BaseWindow):
         self.handle_action(controlId)
 
     def handle_action(self, actionID):
-        if self.getFocusId() == 1002:
+        if actionID == 1002:
             self.set_settings()
-        elif self.getFocusId() == 1003:
+            self.close()
+        elif actionID == 1003:
             self.close()
 
     def onAction(self, action):
@@ -34,38 +45,14 @@ class WatchlistFlavorAuth(BaseWindow):
             self.close()
 
     def set_settings(self):
-        res = {}
         if self.flavor == 'anilist':
-            res['username'] = self.getControl(1000).getText()
-            res['token'] = self.getControl(1001).getText()
+            username = self.getControl(1000).getText()
+            token = self.getControl(1001).getText()
+            control.setString('anilist.username', username)
+            control.setString('anilist.token', token)
+        elif self.flavor == 'mal':
+            authvar = self.getControl(1000).getText()
+            control.setString('mal.authvar', authvar)
         else:
-            res['authvar'] = self.getControl(1000).getText()
-
-        for _id, value in list(res.items()):
-            control.setSetting('%s.%s' % (self.flavor, _id), value)
-
+            raise Exception("No Flavor")
         self.authorized = True
-        self.close()
-
-
-class AltWatchlistFlavorAuth:
-    def __init__(self, flavor=None):
-        self.flavor = flavor
-        self.authorized = False
-
-    def set_settings(self):
-        res = {}
-        dialog = xbmcgui.Dialog()
-        if self.flavor == 'anilist':
-            control.textviewer_dialog(f'{control.ADDON_NAME} : AniList', '{}\n{}\n{}'.format(control.lang(30042), control.lang(30043).replace('below', 'in the input dialog that will popup once you close this'), control.lang(30044)))
-            res['username'] = dialog.input('Enter AniList username', type=0)
-            res['token'] = dialog.input('Enter AniList token', type=0)
-        else:
-            control.textviewer_dialog(f'{control.ADDON_NAME} : MyAnimeList', '{}\n{}\n{}'.format(control.lang(30040), control.lang(30041).replace('below', 'in the input dialog that will popup once you close this'), control.lang(30044)))
-            res['authvar'] = dialog.input('Enter MAL auth url', type=0)
-
-        for _id, value in list(res.items()):
-            control.setSetting('%s.%s' % (self.flavor, _id), value)
-            self.authorized = True
-
-        return self.authorized

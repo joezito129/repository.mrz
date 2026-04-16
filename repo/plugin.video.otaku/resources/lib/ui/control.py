@@ -8,6 +8,7 @@ import xbmcvfs
 import sys
 import os
 
+from functools import partial
 from urllib import parse
 from concurrent.futures import ThreadPoolExecutor
 
@@ -45,25 +46,23 @@ LOGO_SMALL = os.path.join(COMMON_PATH, 'trans-goku-small.png')
 LOGO_MEDIUM = os.path.join(COMMON_PATH, 'trans-goku.png')
 ICONS_PATH = os.path.join(ADDON_PATH, 'resources', 'images', 'icons', ADDON.getSetting("interface.icons"))
 
-execute = xbmc.executebuiltin
 progressDialog = xbmcgui.DialogProgress()
 playList = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
 window = xbmcgui.Window(10000)
+max_threads = os.cpu_count()
 
+intro_keywords = ['intro', 'opening', 'op']
+# intro_keywords = ['intro', 'opening', 'prologue']
+outro_keywords = []
 bool_cache = {}
-
-
-def get_bool_cache(setting_id: str):
-    if setting_id not in bool_cache:
-        bool_cache[setting_id] = getBool(setting_id)
-    return bool_cache[setting_id]
-
+int_cache = {}
+str_cache = {}
 
 def closeBusyDialog() -> None:
     if xbmc.getCondVisibility('Window.IsActive(busydialog)'):
-        execute('Dialog.Close(busydialog)')
+        xbmc.executebuiltin('Dialog.Close(busydialog)')
     if xbmc.getCondVisibility('Window.IsActive(busydialognocancel)'):
-        execute('Dialog.Close(busydialognocancel)')
+        xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
 
 
 def log(msg, level="info") -> None:
@@ -83,22 +82,22 @@ def log(msg, level="info") -> None:
     xbmc.log(f'{ADDON_NAME.upper()} ({HANDLE}): {msg}', level)
 
 
-def enabled_debrid() -> dict:
+def enabled_debrid() -> list:
     debrids = ['real_debrid', 'debrid_link', 'alldebrid', 'premiumize', 'torbox']
-    return {x: getSetting(f'{x}.token') != '' and getBool(f'{x}.enabled') for x in debrids}
+    return [x for x in debrids if getString(f'{x}.token') != '' and getBool(f'{x}.enabled')]
 
 
 def enabled_watchlists() -> list:
     watchlists = ['mal', 'anilist', 'simkl', 'kitsu']
-    return [x for x in watchlists if getSetting(f'{x}.token') != '' and getBool(f'{x}.enabled')]
+    return [x for x in watchlists if getString(f'{x}.token') != '' and getBool(f'{x}.enabled')]
 
 
-def watchlist_to_update() -> str:
+def watchlist_to_update():
     if getBool('watchlist.update.enabled'):
-        flavor = getSetting('watchlist.update.flavor')
+        flavor = getString('watchlist.update.flavor')
         if getBool(f"{flavor}.enabled"):
             return flavor
-    return ''
+    return None
 
 
 def copy2clip(txt: str) -> bool:
@@ -128,28 +127,47 @@ def colorstr(text, color: str = 'deepskyblue') -> str:
 
 
 def refresh() -> None:
-    execute('Container.Refresh')
+    xbmc.executebuiltin('Container.Refresh')
 
 
 def getSetting(key: str) -> str:
     cache = window.getProperty(f'{ADDON_ID}_{key}')
     return cache if cache else ADDON.getSetting(key)
 
-
 def getBool(key: str) -> bool:
-    cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return cache == 'true' if cache else Settings.getBool(key)
+    if key in bool_cache:
+        return bool_cache[key]
+    prop_val = window.getProperty(f'{ADDON_ID}_{key}')
+    if prop_val != '':
+        cache = prop_val == 'true'
+    else:
+        cache = Settings.getBool(key)
+    bool_cache[key] = cache
+    return cache
 
 
 def getInt(key: str) -> int:
-    cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return int(cache) if cache else Settings.getInt(key)
+    if key in int_cache:
+        return int_cache[key]
+    prop_val = window.getProperty(f'{ADDON_ID}_{key}')
+    if prop_val:
+        cache = int(prop_val)
+    else:
+        cache = Settings.getInt(key)
+    int_cache[key] = cache
+    return cache
 
 
 def getString(key: str) -> str:
-    cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return cache if cache else Settings.getString(key)
-
+    if key in str_cache:
+        return str_cache[key]
+    prop_val = window.getProperty(f'{ADDON_ID}_{key}')
+    if prop_val:
+        cache = prop_val
+    else:
+        cache = Settings.getString(key)
+    str_cache[key] = cache
+    return cache
 
 def getStringList(settingid: str) -> list:
     return Settings.getStringList(settingid)
@@ -165,6 +183,10 @@ def setBool(settingid: str, value: bool) -> None:
 
 def setInt(settingid: str, value: int) -> None:
     Settings.setInt(settingid, value)
+
+
+def setString(settingid: str, value: str) -> None:
+    Settings.setString(settingid, value)
 
 
 def setStringList(settingid: str, value: list):
@@ -193,7 +215,7 @@ def get_payload_params(url: str) -> tuple:
 
 
 def exit_code() -> None:
-    if getSetting('reuselanguageinvoker.status') == 'Enabled':
+    if getString('reuselanguageinvoker.status') == 'Enabled':
         sys.exit(1)
 
 
@@ -204,7 +226,7 @@ def keyboard(title: str, text: str = '') -> str:
 
 
 def closeAllDialogs() -> None:
-    execute('Dialog.Close(all,true)')
+    xbmc.executebuiltin('Dialog.Close(all,true)')
 
 
 def ok_dialog(title: str, text: str) -> bool:
@@ -243,16 +265,16 @@ def context_menu(context_list: list) -> int:
     return xbmcgui.Dialog().contextmenu(context_list)
 
 
-def browse(type_: int, heading: str, shares: str, mask: str = '') -> str:
+def browse(type_: int, heading: str, shares: str, mask: str = ''):
     return xbmcgui.Dialog().browse(type_, heading, shares, mask)
 
 
-def handle_set_fanart(art: dict, info: dict) -> dict:
-    if not (image := art.get('fanart')) or get_bool_cache('interface.fanart.disable'):
+def handle_set_fanart(art: dict, info: dict, fanart_disable: bool, fanart_select_bool: bool) -> dict:
+    if not (image := art.get('fanart')) or fanart_disable:
         art['fanart'] = FANART
     else:
         if isinstance(image, list):
-            if get_bool_cache('context.otaku.fanartselect'):
+            if fanart_select_bool:
                 if info.get('UniqueIDs', {}).get('mal_id'):
                     fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
                     art['fanart'] = fanart_select if fanart_select else random.choice(image)
@@ -263,10 +285,13 @@ def handle_set_fanart(art: dict, info: dict) -> dict:
     return art
 
 
-def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
+def set_videotags(li, info) -> None:
     vinfo: xbmc.InfoTagVideo = li.getVideoInfoTag()
-    if title := info.get('title'):
-        vinfo.setTitle(title)
+    try:
+        vinfo.setTitle(info['title'])
+    except KeyError:
+        log(info)
+
     if media_type := info.get('mediatype'):
         vinfo.setMediaType(media_type)
     if tvshow_title := info.get('tvshowtitle'):
@@ -274,7 +299,7 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     if plot := info.get('plot'):
         vinfo.setPlot(plot)
     if year := info.get('year'):
-        vinfo.setYear(int(year))
+        vinfo.setYear(year)
     if premiered := info.get('premiered'):
         vinfo.setPremiered(premiered)
     if status := info.get('status'):
@@ -285,10 +310,10 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
         vinfo.setMpaa(mpaa)
     if rating := info.get('rating'):
         vinfo.setRating(rating.get('score', 0), rating.get('votes', 0))
-    if season := info.get('season'):
-        vinfo.setSeason(int(season))
-    if episode := info.get('episode'):
-        vinfo.setEpisode(int(episode))
+    if (season := info.get('season')) is not None:
+        vinfo.setSeason(season)
+    if (episode := info.get('episode')) is not None:
+        vinfo.setEpisode(episode)
     if aired := info.get('aired'):
         vinfo.setFirstAired(aired)
     if playcount := info.get('playcount'):
@@ -312,29 +337,29 @@ def set_videotags(li: xbmcgui.ListItem, info: dict) -> None:
     if properties := info.get('properties'):
         li.setProperties(properties)
 
-
 def jsonrpc(json_data: dict) -> dict:
     return json.loads(xbmc.executeJSONRPC(json.dumps(json_data)))
 
 
-def xbmc_add_dir(name: str, url: str, art, info: dict, draw_cm: list, isfolder: bool, isplayable: bool) -> tuple:
+def xbmc_add_dir(data: dict, clear_logo_disable: bool, fanart_disable: bool, fanart_select_bool: bool) -> tuple:
+    url = data['url']
     u = addon_url(url)
-    liz = xbmcgui.ListItem(name, offscreen=True)
-    if info:
+    liz = xbmcgui.ListItem(data['name'], offscreen=True)
+    if info := data['info']:
         set_videotags(liz, info)
-    if draw_cm:
+    if draw_cm := data['cm']:
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
 
-    art = handle_set_fanart(art, info)
+    art = handle_set_fanart(data['image'], info, fanart_disable, fanart_select_bool)
 
-    if get_bool_cache('interface.clearlogo.disable'):
+    if clear_logo_disable:
         art['clearlogo'] = ICONS_PATH
-    if isplayable:
+    if data['isplayable']:
         art['tvshow.poster'] = art.pop('poster')
         liz.setProperties({'Video': 'true', 'IsPlayable': 'true'})
     liz.setArt(art)
-    return u, liz, isfolder
+    return u, liz, data['isfolder']
 
 
 def bulk_draw_items(video_data: list) -> bool:
@@ -356,9 +381,8 @@ def wait_loop(step: int, timeout: int, path: str, path2: str=''):
             kodi_path = xbmc.getInfoLabel('Container.FolderPath')
             if path in kodi_path or path2 in kodi_path:
                 if not xbmc.getCondVisibility("Container.IsUpdating"):
-                    log(f"Waited ({(i + 1) * step}ms) for path {kodi_path}")
+                    # log(f"Waited ({(i + 1) * step}ms) for path {kodi_path}")
                     break
-
     else:
         log(f"Waited ({step * max_loop}ms) for path {xbmc.getInfoLabel('Container.FolderPath')}")
 
@@ -375,11 +399,11 @@ def draw_items(video_data: list, content_type: str = '') -> None:
     if getBool('interface.viewtypes.bool'):
         wait_loop(100, 250, 'plugin://plugin.video.otaku/')
         if content_type == 'tvshows':
-            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.tvshows')))
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getString('interface.viewtypes.tvshows')))
         elif content_type == 'episodes':
-            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.episodes')))
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getString('interface.viewtypes.episodes')))
         else:
-            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getSetting('interface.viewtypes.general')))
+            xbmc.executebuiltin('Container.SetViewMode(%d)' % get_view_type(getString('interface.viewtypes.general')))
 
     # move to episode position currently watching
     if content_type == "episodes" and getBool('general.smart.scroll.enable'):
@@ -401,8 +425,12 @@ def draw_items(video_data: list, content_type: str = '') -> None:
 
 
 def bulk_dir_list(video_data: list) -> list:
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        list_items = list(executor.map(lambda x: xbmc_add_dir(x['name'], x['url'], x['image'], x['info'], x['cm'], x['isfolder'], x['isplayable']), [v for v in video_data if v]))
+    clear_logo_disable = getBool('interface.clearlogo.disable')
+    fanart_disable = getBool('interface.fanart.disable')
+    fanart_select_bool = getBool('context.otaku.fanartselect')
+    mapfunc = partial(xbmc_add_dir, clear_logo_disable=clear_logo_disable, fanart_disable=fanart_disable, fanart_select_bool=fanart_select_bool)
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+        list_items = list(executor.map(mapfunc, filter(None, video_data)))
     return list_items
 
 

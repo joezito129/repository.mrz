@@ -10,6 +10,7 @@ class AniListWLF(WatchlistFlavorBase):
     _URL = "https://graphql.anilist.co"
     _TITLE = "AniList"
     _IMAGE = "anilist.png"
+    user_id = control.getInt('anilist.userid')
 
     def __headers(self):
         headers = {
@@ -19,7 +20,7 @@ class AniListWLF(WatchlistFlavorBase):
         }
         return headers
 
-    def login(self):
+    def login(self) -> bool:
         query = '''
         query ($name: String) {
             User(name: $name) {
@@ -27,28 +28,25 @@ class AniListWLF(WatchlistFlavorBase):
             }
         }
         '''
+        self.username = control.getString('anilist.username')
+        self.token = control.getString('anilist.token')
 
-        variables = {
-            "name": self.username
-        }
-
+        variables = {"name": self.username}
         r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
         results = r.json()
         if "errors" in results.keys():
-            control.setSetting('anilist.token', '')
-            control.setSetting('anilist.username', '')
-            return
+            control.setString('anilist.token', '')
+            control.setString('anilist.username', '')
+            return False
         userId = results['data']['User']['id']
-        login_data = {
-            'userid': str(userId)
-        }
-        return login_data
+        control.setInt('anilist.userid', userId)
+        return True
 
     def __get_sort(self):
         sort_types = ['MEDIA_TITLE_ENGLISH_DESC', 'MEDIA_TITLE_ROMAJI_DESC', 'SCORE', 'PROGRESS', 'UPDATED_TIME', 'ADDED_TIME']
-        return sort_types[int(self.sort)]
+        return sort_types[self.sort]
 
-    def watchlist(self):
+    def watchlist(self) -> list:
         statuses = [
             ("Next Up", "CURRENT?next_up=true", 'nextup.png'),
             ("Current", "CURRENT", 'watching.png'),
@@ -60,13 +58,13 @@ class AniListWLF(WatchlistFlavorBase):
         ]
         return [utils.allocate_item(res[0], f'watchlist_status_type/{self._NAME}/{res[1]}', True, False, [], res[2], {}) for res in statuses]
 
-    def _base_watchlist_view(self, res):
+    def _base_watchlist_view(self, res: list) -> list:
         url = f'watchlist_status_type/{self._NAME}/{res[1]}'
         return [utils.allocate_item(res[0], url, True, False, [], f'{res[0].lower()}.png', {})]
 
     @staticmethod
-    def action_statuses():
-        actions = [
+    def action_statuses() -> list:
+        return [
             ("Add to Current", "CURRENT"),
             ("Add to Rewatching", "REPEATING"),
             ("Add to Planning", "PLANNING"),
@@ -76,9 +74,8 @@ class AniListWLF(WatchlistFlavorBase):
             ("Set Score", "set_score"),
             ("Delete", "DELETE")
         ]
-        return actions
 
-    def get_watchlist_status(self, status, next_up, offset, page):
+    def get_watchlist_status(self, status, next_up, offset: int, page: int):
         query = '''
         query ($userId: Int, $userName: String, $status: MediaListStatus, $type: MediaType, $sort: [MediaListSort], $forceSingleCompletedList: Boolean) {
             MediaListCollection(userId: $userId, userName: $userName, status: $status, type: $type, sort: $sort, forceSingleCompletedList: $forceSingleCompletedList) {
@@ -162,7 +159,7 @@ class AniListWLF(WatchlistFlavorBase):
         '''
 
         variables = {
-            'userId': int(self.user_id),
+            'userId': self.user_id,
             'username': self.username,
             'status': status,
             'type': 'ANIME',
@@ -180,7 +177,7 @@ class AniListWLF(WatchlistFlavorBase):
             for entrie in mlist['entries']:
                 if entrie not in entries:
                     entries.append(entrie)
-        all_results = map(self._base_next_up_view, reversed(entries)) if next_up else map(self.base_watchlist_status_view, reversed(entries))
+        all_results = map(self.base_watchlist_status_view, reversed(entries)) if next_up is None else map(self._base_next_up_view, reversed(entries))
         all_results = list(all_results)
         return all_results
 
@@ -189,71 +186,64 @@ class AniListWLF(WatchlistFlavorBase):
         progress = res['progress']
         res = res['media']
 
-        mal_id = res.get('idMal')
-        if not mal_id:
+        if (mal_id := res.get('idMal')) is None:
             control.log(f"mal_id not found for anilist_id={res['id']}", 'warning')
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
 
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
         title = res['title'].get(self.title_lang) or res['title'].get('userPreferred')
 
         info = {
             'title': title,
-            'genre': res.get('genres'),
-            'status': res.get('status'),
-            'mediatype': 'tvshow',
-            'country': res.get('countryOfOrigin', ''),
-            'studio': [x['node'].get('name') for x in res['studios'].get('edges')]
+            'mediatype': 'tvshow'
         }
 
-        if res['episodes'] != 0 and progress == res['episodes']:
-            info['playcount'] = 1
-
-        try:
-            info['duration'] = res.get('duration') * 60
-        except TypeError:
-            pass
-
-        try:
-            info['rating'] = {'score': res.get('averageScore') / 10.0}
-        except TypeError:
-            pass
-
-        desc = res.get('description')
-        if desc:
+        if (studio := res.get('studios')) is not None:
+            info['studio'] = [x['node']['name'] for x in studio['edges']]
+        if (genres := res.get('genres')) is not None:
+            info['genre'] = genres
+        if (status := res.get('status')) is not None:
+            info['status'] = status
+        if (country := res.get('countryOfOrigin')) is not None:
+            info['country'] = country
+        if (duration := res.get('duration')) is not None:
+            info['duration'] = duration * 60
+        if (averageScore := res.get('averageScore')) is not None:
+            info['rating'] = {'score': averageScore / 10.0}
+        if (desc:= res.get('description')) is not None:
             desc = desc.replace('<i>', '[I]').replace('</i>', '[/I]')
             desc = desc.replace('<b>', '[B]').replace('</b>', '[/B]')
             desc = desc.replace('<br>', '[CR]')
             desc = desc.replace('\n', '')
             info['plot'] = desc
-
-        try:
-            start_date = res.get('startDate')
+        if (startDate := res.get('startDate')) is not None:
+            start_date = startDate
             info['aired'] = '{}-{:02}-{:02}'.format(start_date['year'], start_date['month'], start_date['day'])
-        except TypeError:
-            pass
+        if (characters := res.get('characters')) is not None:
+            cast = []
+            for i, x in enumerate(characters['edges']):
+                try:
+                    role = x['node']['name']['userPreferred']
+                    actor = x['voiceActors'][0]['name']['userPreferred']
+                    actor_hs = x['voiceActors'][0]['image']['large']
+                    cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
+                except (KeyError, IndexError):
+                    continue
+            info['cast'] = cast
 
-        cast = []
-        try:
-            for i, x in enumerate(res['characters']['edges']):
-                role = x['node']['name']['userPreferred']
-                actor = x['voiceActors'][0]['name']['userPreferred']
-                actor_hs = x['voiceActors'][0]['image'].get('large')
-                cast.append({'name': actor, 'role': role, 'thumbnail': actor_hs, 'index': i})
-                info['cast'] = cast
-        except IndexError:
-            pass
+        if (episodes := res['episodes']) != 0 and progress == episodes:
+            info['playcount'] = 1
 
         base = {
-            "name": '%s - %d/%d' % (title, progress, res['episodes'] if res['episodes'] else 0),
+            "name": f"{title} - {progress}/{episodes}",
             "url": f'watchlist_to_ep/{mal_id}/{progress}',
             "image": res['coverImage']['extraLarge'],
             "poster": res['coverImage']['extraLarge'],
             "fanart": res['coverImage']['extraLarge'],
-            "banner": res.get('bannerImage'),
+            "banner": res['bannerImage'],
             "info": info
         }
 
-        if res['format'] == 'MOVIE' and res['episodes'] == 1:
+        if res['format'] == 'MOVIE' and episodes == 1:
             base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
@@ -265,40 +255,42 @@ class AniListWLF(WatchlistFlavorBase):
         res = res['media']
 
         mal_id = res.get('idMal')
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
+        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
 
         next_up = progress + 1
-        episode_count = res['episodes'] if res['episodes'] else 0
+        if (episodes:= res['episodes']) is None:
+            episodes = 0
         base_title = res['title'].get(self.title_lang) or res['title'].get('userPreferred')
-        title = f"{base_title} - {next_up}/{episode_count}"
+        title = f"{base_title} - {next_up}/{episodes}"
         poster = image = res['coverImage']['extraLarge']
 
-        if (0 < episode_count < next_up) or (res['nextAiringEpisode'] and next_up == res['nextAiringEpisode']['episode']):
+        if (0 < episodes < next_up) or (res['nextAiringEpisode'] and next_up == res['nextAiringEpisode']['episode']):
             return None
 
-        if mal_id:
-            mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, progress)
-        else:
+        if mal_id is None:
             next_up_meta = None
-        if next_up_meta:
-            if next_up_meta.get('title'):
-                title = f"{title} - {next_up_meta['title']}"
-            if next_up_meta.get('image'):
-                image = next_up_meta['image']
-            plot = next_up_meta.get('plot')
-            aired = next_up_meta.get('aired')
         else:
-            plot = aired = None
+            mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, progress)
 
         info = {
             'episode': next_up,
             'title': title,
             'tvshowtitle': res['title']['userPreferred'],
-            'plot': plot,
-            'genre': res.get('genres'),
-            'mediatype': 'episode',
-            'aired': aired
+            'mediatype': 'episode'
         }
+
+        if next_up_meta is not None:
+            if (title_ := next_up_meta.get('title')) is not None:
+                info['title'] = f"{title} - {title_}"
+            if (image_ := next_up_meta.get('image')) is not None:
+                image = image_
+            if (plot := next_up_meta.get('plot')) is not None:
+                info['plot'] = plot
+            if (aired := next_up_meta.get('aired')) is not None:
+                info['aired'] = aired
+
+        if genre := res.get('genres') is not None:
+            info['genre'] = genre
 
         base = {
             "name": title,
@@ -309,7 +301,7 @@ class AniListWLF(WatchlistFlavorBase):
             "poster": poster
         }
 
-        if res['format'] == 'MOVIE' and res['episodes'] == 1:
+        if res['format'] == 'MOVIE' and episodes == 1:
             base['url'] = f"play_movie/{mal_id}/"
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
@@ -385,7 +377,7 @@ class AniListWLF(WatchlistFlavorBase):
         '''
 
         variables = {
-            'userId': int(self.user_id),
+            'userId': self.user_id,
             'username': self.username,
             'status': status,
             'type': 'ANIME',
@@ -421,7 +413,7 @@ class AniListWLF(WatchlistFlavorBase):
 
     def update_list_status(self, mal_id, status):
         anilist_id = self._get_mapping_id(mal_id, 'anilist_id')
-        if not anilist_id:
+        if anilist_id is None:
             return False
         query = '''
         mutation ($mediaId: Int, $status: MediaListStatus) {
@@ -442,7 +434,7 @@ class AniListWLF(WatchlistFlavorBase):
 
     def update_num_episodes(self, mal_id, episode):
         anilist_id = self._get_mapping_id(mal_id, 'anilist_id')
-        if not anilist_id:
+        if anilist_id is None:
             return False
         query = '''
         mutation ($mediaId: Int, $progress : Int, $status: MediaListStatus) {
@@ -464,7 +456,7 @@ class AniListWLF(WatchlistFlavorBase):
 
     def update_score(self, mal_id, score):
         anilist_id = self._get_mapping_id(mal_id, 'anilist_id')
-        if not anilist_id:
+        if anilist_id is None:
             return False
         query = '''
         mutation ($mediaId: Int, $score: Float) {
@@ -485,7 +477,7 @@ class AniListWLF(WatchlistFlavorBase):
 
     def delete_anime(self, mal_id):
         anilist_id = self._get_mapping_id(mal_id, 'anilist_id')
-        if not anilist_id:
+        if anilist_id is None:
             return False
         media_entry = self.get_watchlist_anime_info(anilist_id)['data']['Media']['mediaListEntry']
         if media_entry:

@@ -9,11 +9,11 @@ from resources.lib.ui import control, database_sync
 
 def refresh_apis() -> None:
     control.log("### Refreshing API's")
-    rd_token = control.getSetting('real_debrid.token')
-    dl_token = control.getSetting('debrid_link.token')
+    rd_token = control.getString('real_debrid.token')
+    dl_token = control.getString('debrid_link.token')
 
-    kitsu_token = control.getSetting('kitsu.token')
-    mal_token = control.getSetting('mal.token')
+    kitsu_token = control.getString('kitsu.token')
+    mal_token = control.getString('mal.token')
 
     if rd_token != '':
         rd_expiry = control.getInt('real_debrid.expiry')
@@ -99,7 +99,7 @@ def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
             addon_xml_.writelines(output)
         if not forced_state:
             control.ok_dialog(control.ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
-            control.execute(f'LoadProfile({control.xbmc.getInfoLabel("system.profilename")})')
+            xbmc.executebuiltin(f'LoadProfile({control.xbmc.getInfoLabel("system.profilename")})')
     file_path = os.path.join(control.ADDON_PATH, "addon.xml")
     with open(file_path) as addon_xml:
         file_lines = addon_xml.readlines()
@@ -108,11 +108,11 @@ def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
         if "reuselanguageinvoker" in file_lines[i]:
             if forced_state == 'Disabled' or ("true" in line_string and forced_state is None):
                 file_lines[i] = file_lines[i].replace("true", "false")
-                control.setSetting("reuselanguageinvoker.status", "Disabled")
+                control.setString("reuselanguageinvoker.status", "Disabled")
                 _store_and_reload(file_lines)
             elif forced_state == 'Enabled' or ("false" in line_string and forced_state is None):
                 file_lines[i] = file_lines[i].replace("false", "true")
-                control.setSetting("reuselanguageinvoker.status", "Enabled")
+                control.setString("reuselanguageinvoker.status", "Enabled")
                 _store_and_reload(file_lines)
             break
 
@@ -124,14 +124,14 @@ def version_check() -> None:
     control.log(f'### SQLite: {database_sync.version}')
     control.log(f'### Kodi Version: {control.kodi_version}')
 
-    if control.getSetting('otaku.version') != control.ADDON_VERSION:
-        reuselang = control.getSetting('reuselanguageinvoker.status')
+    if control.getString('otaku.version') != control.ADDON_VERSION:
+        reuselang = control.getString('reuselanguageinvoker.status')
         toggle_reuselanguageinvoker(reuselang)
-        control.setSetting('otaku.version', control.ADDON_VERSION)
+        control.setString('otaku.version', control.ADDON_VERSION)
         control.log(f"### {reuselang} Re-uselanguageinvoker")
 
 
-def load_settings():
+def load_settings() -> None:
     bool_settings = [
         "jz.dub", "jz.filler", "general.smart.scroll.enable", "override.meta.api",
         "interface.viewtypes.bool", "interface.cleantitles", "interface.fanart.disable",
@@ -166,32 +166,22 @@ def load_settings():
         "otaku.version", "last_played"
 ]
 
-    for s_id in bool_settings:
-        try:
-            cache_val = control.window.getProperty(s_id)
-            val = control.ADDON.getSettingBool(s_id)
-            if cache_val != val:
-                control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val).lower())
-        except:
-            control.log(s_id, 'error')
-
-    for s_id in int_settings:
-        try:
-            cache_val = control.window.getProperty(s_id)
-            val = control.ADDON.getSettingInt(s_id)
-            if cache_val != val:
-                control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
-        except:
-            control.log(s_id, 'error')
-
-    for s_id in str_settings:
-        try:
-            cache_val = control.window.getProperty(s_id)
-            val = control.ADDON.getSettingString(s_id)
-            if cache_val != val:
-                control.window.setProperty(f"{control.ADDON_ID}_{s_id}", str(val))
-        except:
-            control.log(s_id, 'error')
+    settings_map = [
+        (bool_settings, control.ADDON.getSettingBool),
+        (int_settings, control.ADDON.getSettingInt),
+        (str_settings, control.ADDON.getSettingString)
+    ]
+    for setting_list, getter in settings_map:
+        for s_id in setting_list:
+            prop_name = f"{control.ADDON_ID}_{s_id}"
+            try:
+                cache_val = control.window.getProperty(prop_name)
+                current_val = getter(s_id)
+                val_str = str(current_val).lower()
+                if cache_val != val_str:
+                    control.window.setProperty(prop_name, val_str)
+            except Exception as e:
+                control.log(f"{s_id} -> {e}", 'error')
 
 
 class Monitor(xbmc.Monitor):
@@ -208,7 +198,7 @@ if __name__ == "__main__":
     control.log('##################  RUNNING MAINTENANCE  ######################')
     if control.getBool('general.kodi.cache'):
         load_settings()
-        control.process_context()
+    control.process_context()
     version_check()
     database_sync.SyncDatabase()
     refresh_apis()

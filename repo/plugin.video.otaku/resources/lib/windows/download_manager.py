@@ -124,7 +124,7 @@ class Manager:
         if not xbmcvfs.exists(control.downloads_json):
             with open(control.downloads_json, 'w') as file:
                 json.dump({}, file)
-        self.storage_location = control.getSetting('download.location')
+        self.storage_location = control.getString('download.location')
 
     def create_download_task(self, url_hash):
         self.get_download_index()
@@ -189,7 +189,7 @@ class Manager:
             self.storage_location = control.browse(3, f'{control.ADDON_NAME}: Please Choose A Download Locaton.', 'files')
             if not xbmcvfs.exists(self.storage_location):
                 return control.ok_dialog(control.ADDON_NAME, "Unable to Find Directory")
-            control.setSetting('download.location', self.storage_location)
+            control.setString('download.location', self.storage_location)
 
         self.output_filename = filename
         if self.output_filename is None:

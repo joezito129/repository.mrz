@@ -1,9 +1,10 @@
+import json
+
 import requests
 import xbmcgui
 import xbmcplugin
 import xbmc
 
-from urllib import parse
 from resources.lib.WatchlistIntegration import watchlist_update_episode
 from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid, torbox
 from resources.lib.ui import control, source_utils, player
@@ -28,16 +29,11 @@ class HookMimetype:
         return func
 
 class Resolver(BaseWindow):
-    def __init__(self, xml_file, location, *, actionArgs=None, source_select=False):
+    def __init__(self, xml_file, location, *, actionArgs=None):
         super().__init__(xml_file, location, actionArgs=actionArgs)
-        self.return_data = {
-            'link': None,
-            'linkinfo': None,
-            'source': None
-        }
+        self.return_data = {}
         self.canceled = False
         self.sources = None
-        self.args = None
         self.resolvers = {
             'all_debrid': all_debrid.AllDebrid,
             'debrid_link': debrid_link.DebridLink,
@@ -45,16 +41,15 @@ class Resolver(BaseWindow):
             'real_debrid': real_debrid.RealDebrid,
             'torbox': torbox.Torbox
         }
-        self.source_select = source_select
-        self.pack_select = False
         self.mal_id = actionArgs['mal_id']
-        self.episode = int(actionArgs.get('episode', 1))
+        self.episode = actionArgs.get('episode', 1)
+        self.source_select = actionArgs.get('source_select')
+        self.pack_select = actionArgs.get('pack_select')
         self.play = actionArgs.get('play')
         self.source_select_close = actionArgs.get('close')
         self.resume = actionArgs.get('resume')
         self.context = actionArgs.get('context')
         self.silent = actionArgs.get('silent')
-        self.params = actionArgs.get('params', {})
         self.abort = False
 
     def onInit(self):
@@ -63,7 +58,7 @@ class Resolver(BaseWindow):
     def resolve(self, sources):
         # last played source move to top of list
         if len(sources) > 1 and not self.source_select:
-            last_played = control.getSetting('last_played')
+            last_played = control.getString('last_played')
             for index, source in enumerate(sources):
                 if str(source['release_title']) == last_played:
                     sources.insert(0, sources.pop(index))
@@ -86,83 +81,70 @@ class Resolver(BaseWindow):
                 self.return_data['link'] = self.resolve_uncache(i)
                 break
 
-            if i['type'] in ['torrent', 'cloud', 'hoster']:
+            if i['type'] in ['torrent', 'cloud', 'hoster', 'torrentio']:
                 stream_link = self.resolve_source(self.resolvers[i['debrid_provider']], i)
                 if stream_link:
                     self.return_data['link'] = stream_link
                     break
 
-            elif i['type'] == 'direct':
-                stream_link = i['hash']
+            elif i['type'] in ['local_files']:
+                stream_link = i['link']
                 if stream_link:
-                    self.return_data['link'] = stream_link
-                    if i.get('subs'):
-                        self.return_data['link'] = stream_link
-                        self.return_data['sub'] = i['subs']
+                    if self.pack_select:
+                        select = control.select_dialog(control.ADDON_NAME, [i['release_title']])
+                        if select != -1:
+                            self.return_data['url'] = stream_link
+                    else:
+                        self.return_data['url'] = stream_link
                     break
-            elif i['type'] == 'local_files':
-                stream_link = i['hash']
-                self.return_data = {
-                    'url': stream_link,
-                    'local': True,
-                    'headers': {}
-                }
-                break
 
-        if self.return_data.get('local'):
-            self.return_data['linkinfo'] = self.return_data
-        else:
-            self.return_data['linkinfo'] = self.prefetch_play_link(self.return_data['link'])
+        if self.play and self.return_data.get('link'):
+            if not self.return_data.get('url'):
+                self.return_data = self.prefetch_play_link()
 
-        if not self.return_data['linkinfo']:
-            self.return_data = False
-        if self.play and isinstance(self.return_data, dict):
-            if self.source_select_close:
-                self.source_select_close()
-            linkInfo = self.return_data['linkinfo']
+            if self.return_data.get('url'):
+                if self.source_select_close:
+                    self.source_select_close()
+                item = xbmcgui.ListItem(path=self.return_data['url'], offscreen=True)
 
-            item = xbmcgui.ListItem(path=linkInfo['url'], offscreen=True)
-            if self.return_data.get('sub'):
-                from resources.lib.ui import embed_extractor
-                embed_extractor.del_subs()
-                subtitles = []
-                for sub in self.return_data['sub']:
-                    sub_url = sub.get('url')
-                    sub_lang = sub.get('lang')
-                    subtitles.append(embed_extractor.get_sub(sub_url, sub_lang))
-                item.setSubtitles(subtitles)
+                if self.return_data.get('headers', {}).get('Content-Type'):
+                    item.setProperty('MimeType', self.return_data['headers']['Content-Type'])
+                    # Run any mimetype hook
+                    item = HookMimetype.trigger(self.return_data['headers']['Content-Type'], item)
 
-            if linkInfo['headers'].get('Content-Type'):
-                item.setProperty('MimeType', linkInfo['headers']['Content-Type'])
-                # Run any mimetype hook
-                item = HookMimetype.trigger(linkInfo['headers']['Content-Type'], item)
+                if self.context:
+                    params = control.window.getProperty('otaku.player.video_info')
+                    control.window.clearProperty('otaku.player.video_info')
+                    if params:
+                        try:
+                            params = json.loads(params)
+                        except:
+                            params = {}
+                        if params.get('art') is not None:
+                            item.setArt(params.pop('art'))
+                        if params:
+                            control.set_videotags(item, params)
 
-            if self.context:
-                control.set_videotags(item, self.params)
-                art = {
-                    'tvshow.poster': self.params.get('tvshow.poster'),
-                    'thumb': self.params.get('thumb')
-                }
-                item.setArt(art)
-                control.playList.add(linkInfo['url'], item)
-                xbmc.Player().play(control.playList, item)
-            else:
-                xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
-            monitor = Monitor()
-            for _ in range(30):
-                if monitor.waitForAbort(1) or monitor.playbackerror or monitor.abortRequested():
-                    xbmcplugin.setResolvedUrl(control.HANDLE, False, item)
-                    control.playList.clear()
-                    self.abort = True
-                    break
-                if monitor.playing:
-                    break
-            else:
-                control.log('no xbmc playing source found; Continuing code', 'warning')
-            del monitor
-            self.close()
-            if not self.abort:
-                player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, self.episode, self.resume, self.params.get('path', ''), self.context)
+                    control.playList.add(self.return_data['url'], item)
+                    xbmc.Player().play(control.playList, item)
+                else:
+                    xbmcplugin.setResolvedUrl(control.HANDLE, True, item)
+                    params = {}
+                monitor = Monitor()
+                for _ in range(30):
+                    if monitor.waitForAbort(1) or monitor.playbackerror or monitor.abortRequested():
+                        xbmcplugin.setResolvedUrl(control.HANDLE, False, item)
+                        control.playList.clear()
+                        self.abort = True
+                        break
+                    if monitor.playing:
+                        break
+                else:
+                    control.log('no xbmc playing source found; Continuing code', 'warning')
+                del monitor
+                self.close()
+                if not self.abort:
+                    player.WatchlistPlayer().handle_player(self.mal_id, watchlist_update_episode, self.episode, self.resume, params.get('path'), self.context)
         else:
             self.close()
 
@@ -172,42 +154,39 @@ class Resolver(BaseWindow):
 
         magnet = f"magnet:?xt=urn:btih:{hash_}"
         stream_link = {}
-        if source['type'] == 'torrent':
-            stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select)
+        if source['type'] in ['torrent', 'torrentio']:
+            stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select, source['filename'])
         elif source['type'] in ['cloud', 'hoster']:
             hash_ = api.resolve_cloud(source, self.pack_select)
             if hash_:
                 stream_link = api.resolve_hoster(hash_)
         return stream_link
 
-    @staticmethod
-    def prefetch_play_link(link):
-        if not link:
-            return None
 
-        url = link
-        if '|' in url:
-            url, hdrs = link.split('|')
-            headers = dict([item.split('=') for item in hdrs.split('&')])
-            for header in headers:
-                headers[header] = parse.unquote_plus(headers[header])
-        else:
-            headers = None
+    def prefetch_play_link(self) -> dict:
         try:
-            r = requests.get(url, headers=headers, stream=True)
+            url = self.return_data['link']
+        except KeyError:
+            url = ''
+
+        if not url:
+            return {}
+
+        try:
+            r = requests.get(url, stream=True)
         except requests.exceptions.SSLError:
             yesno = control.yesno_dialog(f'{control.ADDON_NAME}: Request Error',
                                          f'{url}\nWould you like to try without verifying TLS certificate?')
             if yesno == 1:
-                r = requests.get(url, headers=headers, stream=True, verify=False)
+                r = requests.get(url, stream=True, verify=False)
             else:
-                return None
+                return {}
         except Exception as e:
             control.log(repr(e), level='warning')
-            return None
+            return {}
 
         return {
-            "url": link if '|' in link else r.url,
+            "url": r.url,
             "headers": r.headers
         }
 
@@ -217,7 +196,6 @@ class Resolver(BaseWindow):
                     f"[CR]"
                     f"This source is not cached would you like to cache it now?")
         api = self.resolvers[source['debrid_provider']]()
-
         autorun = control.getBool('uncached.autorun')
         if autorun:
             resolved_cache = api.resolve_uncached_source_background(source, autorun)
@@ -230,17 +208,13 @@ class Resolver(BaseWindow):
             else:
                 self.canceled = True
                 resolved_cache = None
-
             if not resolved_cache:
                 self.canceled = True
-
         return resolved_cache
 
-    def doModal(self, sources, args, pack_select):
+    def doModal(self, sources) -> dict:
         self.sources = sources
         if self.sources:
-            self.args = args
-            self.pack_select = pack_select
             self.setProperty('release_title', str(self.sources[0]['release_title']))
             self.setProperty('debrid_provider', self.sources[0].get('debrid_provider', 'None').replace('_', ' '))
             self.setProperty('source_provider', self.sources[0]['provider'])
@@ -255,7 +229,7 @@ class Resolver(BaseWindow):
                 self.resolve(sources)
             else:
                 super(Resolver, self).doModal()
-            control.setSetting('last_played', self.sources[0]['release_title'])
+            control.setString('last_played', self.sources[0]['release_title'])
         return self.return_data
 
     def onAction(self, action):
@@ -272,9 +246,6 @@ def _DASH_HOOK(item):
     if is_helper.check_inputstream():
         stream_url = item.getPath()
         item.setProperty('inputstream', is_helper.inputstream_addon)
-        if control.kodi_version < 20.9:
-            item.setProperty('inputstream.adaptive.manifest_type', 'mpd')
-            item.setContentLookup(False)
         if '|' in stream_url:
             stream_url, headers = stream_url.split('|')
             item.setProperty('inputstream.adaptive.stream_headers', headers)
@@ -295,11 +266,6 @@ def _HLS_HOOK(item):
     if is_helper.check_inputstream():
         stream_url = item.getPath()
         item.setProperty('inputstream', is_helper.inputstream_addon)
-        if control.kodi_version < 20.9:
-            item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-            item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
-            item.setMimeType('application/vnd.apple.mpegstream_url')
-            item.setContentLookup(False)
         if '|' in stream_url:
             stream_url, headers = stream_url.split('|')
             item.setProperty('inputstream.adaptive.stream_headers', headers)
@@ -318,11 +284,6 @@ def _HLS_HOOK(item):
     if is_helper.check_inputstream():
         stream_url = item.getPath()
         item.setProperty('inputstream', is_helper.inputstream_addon)
-        if control.kodi_version < 20.9:
-            item.setProperty('inputstream.adaptive.manifest_type', 'hls')
-            item.setProperty('MimeType', 'application/vnd.apple.mpegurl')
-            item.setMimeType('application/vnd.apple.mpegstream_url')
-            item.setContentLookup(False)
         if '|' in stream_url:
             stream_url, headers = stream_url.split('|')
             item.setProperty('inputstream.adaptive.stream_headers', headers)

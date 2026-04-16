@@ -5,11 +5,11 @@ import difflib
 from functools import partial
 from resources.lib.ui import BrowserBase, source_utils, control
 
-PATH = control.getSetting('download.location')
+PATH = control.getString('download.location')
 
 
 class Sources(BrowserBase.BrowserBase):
-    def get_sources(self, titles: list, mal_id, episode):
+    def get_sources(self, titles: list, mal_id: int, episode: int):
         query = '"' + '"|"'.join(titles) + '"'
         filenames = []
         for root, dirs, files in os.walk(PATH):
@@ -18,12 +18,11 @@ class Sources(BrowserBase.BrowserBase):
                     filenames.append(str(os.path.join(root, file).replace(PATH, '')))
 
         clean_filenames = [re.sub(r'\[.*?]\s*', '', os.path.basename(i).replace(',', '')) for i in filenames]
-
         close_matches = difflib.get_close_matches(query, clean_filenames, cutoff=0.3)
         resp = [clean_filenames.index(i) for i in close_matches]
         match_files = []
         for i in resp:
-            if episode not in clean_filenames[i]:
+            if str(episode) not in clean_filenames[i]:
                 continue
             match_files.append(filenames[i])
         mapfunc = partial(self.process_offline_search, episode=episode)
@@ -35,7 +34,7 @@ class Sources(BrowserBase.BrowserBase):
         full_path = os.path.join(PATH, f)
         source = {
             'release_title': os.path.basename(f),
-            'hash': os.path.join(PATH, f),
+            'link': os.path.join(PATH, f),
             'type': 'local_files',
             'quality': source_utils.getQuality(f),
             'debrid_provider': PATH,

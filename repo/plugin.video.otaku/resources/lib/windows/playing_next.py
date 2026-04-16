@@ -1,10 +1,11 @@
 import xbmc
 
+from resources.lib.ui import control
 from resources.lib.windows.base_window import BaseWindow
 
 
 class PlayingNext(BaseWindow):
-    def __init__(self, xml_file, xml_location, *, actionArgs=None):
+    def __init__(self, xml_file, xml_location, *args, actionArgs=None):
         super().__init__(xml_file, xml_location, actionArgs=actionArgs)
         self.player = xbmc.Player()
         self.playing_file = self.player.getPlayingFile()
@@ -48,9 +49,13 @@ class PlayingNext(BaseWindow):
             self.close()
         elif controlID == 3003:   # skipoutro
             self.actioned = True
-            skipoutro_end_skip_time = self.skipoutro_end
-            if skipoutro_end_skip_time != 0:
-                self.player.seekTime(skipoutro_end_skip_time)
+            current_chapter = xbmc.getInfoLabel('Player.ChapterName').lower()
+            if any(x in current_chapter for x in control.outro_keywords):
+                xbmc.executebuiltin("Action(ChapterOrBigStepForward)")
+            else:
+                skipoutro_end_skip_time = self.skipoutro_end
+                if skipoutro_end_skip_time != 0:
+                    self.player.seekTime(skipoutro_end_skip_time)
             self.close()
 
     def onAction(self, action):

@@ -9,8 +9,8 @@ from resources.lib.ui import control, source_utils
 class DebridLink:
     def __init__(self):
         self.ClientID = 'sdpBuYFQo6L53s3B4apluw'
-        self.token = control.getSetting('debrid_link.token')
-        self.refresh = control.getSetting('debrid_link.refresh')
+        self.token = control.getString('debrid_link.token')
+        self.refresh = control.getString('debrid_link.refresh')
         self.agent_identifier = 'Otaku'
         self.api_url = "https://debrid-link.com/api/v2"
         self.cache_check_results = {}
@@ -76,8 +76,8 @@ class DebridLink:
             self.dialog.close()
             self.token = response.get('access_token')
             self.refresh = response.get('refresh_token')
-            control.setSetting('debrid_link.token', self.token)
-            control.setSetting('debrid_link.refresh', self.refresh)
+            control.setString('debrid_link.token', self.token)
+            control.setString('debrid_link.refresh', self.refresh)
             control.setInt('debrid_link.expiry', int(time.time()) + int(response['expires_in']))
         return r.ok, OauthTimeout
 
@@ -86,13 +86,13 @@ class DebridLink:
         response = requests.get(url, headers=self.headers()).json()
         username = response['value']['pseudo']
         premium = response['value']['premiumLeft'] > 0
-        control.setSetting('debrid_link.username', username)
+        control.setString('debrid_link.username', username)
         control.ok_dialog(f'{control.ADDON_NAME}: Debrid-Link', control.lang(30023))
         if not premium:
-            control.setSetting('debrid_link.auth.status', 'Expired')
+            control.setString('debrid_link.auth.status', 'Expired')
             control.ok_dialog(control.ADDON_NAME, control.lang(30024))
         else:
-            control.setSetting('debrid_link.auth.status', 'Premium')
+            control.setString('debrid_link.auth.status', 'Premium')
 
     def refreshToken(self):
         postData = {
@@ -104,7 +104,7 @@ class DebridLink:
         response = requests.post(url, data=postData, headers={'User-Agent': self.agent_identifier}).json()
         if response.get('access_token'):
             self.token = response['access_token']
-            control.setSetting('debrid_link.token', self.token)
+            control.setString('debrid_link.token', self.token)
             control.setInt('debrid_link.expiry', int(time.time()) + response['expires_in'])
 
     def check_hash(self, hashlist):
@@ -140,11 +140,11 @@ class DebridLink:
         response = requests.post(url, data=postData, headers=self.headers()).json()
         return response.get('value')
 
-    def resolve_single_magnet(self, hash_, magnet, episode, pack_select):
+    def resolve_single_magnet(self, hash_, magnet, episode, pack_select, filename):
         files = self.addMagnet(magnet)['files']
         folder_details = [{'link': x['downloadUrl'], 'path': x['name']} for x in files]
         if episode:
-            selected_file = source_utils.get_best_match('path', folder_details, episode, pack_select)
+            selected_file = source_utils.get_best_match('path', folder_details, episode, pack_select, filename)
             if selected_file is not None:
                 return selected_file['link']
 

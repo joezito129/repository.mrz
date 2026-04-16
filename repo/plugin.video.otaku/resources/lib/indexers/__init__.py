@@ -11,7 +11,7 @@ def parse_episodes(res, eps_watched, dub_data=None) -> dict:
     parsed = pickle.loads(res['kodi_meta'])
     if eps_watched and int(eps_watched) >= res['number']:
         parsed['info']['playcount'] = 1
-    if control.get_bool_cache('interface.cleantitles') and parsed['info'].get('playcount') != 1:
+    if control.getBool('interface.cleantitles') and parsed['info'].get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["number"]}'
         parsed['info']['plot'] = None
     code = endpoint.get_second_label(parsed['info'], dub_data, res.get('filler'))
@@ -21,17 +21,17 @@ def parse_episodes(res, eps_watched, dub_data=None) -> dict:
 
 def process_episodes(episodes, eps_watched, dub_data=None) -> list:
     mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
         all_results = list(executor.map(mapfunc, episodes))
     return all_results
 
 
-def process_dub(mal_id, ename) -> list:
+def process_dub(mal_id: int, ename: str) -> list:
     update_time = date.today().isoformat()
     if not (show_data := database.get_show_data(mal_id)) or show_data['last_updated'] != update_time:
         if control.getInt('jz.dub.api') == 0:
             from resources.lib.endpoint import teamup
-            dub_data = teamup.get_dub_data(ename)
+            dub_data = teamup.get_dub_data(mal_id, ename)
             data = {"dub_data": dub_data}
             database.update_show_data(mal_id, data, update_time)
         else:
@@ -47,17 +47,13 @@ def process_dub(mal_id, ename) -> list:
 def get_diff(episodes_0) -> tuple:
     import datetime
     update_time = datetime.date.today().isoformat()
-    try:
-        last_updated = datetime.datetime.strptime(episodes_0.get('last_updated'), "%Y-%m-%d")
-    except TypeError:
-        import time
-        control.log('Unsupported strptime using fromtimestamp', 'warning')
-        last_updated = datetime.datetime.fromtimestamp(time.mktime(time.strptime(episodes_0.get('last_updated'), '%Y-%m-%d')))
+    last_updated = utils.strp_time(episodes_0.get('last_updated'), "%Y-%m-%d")
     diff = (datetime.datetime.today() - last_updated).days
     return update_time, diff
 
 def update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id)-> dict:
-    filler = control.colorstr(filler, color="red") if filler == 'Filler' else filler
+    if filler is not None and filler == 'Filler':
+        filler = control.colorstr(filler, color="red")
     parsed = utils.allocate_item(title, f"play/{url}", False, True, [], image, info, fanart, poster)
     kodi_meta = pickle.dumps(parsed)
 
@@ -66,10 +62,11 @@ def update_database(mal_id, update_time, res, url, image, info, season, episode,
     elif kodi_meta != episodes[episode - 1]['kodi_meta']:
         database.update_episode_column(mal_id, episode, 'kodi_meta', kodi_meta)
 
-    if control.get_bool_cache('interface.cleantitles') and info.get('playcount') != 1:
+    if control.getBool('interface.cleantitles') and info.get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["episode"]}'
         parsed['info']['plot'] = None
 
     code = endpoint.get_second_label(info, dub_data, filler)
-    parsed['info']['code'] = code
+    if code is not None:
+        parsed['info']['code'] = code
     return parsed

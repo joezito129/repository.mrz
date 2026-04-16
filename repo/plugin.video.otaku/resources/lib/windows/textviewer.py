@@ -18,6 +18,13 @@ class TextViewerXML(WindowXMLDialog):
             # BACKSPACE / ESCAPE
             self.close()
 
+    def onClick(self, controlId: int):
+        self.handle_action(controlId)
+
+    def handle_action(self, controlId: int):
+        if controlId == 3001:
+            self.close()
+
     def set_properties(self):
         self.setProperty('otaku.text', self.text)
         self.setProperty('otaku.heading', self.heading)

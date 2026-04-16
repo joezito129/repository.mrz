@@ -3,13 +3,14 @@ import threading
 from resources.lib.ui import database
 from resources.lib.endpoint import tmdb, fanart
 
+
 def collect_meta(anime_list):
     threads = []
     for anime in anime_list:
         mal_id = anime.get('idMal') or anime.get('mal_id')
-        if not mal_id:
+        if mal_id is None:
             continue
-        if not database.get_show_meta(mal_id):
+        if database.get_show_meta(mal_id) is None:
             if (anime.get('format') or anime.get('type')) in ['MOVIE', 'ONA', 'OVA', 'SPECIAL', 'Movie', "Special"] and anime.get('episodes') == 1:
                 mtype = 'movies'
             else:
@@ -26,8 +27,8 @@ def update_meta(mal_id, mtype='tv'):
     art = fanart.getArt(meta_ids, mtype)
     if not art:
         art = tmdb.getArt(meta_ids, mtype)
-    elif 'fanart' not in art.keys():
+    elif art.get('fanart') is None:
         art2 = tmdb.getArt(meta_ids, mtype)
-        if art2.get('fanart'):
-            art['fanart'] = art['fanart']
+        if (fanart2 := art2.get('fanart')) is not None:
+            art['fanart'] = fanart2
     database.update_show_meta(mal_id, meta_ids, art)

@@ -1,23 +1,23 @@
 from resources.lib.ui import control, database
 
 
-if control.getSetting('browser.api') == 'mal':
+if control.getString('browser.api') == 'mal':
     from resources.lib.MalBrowser import MalBrowser
     BROWSER = MalBrowser()
 else:
     from resources.lib.AniListBrowser import AniListBrowser
     BROWSER = AniListBrowser()
 
-def get_anime_init(mal_id) -> tuple:
+def get_anime_init(mal_id: int) -> tuple:
     show_meta = database.get_show_meta(mal_id)
     if not show_meta:
         BROWSER.get_anime(mal_id)
         show_meta = database.get_show_meta(mal_id)
-        if not show_meta:
+        if show_meta is None:
             return [], 'episodes'
 
     if control.getBool('override.meta.api'):
-        meta_api = control.getSetting('meta.api')
+        meta_api = control.getString('meta.api')
         if meta_api == 'simkl':
             from resources.lib.indexers import simkl
             data = simkl.SIMKLAPI().get_episodes(mal_id, show_meta)

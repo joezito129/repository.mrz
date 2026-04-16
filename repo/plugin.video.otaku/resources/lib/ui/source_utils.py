@@ -164,31 +164,37 @@ def get_cache_check_reg(episode: str):
     return re.compile(reg_string)
 
 
-def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False) -> dict:
+def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False, filename=None) -> dict:
+    pattern = re.compile(r'\[.*?\]')
+    if pack_select:
+        all_files = [i for i in dictionary_list if is_file_ext_valid(pattern.sub('', i[dict_key].rsplit('/')[-1]))]
+        if not all_files:
+            return {}
+        return user_select(all_files, dict_key)[0]
+
     regex = get_cache_check_reg(episode)
     all_files = []
-    pattern = re.compile(r'\[.*?\]')
     for item in dictionary_list:
         i = item.copy()
         path = pattern.sub('', i[dict_key].rsplit('/')[-1])
+        if not is_file_ext_valid(path):
+            continue
+        if filename in i['path']:
+            return i
         i['regex_matches'] = regex.findall(path)
-        i['short_name'] = i.get('short_name', '').removeprefix('[CR]').strip()
         all_files.append(i)
     if not all_files:
         return {}
-    if pack_select:
-        files = user_select(all_files, dict_key)
+    if len(all_files) == 1:
+        files = all_files
     else:
-        if len(all_files) == 1:
-            files = all_files
+        files = [i for i in all_files if len(i['regex_matches']) > 0]
+        if not files:
+            files = user_select(all_files, dict_key)
         else:
-            files = [i for i in all_files if len(i['regex_matches']) > 0]
-            if not files:
-                files = user_select(all_files, dict_key)
-            else:
-                files.sort(key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
-                if len(files) != 1:
-                    files = user_select(files, dict_key)
+            files.sort(key=lambda x: len(' '.join(list(x['regex_matches'][0]))), reverse=True)
+            if len(files) != 1:
+                files = user_select(files, dict_key)
     return files[0]
 
 
@@ -223,7 +229,7 @@ def filter_sources(list_, season: int, episode: int, _id=None, titles=None) -> l
         # filter out junk
         if fuzz_titles:
             best_ratio = max(difflib.SequenceMatcher(None, title, t).ratio() for t in fuzz_titles)
-            if best_ratio < .2:
+            if best_ratio < .39:
                 continue
         filtered_list.append(torrent)
     return filtered_list
