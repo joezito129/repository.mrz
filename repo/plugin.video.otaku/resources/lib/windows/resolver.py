@@ -155,7 +155,7 @@ class Resolver(BaseWindow):
         magnet = f"magnet:?xt=urn:btih:{hash_}"
         stream_link = {}
         if source['type'] in ['torrent', 'torrentio']:
-            stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select, source['filename'])
+            stream_link = api.resolve_single_magnet(hash_, magnet, source['episode_re'], self.pack_select, source.get('filename'))
         elif source['type'] in ['cloud', 'hoster']:
             hash_ = api.resolve_cloud(source, self.pack_select)
             if hash_:

@@ -131,7 +131,7 @@ class Sources(BrowserBase.BrowserBase):
     @staticmethod
     def parse_nyaa_view(res: dict, episode: str, re_size, cached: bool) -> dict:
         source = {
-            'release_title': res['name'].removeprefix('[CR]').strip(),
+            'release_title': res['name'],
             'hash': res['hash'],
             'type': 'torrent',
             'quality': source_utils.getQuality(res['name']),

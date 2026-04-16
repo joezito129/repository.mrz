@@ -179,7 +179,7 @@ def get_best_match(dict_key, dictionary_list, episode: str, pack_select=False, f
         path = pattern.sub('', i[dict_key].rsplit('/')[-1])
         if not is_file_ext_valid(path):
             continue
-        if filename in i['path']:
+        if filename is not None and filename in i['path']:
             return i
         i['regex_matches'] = regex.findall(path)
         all_files.append(i)

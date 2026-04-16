@@ -1,4 +1,4 @@
-Changelog v5.1.33 (2026-04-15)
+Changelog v5.1.33 (2026-04-14)
 - Fixed Teamup for dubs release schedule
 - Changed mal_ids to ints
 - Changed getSetting to getstr|getint|getbool

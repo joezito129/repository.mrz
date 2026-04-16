@@ -172,7 +172,7 @@ class Torbox:
             best_match = source_utils.get_best_match('short_name', source['hash'], source['episode'], pack_select)
             if best_match and best_match.get('short_name'):
                 for f_index, torrent_file in enumerate(source['hash']):
-                    if torrent_file['short_name'].removeprefix('[CR]').strip() == best_match['short_name']:
+                    if torrent_file['short_name'] == best_match['short_name']:
                         match = {'folder_id': source['id'], 'file': source['hash'][f_index]}
                         break
         return match
