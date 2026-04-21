@@ -1,4 +1,3 @@
-import pickle
 import xbmcgui
 import xbmcplugin
 
@@ -37,9 +36,7 @@ class SourceSelect(BaseWindow):
                 self.setProperty('item.info.year', year)
 
         else:
-            show = database.get_show(actionArgs.get('mal_id'))
-            if show:
-                kodi_meta = pickle.loads(show.get('kodi_meta'))
+            if kodi_meta := database.get_show_kodi_meta(actionArgs.get('mal_id')):
                 self.setProperty('item.info.plot', kodi_meta.get('plot', ''))
                 self.setProperty('item.info.rating', str(kodi_meta.get('rating', {}).get('score', '')))
                 aired = kodi_meta.get('start_date', '')
@@ -79,9 +76,10 @@ class SourceSelect(BaseWindow):
 
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
-            xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
+            # xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
             self.stream_link = False
             self.close()
+            control.playList.clear()
 
         elif actionID == 117:
             context = control.context_menu(
@@ -111,7 +109,7 @@ class SourceSelect(BaseWindow):
 
             elif context == 2:  # File Selection
                 if not self.sources[self.position]['debrid_provider']:
-                    control.notify(control.ADDON_NAME, "Please Select A Debrid File")
+                    control.notify(control.ADDON_NAME, "Please Select A Torrent File")
                 else:
                     self.resolve_item(True)
 

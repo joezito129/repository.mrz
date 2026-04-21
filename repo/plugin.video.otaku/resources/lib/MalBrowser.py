@@ -1,12 +1,10 @@
 import xbmc
 import requests
 import random
-import pickle
 
 from functools import partial
 from resources.lib.ui import BrowserBase, database, control, utils, get_meta
-from resources.lib.ui.divide_flavors import div_flavor
-
+from resources.packages import msgpack
 
 class MalBrowser(BrowserBase.BrowserBase):
     _BASE_URL = "https://api.jikan.moe/v4"
@@ -32,24 +30,10 @@ class MalBrowser(BrowserBase.BrowserBase):
         return all_results
 
     def process_res(self, res):
-        self.database_update_show(res)
         get_meta.collect_meta([res])
+        self.database_update_show(res)
         return database.get_show(res['mal_id'])
 
-    @staticmethod
-    def get_season_year(period='current'):
-        import datetime
-        date = datetime.datetime.today()
-        year = date.year
-        month = date.month
-        seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL']
-        if period == "next":
-            season = seasons[int((month - 1) / 3 + 1) % 4]
-            if season == 'WINTER':
-                year += 1
-        else:
-            season = seasons[int((month - 1) / 3)]
-        return season, year
 
     def get_anime(self, mal_id):
         res = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/anime/{mal_id}")
@@ -120,7 +104,20 @@ class MalBrowser(BrowserBase.BrowserBase):
             params['filter'] = self.format_in_type
 
         calendar = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/now", params)
-        return self.process_calendar_view(calendar, f"airing_calendar?page=%d", page)
+        return self.process_calendar_view(calendar, "airing_calendar?page=%d", page)
+
+    def get_last_season(self, page: int) -> list:
+        season, year = self.get_season_year(-1)
+        params = {
+            'page': page,
+            'limit': self.perpage,
+            'sfw': self.adult
+        }
+        if self.format_in_type is not None:
+            params['filter'] = self.format_in_type
+
+        upcoming = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/{year}/{season}", params)
+        return self.process_mal_view(upcoming, "aired_last_season?page=%d", page)
 
     def get_airing_anime(self, page: int) -> list:
         params = {
@@ -135,7 +132,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         return self.process_mal_view(airing, "airing_anime?page=%d", page)
 
     def get_upcoming_next_season(self, page: int) -> list:
-        season, year = self.get_season_year('next')
+        season, year = self.get_season_year(1)
         params = {
             'page': page,
             'limit': self.perpage,
@@ -161,12 +158,12 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     @staticmethod
     def get_base_res(url, params=None):
-        r = requests.get(url, params=params)
+        r = requests.get(url, params=params, timeout=10)
         return r.json()
 
 
-    @div_flavor
-    def recommendation_relation_view(self, res, completed=None, mal_dub=None) -> dict:
+    @staticmethod
+    def recommendation_relation_view(res, completed=None) -> dict:
         if completed is None:
             completed = {}
 
@@ -177,7 +174,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         title = res['title']
 
         if (relation := res.get('relation')) is not None:
-            title += ' [I]%s[/I]' % control.colorstr(relation, 'limegreen')
+            title += f" [I]{control.colorstr(relation, 'limegreen')}[/I]"
 
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
@@ -188,7 +185,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         if completed.get(str(mal_id)) is not None:
             info['playcount'] = 1
 
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
         try:
             image = res['images']['webp']['large_image_url']
         except KeyError:
@@ -242,30 +239,26 @@ class MalBrowser(BrowserBase.BrowserBase):
         genres = database.get_(self.get_base_res, 24, f'{self._BASE_URL}/anime', params)
         return self.process_mal_view(genres, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
-    @div_flavor
-    def base_mal_view(self, res: dict, completed=None, mal_dub=None) -> dict:
+
+    def base_mal_view(self, res: dict, completed=None) -> dict:
         if completed is None:
             completed = {}
 
         mal_id = res['mal_id']
 
-        if database.get_show(mal_id) is None:
+        show = database.get_show(mal_id)
+        if show is None or show['kodi_meta'] is None:
             self.database_update_show(res)
 
-        show_meta = database.get_show_meta(mal_id)
-        try:
-            kodi_meta= pickle.loads(show_meta['art'])
-        except KeyError:
-            kodi_meta = {}
+        kodi_meta = {} if show is None else msgpack.loads(show['art'])
 
         title = res[self._TITLE_LANG] or res['title']
-
 
         if (mpaa := res.get('rating')) == 'Rx - Hentai':
             title += ' - ' + control.colorstr("Adult", 'red')
 
         if (relation := res.get('relation')) is not None:
-            title += ' [I]%s[/I]' % control.colorstr(relation, 'limegreen')
+            title += f" [I]{control.colorstr(relation, 'limegreen')}[/I]"
 
         info = {
             'UniqueIDs': {'mal_id': str(mal_id)},
@@ -301,7 +294,7 @@ class MalBrowser(BrowserBase.BrowserBase):
             start_date = res['aired']['from']
             info['premiered'] = start_date[:10]
             info['year'] = res.get('year', int(start_date[:3]))
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
         try:
@@ -321,7 +314,6 @@ class MalBrowser(BrowserBase.BrowserBase):
         if (broadcast := res.get('broadcast')) is not None:
             try:
                 airingat = res['aired']['from']
-                broadcast = broadcast
                 day = broadcast['day']
                 time_ = broadcast['time']
                 timezone = broadcast['timezone']
@@ -342,7 +334,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         if completed.get(str(mal_id)) is not None:
             info['playcount'] = 1
 
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         image = res['images']['webp']['large_image_url']
         base = {
@@ -417,7 +409,7 @@ class MalBrowser(BrowserBase.BrowserBase):
         except KeyError:
             pass
 
-        database.update_show(mal_id, pickle.dumps(kodi_meta))
+        database.update_kodi_meta(mal_id, msgpack.dumps(kodi_meta))
 
     def process_calendar_view(self, res: dict, base_plugin_url: str, page: int):
         all_results = []

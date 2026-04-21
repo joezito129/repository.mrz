@@ -24,7 +24,7 @@ def get_dub_data(mal_id: int, en_title: str):
             'startDate': datetime.datetime.today().isoformat(),
             'endDate': (datetime.datetime.today().date() + datetime.timedelta(days=90)).isoformat()
         }
-        r = requests.get(f'{api_url}/{token}/events', headers=headers, params=parms)
+        r = requests.get(f'{api_url}/{token}/events', headers=headers, params=parms, timeout=10)
         teamup_data = r.json().get('events', [])
         dub_list = []
         re_ep = re.compile(r"<strong>episode:</strong>\s*(\d+)", re.IGNORECASE)

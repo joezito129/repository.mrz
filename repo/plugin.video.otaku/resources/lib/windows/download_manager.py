@@ -122,7 +122,7 @@ class Manager:
         self.download_ids = []
         self.download = {}
         if not xbmcvfs.exists(control.downloads_json):
-            with open(control.downloads_json, 'w') as file:
+            with open(control.downloads_json, 'w', encoding='utf-8') as file:
                 json.dump({}, file)
         self.storage_location = control.getString('download.location')
 
@@ -213,18 +213,18 @@ class Manager:
         self.speed = 0
         self.status = "downloading"
 
-        head = requests.head(url, allow_redirects=True)
+        head = requests.head(url, allow_redirects=True, timeout=10)
         self.file_size = int(head.headers.get("content-length", None))
         self.file_size_display = self.get_display_size(self.file_size)
 
-        r = requests.get(url, stream=True)
+        r = requests.get(url, stream=True, timeout=10)
         chunks = r.iter_content(chunk_size=1024 * 1024 * 8)
 
         control.notify(control.ADDON_NAME, 'Download Started')
         with open(self.output_path, 'wb') as f:
             for chunk in chunks:
                 if chunk:
-                    with open(control.downloads_json) as file:
+                    with open(control.downloads_json, encoding='utf-8') as file:
                         data = json.load(file)
                     if data[self.url_hash].get('canceled'):
                         os.remove(self.output_path)

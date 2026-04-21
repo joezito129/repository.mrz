@@ -1,15 +1,13 @@
-import pickle
+import datetime
 
-from concurrent.futures import ThreadPoolExecutor
-from datetime import date
 from functools import partial
 from resources.lib import endpoint
 from resources.lib.ui import database, control, utils
+from resources.packages import msgpack
 
-
-def parse_episodes(res, eps_watched, dub_data=None) -> dict:
-    parsed = pickle.loads(res['kodi_meta'])
-    if eps_watched and int(eps_watched) >= res['number']:
+def parse_episodes(res, eps_watched: int, dub_data=None) -> dict:
+    parsed = msgpack.loads(res['kodi_meta'])
+    if eps_watched >= res['number']:
         parsed['info']['playcount'] = 1
     if control.getBool('interface.cleantitles') and parsed['info'].get('playcount') != 1:
         parsed['info']['title'] = f'Episode {res["number"]}'
@@ -21,52 +19,28 @@ def parse_episodes(res, eps_watched, dub_data=None) -> dict:
 
 def process_episodes(episodes, eps_watched, dub_data=None) -> list:
     mapfunc = partial(parse_episodes, eps_watched=eps_watched, dub_data=dub_data)
-    with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
-        all_results = list(executor.map(mapfunc, episodes))
+    all_results = list(map(mapfunc, episodes))
     return all_results
 
 
 def process_dub(mal_id: int, ename: str) -> list:
-    update_time = date.today().isoformat()
-    if not (show_data := database.get_show_data(mal_id)) or show_data['last_updated'] != update_time:
+    update_time = datetime.date.today().isoformat()
+    if (show_data := database.get_show_data(mal_id)) is None or show_data['last_updated'] != update_time:
         if control.getInt('jz.dub.api') == 0:
             from resources.lib.endpoint import teamup
             dub_data = teamup.get_dub_data(mal_id, ename)
-            data = {"dub_data": dub_data}
-            database.update_show_data(mal_id, data, update_time)
+            database.update_show_data(mal_id, dub_data, update_time)
         else:
             from resources.lib.endpoint import animeschedule
             dub_data = animeschedule.get_dub_time(mal_id)
-            data = {"dub_data": dub_data}
-            database.update_show_data(mal_id, data, update_time)
+            database.update_show_data(mal_id, dub_data, update_time)
     else:
-        dub_data = pickle.loads(show_data['data'])['dub_data']
+        dub_data = msgpack.loads(show_data['dub_data'])
     return dub_data
 
 
 def get_diff(episodes_0) -> tuple:
-    import datetime
     update_time = datetime.date.today().isoformat()
     last_updated = utils.strp_time(episodes_0.get('last_updated'), "%Y-%m-%d")
     diff = (datetime.datetime.today() - last_updated).days
     return update_time, diff
-
-def update_database(mal_id, update_time, res, url, image, info, season, episode, episodes, title, fanart, poster, dub_data, filler, anidb_ep_id)-> dict:
-    if filler is not None and filler == 'Filler':
-        filler = control.colorstr(filler, color="red")
-    parsed = utils.allocate_item(title, f"play/{url}", False, True, [], image, info, fanart, poster)
-    kodi_meta = pickle.dumps(parsed)
-
-    if not episodes or len(episodes) <= episode or episode == 1:
-        database.create_episode(mal_id, episode, update_time, season, kodi_meta, filler, anidb_ep_id)
-    elif kodi_meta != episodes[episode - 1]['kodi_meta']:
-        database.update_episode_column(mal_id, episode, 'kodi_meta', kodi_meta)
-
-    if control.getBool('interface.cleantitles') and info.get('playcount') != 1:
-        parsed['info']['title'] = f'Episode {res["episode"]}'
-        parsed['info']['plot'] = None
-
-    code = endpoint.get_second_label(info, dub_data, filler)
-    if code is not None:
-        parsed['info']['code'] = code
-    return parsed

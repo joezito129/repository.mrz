@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addons><addon id="context.otaku" version="1.0.25" name="Otaku - Global Context Menu" provider-name="TeamOtaku">
+<addons><addon id="context.otaku" version="1.0.26" name="Otaku - Global Context Menu" provider-name="TeamOtaku">
   <requires>
      <import addon="xbmc.python" version="3.0.0" />
   </requires>
@@ -36,10 +36,6 @@
       <item library="default.py" args="watchlist">
         <label>WatchList Manager</label>
         <visible>String.IsEqual(Window(home).Property(context.otaku.watchlist),true) + String.StartsWith(ListItem.Path,plugin://plugin.video.otaku/) + [String.IsEqual(ListItem.DBTYPE,tvshow)|String.IsEqual(ListItem.DBTYPE,movie)]</visible>
-      </item>
-      <item library="default.py" args="fanartselect">
-        <label>Select Fanart</label>
-        <visible>String.IsEqual(Window(home).Property(context.otaku.fanartselect),true) + String.StartsWith(ListItem.Path,plugin://plugin.video.otaku/)+[String.IsEqual(ListItem.DBTYPE,tvshow)|String.IsEqual(ListItem.DBTYPE,movie)]</visible>
       </item>
     </menu>
   </extension>
@@ -180,7 +176,7 @@
             <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
-</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.1.33.1">
+</addon><addon id="plugin.video.otaku" name="Otaku" provider-name="TeamOtaku" version="5.1.34">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="2.31.0" />

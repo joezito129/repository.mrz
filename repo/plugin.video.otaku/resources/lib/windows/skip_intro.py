@@ -29,9 +29,6 @@ class SkipIntro(BaseWindow):
             xbmc.sleep(500)
         self.close()
 
-    def doModal(self):
-        super(SkipIntro, self).doModal()
-
     def close(self):
         self.closed = True
         super(SkipIntro, self).close()

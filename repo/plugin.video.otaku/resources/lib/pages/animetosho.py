@@ -1,4 +1,3 @@
-import pickle
 import requests
 
 from functools import partial
@@ -17,20 +16,15 @@ class Sources(BrowserBase.BrowserBase):
         self.anidb_ep_id = None
 
     def get_sources(self, titles: list, mal_id, episode, status, media_type, episodes) -> dict:
-        show = '"' + '"|"'.join(titles) + '"'
+        show_titles = '"' + '"|"'.join(titles) + '"'
         sources = []
-        show_meta = database.get_show_meta(mal_id)
-        if show_meta:
-            meta_ids = pickle.loads(show_meta['meta_ids'])
-            self.anidb_id = meta_ids.get('anidb_id')
-            if self.anidb_id is None:
-                from resources.lib.indexers.simkl import SIMKLAPI
-                ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
-                if ids:
-                    self.anidb_id = meta_ids['anidb_id'] = ids['anidb']
-                else:
-                    self.anidb_id = meta_ids['anidb_id'] = 0
-                database.update_show_meta(mal_id, meta_ids, pickle.loads(show_meta['art']))
+
+        self.anidb_id = database.get_show_id(mal_id, 'anidb_id')
+        if self.anidb_id is None:
+            from resources.lib.indexers.simkl import SIMKLAPI
+            ids = SIMKLAPI().get_mapping_ids('mal', mal_id)
+            self.anidb_id = ids['anidb'] if ids else 0
+            database.update_mapping(mal_id, 'anidb_id', self.anidb_id)
         if self.anidb_id:
             episode_meta = database.get_episode(mal_id, episode)
             if episode_meta:
@@ -45,7 +39,7 @@ class Sources(BrowserBase.BrowserBase):
                     database.update_episode_column(mal_id, episode, 'anidb_ep_id', self.anidb_ep_id)
                 with database.SQL(control.malSyncDB) as cursor:
                     for anidb_ep in anidb_meta:
-                        cursor.execute('UPDATE episodes SET %s=? WHERE mal_id=? AND number=?' % 'anidb_ep_id', (anidb_meta[anidb_ep]['anidb_id'], mal_id, anidb_ep))
+                        cursor.execute('UPDATE episodes SET anidb_ep_id=? WHERE mal_id=? AND number=?', (anidb_meta[anidb_ep]['anidb_id'], mal_id, anidb_ep))
                     cursor.connection.commit()
 
         episode_zfill = str(episode).zfill(2)
@@ -58,12 +52,12 @@ class Sources(BrowserBase.BrowserBase):
             sources += self.process_animetosho(self._BASE_URL, params, episode_zfill, '')
 
         if media_type != "movie":
-            season = database.get_episode(mal_id)['season']
+            season = database.get_episode(mal_id, episode)['season']
             season_zfill = str(season).zfill(2)
-            query = f'{show} {episode_zfill}|- {episode_zfill}|S{season_zfill}E{episode_zfill}'
+            query = f'{show_titles} {episode_zfill}|- {episode_zfill}|S{season_zfill}E{episode_zfill}'
         else:
             season_zfill = ''
-            query = show
+            query = show_titles
 
         params = {
             'qx': 1,
@@ -76,7 +70,7 @@ class Sources(BrowserBase.BrowserBase):
         params['q'] = self._sphinx_clean(query)
         sources += self.process_animetosho(self._BASE_URL, params, episode_zfill, season_zfill)
 
-        params['q'] = self._sphinx_clean(show)
+        params['q'] = self._sphinx_clean(show_titles)
         sources += self.process_animetosho(self._BASE_URL, params, episode_zfill, season_zfill)
 
         # remove any duplicate sources

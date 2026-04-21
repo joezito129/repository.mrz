@@ -13,7 +13,7 @@ params = {
 
 def get_episode_meta(anidb_id: int) -> dict:
     params['aid'] = anidb_id
-    r = requests.get(base_url, params=params)
+    r = requests.get(base_url, params=params, timeout=10)
     episode_meta = {}
     if r.ok:
         root = ET.fromstring(r.text)

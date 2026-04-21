@@ -1,4 +1,19 @@
-Changelog v5.1.33 (2026-04-14)
+Changelog v5.1.34 (2026-04-20)
+- Fixed Cloud Sources
+- Fixed Skipoutro
+- Changed dub.json to dub.db
+- Recoded database
+- No more pickle!
+- Added Setting for Cast Language
+- Removed Select Fanart Setting
+- Added Aired Last Season
+
+### future updates ###
+# add setting for filtering
+# add button to copy instead of auto copy
+# add dmm
+
+Changelog v5.1.33 (2026-04-16)
 - Fixed Teamup for dubs release schedule
 - Changed mal_ids to ints
 - Changed getSetting to getstr|getint|getbool

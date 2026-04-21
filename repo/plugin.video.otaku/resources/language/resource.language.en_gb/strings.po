@@ -44,6 +44,9 @@ msgctxt "#30007"
 msgid "Airing Calendar"
 msgstr ""
 
+msgctxt "#30008"
+msgid "Aired Last Season"
+msgstr ""
 
 
 ######TOOLS & SEARCH DIRECTORY#######
@@ -541,6 +544,10 @@ msgid "0 is any size"
 msgstr ""
 
 
+msgctxt "#30602"
+msgid "Voice Actor Language"
+msgstr ""
+
 
 ##############################################################################
 
@@ -803,7 +810,7 @@ msgid "Marked as Watched [COLOR deepskyblue]WatchList[/COLOR]"
 msgstr ""
 
 msgctxt "#30509"
-msgid "Select Fanart"
+msgid "######################## UNUSED ########################"
 msgstr ""
 
 msgctxt "#30510"

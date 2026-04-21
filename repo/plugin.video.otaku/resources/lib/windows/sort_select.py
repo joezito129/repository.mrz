@@ -45,7 +45,7 @@ default_sort_options = {
 sort_path = os.path.join(control.dataPath, 'sort_options.json')
 
 if xbmcvfs.exists(sort_path):
-    with open(sort_path) as f:
+    with open(sort_path, encoding='utf-8') as f:
         sort_options = json.load(f)
 else:
     sort_options = default_sort_options
@@ -100,7 +100,7 @@ class SortSelect(BaseWindow):
         method = SORT_METHODS[self.sort_options[sort_method]]
         setting = sort_method if idx == 0 else f'{method}.{idx}'
         current = self.sort_options[setting]
-        category = setting.split('.')[0]
+        category = setting.split('.', 1)[0]
         new = (current + 1) % len(SORT_OPTIONS[category])
         self.sort_options[setting] = new
 
@@ -123,7 +123,7 @@ class SortSelect(BaseWindow):
         self.setProperty(f"{sort_method}", method)
 
     def save_settings(self):
-        with open(os.path.join(control.dataPath, 'sort_options.json'), 'w') as file:
+        with open(os.path.join(control.dataPath, 'sort_options.json'), 'w', encoding='utf-8') as file:
             json.dump(self.sort_options, file)
 
 
@@ -143,11 +143,13 @@ def sort_by_size(list_, reverse):
 
 def sort_by_type(list_, reverse):
     for i in range(len(SORT_OPTIONS['type']), 0, -1):
-        list_.sort(key=lambda x: x['type'] in source_type[int(sort_options[f'type.{i}'])], reverse=reverse)
+        key_name = source_type[int(sort_options[f'type.{i}'])]
+        list_.sort(key=lambda x: x['type'] in key_name, reverse=reverse)
     return list_
 
 
 def sort_by_audio(list_, reverse):
     for i in range(len(SORT_OPTIONS['audio']), 0, -1):
-        list_.sort(key=lambda x: x['lang'] == audio[int(sort_options[f'audio.{i}'])], reverse=reverse)
+        key_name = audio[int(sort_options[f'audio.{i}'])]
+        list_.sort(key=lambda x: x['lang'] == key_name, reverse=reverse)
     return list_

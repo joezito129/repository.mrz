@@ -1,4 +1,3 @@
-import pickle
 import random
 import requests
 import datetime
@@ -6,7 +5,7 @@ import time
 
 from functools import partial
 from resources.lib.ui import BrowserBase, database, get_meta, utils, control
-from resources.lib.ui.divide_flavors import div_flavor
+from resources.packages import msgpack
 
 
 class AniListBrowser(BrowserBase.BrowserBase):
@@ -17,21 +16,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
         self.perpage = control.getInt('interface.perpage.general.anilist')
         self.format_in_type = ['TV', 'MOVIE', 'TV_SHORT', 'SPECIAL', 'OVA', 'ONA', 'MUSIC'][control.getInt('contentformat.menu')] if control.getBool('contentformat.bool') else None
         self.countryOfOrigin_type = ['JP', 'KR', 'CN', 'TW'][control.getInt('contentorigin.menu')] if control.getBool('contentorigin.bool') else None
+        self.voice_lang = control.getString('general.voicelang')
 
-
-    @staticmethod
-    def get_season_year(period='current'):
-        date = datetime.datetime.today()
-        year = date.year
-        month = date.month
-        seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL']
-        if period == "next":
-            season = seasons[int((month - 1) / 3 + 1) % 4]
-            if season == 'WINTER':
-                year += 1
-        else:
-            season = seasons[int((month - 1) / 3)]
-        return season, year
 
     def get_airing_calendar(self, page: int):
         one_day = 60 * 60 * 24
@@ -41,23 +27,23 @@ class AniListBrowser(BrowserBase.BrowserBase):
             'page': page,
             'perPage': self.perpage,
             'airingAt_greater': time_now - one_day,
-            'airingAt_lesser': time_now + one_week,
+            'airingAt_lesser': time_now + one_week
         }
 
         calendar = database.get_(self.get_airing_calendar_res, 24, variables)
         if not control.getBool('search.adult'):
             calendar['airingSchedules'] = [x for x in calendar['airingSchedules'] if not x['media']['isAdult']]
+        return self.process_calendar_view(calendar, 'airing_calendar?page=%d', page)
 
-        return self.process_calendar_view(calendar, f'airing_calendar?page=%d', page)
-
-    def get_airing_anime(self, page: int):
-        season, year = self.get_season_year('Aired')
+    def anilist_season(self, season: int, page: int):
+        season, year = self.get_season_year(season)
         variables = {
             'page': page,
             'perPage': self.perpage,
             'type': "ANIME",
             'season': season,
             'year': f'{year}%',
+            'voiceLang': self.voice_lang,
             # 'status': "RELEASING",
             'sort': "TRENDING_DESC"
         }
@@ -67,26 +53,19 @@ class AniListBrowser(BrowserBase.BrowserBase):
         if self.countryOfOrigin_type is not None:
             variables['countryOfOrigin'] = self.countryOfOrigin_type
 
-        airing = database.get_(self.get_base_res, 24, variables)
+        res = database.get_(self.get_base_res, 24, variables)
+        return res
+
+    def get_last_season(self, page: int):
+        last_season = self.anilist_season(-1, page)
+        return self.process_anilist_view(last_season, "aired_last_season?page=%d", page)
+
+    def get_airing_anime(self, page: int):
+        airing = self.anilist_season(0, page)
         return self.process_anilist_view(airing, "airing_anime?page=%d", page)
 
     def get_upcoming_next_season(self, page: int):
-        season, year = self.get_season_year('next')
-        variables = {
-            'page': page,
-            'perPage': self.perpage,
-            'type': "ANIME",
-            'season': season,
-            'year': f'{year}%',
-            'sort': "TRENDING_DESC"
-        }
-
-        if self.format_in_type is not None:
-            variables['format'] = self.format_in_type
-        if self.countryOfOrigin_type is not None:
-            variables['countryOfOrigin'] = self.countryOfOrigin_type
-
-        upcoming = database.get_(self.get_base_res, 24, variables)
+        upcoming = self.anilist_season(1, page)
         return self.process_anilist_view(upcoming, "upcoming_next_season?page=%d", page)
 
     def get_top_100_anime(self, page: int):
@@ -94,7 +73,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
             'page': page,
             'perPage': self.perpage,
             'type': "ANIME",
-            'sort': "SCORE_DESC"
+            'sort': "SCORE_DESC",
+            'voiceLang': self.voice_lang,
         }
 
         if self.format_in_type is not None:
@@ -111,7 +91,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
             'perPage': self.perpage,
             'search': query,
             'sort': "SEARCH_MATCH",
-            'type': "ANIME"
+            'type': "ANIME",
+            'voiceLang': self.voice_lang,
         }
         search = self.get_search_res(variables)
         if control.getBool('search.adult'):
@@ -126,14 +107,16 @@ class AniListBrowser(BrowserBase.BrowserBase):
         variables = {
             'page': page,
             'perPage': self.perpage,
-            'idMal': mal_id
+            'idMal': mal_id,
+            'voiceLang': self.voice_lang,
         }
         recommendations = database.get_(self.get_recommendations_res, 24, variables)
-        return self.process_recommendations_view(recommendations, f'find_recommendations/{mal_id}?page=%d', page)
+        return self.process_recommendations_view(recommendations, f'find_recommendations/anime/{mal_id}?page=%d', page)
 
     def get_relations(self, mal_id):
         variables = {
-            'idMal': mal_id
+            'idMal': mal_id,
+            'voiceLang': self.voice_lang,
         }
         relations = database.get_(self.get_relations_res, 24, variables)
         return self.process_relations_view(relations)
@@ -141,7 +124,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
     def get_anime(self, mal_id):
         variables = {
             'idMal': mal_id,
-            'type': "ANIME"
+            'type': "ANIME",
+            'voiceLang': self.voice_lang,
         }
         anilist_res = database.get_(self.get_anilist_res, 24, variables)
         return self.process_res(anilist_res)
@@ -153,6 +137,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             $perPage: Int=20
             $type: MediaType,
             $isAdult: Boolean=false,
+            $voiceLang: StaffLanguage,
             $format: [MediaFormat],
             $countryOfOrigin: CountryCode,
             $season: MediaSeason,
@@ -213,7 +198,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
                                     userPreferred
                                 }
                             }
-                            voiceActors (language: JAPANESE) {
+                            voiceActors (language: $voiceLang) {
                                 name {
                                     userPreferred
                                 }
@@ -234,7 +219,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             }
         }
         '''
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -291,7 +276,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -303,6 +288,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             $perPage: Int=20,
             $type: MediaType,
             $isAdult: Boolean=false,
+            $voiceLang: StaffLanguage,
             $search: String,
             $sort: [MediaSort]=[SCORE_DESC, POPULARITY_DESC]
         ) {
@@ -355,7 +341,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
                                     userPreferred
                                 }
                             }
-                            voiceActors (language: JAPANESE) {
+                            voiceActors (language: $voiceLang) {
                                 name {
                                     userPreferred
                                 }
@@ -377,14 +363,14 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         json_res = results['data']['Page']
         return json_res
 
     def get_recommendations_res(self, variables: dict):
         query = '''
-        query ($idMal: Int, $page: Int, $perPage: Int=20) {
+        query ($idMal: Int, $page: Int, $perPage: Int=20, $voiceLang: StaffLanguage) {
           Media(idMal: $idMal, type: ANIME) {
             id
             recommendations(page: $page, perPage: $perPage, sort: [RATING_DESC, ID]) {
@@ -438,7 +424,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
                             userPreferred
                           }
                         }
-                        voiceActors(language: JAPANESE) {
+                        voiceActors(language: $voiceLang) {
                           id
                           name {
                             full
@@ -459,14 +445,14 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         json_res = results['data']['Media']['recommendations']
         return json_res
 
     def get_relations_res(self, variables: dict):
         query = '''
-        query ($idMal: Int) {
+        query ($idMal: Int, $voiceLang: StaffLanguage) {
           Media(idMal: $idMal, type: ANIME) {
             relations {
               edges {
@@ -514,7 +500,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
                           userPreferred
                         }
                       }
-                      voiceActors(language: JAPANESE) {
+                      voiceActors(language: $voiceLang) {
                         id
                         name {
                           full
@@ -534,14 +520,14 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         json_res = results['data']['Media']['relations']
         return json_res
 
     def get_anilist_res(self, variables: dict):
         query = '''
-        query($idMal: Int, $type: MediaType){
+        query($idMal: Int, $type: MediaType, $voiceLang: StaffLanguage){
             Media(idMal: $idMal, type: $type) {
                 id
                 idMal
@@ -578,7 +564,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
                                 userPreferred
                             }
                         }
-                        voiceActors (language: JAPANESE) {
+                        voiceActors (language: $voiceLang) {
                             name {
                                 userPreferred
                             }
@@ -603,10 +589,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
-        if "errors" in results.keys():
-            return None
         json_res = results['data']['Media']
         return json_res
 
@@ -626,8 +610,6 @@ class AniListBrowser(BrowserBase.BrowserBase):
         res = [edge['node']['mediaRecommendation'] for edge in json_res['edges'] if edge['node']['mediaRecommendation']]
         get_meta.collect_meta(res)
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
-        # with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
-        #     all_results = list(executor.map(mapfunc, res))
         all_results = list(map(mapfunc, res))
         all_results += self.handle_paging(hasNextPage, base_plugin_url, page)
         return all_results
@@ -641,18 +623,16 @@ class AniListBrowser(BrowserBase.BrowserBase):
                 res.append(tnode)
         get_meta.collect_meta(res)
         mapfunc = partial(self.base_anilist_view, completed=self.open_completed())
-        # with ThreadPoolExecutor(max_workers=control.max_threads) as executor:
-        #     all_results = list(executor.map(mapfunc, res))x_threads) as executor:
         all_results = list(map(mapfunc, res))
         return all_results
 
     def process_res(self, res):
-        self.database_update_show(res)
         get_meta.collect_meta([res])
+        self.database_update_show(res)
         return database.get_show(res['idMal'])
 
-    @div_flavor
-    def base_anilist_view(self, res: dict, completed=None, mal_dub=None):
+
+    def base_anilist_view(self, res: dict, completed=None):
         if completed is None:
             completed = {}
 
@@ -668,19 +648,16 @@ class AniListBrowser(BrowserBase.BrowserBase):
             return None
         anilist_id = res['id']
 
-        if database.get_show(mal_id) is None:
+        show = database.get_show(mal_id)
+        if show is None or show['kodi_meta'] is None:
             self.database_update_show(res)
 
-        show_meta = database.get_show_meta(mal_id)
-        try:
-            kodi_meta = pickle.loads(show_meta['art'])
-        except (KeyError, TypeError):
-            kodi_meta = {}
+        kodi_meta = {} if show is None else msgpack.loads(show['art'])
 
         title = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
         if res.get('relationType') is not None:
-            title += ' [I]%s[/I]' % control.colorstr(res['relationType'], 'limegreen')
+            title += f" [I]{control.colorstr(res['relationType'], 'limegreen')}[/I]"
 
         info = {
             'UniqueIDs': {'anilist_id': str(anilist_id), 'mal_id': str(mal_id)},
@@ -772,7 +749,8 @@ class AniListBrowser(BrowserBase.BrowserBase):
             }
             # info['premiered'] = f"{time_format:%Y-%m-%d}"
 
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         image = res['coverImage']['extraLarge']
         base = {
@@ -789,11 +767,11 @@ class AniListBrowser(BrowserBase.BrowserBase):
         except KeyError:
             base['fanart'] = image
 
-        if kodi_meta.get('thumb') is not None:
+        if kodi_meta.get('thumb'):
             base['landscape'] = random.choice(kodi_meta['thumb'])
         if kodi_meta.get('clearart'):
             base['clearart'] = random.choice(kodi_meta['clearart'])
-        if kodi_meta.get('clearlogo') is not None:
+        if kodi_meta.get('clearlogo'):
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
         if res['format'] in ['MOVIE', 'ONA', 'SPECIAL'] and res['episodes'] == 1:
             base['url'] = f'play_movie/{mal_id}/'
@@ -801,12 +779,10 @@ class AniListBrowser(BrowserBase.BrowserBase):
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    def database_update_show(self, res: dict) -> None:
-        try:
-            mal_id = res['idMal']
-        except KeyError:
-            return None
 
+    def database_update_show(self, res: dict) -> None:
+        mal_id = res['idMal']
+        database.update_mapping(mal_id, 'anilist_id', res['id'])
         title_userPreferred = res['title'][self._TITLE_LANG] or res['title']['romaji']
 
         name = res['title']['romaji']
@@ -870,9 +846,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             kodi_meta['cast'] = cast
         except KeyError:
             pass
-
-        database.update_show(mal_id, pickle.dumps(kodi_meta))
-        return None
+        database.update_kodi_meta(mal_id, msgpack.dumps(kodi_meta))
 
     def get_genres(self):
         query = '''
@@ -885,7 +859,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query})
+        r = requests.post(self._BASE_URL, json={'query': query}, timeout=10)
         results = r.json()
         if not results:
             # genres_list = ['Action', 'Adventure', 'Comedy', 'Drama', 'Ecchi', 'Fantasy', 'Hentai', "Horror", 'Mahou Shoujo', 'Mecha', 'Music', 'Mystery', 'Psychological', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller']
@@ -1010,7 +984,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         return self.process_genre_view(query, variables, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
     def process_genre_view(self, query: str, variables: dict, base_plugin_url: str, page: int):
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables})
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
         hasNextPage = results['data']['Page']['pageInfo']['hasNextPage']

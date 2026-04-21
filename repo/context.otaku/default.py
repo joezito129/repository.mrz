@@ -92,9 +92,6 @@ def main():
     elif arg == 'markedaswatched':
         path = path.split(f'{plugin}/play', 1)[1].replace('_', '/', 1)
         xbmc.executebuiltin(f"RunPlugin({plugin}/marked_as_watched{path})")
-    elif arg == 'fanartselect':
-        path = path.split(plugin, 1)[1]
-        xbmc.executebuiltin(f"Container.Update({plugin}/fanart_select{path})")
     else:
         raise KeyError(f"Could Not find {arg} in Context Menu Action")
 

@@ -1,4 +1,3 @@
-import pickle
 import requests
 
 from functools import partial
@@ -39,27 +38,21 @@ class Sources(BrowserBase.BrowserBase):
 
     def process_similarity_nekobt_id(self, similar_media: list) -> None:
         for x in similar_media:
-            if x['similarity'] > 0.2:
+            if x['similarity'] > 0.25:
                 self.nekobt_id = x['id']
                 break
-        self.meta_ids['nekobt_id'] = self.nekobt_id
-        database.update_show_meta(self.mal_id, self.meta_ids, pickle.loads(self.show_meta['art']))
-
+        database.update_mapping(self.mal_id, 'nekobt_id', self.nekobt_id)
 
     def get_episode_ids(self) -> None:
         r = self.S.get(f'{self._BASE_URL}/media/{self.nekobt_id}')
         if r.ok:
             r = control.json_res(r)
             episodes = r.get('data', {}).get('episodes', [])
-            for x in episodes:
-                if x['episode'] == self.episode or x.get('absolute') == self.episode:
-                    self.nekobt_ep_id = x['id']
-                    break
+            self.nekobt_ep_id = next((x['id'] for x in episodes if x['episode'] == self.episode or x.get('absolute') == self.episode), None)
             with database.SQL(control.malSyncDB) as cursor:
-                for x in episodes:
-                    if x['episode'] == self.episode:
-                        self.nekobt_ep_id = x['id']
-                    cursor.execute('UPDATE episodes SET %s=? WHERE mal_id=? AND number=?' % 'nekobt_ep_id', (x['id'], self.mal_id, x['episode']))
+                update_data = [(x['id'], self.mal_id, x['episode']) for x in episodes]
+                self.nekobt_ep_id = next((x['id'] for x in episodes if x['episode'] == self.episode), None)
+                cursor.executemany('UPDATE episodes SET nekobt_ep_id=? WHERE mal_id=? AND number=?', update_data)
                 cursor.connection.commit()
 
 
@@ -69,12 +62,9 @@ class Sources(BrowserBase.BrowserBase):
         self.titles = titles
         show = self.titles[0]
         sources = []
-        self.show_meta = database.get_show_meta(mal_id)
-        if self.show_meta:
-            self.meta_ids = pickle.loads(self.show_meta['meta_ids'])
-            self.nekobt_id = self.meta_ids.get('nekobt_id')
-            if self.nekobt_id is None:
-                self.get_nekobt_ids()
+        self.nekobt_id= database.get_show_id(mal_id, 'nekobt_id')
+        if self.nekobt_id is None:
+            self.get_nekobt_ids()
         if self.nekobt_id:
             episode_meta = database.get_episode(mal_id, episode)
             if episode_meta:
@@ -85,7 +75,7 @@ class Sources(BrowserBase.BrowserBase):
         control.log(f'{self.nekobt_id=}, {self.nekobt_ep_id=}')
         episode_zfill = str(episode).zfill(2)
         if media_type != "movie":
-            season = database.get_episode(mal_id)['season']
+            season = database.get_episode(mal_id, episode)['season']
             season_zfill = str(season).zfill(2)
             query = f'"{show}" S{season_zfill}E{episode_zfill}'
         else:

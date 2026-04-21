@@ -1,10 +1,9 @@
 import time
 import requests
-import json
 import os
 import xbmc
 
-from resources.lib.ui import control, database_sync
+from resources.lib.ui import control, database_sync, database
 
 
 def refresh_apis() -> None:
@@ -43,7 +42,7 @@ def refresh_apis() -> None:
 def update_mappings_db() -> None:
     control.log("### Updating Mappings")
     url = 'https://github.com/Goldenfreddy0703/Otaku-Mappings/raw/main/anime_mappings.db'
-    r = requests.get(url)
+    r = requests.get(url, timeout=30)
     with open(os.path.join(control.dataPath, 'mappings.db'), 'wb') as file:
         file.write(r.content)
 
@@ -55,7 +54,7 @@ def sync_watchlist(silent: bool = False) -> None:
         from resources.lib.WatchlistFlavor import WatchlistFlavor
 
         flavor = WatchlistFlavor.get_update_flavor()
-        if flavor:
+        if flavor is not None:
             if flavor.flavor_name in control.enabled_watchlists():
                 flavor.save_completed()
                 if not silent:
@@ -73,20 +72,18 @@ def sync_watchlist(silent: bool = False) -> None:
             control.ok_dialog(control.ADDON_NAME, "Watchilst Sync is Disabled")
 
 
-def update_dub_json() -> None:
-    control.log("### Updating Dub json")
-    with open(control.maldubFile, 'w') as file:
-        r = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json')
-        mal_dub_list = r.json()["dubbed"]
-        mal_dub = {str(item): {'dub': True} for item in mal_dub_list}
-        json.dump(mal_dub, file)
+def update_dub_db() -> None:
+    control.log("### Updating Dub Database")
+    r = requests.get('https://raw.githubusercontent.com/MAL-Dubs/MAL-Dubs/main/data/dubInfo.json', timeout=30)
+    mal_dub_list = r.json()["dubbed"]
+    database.update_dub_database(mal_dub_list)
 
 
 def getchangelog() -> None:
-    with open(os.path.join(control.ADDON_PATH, 'changelog.txt')) as f:
+    with open(os.path.join(control.ADDON_PATH, 'changelog.txt'), encoding='utf-8') as f:
         changelog_text = f.read()
 
-    heading = '[B]%s -  v%s - ChangeLog[/B]' % (control.ADDON_NAME, control.ADDON_VERSION)
+    heading = f"[B]{control.ADDON_NAME} -  v{control.ADDON_VERSION} - ChangeLog[/B]"
     from resources.lib.windows.textviewer import TextViewerXML
     windows = TextViewerXML('textviewer.xml', control.ADDON_PATH, heading=heading, text=changelog_text)
     windows.doModal()
@@ -95,16 +92,15 @@ def getchangelog() -> None:
 
 def toggle_reuselanguageinvoker(forced_state: str = None) -> None:
     def _store_and_reload(output):
-        with open(file_path, "w+") as addon_xml_:
+        with open(file_path, "w+", encoding='utf-8') as addon_xml_:
             addon_xml_.writelines(output)
         if not forced_state:
             control.ok_dialog(control.ADDON_NAME, 'Language Invoker option has been changed, reloading kodi profile')
             xbmc.executebuiltin(f'LoadProfile({control.xbmc.getInfoLabel("system.profilename")})')
     file_path = os.path.join(control.ADDON_PATH, "addon.xml")
-    with open(file_path) as addon_xml:
+    with open(file_path, encoding='utf-8') as addon_xml:
         file_lines = addon_xml.readlines()
-    for i in range(len(file_lines)):
-        line_string = file_lines[i]
+    for i, line_string in enumerate(file_lines):
         if "reuselanguageinvoker" in file_lines[i]:
             if forced_state == 'Disabled' or ("true" in line_string and forced_state is None):
                 file_lines[i] = file_lines[i].replace("true", "false")
@@ -185,9 +181,6 @@ def load_settings() -> None:
 
 
 class Monitor(xbmc.Monitor):
-    def __init__(self):
-        super().__init__()
-
     def onSettingsChanged(self):
         control.log('Setting Changed Updating Settings Cache')
         load_settings()
@@ -206,10 +199,9 @@ if __name__ == "__main__":
         update_mappings_db()
         control.setInt('update.time.30', int(time.time()))
     if time.time() > control.getInt('update.time.7') + 604_800:   # 7 days
-        update_dub_json()
+        update_dub_db()
         sync_watchlist(True)
         control.setInt('update.time.7', int(time.time()))
     control.log('##################  MAINTENANCE COMPLETE ######################')
     if control.getBool('general.kodi.cache'):
         Monitor().waitForAbort()
-

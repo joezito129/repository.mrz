@@ -1,8 +1,7 @@
 import requests
 
-from resources.lib.ui import utils, control
+from resources.lib.ui import utils, control, database
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
-from resources.lib.ui.divide_flavors import div_flavor
 
 
 class AniListWLF(WatchlistFlavorBase):
@@ -32,7 +31,7 @@ class AniListWLF(WatchlistFlavorBase):
         self.token = control.getString('anilist.token')
 
         variables = {"name": self.username}
-        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
+        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         if "errors" in results.keys():
             control.setString('anilist.token', '')
@@ -169,7 +168,7 @@ class AniListWLF(WatchlistFlavorBase):
         return self.process_status_view(query, variables, next_up)
 
     def process_status_view(self, query, variables, next_up):
-        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables})
+        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables}, timeout=10)
         results = r.json()
         lists = results['data']['MediaListCollection']['lists']
         entries = []
@@ -181,15 +180,15 @@ class AniListWLF(WatchlistFlavorBase):
         all_results = list(all_results)
         return all_results
 
-    @div_flavor
-    def base_watchlist_status_view(self, res, mal_dub=None):
+
+    def base_watchlist_status_view(self, res):
         progress = res['progress']
         res = res['media']
 
         if (mal_id := res.get('idMal')) is None:
             control.log(f"mal_id not found for anilist_id={res['id']}", 'warning')
 
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
         title = res['title'].get(self.title_lang) or res['title'].get('userPreferred')
 
         info = {
@@ -249,13 +248,13 @@ class AniListWLF(WatchlistFlavorBase):
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    @div_flavor
-    def _base_next_up_view(self, res, mal_dub=None):
+
+    def _base_next_up_view(self, res):
         progress = res['progress']
         res = res['media']
 
         mal_id = res.get('idMal')
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         next_up = progress + 1
         if (episodes:= res['episodes']) is None:
@@ -270,7 +269,7 @@ class AniListWLF(WatchlistFlavorBase):
         if mal_id is None:
             next_up_meta = None
         else:
-            mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, progress)
+            mal_id, next_up_meta = self._get_next_up_meta(mal_id, progress)
 
         info = {
             'episode': next_up,
@@ -279,8 +278,8 @@ class AniListWLF(WatchlistFlavorBase):
             'mediatype': 'episode'
         }
 
-        if next_up_meta is not None:
-            if (title_ := next_up_meta.get('title')) is not None:
+        if next_up_meta:
+            if (title_ := next_up_meta['title']) is not None:
                 info['title'] = f"{title} - {title_}"
             if (image_ := next_up_meta.get('image')) is not None:
                 image = image_
@@ -293,7 +292,7 @@ class AniListWLF(WatchlistFlavorBase):
             info['genre'] = genre
 
         base = {
-            "name": title,
+            "name": info['title'],
             "url": f"watchlist_to_ep/{mal_id}/{progress}",
             "image": image,
             "info": info,

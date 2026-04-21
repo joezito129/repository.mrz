@@ -1,9 +1,8 @@
-import pickle
-
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route
 from resources.lib.WatchlistFlavor import WatchlistFlavor
 from resources.lib import OtakuBrowser
+from resources.packages import msgpack
 
 BROWSER = OtakuBrowser.BROWSER
 
@@ -42,7 +41,7 @@ def WATCHLIST(payload: str, params: dict) -> None:
         statuses = WatchlistFlavor.watchlist_action_statuses(flavor)
         for x, status in statuses:
             if status == "watching":
-                database.background_cache(WatchlistFlavor.watchlist_status_request, 60, flavor, status, next_up)
+                database.background_cache(WatchlistFlavor.watchlist_status_request, 1, flavor, status, next_up)
 
 
 @Route('watchlist_status_type/*')
@@ -50,7 +49,7 @@ def WATCHLIST_STATUS_TYPE(payload: str, params: dict) -> None:
     flavor, status = payload.split("/", 1)
     next_up = params.get('next_up')
     content_type = 'tvshows' if next_up is None else 'videos'
-    control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 60, False, flavor, status, next_up), content_type)
+    control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 1, False, flavor, status, next_up), content_type)
 
 
 @Route('watchlist_status_type_pages/*')
@@ -59,7 +58,7 @@ def WATCHLIST_STATUS_TYPE_PAGES(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
     next_up = params.get('next_up')
     content_type = 'tvshows' if next_up is None else 'videos'
-    control.draw_items(database.cache(WatchlistFlavor.watchlist_status_request, 60, False, flavor, status, next_up, offset, page), content_type)
+    control.draw_items(database.get_(WatchlistFlavor.watchlist_status_request, 1, flavor, status, next_up, offset, page), content_type)
 
 
 @Route('watchlist_to_ep/*')
@@ -67,21 +66,21 @@ def WATCHLIST_TO_EP(payload: str, params: dict) -> None:
     payload_list = payload.split("/", 1)
     mal_id = int(payload_list[0])
     eps_watched = int(payload_list[1])
-
     if (show := database.get_show(mal_id)) is None:
         show = BROWSER.get_anime(mal_id)
-    kodi_meta = pickle.loads(show['kodi_meta'])
-    kodi_meta['eps_watched'] = eps_watched
-    database.update_kodi_meta(mal_id, kodi_meta)
-    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60, False, mal_id))
+    kodi_meta = msgpack.loads(show['kodi_meta'])
+    if kodi_meta.get('eps_watched') != eps_watched:
+        kodi_meta['eps_watched'] = eps_watched
+        database.update_kodi_meta(mal_id, msgpack.dumps(kodi_meta))
+    control.draw_items(*database.get_(OtakuBrowser.get_anime_init, 1, mal_id))
 
 
 @Route('watchlist_manager/*')
 def CONTEXT_MENU(payload: str, params: dict) -> None:
     if not control.getBool('watchlist.update.enabled'):
-        control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B] before using the Watchlist Manager')
+        control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B]')
         control.exit_code()
-        return None
+        return
 
     payload_list = payload.split("/", 2)
     # path = int(payload_list[0])
@@ -94,11 +93,11 @@ def CONTEXT_MENU(payload: str, params: dict) -> None:
     if (flavor := WatchlistFlavor.get_update_flavor()) is None:
         control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease Enable a Watchlist before using the Watchlist Manager')
         control.exit_code()
-        return None
+        return
 
     actions = WatchlistFlavor.context_statuses()
 
-    kodi_meta = pickle.loads(show['kodi_meta'])
+    kodi_meta = msgpack.loads(show['kodi_meta'])
     title = kodi_meta['title_userPreferred']
 
     context = control.select_dialog(f"{title}  {control.colorstr(f'({str(flavor.flavor_name).capitalize()})', 'blue')}", list(map(lambda x: x[0], actions)))
@@ -144,7 +143,6 @@ def CONTEXT_MENU(payload: str, params: dict) -> None:
             else:
                 control.ok_dialog(heading, 'Unable to Set Watchlist')
     control.exit_code()
-    return None
 
 
 def add_watchlists(items: list) -> list:

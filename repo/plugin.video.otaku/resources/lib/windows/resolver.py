@@ -118,7 +118,7 @@ class Resolver(BaseWindow):
                     if params:
                         try:
                             params = json.loads(params)
-                        except:
+                        except TypeError:
                             params = {}
                         if params.get('art') is not None:
                             item.setArt(params.pop('art'))
@@ -173,12 +173,12 @@ class Resolver(BaseWindow):
             return {}
 
         try:
-            r = requests.get(url, stream=True)
+            r = requests.get(url, stream=True, timeout=10)
         except requests.exceptions.SSLError:
             yesno = control.yesno_dialog(f'{control.ADDON_NAME}: Request Error',
                                          f'{url}\nWould you like to try without verifying TLS certificate?')
             if yesno == 1:
-                r = requests.get(url, stream=True, verify=False)
+                r = requests.get(url, stream=True, verify=False, timeout=10)
             else:
                 return {}
         except Exception as e:
@@ -238,6 +238,7 @@ class Resolver(BaseWindow):
             # BACKSPACE / ESCAPE
             self.canceled = True
             self.close()
+            control.playList.clear()
 
 @HookMimetype('application/dash+xml')
 def _DASH_HOOK(item):

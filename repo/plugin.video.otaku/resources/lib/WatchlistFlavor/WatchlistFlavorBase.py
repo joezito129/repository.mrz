@@ -1,7 +1,7 @@
-import pickle
 import random
 import requests
 
+from resources.packages import msgpack
 from resources.lib.ui import control, database
 
 
@@ -61,21 +61,19 @@ class WatchlistFlavorBase:
         next_up_meta = {}
         show = database.get_show(mal_id)
         if show is not None:
-            if (show_meta := database.get_show_meta(mal_id)) is not None:
-                art = pickle.loads(show_meta['art'])
-                if art.get('fanart') is not None:
-                    next_up_meta['image'] = random.choice(art['fanart'])
-            if (episodes := database.get_episode_list(mal_id)) is not None:
-                if len(episodes) > next_up:
-                    if (episode_meta := pickle.loads(episodes[next_up]['kodi_meta'])) is not None:
-                        if control.getBool('interface.cleantitles'):
-                            next_up_meta['title'] = f'Episode {episode_meta["info"]["episode"]}'
-                        else:
-                            next_up_meta['title'] = episode_meta['info']['title']
-                            next_up_meta['plot'] = episode_meta['info'].get('plot')
-                        next_up_meta['image'] = episode_meta['image']['thumb']
-                        next_up_meta['aired'] = episode_meta['info'].get('aired')
-        return mal_id, next_up_meta, show
+            if art := msgpack.loads(show['art']):
+                if (fanart := art.get('fanart')) is not None:
+                    next_up_meta['image'] = random.choice(fanart)
+            if (episode := database.get_episode(mal_id, next_up)) is not None:
+                if episode_meta := msgpack.loads(episode['kodi_meta']):
+                    if control.getBool('interface.cleantitles'):
+                        next_up_meta['title'] = f'Episode {episode_meta["info"]["episode"]}'
+                    else:
+                        next_up_meta['title'] = episode_meta['info']['title']
+                        next_up_meta['plot'] = episode_meta['info'].get('plot')
+                    next_up_meta['image'] = episode_meta['image']['thumb']
+                    next_up_meta['aired'] = episode_meta['info'].get('aired')
+        return mal_id, next_up_meta
 
     def _get_mapping_id(self, mal_id: int, flavor: str):
         show = database.get_show(mal_id)
@@ -84,16 +82,17 @@ class WatchlistFlavorBase:
             mapping_id = self.get_flavor_id_findmyanime(mal_id, flavor)
         return mapping_id
 
+
     @staticmethod
     def get_flavor_id_vercel(mal_id: int, flavor: str):
         params = {
             'type': "mal",
             "id": mal_id
         }
-        r = requests.get('https://armkai.vercel.app/api/search', params=params)
+        r = requests.get('https://armkai.vercel.app/api/search', params=params, timeout=10)
         res = r.json()
         flavor_id = res.get(flavor[:-3])
-        database.add_mapping_id(mal_id, flavor, flavor_id)
+        database.update_mapping(mal_id, flavor, flavor_id)
         return flavor_id
 
     @staticmethod
@@ -110,15 +109,15 @@ class WatchlistFlavorBase:
             'id': mal_id,
             'providor': 'MyAnimeList'
         }
-        r = requests.get('https://find-my-anime.dtimur.de/api', params=params).json()
+        r = requests.get('https://find-my-anime.dtimur.de/api', params=params, timeout=10).json()
         flavor_id = r[0]['providerMapping'][mapping]
-        database.add_mapping_id(mal_id, flavor, flavor_id)
+        database.update_mapping(mal_id, flavor, flavor_id)
         return flavor_id
 
     @staticmethod
     def get_flavor_id_simkl(mal_id: int, flavor: str):
         from resources.lib.indexers.simkl import SIMKLAPI
-        ids = SIMKLAPI().get_mapping_ids(mal_id, flavor)
+        ids = SIMKLAPI().get_mapping_ids(flavor, mal_id)
         flavor_id = ids[flavor]
-        database.add_mapping_id(mal_id, flavor, flavor_id)
+        database.update_mapping(mal_id, flavor, flavor_id)
         return flavor_id

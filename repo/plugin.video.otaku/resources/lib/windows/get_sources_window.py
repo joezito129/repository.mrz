@@ -18,10 +18,8 @@ class GetSources(BaseWindow):
         self.args = actionArgs
         self.progress = 0
         self.torrents_qual_len = [0, 0, 0, 0]
-        self.embeds_qual_len = [0, 0, 0, 0]
         self.torrentSources = []
         self.torrentCacheSources = []
-        self.embedSources = []
         self.cloud_files = []
         self.local_files = []
         self.remainingProviders = []
@@ -30,7 +28,7 @@ class GetSources(BaseWindow):
     def onInit(self):
         threading.Thread(target=self.getSources, args=[self.args]).start()
 
-    def doModal(self) -> object:
+    def doModal(self) -> list:
         if self.silent:
             self.getSources(self.args)
         else:
@@ -41,10 +39,10 @@ class GetSources(BaseWindow):
         self.setProperty('process_started', 'true')
         if not self.silent:
             self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
-                control.colorstr(str(self.torrents_qual_len[0] + self.embeds_qual_len[0])),
-                control.colorstr(str(self.torrents_qual_len[1] + self.embeds_qual_len[1])),
-                control.colorstr(str(self.torrents_qual_len[2] + self.embeds_qual_len[2])),
-                control.colorstr(str(self.torrents_qual_len[3] + self.embeds_qual_len[3])),
+                control.colorstr(str(self.torrents_qual_len[0])),
+                control.colorstr(str(self.torrents_qual_len[1])),
+                control.colorstr(str(self.torrents_qual_len[2])),
+                control.colorstr(str(self.torrents_qual_len[3])),
             ))
         self.close()
 
@@ -56,14 +54,13 @@ class GetSources(BaseWindow):
 
     def update_properties(self, text):
         self.setProperty('notification_text', str(text))
-        self.setProperty('4k_sources', str(self.torrents_qual_len[0] + self.embeds_qual_len[0]))
-        self.setProperty('1080p_sources', str(self.torrents_qual_len[1] + self.embeds_qual_len[1]))
-        self.setProperty('720p_sources', str(self.torrents_qual_len[2] + self.embeds_qual_len[2]))
-        self.setProperty('SD_sources', str(self.torrents_qual_len[3] + self.embeds_qual_len[3]))
+        self.setProperty('4k_sources', str(self.torrents_qual_len[0]))
+        self.setProperty('1080p_sources', str(self.torrents_qual_len[1]))
+        self.setProperty('720p_sources', str(self.torrents_qual_len[2]))
+        self.setProperty('SD_sources', str(self.torrents_qual_len[3]))
 
         self.setProperty('total_torrents', str(len(self.torrentSources)))
         self.setProperty('cached_torrents', str(len(self.torrentCacheSources)))
-        self.setProperty('hosters_sources', str(len(self.embedSources)))
         self.setProperty('cloud_sources', str(len(self.cloud_files)))
         self.setProperty('localfiles', str(len(self.local_files)))
 

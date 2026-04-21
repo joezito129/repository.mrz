@@ -6,8 +6,6 @@ from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBas
 from resources.lib.indexers.simkl import SIMKLAPI
 from urllib import parse
 
-from resources.lib.ui.divide_flavors import div_flavor
-
 
 class KitsuWLF(WatchlistFlavorBase):
     _NAME = "kitsu"
@@ -16,7 +14,7 @@ class KitsuWLF(WatchlistFlavorBase):
     _IMAGE = "kitsu.png"
 
     user_id = control.getInt('kitsu.userid')
-    password = control.getString(f"kitsu.password")
+    password = control.getString("kitsu.password")
     mapping = None
 
     def __headers(self):
@@ -33,7 +31,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "username": self.auth_var,
             "password": self.password
         }
-        resp = requests.post(f'{self._URL}/oauth/token', params=params)
+        resp = requests.post(f'{self._URL}/oauth/token', params=params, timeout=10)
 
         if not resp.ok:
             return False
@@ -46,7 +44,7 @@ class KitsuWLF(WatchlistFlavorBase):
         control.setString('kitsu.refresh', self.refresh)
         control.setInt('kitsu.expiry', int(time.time()) + int(data['expires_in']))
 
-        resp2 = requests.get(f'{self._URL}/edge/users', headers=self.__headers(), params={'filter[self]': True})
+        resp2 = requests.get(f'{self._URL}/edge/users', headers=self.__headers(), params={'filter[self]': True}, timeout=10)
         data2 = resp2.json()["data"][0]
 
 
@@ -62,7 +60,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "grant_type": "refresh_token",
             "refresh_token": control.getString('kitsu.refresh')
         }
-        resp = requests.post(f'{self._URL}/oauth/token', params=params)
+        resp = requests.post(f'{self._URL}/oauth/token', params=params, timeout=10)
 
         if not resp:
             return None
@@ -78,7 +76,7 @@ class KitsuWLF(WatchlistFlavorBase):
         if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
-        name = "Next Page (%d)" % next_page
+        name = f"Next Page ({next_page})"
         parsed = parse.urlparse(hasnextpage)
         offset = parse.parse_qs(parsed.query)['page[offset]'][0]
         return [utils.allocate_item(name, f'{base_url}/{offset}?page={next_page}', True, False, [], 'next.png', {'plot': name}, fanart='next.png')]
@@ -133,7 +131,7 @@ class KitsuWLF(WatchlistFlavorBase):
         return self.process_watchlist_view(url, params, next_up, f'watchlist_status_type_pages/kitsu/{status}', page)
 
     def process_watchlist_view(self, url, params, next_up, base_plugin_url, page) -> list:
-        result = requests.get(url, headers=self.__headers(), params=params)
+        result = requests.get(url, headers=self.__headers(), params=params, timeout=10)
         result = result.json()
         _list = result["data"]
 
@@ -148,20 +146,20 @@ class KitsuWLF(WatchlistFlavorBase):
         all_results += self.handle_paging(result['links'].get('next'), base_plugin_url, page)
         return all_results
 
-    @div_flavor
-    def _base_watchlist_view(self, res, eres, mal_dub=None):
+
+    def _base_watchlist_view(self, res, eres):
         kitsu_id = eres['id']
         if (mal_id := self.mapping_mal(kitsu_id)) is None:
             control.log(f"mal_id not found for kitsu_id={kitsu_id}", 'warning')
 
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         title = eres["attributes"]["titles"].get(self.__get_title_lang(), eres["attributes"]['canonicalTitle'])
 
         info = {
             'title': title,
             'mpaa': eres['attributes']['ageRating'],
-            'trailer': 'plugin://plugin.video.youtube/play/?video_id={0}'.format(eres['attributes']['youtubeVideoId']),
+            'trailer': f"plugin://plugin.video.youtube/play/?video_id={eres['attributes']['youtubeVideoId']}",
             'mediatype': 'tvshow'
         }
 
@@ -192,11 +190,11 @@ class KitsuWLF(WatchlistFlavorBase):
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    @div_flavor
-    def _base_next_up_view(self, res, eres, mal_dub=None):
+
+    def _base_next_up_view(self, res, eres):
         kitsu_id = eres['id']
         mal_id = self.mapping_mal(kitsu_id)
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         progress = res["attributes"]['progress']
         next_up = progress + 1
@@ -211,9 +209,9 @@ class KitsuWLF(WatchlistFlavorBase):
             'tvshowtitle': anime_title,
             'mediatype': 'episode'
         }
-        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, progress)
-        if next_up_meta is not None:
-            if (title_ := next_up_meta.get('title')) is not None:
+        mal_id, next_up_meta = self._get_next_up_meta(mal_id, progress)
+        if next_up_meta:
+            if (title_ := next_up_meta['title']) is not None:
                 info['title'] = f"{title} - {title_}"
             if (image_ := next_up_meta.get('image')) is not None:
                 image = image_
@@ -223,7 +221,7 @@ class KitsuWLF(WatchlistFlavorBase):
                 info['aired'] = aired
 
         base = {
-            "name": title,
+            "name": info['title'],
             "url": f'watchlist_to_ep/{mal_id}/{res["attributes"]["progress"]}',
             "image": image,
             "info": info,
@@ -252,7 +250,7 @@ class KitsuWLF(WatchlistFlavorBase):
         if mal_id is not None:
             ids = SIMKLAPI().get_mapping_ids('kitsu', kitsu_id)
             mal_id = ids['mal']
-            database.add_mapping_id(mal_id, 'mal_id', mal_id)
+            database.update_mapping(mal_id, 'mal_id', mal_id)
         return mal_id
 
     def get_library_entries(self, kitsu_id):
@@ -260,7 +258,7 @@ class KitsuWLF(WatchlistFlavorBase):
             "filter[user_id]": self.user_id,
             "filter[anime_id]": kitsu_id
         }
-        r = requests.get(f'{self._URL}/edge/library-entries', headers=self.__headers(), params=params)
+        r = requests.get(f'{self._URL}/edge/library-entries', headers=self.__headers(), params=params, timeout=10)
         r = r.json()
         return r
 
@@ -289,7 +287,7 @@ class KitsuWLF(WatchlistFlavorBase):
             mal_id = self.mapping_mal(dat['relationships']['anime']['data']['id'])
             completed[str(mal_id)] = dat['attributes']['progress']
 
-        with open(control.completed_json, 'w') as file:
+        with open(control.completed_json, 'w', encoding='utf-8') as file:
             json.dump(completed, file)
 
     def get_user_anime_list(self, status):
@@ -301,12 +299,12 @@ class KitsuWLF(WatchlistFlavorBase):
             "page[limit]": "500",
             "include": "anime,anime.mappings,anime.mappings.item",
         }
-        r = requests.get(url, headers=self.__headers(), params=params)
+        r = requests.get(url, headers=self.__headers(), params=params, timeout=10)
         res = r.json()
         paging = res['links']
         data = res['data']
         while paging.get('next'):
-            r = requests.get(paging['next'], headers=self.__headers())
+            r = requests.get(paging['next'], headers=self.__headers(), timeout=10)
             res = r.json()
             paging = res['links']
             data += res['data']
@@ -341,7 +339,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     }
                 }
             }
-            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
+            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data, timeout=10)
             return r.ok
         animeid = int(r['data'][0]['id'])
         data = {
@@ -353,7 +351,7 @@ class KitsuWLF(WatchlistFlavorBase):
                 }
             }
         }
-        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
+        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data, timeout=10)
         return r.ok
 
     def update_num_episodes(self, mal_id, episode):
@@ -386,7 +384,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     }
                 }
             }
-            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
+            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data, timeout=10)
             return r.ok
 
         animeid = int(r['data'][0]['id'])
@@ -400,7 +398,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     'progress': int(episode)}
             }
         }
-        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
+        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data, timeout=10)
         return r.ok
 
     def update_score(self, mal_id, score):
@@ -435,7 +433,7 @@ class KitsuWLF(WatchlistFlavorBase):
                     }
                 }
             }
-            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data)
+            r = requests.post(f'{self._URL}/edge/library-entries', headers=self.__headers(), json=data, timeout=10)
             return r.ok
 
         animeid = int(r['data'][0]['id'])
@@ -448,7 +446,7 @@ class KitsuWLF(WatchlistFlavorBase):
                 }
             }
         }
-        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data)
+        r = requests.patch(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), json=data, timeout=10)
         return r.ok
 
     def delete_anime(self, mal_id):
@@ -463,5 +461,5 @@ class KitsuWLF(WatchlistFlavorBase):
         else:
             return True
 
-        r = requests.delete(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers())
+        r = requests.delete(f'{self._URL}/edge/library-entries/{animeid}', headers=self.__headers(), timeout=10)
         return r.ok

@@ -18,7 +18,7 @@ class Torbox:
         import pyqrcode
         import os
         params = {'app': control.ADDON_NAME}
-        r = requests.get(f'{self.BaseUrl}/user/auth/device/start', params=params)
+        r = requests.get(f'{self.BaseUrl}/user/auth/device/start', params=params, timeout=10)
         if r.ok:
             res = control.json_res(r).get('data')
             if res:
@@ -64,7 +64,7 @@ class Torbox:
         if self.dialog.iscanceled():
             timeout = 0
             return False, timeout
-        r = requests.post(f'{self.BaseUrl}/user/auth/device/token', json=data)
+        r = requests.post(f'{self.BaseUrl}/user/auth/device/token', json=data, timeout=10)
         if r.ok:
             r = control.json_res(r)
             res = r.get('data')
@@ -76,7 +76,7 @@ class Torbox:
 
 
     def status(self) -> bool:
-        r = requests.get(f'{self.BaseUrl}/user/me', headers=self.headers())
+        r = requests.get(f'{self.BaseUrl}/user/me', headers=self.headers(), timeout=10)
         if r.ok:
             user_info = r.json()['data']
             control.setString('torbox.username', user_info['email'])
@@ -89,12 +89,12 @@ class Torbox:
                 control.setString('torbox.auth.status', 'Standard')
             elif user_info['plan'] == 2:
                 control.setString('torbox.auth.status', 'Pro')
-            control.ok_dialog(control.ADDON_NAME, 'Torbox %s' % control.lang(30023))
+            control.ok_dialog(control.ADDON_NAME, f"Torbox {control.lang(30023)}")
         return r.ok
 
     def refreshToken(self):
         url = f'{self.BaseUrl}/v1/api/user/refreshtoken'
-        r = requests.post(url, headers=self.headers())
+        r = requests.post(url, headers=self.headers(), timeout=10)
         return r.ok
 
     def hash_check(self, hash_list: list) -> dict:
@@ -104,7 +104,7 @@ class Torbox:
             'hash': hashes,
             'format': 'list'
         }
-        r = requests.get(url, headers=self.headers(), params=params)
+        r = requests.get(url, headers=self.headers(), params=params, timeout=10)
         return r.json()['data']
 
     def addMagnet(self, magnet: str) -> dict:
@@ -112,7 +112,7 @@ class Torbox:
         data = {
             'magnet': magnet
         }
-        r = requests.post(url, headers=self.headers(), data=data)
+        r = requests.post(url, headers=self.headers(), data=data, timeout=10)
         return r.json()['data']
 
     def delete_torrent(self, torrent_id) -> bool:
@@ -121,12 +121,12 @@ class Torbox:
             'torrent_id': str(torrent_id),
             'operation': 'delete'
         }
-        r = requests.post(url, headers=self.headers(), json=data)
+        r = requests.post(url, headers=self.headers(), json=data, timeout=10)
         return r.ok
 
     def list_torrents(self) -> dict:
         url = f'{self.BaseUrl}/torrents/mylist'
-        r = requests.get(url, headers=self.headers())
+        r = requests.get(url, headers=self.headers(), timeout=10)
         return r.json()['data']
 
     def get_torrent_info(self, torrent_id: str, bypass_cache=False):
@@ -134,7 +134,7 @@ class Torbox:
         params = {'id': torrent_id}
         if bypass_cache:
             params['bypass_cache'] = 'true'
-        r = requests.get(url, headers=self.headers(), params=params)
+        r = requests.get(url, headers=self.headers(), params=params, timeout=10)
         return r.json()['data']
 
     def request_dl_link(self, torrent_id, file_id=-1):
@@ -145,7 +145,7 @@ class Torbox:
         }
         if file_id >= 0:
             params['file_id'] = file_id
-        r = requests.get(url, params=params)
+        r = requests.get(url, params=params, timeout=10)
         return r.json()['data']
 
     def resolve_single_magnet(self, hash_, magnet, episode, pack_select, filename):
@@ -169,7 +169,7 @@ class Torbox:
     def resolve_cloud(source, pack_select):
         match = {}
         if source['hash']:
-            best_match = source_utils.get_best_match('short_name', source['hash'], source['episode'], pack_select)
+            best_match = source_utils.get_best_match('short_name', source['hash'], str(source['episode']), pack_select)
             if best_match and best_match.get('short_name'):
                 for f_index, torrent_file in enumerate(source['hash']):
                     if torrent_file['short_name'] == best_match['short_name']:

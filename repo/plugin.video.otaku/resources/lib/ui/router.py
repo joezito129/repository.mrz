@@ -5,6 +5,7 @@ class Route:
     def __init__(self, route_path):
         self.path = route_path
         self.wildcard = False
+        self.func = None
         if route_path.endswith("*"):
             self.wildcard = True
             self.path = route_path[:-1]

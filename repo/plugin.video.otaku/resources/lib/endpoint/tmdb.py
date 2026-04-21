@@ -29,7 +29,7 @@ def getArt(meta_ids, mtype):
         params = {
             'include_image_language': 'en,ja,null'
         }
-        r = requests.get(f'{baseUrl}{mtype[0:5]}/{mid}/images', params=params)
+        r = requests.get(f'{baseUrl}{mtype[0:5]}/{mid}/images', params=params, timeout=10)
         res = r.json() if r.ok else {}
 
         if res:

@@ -12,6 +12,7 @@ from functools import partial
 from urllib import parse
 from concurrent.futures import ThreadPoolExecutor
 
+
 try:
     HANDLE = int(sys.argv[1])
 except IndexError:
@@ -36,8 +37,8 @@ cacheFile = os.path.join(dataPath, 'cache.db')
 searchHistoryDB = os.path.join(dataPath, 'search.db')
 malSyncDB = os.path.join(dataPath, 'malSync.db')
 mappingDB = os.path.join(dataPath, 'mappings.db')
+maldubDB = os.path.join(dataPath, 'mal_dub.db')
 
-maldubFile = os.path.join(dataPath, 'mal_dub.json')
 downloads_json = os.path.join(dataPath, 'downloads.json')
 completed_json = os.path.join(dataPath, 'completed.json')
 
@@ -52,8 +53,8 @@ window = xbmcgui.Window(10000)
 max_threads = os.cpu_count()
 
 intro_keywords = ['intro', 'opening', 'op']
-# intro_keywords = ['intro', 'opening', 'prologue']
-outro_keywords = []
+outro_keywords = ['credits']
+
 bool_cache = {}
 int_cache = {}
 str_cache = {}
@@ -130,10 +131,6 @@ def refresh() -> None:
     xbmc.executebuiltin('Container.Refresh')
 
 
-def getSetting(key: str) -> str:
-    cache = window.getProperty(f'{ADDON_ID}_{key}')
-    return cache if cache else ADDON.getSetting(key)
-
 def getBool(key: str) -> bool:
     if key in bool_cache:
         return bool_cache[key]
@@ -150,10 +147,7 @@ def getInt(key: str) -> int:
     if key in int_cache:
         return int_cache[key]
     prop_val = window.getProperty(f'{ADDON_ID}_{key}')
-    if prop_val:
-        cache = int(prop_val)
-    else:
-        cache = Settings.getInt(key)
+    cache = int(prop_val) if prop_val else Settings.getInt(key)
     int_cache[key] = cache
     return cache
 
@@ -162,10 +156,7 @@ def getString(key: str) -> str:
     if key in str_cache:
         return str_cache[key]
     prop_val = window.getProperty(f'{ADDON_ID}_{key}')
-    if prop_val:
-        cache = prop_val
-    else:
-        cache = Settings.getString(key)
+    cache = prop_val if prop_val else Settings.getString(key)
     str_cache[key] = cache
     return cache
 
@@ -245,7 +236,7 @@ def yesnocustom_dialog(title: str, text: str, customlabel: str = '', nolabel: st
     return xbmcgui.Dialog().yesnocustom(title, text, customlabel, nolabel, yeslabel, autoclose, defaultbutton)
 
 
-def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 1000, sound: bool = True) -> None:
+def notify(title: str, text: str, icon: str = LOGO_MEDIUM, time: int = 10, sound: bool = True) -> None:
     xbmcgui.Dialog().notification(title, text, icon, time, sound)
 
 
@@ -269,19 +260,12 @@ def browse(type_: int, heading: str, shares: str, mask: str = ''):
     return xbmcgui.Dialog().browse(type_, heading, shares, mask)
 
 
-def handle_set_fanart(art: dict, info: dict, fanart_disable: bool, fanart_select_bool: bool) -> dict:
+def handle_set_fanart(art: dict, fanart_disable: bool) -> dict:
     if not (image := art.get('fanart')) or fanart_disable:
         art['fanart'] = FANART
     else:
         if isinstance(image, list):
-            if fanart_select_bool:
-                if info.get('UniqueIDs', {}).get('mal_id'):
-                    fanart_select = getSetting(f'fanart.select.{info["UniqueIDs"]["mal_id"]}')
-                    art['fanart'] = fanart_select if fanart_select else random.choice(image)
-                else:
-                    art['fanart'] = FANART
-            else:
-                art['fanart'] = random.choice(image)
+            art['fanart'] = random.choice(image)
     return art
 
 
@@ -290,7 +274,7 @@ def set_videotags(li, info) -> None:
     try:
         vinfo.setTitle(info['title'])
     except KeyError:
-        log(info)
+        pass
 
     if media_type := info.get('mediatype'):
         vinfo.setMediaType(media_type)
@@ -341,7 +325,7 @@ def jsonrpc(json_data: dict) -> dict:
     return json.loads(xbmc.executeJSONRPC(json.dumps(json_data)))
 
 
-def xbmc_add_dir(data: dict, clear_logo_disable: bool, fanart_disable: bool, fanart_select_bool: bool) -> tuple:
+def xbmc_add_dir(data: dict, clear_logo_disable: bool, fanart_disable: bool) -> tuple:
     url = data['url']
     u = addon_url(url)
     liz = xbmcgui.ListItem(data['name'], offscreen=True)
@@ -351,7 +335,7 @@ def xbmc_add_dir(data: dict, clear_logo_disable: bool, fanart_disable: bool, fan
         cm = [(x[0], f'RunPlugin(plugin://{ADDON_ID}/{x[1]}/{url})') for x in draw_cm]
         liz.addContextMenuItems(cm)
 
-    art = handle_set_fanart(data['image'], info, fanart_disable, fanart_select_bool)
+    art = handle_set_fanart(data['image'], fanart_disable)
 
     if clear_logo_disable:
         art['clearlogo'] = ICONS_PATH
@@ -427,8 +411,7 @@ def draw_items(video_data: list, content_type: str = '') -> None:
 def bulk_dir_list(video_data: list) -> list:
     clear_logo_disable = getBool('interface.clearlogo.disable')
     fanart_disable = getBool('interface.fanart.disable')
-    fanart_select_bool = getBool('context.otaku.fanartselect')
-    mapfunc = partial(xbmc_add_dir, clear_logo_disable=clear_logo_disable, fanart_disable=fanart_disable, fanart_select_bool=fanart_select_bool)
+    mapfunc = partial(xbmc_add_dir, clear_logo_disable=clear_logo_disable, fanart_disable=fanart_disable)
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         list_items = list(executor.map(mapfunc, filter(None, video_data)))
     return list_items
@@ -464,6 +447,7 @@ def json_res(response):
         response = {}
     return response
 
+
 def process_context():
     context_settings = [
         "context.otaku.findrecommendations",
@@ -473,8 +457,7 @@ def process_context():
         "context.otaku.logout",
         'context.otaku.deletefromdatabase',
         'context.otaku.watchlist',
-        'context.otaku.markedaswatched',
-        'context.otaku.fanartselect'
+        'context.otaku.markedaswatched'
     ]
     for s_id in context_settings:
         try:
@@ -486,11 +469,11 @@ def process_context():
             log(s_id, 'error')
 
 
-def print(string, *args) -> None:
-    for i in list(args):
-        string = f'{string} {i}'
-    textviewer_dialog('print', f'{string}')
-    del args, string
+# def print(string, *args) -> None:
+#     for i in list(args):
+#         string = f'{string} {i}'
+#     textviewer_dialog('print', f'{string}')
+#     del args, string
 
 def timeIt(func):
     # Thanks to 123Venom

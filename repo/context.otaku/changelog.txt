@@ -1,4 +1,7 @@
 Changelog v1.0.25 (2026-04-08)
+- Removed Fanart Select
+
+Changelog v1.0.25 (2026-04-08)
 - Fixed menu navigation
 - Replaced params with window property json type
 

@@ -106,7 +106,7 @@ class RealDebrid:
         user_info = requests.get(f'{self.BaseUrl}/user', headers=self.headers()).json()
         control.setString('real_debrid.username', user_info['username'])
         control.setString('real_debrid.auth.status', user_info['type'].capitalize())
-        control.ok_dialog(control.ADDON_NAME, 'Real Debrid %s' % control.lang(30023))
+        control.ok_dialog(control.ADDON_NAME, f"Real Debrid {control.lang(30023)}")
         if user_info['type'] != 'premium':
             control.ok_dialog(f'{control.ADDON_NAME}: Real-Debrid', control.lang(30024))
 

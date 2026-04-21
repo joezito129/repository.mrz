@@ -1,6 +1,7 @@
 import re
 import json
 import xbmcvfs
+import datetime
 
 from resources.lib.ui import control, utils
 
@@ -13,17 +14,27 @@ class BrowserBase:
         if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
-        name = "Next Page (%d)" % next_page
+        name = f"Next Page ({next_page})"
         return [utils.allocate_item(name, base_url % next_page, True, False, [], 'next.png', {'plot': name}, 'next.png')]
 
     @staticmethod
     def open_completed() -> dict:
         if xbmcvfs.exists(control.completed_json):
-            with open(control.completed_json) as file:
+            with open(control.completed_json, encoding='utf-8') as file:
                 completed = json.load(file)
         else:
             completed = {}
         return completed
+
+    @staticmethod
+    def get_season_year(offset: int):
+        today = datetime.datetime.today()
+        current_quarter = (today.month - 1) // 3
+        total_quarters = (today.year * 4) + current_quarter + offset
+        new_year = total_quarters // 4
+        season_index = total_quarters % 4
+        seasons = ['WINTER', 'SPRING', 'SUMMER', 'FALL']
+        return seasons[season_index], new_year
 
     @staticmethod
     def duration_to_seconds(duration_str: str) -> int:

@@ -1,11 +1,8 @@
 import requests
-import pickle
-
 import xbmc
 
 from resources.lib.ui import utils, database, control
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
-from resources.lib.ui.divide_flavors import div_flavor
 
 
 class SimklWLF(WatchlistFlavorBase):
@@ -34,7 +31,7 @@ class SimklWLF(WatchlistFlavorBase):
             'client_id': self.client_id,
         }
 
-        r = requests.get(f'{self._URL}/oauth/pin', params=params)
+        r = requests.get(f'{self._URL}/oauth/pin', params=params, timeout=10)
         device_code = r.json()
 
         copied = control.copy2clip(device_code["user_code"])
@@ -62,12 +59,12 @@ class SimklWLF(WatchlistFlavorBase):
                 return False
             xbmc.sleep(device_code['interval'] * 1000)
 
-            r = requests.get(f'{self._URL}/oauth/pin/{device_code["user_code"]}', params=params)
+            r = requests.get(f'{self._URL}/oauth/pin/{device_code["user_code"]}', params=params, timeout=10)
             r = r.json()
             if r['result'] == 'OK':
                 self.token = r['access_token']
                 control.setString('simkl.token', self.token)
-                r = requests.post(f'{self._URL}/users/settings', headers=self.__headers())
+                r = requests.post(f'{self._URL}/users/settings', headers=self.__headers(), timeout=10)
                 if r.ok:
                     user = r.json()['user']
                     self.username = user['name']
@@ -130,19 +127,20 @@ class SimklWLF(WatchlistFlavorBase):
             all_results.reverse()
         return all_results
 
-    @div_flavor
-    def _base_watchlist_status_view(self, res: dict, mal_dub=None):
+
+    def _base_watchlist_status_view(self, res: dict):
         show_ids = res['show']['ids']
 
         if (mal_id := show_ids.get('mal')) is None:
             control.log(f"mal_id not found for simkl={show_ids['simkl']}", 'warning')
 
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
-        show = database.get_show(mal_id)
-        kodi_meta = {} if show is None else pickle.loads(show['kodi_meta'])
-
-
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
+        kodi_meta = database.get_show_kodi_meta(mal_id)
         title = kodi_meta.get('ename', res['show']['title']) if self.title_lang == 'english' else res['show']['title']
+
+
+        eps_watched = res["watched_episodes_count"]
+        episodes = res["total_episodes_count"]
 
         info = {
             'title': title,
@@ -152,34 +150,34 @@ class SimklWLF(WatchlistFlavorBase):
             'user_rating': res['user_rating']
         }
 
-        if res["total_episodes_count"] != 0 and res["watched_episodes_count"] == res["total_episodes_count"]:
+        if episodes != 0 and eps_watched == episodes:
             info['playcount'] = 1
 
         image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_.jpg'
 
         base = {
-            "name": '%s - %d/%d' % (title, res["watched_episodes_count"], res["total_episodes_count"]),
-            "url": f'watchlist_to_ep/{mal_id}/{res["watched_episodes_count"]}',
+            "name": f"{title} - {eps_watched}/{episodes}",
+            "url": f'watchlist_to_ep/{mal_id}/{eps_watched}',
             "image": image,
             "fanart": image,
             "info": info
         }
 
-        if res["total_episodes_count"] == 1:
+        if episodes == 1:
             base['url'] = f'play_movie/{mal_id}/'
             base['info']['mediatype'] = 'movie'
             return utils.parse_view(base, False, True, dub)
         return utils.parse_view(base, True, False, dub)
 
-    @div_flavor
-    def _base_next_up_view(self, res: dict, mal_dub=None):
+
+    def _base_next_up_view(self, res: dict):
         show_ids = res['show']['ids']
 
         mal_id = show_ids.get('mal')
         if mal_id is None:
             return None
 
-        dub = True if mal_dub and mal_dub.get(str(mal_id)) else False
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         progress = res['watched_episodes_count']
         next_up = progress + 1
@@ -189,38 +187,32 @@ class SimklWLF(WatchlistFlavorBase):
             return None
 
         base_title = res['show']['title']
-
-        title = '%s - %s/%s' % (base_title, next_up, episode_count)
-        poster = image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg'
-        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, int(progress))
-        if next_up_meta:
-            kodi_meta = pickle.loads(show['kodi_meta'])
-            if self.title_lang == 'english':
-                base_title = kodi_meta['english']
-                title = '%s - %s/%s' % (base_title, next_up, episode_count)
-            if next_up_meta.get('title'):
-                title = '%s - %s' % (title, next_up_meta['title'])
-            if next_up_meta.get('image'):
-                image = next_up_meta['image']
-            plot = next_up_meta.get('plot')
-            aired = next_up_meta.get('aired')
-        else:
-            plot = aired = None
+        title = f"{base_title} - {next_up}/{episode_count}"
 
         info = {
             'episode': next_up,
             'title': title,
             'tvshowtitle': base_title,
-            'plot': plot,
-            'mediatype': 'episode',
-            'aired': aired,
             'last_watched': res['last_watched_at'],
-            'user_rating': res['user_rating']
+            'user_rating': res['user_rating'],
+            'mediatype': 'episode'
         }
+
+        poster = image = f'https://wsrv.nl/?url=https://simkl.in/posters/{res["show"]["poster"]}_m.jpg'
+        mal_id, next_up_meta = self._get_next_up_meta(mal_id, int(progress))
+        if next_up_meta:
+            if (title_ := next_up_meta['title']) is not None:
+                info['title'] = f"{title} - {title_}"
+            if (image_ := next_up_meta.get('image')) is not None:
+                image = image_
+            if (plot := next_up_meta.get('plot')) is not None:
+                info['plot'] = plot
+            if (aired := next_up_meta.get('aired')) is not None:
+                info['aired'] = aired
 
         base = {
             "name": title,
-            "url": f'watchlist_to_ep/{mal_id}/{res["watched_episodes_count"]}',
+            "url": f'watchlist_to_ep/{mal_id}/{episode_count}',
             "image": image,
             "info": info,
             "fanart": image,
@@ -233,7 +225,7 @@ class SimklWLF(WatchlistFlavorBase):
             return utils.parse_view(base, False, True, dub)
 
         if next_up_meta:
-            base['url'] = 'play/%d/%d' % (mal_id, next_up)
+            base['url'] = f"play/{mal_id}/{next_up}"
             return utils.parse_view(base, False, True, dub)
 
         return utils.parse_view(base, True, False, dub)
@@ -262,7 +254,7 @@ class SimklWLF(WatchlistFlavorBase):
         completed = {}
         for dat in data['anime']:
             completed[str(dat['show']['ids']['mal'])] = dat['total_episodes_count']
-        with open(control.completed_json, 'w') as file:
+        with open(control.completed_json, 'w', encoding='utf-8') as file:
             json.dump(completed, file)
 
     def get_all_items(self, status):
@@ -271,7 +263,7 @@ class SimklWLF(WatchlistFlavorBase):
             'extended': 'full',
             # 'next_watch_info': 'yes'
         }
-        r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params)
+        r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params, timeout=10)
         return r.json()
 
     def update_list_status(self, mal_id, status):
@@ -283,7 +275,7 @@ class SimklWLF(WatchlistFlavorBase):
                 }
             }]
         }
-        r = requests.post(f'{self._URL}/sync/add-to-list', headers=self.__headers(), json=data)
+        r = requests.post(f'{self._URL}/sync/add-to-list', headers=self.__headers(), json=data, timeout=10)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['shows']:
@@ -301,7 +293,7 @@ class SimklWLF(WatchlistFlavorBase):
                 "episodes": [{'number': i} for i in range(1, int(episode) + 1)]
             }]
         }
-        r = requests.post(f'{self._URL}/sync/history', headers=self.__headers(), json=data)
+        r = requests.post(f'{self._URL}/sync/history', headers=self.__headers(), json=data, timeout=10)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:
@@ -321,7 +313,7 @@ class SimklWLF(WatchlistFlavorBase):
         if score == 0:
             url = f"{url}/remove"
 
-        r = requests.post(url, headers=self.__headers(), json=data)
+        r = requests.post(url, headers=self.__headers(), json=data, timeout=10)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:
@@ -336,7 +328,7 @@ class SimklWLF(WatchlistFlavorBase):
                 }
             }]
         }
-        r = requests.post(f"{self._URL}/sync/history/remove", headers=self.__headers(), json=data)
+        r = requests.post(f"{self._URL}/sync/history/remove", headers=self.__headers(), json=data, timeout=10)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:

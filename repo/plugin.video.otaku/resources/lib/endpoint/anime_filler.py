@@ -10,7 +10,7 @@ def get_data(anime_eng_title):
     filler_list = []
     if anime_eng_title:
         anime_url = re.sub(r'\W', '-', anime_eng_title)
-        r = requests.get(f'{url}/{anime_url}')
+        r = requests.get(f'{url}/{anime_url}', timeout=10)
         if r.ok:
             soup = BeautifulSoup(r.text, 'html.parser')
             episode_list = soup.find('table', class_="EpisodeList")

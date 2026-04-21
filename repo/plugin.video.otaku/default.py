@@ -15,27 +15,22 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-import pickle
 import os
 import sys
 import xbmcplugin
-import xbmcgui
 
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib import WatchlistIntegration
 
-
 BROWSER = OtakuBrowser.BROWSER
+
 
 def add_last_watched(items: list) -> list:
     mal_id = control.getInt("addon.last_watched")
     if mal_id != -1:
-        show = database.get_show(mal_id)
-        if show:
-            kodi_meta = pickle.loads(show['kodi_meta'])
+        if kodi_meta := database.get_show_kodi_meta(mal_id):
             last_watched = f"{control.lang(30000)}[I]{kodi_meta['title_userPreferred']}[/I]"
             info = {
                 'UniqueIDs': {'mal_id': str(mal_id)},
@@ -60,7 +55,8 @@ def ANIMES_PAGE(payload: str, params: dict) -> None:
     payload_split = payload.split("/", 1)
     mal_id = int(payload_split[0])
     # eps_watched = int(payload_split[1])
-    control.draw_items(*database.cache(OtakuBrowser.get_anime_init, 60 * 8, False, mal_id))
+
+    control.draw_items(*OtakuBrowser.get_anime_init(mal_id))
 
 
 @Route('find_recommendations/*')
@@ -71,10 +67,11 @@ def FIND_RECOMMENDATIONS(payload: str, params: dict) -> None:
     # eps_watched = int(payload_split[2])
 
     page = int(params.get('page', 1))
+
     recommendations = BROWSER.get_recommendations(mal_id, page)
     control.draw_items(recommendations, 'tvshows')
     if recommendations and "Next Page" in recommendations[-1].get('name'):
-        database.background_cache(BROWSER.recommendations, 60 * 8, mal_id, page + 1)
+        database.background_cache(BROWSER.get_recommendations, 24, mal_id, page + 1)
 
 
 @Route('find_relations/*')
@@ -86,38 +83,46 @@ def FIND_RELATIONS(payload: str, params: dict) -> None:
 
     control.draw_items(BROWSER.get_relations(mal_id), 'tvshows')
 
-
 @Route('airing_anime')
 def AIRING_ANIME(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    airing_anime = database.cache(BROWSER.get_airing_anime, 60 * 8, False, page)
+    airing_anime = database.cache(BROWSER.get_airing_anime, 24, True, page)
     control.draw_items(airing_anime, 'tvshows')
     if airing_anime and "Next Page" in airing_anime[-1].get('name'):
-        database.background_cache(BROWSER.get_airing_anime, 60 * 8, page + 1)
+        database.background_cache(BROWSER.get_airing_anime, 24, page + 1)
+
+
+@Route('aired_last_season')
+def AIRED_LAST_SEASON(payload: str, params: dict) -> None:
+    page = int(params.get('page', 1))
+    last_season = database.cache(BROWSER.get_last_season, 24, True, page)
+    control.draw_items(last_season, 'tvshows')
+    if last_season and "Next Page" in last_season[-1].get('name'):
+        database.background_cache(BROWSER.get_last_season, 24, page + 1)
 
 
 @Route('upcoming_next_season')
 def UPCOMING_NEXT_SEASON(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    next_season = database.cache(BROWSER.get_upcoming_next_season, 60 * 8, False, page)
+    next_season = database.cache(BROWSER.get_upcoming_next_season, 24, True, page)
     control.draw_items(next_season, 'tvshows')
     if next_season and "Next Page" in next_season[-1].get('name'):
-        database.background_cache(BROWSER.get_upcoming_next_season, 60 * 8, page + 1)
+        database.background_cache(BROWSER.get_upcoming_next_season, 24, page + 1)
 
 
 @Route('top_100_anime')
 def TOP_100_ANIME_PAGES(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    top_100 = database.cache(BROWSER.get_top_100_anime, 60 * 8, False, page)
+    top_100 = database.cache(BROWSER.get_top_100_anime, 24, True, page)
     control.draw_items(top_100, 'tvshows')
     if top_100 and "Next Page" in top_100[-1].get('name'):
-        database.background_cache(BROWSER.get_top_100_anime, 60 * 8, page + 1)
+        database.background_cache(BROWSER.get_top_100_anime, 24, page + 1)
 
 
 @Route('airing_calendar')
 def AIRING_CALENDAR(payload: str, params: dict) -> None:
     page = int(params.get('page', 1))
-    calendar = database.cache(BROWSER.get_airing_calendar, 60 * 8, False, page)
+    calendar = database.cache(BROWSER.get_airing_calendar, 24, True, page)
     if calendar:
         from resources.lib.windows.anichart import Anichart
         window = Anichart('anichart.xml', control.ADDON_PATH, calendar=calendar)
@@ -133,7 +138,7 @@ def GENRES_PAGES(payload: str, params: dict) -> None:
         genre_page = BROWSER.genres_payload(genres, tags, page)
         control.draw_items(genre_page, 'tvshows')
         if genre_page and "Next Page" in genre_page[-1].get('name'):
-            database.background_cache(BROWSER.genres_payload, 60 * 8, genres, tags, page + 1)
+            database.background_cache(BROWSER.genres_payload, 24, genres, tags, page + 1)
     else:
         control.draw_items(BROWSER.get_genres(), 'tvshows')
 
@@ -158,10 +163,10 @@ def SEARCH(payload: str, params: dict) -> None:
             return None
         if control.getInt('searchhistory') == 0:
             database.addSearchHistory(query, 'show')
-    search_page = database.cache(BROWSER.get_search, 60 * 8, False, query, page)
+    search_page = database.cache(BROWSER.get_search, 24, True, query, page)
     control.draw_items(search_page, 'tvshows')
     if search_page and "Next Page" in search_page[-1].get('name'):
-        database.background_cache(BROWSER.get_search, 60 * 8, query, page + 1)
+        database.background_cache(BROWSER.get_search, 24, query, page + 1)
     return None
 
 
@@ -215,7 +220,7 @@ def PLAY(payload: str, params: dict) -> None:
             del window
     else:
         control.notify(control.ADDON_NAME, "No Sources Found!")
-        xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
+        # xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
     control.exit_code()
 
 
@@ -253,7 +258,7 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
             del window
     else:
         control.notify(control.ADDON_NAME, "No Sources Found!")
-        xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
+        # xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
     control.exit_code()
 
 
@@ -269,9 +274,12 @@ def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
         episode = 1
 
     flavor = WatchlistFlavor.get_update_flavor()
-    WatchlistIntegration.watchlist_update_episode(mal_id, episode)
-    control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
-    control.refresh()
+    if flavor is not None:
+        WatchlistIntegration.watchlist_update_episode(mal_id, episode)
+        control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
+        control.refresh()
+    else:
+        control.ok_dialog(control.ADDON_NAME, 'No Watchlist Enabled: \n\nPlease enable [B]Update Watchlist[/B]')
     control.exit_code()
 
 
@@ -286,7 +294,6 @@ def DELETE_ANIME_DATABASE(payload: str, params: dict) -> None:
     database.remove_from_database('shows', mal_id)
     database.remove_from_database('episodes', mal_id)
     database.remove_from_database('show_data', mal_id)
-    database.remove_from_database('shows_meta', mal_id)
     control.notify(control.ADDON_NAME, 'Removed from database')
     control.exit_code()
 
@@ -310,7 +317,6 @@ def AUTH(payload: str, params: dict) -> None:
         Torbox().auth()
 
 
-
 @Route('refresh/*')
 def REFRESH(payload: str, params: dict) -> None:
     if payload == 'realdebrid':
@@ -321,45 +327,13 @@ def REFRESH(payload: str, params: dict) -> None:
         DebridLink().refreshToken()
 
 
-@Route('fanart_select/*')
-def FANART_SELECT(payload: str, params: dict) -> None:
-    payload_split = payload.split("/", 2)
-    # path = int(payload_split[0])
-    mal_id = int(payload_split[1])
-    # eps_watched = int(payload_split[2])
-
-    if not (episode := database.get_episode(mal_id)):
-        OtakuBrowser.get_anime_init(mal_id)
-        episode = database.get_episode(mal_id)
-    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
-    fanart_display = fanart + ["None", "Random (Defualt)"]
-    fanart += ["None", ""]
-    control.draw_items([utils.allocate_item(f, f'fanart/{mal_id}/{i}', False, False, [], f, {}, fanart=f, landscape=f) for i, f in enumerate(fanart_display)], '')
-
-
-@Route('fanart/*')
-def FANART(payload: str, params: dict) -> None:
-    payload_list = payload.split("/", 1)
-    mal_id = int(payload_list[0])
-    select = int(payload_list[1])
-
-    episode = database.get_episode(mal_id)
-    fanart = pickle.loads(episode['kodi_meta'])['image']['fanart'] or []
-    fanart_display = fanart + ["None", "Random"]
-    fanart += ["None", ""]
-    fanart_all = control.getStringList(f'fanart.all')
-    fanart_all.append(str(mal_id))
-    control.setSetting(f'fanart.select.{mal_id}', fanart[select])
-    control.setStringList(f'fanart.all', fanart_all)
-    control.ok_dialog(control.ADDON_NAME, f"Fanart Set to {fanart_display[select]}")
-
-
 # ### Menu Items ###
 @Route('')
 def LIST_MENU(payload: str, params: dict) -> None:
     MENU_ITEMS = [
         (30001, "airing_anime", True, 'airing_anime.png'),
         (30007, 'airing_calendar', False, 'airing_anime_calendar.png'),
+        (30008, "aired_last_season", True, 'upcoming.png'),
         (30002, "upcoming_next_season", True, 'upcoming.png'),
         (30003, "top_100_anime", True, 'top_100_anime.png'),
         (30004, "genres//", True, 'genres_&_tags.png'),
@@ -390,7 +364,6 @@ def TOOLS_MENU(payload: str, params: dict) -> None:
         (control.lang(30015), "completed_sync", "sync_completed.png", {'plot': "Sync Completed Anime with Otaku"}),
         (control.lang(30016), 'download_manager', 'download_manager.png', {'plot': "Open Download Manager"}),
         (control.lang(30017), 'sort_select', 'sort_select.png', {'plot': "Choose Sorting..."}),
-        (control.lang(30018), 'clear_selected_fanart', 'delete.png', {'plot': "Clear All Selected Fanart"})
         # ("install Packages", 'install_packages', '', {'plot': "Install Custom Packages"})
     ]
     control.draw_items([utils.allocate_item(name, url, False, False, [], image, info) for name, url, image, info in TOOLS_ITEMS], '')
@@ -450,17 +423,6 @@ def DOWNLOAD_MANAGER(payload: str, params: dict) -> None:
         control.exit_code()
 
 
-@Route('clear_selected_fanart')
-def CLEAR_SELECTED_FANART(payload: str, params: dict) -> None:
-    fanart_all = control.getStringList(f'fanart.all')
-    for i in fanart_all:
-        control.setSetting(f'fanart.select.{i}', '')
-    control.setStringList('fanart.all', [])
-    control.ok_dialog(control.ADDON_NAME, "Completed")
-    if params.get('setting'):
-        control.exit_code()
-
-
 @Route('sort_select')
 def SORT_SELECT(payload: str, params: dict) -> None:
     from resources.lib.windows.sort_select import SortSelect
@@ -474,7 +436,6 @@ def SORT_SELECT(payload: str, params: dict) -> None:
 def INSTALL_PACKAGES(payload: str, params: dict) -> None:
     from resources.lib.pages import custom_providers
     custom_providers.main()
-    control.print('installed_packages')
 
 
 @Route('toggleLanguageInvoker')
@@ -502,7 +463,7 @@ def IMPORT_SETTINGS(payload: str, params: dict) -> None:
     control.exit_code()
 
 @Route('export_settings')
-def IMPORT_SETTINGS(payload: str, params: dict) -> None:
+def EXPORT_SETTINGS(payload: str, params: dict) -> None:
     import xbmcvfs
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
     export_location = control.browse(3, f"{control.ADDON_NAME}: Export Location", 'files')

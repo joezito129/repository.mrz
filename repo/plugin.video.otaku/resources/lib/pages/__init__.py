@@ -9,11 +9,12 @@ from resources.lib.windows import sort_select
 
 
 def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
-    import pickle
-    from resources.lib.OtakuBrowser import BROWSER
-    if not (show := database.get_show(mal_id)):
+    import json
+    if not (kodi_meta := database.get_show_kodi_meta(mal_id)):
+        from resources.lib.OtakuBrowser import BROWSER
         show = BROWSER.get_anime(mal_id)
-    kodi_meta = pickle.loads(show['kodi_meta'])
+        kodi_meta = msgpack.loads(show['kodi_meta'])
+
     actionArgs = {
         'name': kodi_meta['name'],
         'ename': kodi_meta['ename'],
@@ -41,7 +42,6 @@ class Sources(GetSources):
         self.remainingProviders = self.torrentProviders + self.otherProviders
 
         self.torrents_qual_len = [0, 0, 0, 0]
-        self.embeds_qual_len = [0, 0, 0, 0]
         self.return_data = []
         self.progress = 1
         self.threads = []
@@ -50,14 +50,13 @@ class Sources(GetSources):
         self.torrentSources = []
         self.torrentCacheSources = []
         self.torrentUnCacheSources = []
-        self.embedSources = []
         self.usercloudSources = []
         self.local_files = []
 
     def getSources(self, args):
         title = args['name']
         title_en = args['ename']
-        titles = [title, title_en] + args.get('synonyms', [])
+        # titles = [title, title_en] + args.get('synonyms', [])
         titles = [title, title_en]
         mal_id = args['mal_id']
         episode = args['episode']
@@ -100,10 +99,10 @@ class Sources(GetSources):
             if not self.silent:
                 self.updateProgress()
                 self.update_properties("4K: %s | 1080: %s | 720: %s | SD: %s" % (
-                    control.colorstr(self.torrents_qual_len[0] + self.embeds_qual_len[0]),
-                    control.colorstr(self.torrents_qual_len[1] + self.embeds_qual_len[1]),
-                    control.colorstr(self.torrents_qual_len[2] + self.embeds_qual_len[2]),
-                    control.colorstr(self.torrents_qual_len[3] + self.embeds_qual_len[3])
+                    control.colorstr(self.torrents_qual_len[0]),
+                    control.colorstr(self.torrents_qual_len[1]),
+                    control.colorstr(self.torrents_qual_len[2]),
+                    control.colorstr(self.torrents_qual_len[3])
                 ))
             xbmc.sleep(500)
             if self.canceled or not self.remainingProviders or (self.terminate_on_cloud and self.cloud_files):
@@ -111,7 +110,7 @@ class Sources(GetSources):
             runtime = time.perf_counter() - start_time
             self.progress = runtime / timeout * 100
 
-        if self.torrentSources or self.embedSources or self.cloud_files or self.local_files:
+        if self.torrentSources or self.cloud_files or self.local_files:
             self.return_data = self.sortSources()
         else:
             self.return_data = []
@@ -137,7 +136,7 @@ class Sources(GetSources):
         self.remainingProviders.remove('Cloud Inspection')
 
     def sortSources(self) -> list:
-        all_list = self.torrentSources + self.embedSources + self.cloud_files + self.local_files
+        all_list = self.torrentSources + self.cloud_files + self.local_files
         sortedList = [x for x in all_list if control.getInt('general.minResolution') <= x['quality'] <= control.getInt('general.maxResolution')]
 
         # Filter out sources
@@ -162,11 +161,4 @@ class Sources(GetSources):
             len([i for i in self.torrentSources if i['quality'] == 3]),
             len([i for i in self.torrentSources if i['quality'] == 2]),
             len([i for i in self.torrentSources if i['quality'] == 1])
-        ]
-
-        self.embeds_qual_len = [
-            len([i for i in self.embedSources if i['quality'] == 4]),
-            len([i for i in self.embedSources if i['quality'] == 3]),
-            len([i for i in self.embedSources if i['quality'] == 2]),
-            len([i for i in self.embedSources if i['quality'] == 0])
         ]

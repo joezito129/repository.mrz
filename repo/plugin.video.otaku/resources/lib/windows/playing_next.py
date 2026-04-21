@@ -11,8 +11,8 @@ class PlayingNext(BaseWindow):
         self.playing_file = self.player.getPlayingFile()
         self.closed = False
         self.actioned = False
-        self.total_time = int(self.player.getTotalTime())
-        self.duration = int(self.total_time - self.player.getTime())
+        self.total_time = self.player.getTotalTime()
+        self.duration = self.total_time - self.player.getTime()
         self.skipoutro_end = actionArgs['skipoutro_end']
 
     def onInit(self):
@@ -20,17 +20,14 @@ class PlayingNext(BaseWindow):
 
     def background_tasks(self):
         progress_bar = self.getControl(3014)
-        while not self.closed and self.playing_file == self.player.getPlayingFile():
-            xbmc.sleep(1000)
+        while not self.closed and self.player.isPlayingVideo() and self.playing_file == self.player.getPlayingFile():
             if progress_bar:
-                percent = ((self.total_time - int(self.player.getTime())) / self.duration) * 100
+                percent = (self.total_time - self.player.getTime()) / self.duration * 100
                 if percent < 2:
                     break
                 progress_bar.setPercent(percent)
+            xbmc.sleep(1000)
         self.close()
-
-    def doModal(self):
-        super(PlayingNext, self).doModal()
 
     def close(self):
         self.closed = True

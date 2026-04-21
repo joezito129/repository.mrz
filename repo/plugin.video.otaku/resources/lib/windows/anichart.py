@@ -18,13 +18,12 @@ class Anichart(BaseWindow):
     def onInit(self) -> None:
         self.display_list  = self.getControl(1000)
         fanart_disable = control.getBool('interface.fanart.disable')
-        fanart_select_bool = control.getBool('context.otaku.fanartselect')
         for c in self.calendar:
             if c:
                 menu_item = xbmcgui.ListItem(c['name'], offscreen=True)
                 menu_item.setPath(control.addon_url(c['url']))
                 control.set_videotags(menu_item, c['info'])
-                art = control.handle_set_fanart(c['image'], c['info'], fanart_disable, fanart_select_bool)
+                art = control.handle_set_fanart(c['image'], fanart_disable)
                 menu_item.setArt(art)
                 self.display_list.addItem(menu_item)
         self.setFocusId(1000)

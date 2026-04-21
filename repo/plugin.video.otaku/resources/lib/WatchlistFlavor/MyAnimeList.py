@@ -3,9 +3,8 @@ import re
 import time
 import requests
 
-from resources.lib.ui import utils, control
+from resources.lib.ui import utils, control, database
 from resources.lib.WatchlistFlavor.WatchlistFlavorBase import WatchlistFlavorBase
-from resources.lib.ui.divide_flavors import div_flavor
 
 
 class MyAnimeListWLF(WatchlistFlavorBase):
@@ -36,7 +35,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'code_verifier': code_verifier,
             'grant_type': 'authorization_code'
         }
-        r = requests.post(oauth_url, data=data)
+        r = requests.post(oauth_url, data=data, timeout=10)
         if not r.ok:
             return False
         res = r.json()
@@ -46,7 +45,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         control.setString('mal.refresh', self.refresh)
         control.setInt('mal.expiry', int(time.time()) + int(res['expires_in']))
 
-        user = requests.get(f'{self._URL}/users/@me', headers=self.__headers(), params={'fields': 'name'})
+        user = requests.get(f'{self._URL}/users/@me', headers=self.__headers(), params={'fields': 'name'}, timeout=10)
         user = user.json()
         self.username = user['name']
         control.setString('mal.username', self.username)
@@ -60,7 +59,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'grant_type': 'refresh_token',
             'refresh_token': control.getString('mal.refresh')
         }
-        r = requests.post(oauth_url, data=data)
+        r = requests.post(oauth_url, data=data, timeout=10)
         res = r.json()
         control.setString('mal.token', res['access_token'])
         control.setString('mal.refresh', res['refresh_token'])
@@ -71,7 +70,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         if not hasnextpage or not control.is_addon_visible() and control.getBool('widget.hide.nextpage'):
             return []
         next_page = page + 1
-        name = "Next Page (%d)" % next_page
+        name = f"Next Page ({next_page})"
         offset = (re.compile("offset=(.+?)&").findall(hasnextpage))[0]
         return [utils.allocate_item(name, f'{base_url}/{offset}?page={next_page}', True, False, [], 'next.png', {'plot': name}, fanart='next.png')]
 
@@ -130,7 +129,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return self._process_status_view(url, params, next_up, f'watchlist_status_type_pages/mal/{status}', page)
 
     def _process_status_view(self, url, params, next_up, base_plugin_url, page):
-        r = requests.get(url, headers=self.__headers(), params=params)
+        r = requests.get(url, headers=self.__headers(), params=params, timeout=10)
         if r.ok:
             results = r.json()
             all_results = map(self._base_watchlist_status_view, results['data']) if next_up is None else map(self._base_next_up_view, results['data'])
@@ -143,11 +142,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             all_results = []
         return all_results
 
-    @div_flavor
-    def _base_watchlist_status_view(self, res, mal_dub=None):
+
+    def _base_watchlist_status_view(self, res):
         node = res['node']
         mal_id = node['id']
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
         title = node['title']
         try:
             if self.title_lang == 'english':
@@ -210,11 +210,10 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return utils.parse_view(base, True, False, dub)
 
 
-    @div_flavor
-    def _base_next_up_view(self, res, mal_dub=None):
+    def _base_next_up_view(self, res):
         node = res['node']
         mal_id = node['id']
-        dub = bool(mal_dub is not None and mal_dub.get(str(mal_id)))
+        dub = database.check_dub_status(mal_id) if control.getBool("divflavors.dubonly") or control.getBool("divflavors.showdub") else False
 
         eps_watched = res['list_status']["num_episodes_watched"]
         next_up = eps_watched + 1
@@ -233,12 +232,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'title': title,
             'tvshowtitle': base_title,
             'duration': node['average_episode_duration'],
-            'mediatype': 'episode',
+            'mediatype': 'episode'
         }
 
-        mal_id, next_up_meta, show = self._get_next_up_meta(mal_id, eps_watched)
-        if next_up_meta is not None:
-            if (title_ := next_up_meta.get('title')) is not None:
+        mal_id, next_up_meta = self._get_next_up_meta(mal_id, eps_watched)
+        if next_up_meta:
+            if (title_ := next_up_meta['title']) is not None:
                 info['title'] = f"{title} - {title_}"
             if (image_ := next_up_meta.get('image')) is not None:
                 image = image_
@@ -248,7 +247,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
                 info['aired'] = aired
 
         base = {
-            "name": title,
+            "name": info['title'],
             "url": f'watchlist_to_ep/{mal_id}/{eps_watched}',
             "image": image,
             "info": info,
@@ -273,7 +272,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         }
 
         url = f'{self._URL}/anime/{mal_id}'
-        r = requests.get(url, headers=self.__headers(), params=params)
+        r = requests.get(url, headers=self.__headers(), params=params, timeout=10)
         results = r.json().get('my_list_status')
         if not results:
             return {}
@@ -285,8 +284,6 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return anime_entry
 
     def save_completed(self):
-        import json
-
         data = self.get_user_anime_list('completed')
         completed_ids = {}
         for dat in data:
@@ -295,7 +292,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             if (episodes := node.get('num_episodes')) is not None:
                 completed_ids[str(mal_id)] = int(episodes)
 
-        with open(control.completed_json, 'w') as file:
+        with open(control.completed_json, 'w', encoding='utf-8') as file:
             json.dump(completed_ids, file)
 
     def get_user_anime_list(self, status):
@@ -310,12 +307,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'limit': 1000,
             "fields": ','.join(fields)
         }
-        r = requests.get(f'{self._URL}/users/@me/animelist', headers=self.__headers(), params=params)
+        r = requests.get(f'{self._URL}/users/@me/animelist', headers=self.__headers(), params=params, timeout=10)
         res = r.json()
         paging = res['paging']
         data = res['data']
         while paging.get('next'):
-            r = requests.get(paging['next'], headers=self.__headers())
+            r = requests.get(paging['next'], headers=self.__headers(), timeout=10)
             res = r.json()
             paging = res['paging']
             data += res['data']
@@ -325,23 +322,23 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         data = {
             "status": status,
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=10)
         return r.ok
 
     def update_num_episodes(self, mal_id, episode):
         data = {
             'num_watched_episodes': int(episode)
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=10)
         return r.ok
 
     def update_score(self, mal_id, score):
         data = {
             "score": score,
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data)
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=10)
         return r.ok
 
     def delete_anime(self, mal_id):
-        r = requests.delete(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers())
+        r = requests.delete(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), timeout=10)
         return r.ok

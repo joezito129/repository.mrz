@@ -55,8 +55,12 @@ class Sources(BrowserBase.BrowserBase):
         config_torrentio = "|".join([f"{k}={v}" for k, v in config.items()])
 
         url = f"{self._BASE_URL}/{config_torrentio}/stream/series/kitsu:{self.kitsu_id}:{self.episode}.json"
-        r = requests.get(url, headers=self.headers())
-        data = r.json()
+        r = requests.get(url, headers=self.headers(), timeout=10)
+        if r.ok:
+            data = r.json()
+        else:
+            control.log(f'Torrentio could not find sources: {r.url}', 'warning')
+            return
 
         re_hash = re.compile(r'(?<=\/)([a-f0-9]{40})(?=\/)')
         re_seeders = re.compile(r'👤\s*(\d+)')
@@ -137,7 +141,7 @@ class Sources(BrowserBase.BrowserBase):
                 if media_type != 'movie':
                     self.get_episode_sources()
                 else:
-                    pass
+                    self.get_episode_sources()
                     # self.get_movie_sources()
 
         # remove any duplicate sources
@@ -145,7 +149,7 @@ class Sources(BrowserBase.BrowserBase):
         return {'cached': self.cached, 'uncached': self.uncached}
 
     def get_episode_sources(self) -> None:
-        self.season = database.get_episode(self.mal_id)
+        self.season = database.get_episode(self.mal_id, self.episode)
         if self.season is not None:
             self.season = self.season.get('season', 1)
         self.process_torrentio()

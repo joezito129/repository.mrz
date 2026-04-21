@@ -96,7 +96,7 @@ class Sources(BrowserBase.BrowserBase):
         episode_zfill = str(episode).zfill(2)
         episode_query = {f'- {episode_zfill}'}
 
-        season = database.get_episode(mal_id)
+        season = database.get_episode(mal_id, episode)
         if season:
             season = season.get('season', 1)
             season_zfill = str(season).zfill(2)
