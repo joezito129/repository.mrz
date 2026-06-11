@@ -158,7 +158,7 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     @staticmethod
     def get_base_res(url, params=None):
-        r = requests.get(url, params=params, timeout=10)
+        r = requests.get(url, params=params, timeout=20)
         return r.json()
 
 
@@ -350,11 +350,11 @@ class MalBrowser(BrowserBase.BrowserBase):
         except KeyError:
             base['fanart'] = image
 
-        if kodi_meta.get('thumb') is not None:
+        if kodi_meta.get('thumb'):
             base['landscape'] = random.choice(kodi_meta['thumb'])
         if kodi_meta.get('clearart'):
             base['clearart'] = random.choice(kodi_meta['clearart'])
-        if kodi_meta.get('clearlogo') is not None:
+        if kodi_meta.get('clearlogo'):
             base['clearlogo'] = random.choice(kodi_meta['clearlogo'])
 
         if res.get('type') in ['Movie', 'ONA', 'Special', 'TV Special'] and res['episodes'] == 1:

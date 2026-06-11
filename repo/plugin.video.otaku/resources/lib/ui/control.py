@@ -118,6 +118,8 @@ def copy2clip(txt: str) -> bool:
             process = subprocess.Popen(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE, text=True)
             process.communicate(input=txt)
             return True
+        else:
+            log("Unsupported System copy2clip")
     except Exception as e:
         log(e)
     return False

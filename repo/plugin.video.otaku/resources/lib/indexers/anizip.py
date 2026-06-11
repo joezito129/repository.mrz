@@ -31,7 +31,7 @@ class ANIZIPAPI:
         params = {
             'mal_id': mal_id
         }
-        r = requests.get(f'{self.baseUrl}/mappings', params=params, timeout=10)
+        r = requests.get(f'{self.baseUrl}/mappings', params=params, timeout=20)
         return r.json()
 
     def parse_episode_view(self, res, mal_id, season, poster, fanart, update_time, dub_data, filler_data, episodes=None):
@@ -83,7 +83,7 @@ class ANIZIPAPI:
             pass
         try:
             info['aired'] = res['airDate'][:10]
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
         if self.eps_watched >= episode:
@@ -100,7 +100,7 @@ class ANIZIPAPI:
         if not episodes or len(episodes) <= episode or episode == 1:
             self.episode_create_db.append((mal_id, episode, update_time, season, parsed_json, filler, anidb_ep_id, None))
         elif parsed_json != episodes[episode - 1]['kodi_meta']:
-            self.episode_update_db.append((mal_id, episode, parsed_json))
+            self.episode_update_db.append((parsed_json, mal_id, episode))
 
         if control.getBool('interface.cleantitles') and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["episode"]}'

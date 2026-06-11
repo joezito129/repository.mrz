@@ -8,31 +8,26 @@ from resources.lib.ui import control, database_sync, database
 
 def refresh_apis() -> None:
     control.log("### Refreshing API's")
-    rd_token = control.getString('real_debrid.token')
-    dl_token = control.getString('debrid_link.token')
 
-    kitsu_token = control.getString('kitsu.token')
-    mal_token = control.getString('mal.token')
-
-    if rd_token != '':
+    if control.getString('real_debrid.token'):
         rd_expiry = control.getInt('real_debrid.expiry')
         if time.time() > (rd_expiry - 600):
             from resources.lib.debrid import real_debrid
             real_debrid.RealDebrid().refreshToken()
 
-    if dl_token != '':
+    if control.getString('debrid_link.token'):
         dl_expiry = control.getInt('debrid_link.expiry')
         if time.time() > (dl_expiry - 600):
             from resources.lib.debrid import debrid_link
             debrid_link.DebridLink().refreshToken()
 
-    if kitsu_token != '':
+    if control.getString('kitsu.token'):
         kitsu_expiry = control.getInt('kitsu.expiry')
         if time.time() > (kitsu_expiry - 600):
             from resources.lib.WatchlistFlavor import Kitsu
             Kitsu.KitsuWLF().refresh_token()
 
-    if mal_token != '':
+    if control.getString('mal.token'):
         mal_expiry = control.getInt('mal.expiry')
         if time.time() > (mal_expiry - 600):
             from resources.lib.WatchlistFlavor import MyAnimeList
@@ -47,7 +42,7 @@ def update_mappings_db() -> None:
         file.write(r.content)
 
 
-def sync_watchlist(silent: bool = False) -> None:
+def sync_watchlist(silent: bool) -> None:
     control.log('### Syncing Watchlist')
     if control.getBool('watchlist.sync.enabled'):
         control.log('### Updating Completed Sync')
@@ -186,6 +181,9 @@ class Monitor(xbmc.Monitor):
         load_settings()
         control.process_context()
 
+    # def onNotification(self, sender: str, method: str, data: str) -> None:
+    #     control.log(f'{sender=}, {method=}, {data=}')
+
 
 if __name__ == "__main__":
     control.log('##################  RUNNING MAINTENANCE  ######################')
@@ -200,7 +198,7 @@ if __name__ == "__main__":
         control.setInt('update.time.30', int(time.time()))
     if time.time() > control.getInt('update.time.7') + 604_800:   # 7 days
         update_dub_db()
-        sync_watchlist(True)
+        sync_watchlist(silent=True)
         control.setInt('update.time.7', int(time.time()))
     control.log('##################  MAINTENANCE COMPLETE ######################')
     if control.getBool('general.kodi.cache'):

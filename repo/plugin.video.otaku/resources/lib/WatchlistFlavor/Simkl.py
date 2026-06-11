@@ -31,7 +31,7 @@ class SimklWLF(WatchlistFlavorBase):
             'client_id': self.client_id,
         }
 
-        r = requests.get(f'{self._URL}/oauth/pin', params=params, timeout=10)
+        r = requests.get(f'{self._URL}/oauth/pin', params=params, timeout=20)
         device_code = r.json()
 
         copied = control.copy2clip(device_code["user_code"])
@@ -59,12 +59,12 @@ class SimklWLF(WatchlistFlavorBase):
                 return False
             xbmc.sleep(device_code['interval'] * 1000)
 
-            r = requests.get(f'{self._URL}/oauth/pin/{device_code["user_code"]}', params=params, timeout=10)
+            r = requests.get(f'{self._URL}/oauth/pin/{device_code["user_code"]}', params=params, timeout=20)
             r = r.json()
             if r['result'] == 'OK':
                 self.token = r['access_token']
                 control.setString('simkl.token', self.token)
-                r = requests.post(f'{self._URL}/users/settings', headers=self.__headers(), timeout=10)
+                r = requests.post(f'{self._URL}/users/settings', headers=self.__headers(), timeout=20)
                 if r.ok:
                     user = r.json()['user']
                     self.username = user['name']
@@ -263,7 +263,7 @@ class SimklWLF(WatchlistFlavorBase):
             'extended': 'full',
             # 'next_watch_info': 'yes'
         }
-        r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params, timeout=10)
+        r = requests.get(f'{self._URL}/sync/all-items/anime/{status}', headers=self.__headers(), params=params, timeout=20)
         return r.json()
 
     def update_list_status(self, mal_id, status):
@@ -275,7 +275,7 @@ class SimklWLF(WatchlistFlavorBase):
                 }
             }]
         }
-        r = requests.post(f'{self._URL}/sync/add-to-list', headers=self.__headers(), json=data, timeout=10)
+        r = requests.post(f'{self._URL}/sync/add-to-list', headers=self.__headers(), json=data, timeout=20)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['shows']:
@@ -293,7 +293,7 @@ class SimklWLF(WatchlistFlavorBase):
                 "episodes": [{'number': i} for i in range(1, int(episode) + 1)]
             }]
         }
-        r = requests.post(f'{self._URL}/sync/history', headers=self.__headers(), json=data, timeout=10)
+        r = requests.post(f'{self._URL}/sync/history', headers=self.__headers(), json=data, timeout=20)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:
@@ -313,7 +313,7 @@ class SimklWLF(WatchlistFlavorBase):
         if score == 0:
             url = f"{url}/remove"
 
-        r = requests.post(url, headers=self.__headers(), json=data, timeout=10)
+        r = requests.post(url, headers=self.__headers(), json=data, timeout=20)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:
@@ -328,7 +328,7 @@ class SimklWLF(WatchlistFlavorBase):
                 }
             }]
         }
-        r = requests.post(f"{self._URL}/sync/history/remove", headers=self.__headers(), json=data, timeout=10)
+        r = requests.post(f"{self._URL}/sync/history/remove", headers=self.__headers(), json=data, timeout=20)
         if r.ok:
             r = r.json()
             if not r['not_found']['shows'] or not r['not_found']['movies']:

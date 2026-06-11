@@ -3,7 +3,6 @@ import datetime
 import xbmc
 import threading
 
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from resources.lib.ui import utils, database, control
 from resources.lib import indexers, endpoint
@@ -30,7 +29,7 @@ class JikanAPI:
 
 
     def get_anime_info(self, mal_id):
-        r = requests.get(f'{self.baseUrl}/anime/{mal_id}', timeout=10)
+        r = requests.get(f'{self.baseUrl}/anime/{mal_id}', timeout=20)
         return r.json()['data']
 
     def get_episode_meta(self, mal_id):
@@ -45,7 +44,7 @@ class JikanAPI:
             params = {'page': i + 1}
             if i % 3 == 0:
                 xbmc.sleep(1900)
-            r = requests.get(url, params=params, timeout=10)
+            r = requests.get(url, params=params, timeout=20)
             res = control.json_res(r)
             if r.status_code == 429:
                 control.ok_dialog(control.ADDON_NAME, "Rate Limit Exceeded: Please wait 60 seconds before next request")
@@ -99,7 +98,7 @@ class JikanAPI:
         if not episodes or len(episodes) <= episode or episode == 1:
             self.episode_create_db.append((mal_id, episode, update_time, season, parsed_json, filler, None, None))
         elif parsed_json != episodes[episode - 1]['kodi_meta']:
-            self.episode_update_db.append((mal_id, episode, parsed_json))
+            self.episode_update_db.append((parsed_json, mal_id, episode))
 
         if control.getBool('interface.cleantitles') and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["episode"]}'
@@ -179,5 +178,5 @@ class JikanAPI:
             "page": page,
             "filter": filter_type
         }
-        r = requests.get(f'{self.baseUrl}/top/anime', params, timeout=10)
+        r = requests.get(f'{self.baseUrl}/top/anime', params, timeout=20)
         return r.json()

@@ -104,7 +104,7 @@ class WatchlistPlayer(player):
 
     def onWatchedPercent(self):
         if self._watchlist_update:
-            while self.isPlaying() and not self.updated:
+            while self.isPlayingVideo() and not self.updated:
                 self.current_time = self.getTime()
                 watched_percentage = self.getWatchedPercent()
                 if watched_percentage > control.getInt('watchlist.update.percent'):
@@ -139,7 +139,6 @@ class WatchlistPlayer(player):
                 self.skipoutro_end = self.skipoutro_end + padding_shift
         if self.resume:
             self.seekTime(self.resume)
-
 
         if control.getBool('subtitle.enable'):
             query = {
@@ -183,16 +182,18 @@ class WatchlistPlayer(player):
                 self.skipintro_start = max(1, self.skipintro_start)
                 last_chapter_index = -1
                 intro_chapter = False
-                while self.isPlaying():
+                while self.isPlayingVideo():
                     self.current_time = self.getTime()
                     current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
                     if current_chapter_idx != last_chapter_index:
                         current_chapter_label = xbmc.getInfoLabel('Player.ChapterName').lower()
                         last_chapter_index = current_chapter_idx
                         intro_chapter = any(x in current_chapter_label for x in control.intro_keywords)
-                        if intro_chapter and last_chapter_index != 0:
+                        if intro_chapter and last_chapter_index > 1:
                             # we are waiting because kodi sets chapter too early
                             xbmc.sleep(9000)
+                            if not self.isPlayingVideo():
+                                break
                             # ensure the chapter has not changed again after waiting
                             current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
                             if current_chapter_idx != last_chapter_index:
@@ -212,7 +213,7 @@ class WatchlistPlayer(player):
             if endpoint != 0:
                 last_chapter_index = -1
                 outro_chapter = False
-                while self.isPlaying():
+                while self.isPlayingVideo():
                     self.current_time = self.getTime()
                     current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
                     if current_chapter_idx != last_chapter_index:
@@ -222,6 +223,8 @@ class WatchlistPlayer(player):
                         if outro_chapter and last_chapter_index != 0:
                             # we are waiting because kodi sets chapter too early
                             xbmc.sleep(10000)
+                            if not self.isPlayingVideo():
+                                break
                             # ensure the chapter has not changed again after waiting
                             current_chapter_idx = int(xbmc.getInfoLabel('Player.Chapter'))
                             if current_chapter_idx != last_chapter_index:
@@ -233,7 +236,7 @@ class WatchlistPlayer(player):
                         break
                     xbmc.sleep(5000)
 
-        while self.isPlaying():
+        while self.isPlayingVideo():
             self.current_time = self.getTime()
             xbmc.sleep(5000)
         return None
@@ -247,7 +250,7 @@ class WatchlistPlayer(player):
                 self.skipintro_start = int(skip_times['startTime']) + self.skipintro_offset
                 self.skipintro_end = int(skip_times['endTime']) + self.skipintro_offset
                 self.skipintro_aniskip = True
-                control.log(f'found skip times aniskip: {self.skipintro_start} - {self.skipintro_end}')
+                control.log(f'found skipintro times aniskip: {self.skipintro_start} - {self.skipintro_end}')
 
         if self.skipoutro_aniskip_enable and not self.skipoutro_aniskip:
             skipoutro_aniskip_res = aniskip.get_skip_times(self.mal_id, self.episode, 'ed')
@@ -256,7 +259,7 @@ class WatchlistPlayer(player):
                 self.skipoutro_start = int(skip_times['startTime']) + self.skipoutro_offset
                 self.skipoutro_end = int(skip_times['endTime']) + self.skipoutro_offset
                 self.skipoutro_aniskip = True
-                control.log(f'found skip times aniskip: {self.skipoutro_start} - {self.skipoutro_end}')
+                control.log(f'found skipoutro times aniskip: {self.skipoutro_start} - {self.skipoutro_end}')
 
     def process_animeskip(self):
         anilist_id = database.get_show_id(self.mal_id, 'anilist_id')
@@ -264,7 +267,7 @@ class WatchlistPlayer(player):
             return
 
         if (self.skipintro_aniskip_enable and not self.skipintro_aniskip) or (self.skipoutro_aniskip_enable and not self.skipoutro_aniskip):
-            skip_times = anime_skip.get_time_stamps(anime_skip.get_episode_ids(str(anilist_id), self.episode))
+            skip_times = anime_skip.get_time_stamps(anime_skip.get_episode_ids(anilist_id, self.episode))
             intro_start = None
             intro_end = None
             outro_start = None
@@ -336,6 +339,6 @@ class Monitor(xbmc.Monitor):
         super().__init__()
         self.playbackerror = False
 
-    def onNotification(self, sender, method, data):
+    def onNotification(self, sender: str, method: str, data: str) -> None:
         if method == 'Player.OnStop':
             self.playbackerror = True

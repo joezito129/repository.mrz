@@ -35,7 +35,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'code_verifier': code_verifier,
             'grant_type': 'authorization_code'
         }
-        r = requests.post(oauth_url, data=data, timeout=10)
+        r = requests.post(oauth_url, data=data, timeout=20)
         if not r.ok:
             return False
         res = r.json()
@@ -45,7 +45,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         control.setString('mal.refresh', self.refresh)
         control.setInt('mal.expiry', int(time.time()) + int(res['expires_in']))
 
-        user = requests.get(f'{self._URL}/users/@me', headers=self.__headers(), params={'fields': 'name'}, timeout=10)
+        user = requests.get(f'{self._URL}/users/@me', headers=self.__headers(), params={'fields': 'name'}, timeout=20)
         user = user.json()
         self.username = user['name']
         control.setString('mal.username', self.username)
@@ -59,7 +59,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'grant_type': 'refresh_token',
             'refresh_token': control.getString('mal.refresh')
         }
-        r = requests.post(oauth_url, data=data, timeout=10)
+        r = requests.post(oauth_url, data=data, timeout=20)
         res = r.json()
         control.setString('mal.token', res['access_token'])
         control.setString('mal.refresh', res['refresh_token'])
@@ -129,7 +129,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         return self._process_status_view(url, params, next_up, f'watchlist_status_type_pages/mal/{status}', page)
 
     def _process_status_view(self, url, params, next_up, base_plugin_url, page):
-        r = requests.get(url, headers=self.__headers(), params=params, timeout=10)
+        r = requests.get(url, headers=self.__headers(), params=params, timeout=20)
         if r.ok:
             results = r.json()
             all_results = map(self._base_watchlist_status_view, results['data']) if next_up is None else map(self._base_next_up_view, results['data'])
@@ -272,7 +272,7 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         }
 
         url = f'{self._URL}/anime/{mal_id}'
-        r = requests.get(url, headers=self.__headers(), params=params, timeout=10)
+        r = requests.get(url, headers=self.__headers(), params=params, timeout=20)
         results = r.json().get('my_list_status')
         if not results:
             return {}
@@ -307,12 +307,12 @@ class MyAnimeListWLF(WatchlistFlavorBase):
             'limit': 1000,
             "fields": ','.join(fields)
         }
-        r = requests.get(f'{self._URL}/users/@me/animelist', headers=self.__headers(), params=params, timeout=10)
+        r = requests.get(f'{self._URL}/users/@me/animelist', headers=self.__headers(), params=params, timeout=20)
         res = r.json()
         paging = res['paging']
         data = res['data']
         while paging.get('next'):
-            r = requests.get(paging['next'], headers=self.__headers(), timeout=10)
+            r = requests.get(paging['next'], headers=self.__headers(), timeout=20)
             res = r.json()
             paging = res['paging']
             data += res['data']
@@ -322,23 +322,23 @@ class MyAnimeListWLF(WatchlistFlavorBase):
         data = {
             "status": status,
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=10)
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=20)
         return r.ok
 
     def update_num_episodes(self, mal_id, episode):
         data = {
             'num_watched_episodes': int(episode)
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=10)
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=20)
         return r.ok
 
     def update_score(self, mal_id, score):
         data = {
             "score": score,
         }
-        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=10)
+        r = requests.put(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), data=data, timeout=20)
         return r.ok
 
     def delete_anime(self, mal_id):
-        r = requests.delete(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), timeout=10)
+        r = requests.delete(f'{self._URL}/anime/{mal_id}/my_list_status', headers=self.__headers(), timeout=20)
         return r.ok

@@ -91,6 +91,8 @@ class Sources(BrowserBase.BrowserBase):
     def torbox_cloud_inspection(self, title: str, title_en: str, episode: str) -> None:
         api = torbox.Torbox()
         torrents = api.list_torrents()
+        if not torrents:
+            return
         query = f'("{title}"|"{title_en}")'
         filenames = [re.sub(r'\[.*?]\s*', '', i['name'].replace(',', '')) for i in torrents]
         close_matches = difflib.get_close_matches(query, filenames, cutoff=0.37)

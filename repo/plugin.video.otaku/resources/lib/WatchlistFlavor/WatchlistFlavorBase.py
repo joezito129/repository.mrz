@@ -89,7 +89,7 @@ class WatchlistFlavorBase:
             'type': "mal",
             "id": mal_id
         }
-        r = requests.get('https://armkai.vercel.app/api/search', params=params, timeout=10)
+        r = requests.get('https://armkai.vercel.app/api/search', params=params, timeout=20)
         res = r.json()
         flavor_id = res.get(flavor[:-3])
         database.update_mapping(mal_id, flavor, flavor_id)
@@ -104,12 +104,12 @@ class WatchlistFlavorBase:
         elif flavor == 'kitsu_id':
             mapping = 'Kitsu'
         else:
-            mapping = None
+            return None
         params = {
             'id': mal_id,
             'providor': 'MyAnimeList'
         }
-        r = requests.get('https://find-my-anime.dtimur.de/api', params=params, timeout=10).json()
+        r = requests.get('https://find-my-anime.dtimur.de/api', params=params, timeout=20).json()
         flavor_id = r[0]['providerMapping'][mapping]
         database.update_mapping(mal_id, flavor, flavor_id)
         return flavor_id

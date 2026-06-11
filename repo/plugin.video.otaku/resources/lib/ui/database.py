@@ -44,7 +44,7 @@ def cache(function, duration, disk_db: bool, *args, **kwargs):
 
     :param function: Function to be executed
     :param duration: Duration of validity of cache in hours
-     :param disk_db: Bool save response to cache.db file
+    :param disk_db: Bool save response to cache.db file
     :param args: Optional arguments for the provided function
     :param kwargs: Optional keyword arguments for the provided function
     """
@@ -247,9 +247,10 @@ def update_episode_column(mal_id: int, episode: int, column: str, value):
         cursor.execute(f"UPDATE episodes SET {column}=? WHERE mal_id=? AND number=?", (value, mal_id, episode))
         cursor.connection.commit()
 
+
 def update_episode_kodi_meta_batch(episode_batch: list):
     with SQL(control.malSyncDB) as cursor:
-        cursor.executemany("UPDATE episodes SET kodi_meta WHERE mal_id=? AND number=?", (episode_batch))
+        cursor.executemany("UPDATE episodes SET kodi_meta=? WHERE mal_id=? AND number=?", episode_batch)
         cursor.connection.commit()
 
 

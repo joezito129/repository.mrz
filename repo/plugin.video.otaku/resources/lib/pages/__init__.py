@@ -9,8 +9,8 @@ from resources.lib.windows import sort_select
 
 
 def get_kodi_sources(mal_id, episode, media_type, rescrape=False, source_select=False, silent=False):
-    import json
     if not (kodi_meta := database.get_show_kodi_meta(mal_id)):
+        from resources.packages import msgpack
         from resources.lib.OtakuBrowser import BROWSER
         show = BROWSER.get_anime(mal_id)
         kodi_meta = msgpack.loads(show['kodi_meta'])

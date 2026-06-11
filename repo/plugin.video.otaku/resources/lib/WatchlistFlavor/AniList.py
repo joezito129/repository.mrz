@@ -31,7 +31,7 @@ class AniListWLF(WatchlistFlavorBase):
         self.token = control.getString('anilist.token')
 
         variables = {"name": self.username}
-        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         if "errors" in results.keys():
             control.setString('anilist.token', '')
@@ -168,7 +168,7 @@ class AniListWLF(WatchlistFlavorBase):
         return self.process_status_view(query, variables, next_up)
 
     def process_status_view(self, query, variables, next_up):
-        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._URL, headers=self.__headers(), json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         lists = results['data']['MediaListCollection']['lists']
         entries = []

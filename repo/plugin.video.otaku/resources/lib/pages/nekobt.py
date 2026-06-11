@@ -26,7 +26,7 @@ class Sources(BrowserBase.BrowserBase):
         params = {
             "query": self.titles[0]
         }
-        r = self.S.get(url, params=params, timeout=10)
+        r = self.S.get(url, params=params, timeout=20)
         res = control.json_res(r)
         if not r.ok:
             control.log(res, 'warning')
@@ -114,7 +114,7 @@ class Sources(BrowserBase.BrowserBase):
 
     def process_nekobt(self, url: str, params: dict, episode_zfill: str, season_zfill: str) -> list:
         all_sources = []
-        r = self.S.get(url, params=params, timeout=10)
+        r = self.S.get(url, params=params, timeout=20)
         res = control.json_res(r)
         if not r.ok:
             control.log(res, 'warning')

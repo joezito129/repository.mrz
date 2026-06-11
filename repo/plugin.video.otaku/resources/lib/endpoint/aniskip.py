@@ -8,6 +8,6 @@ def get_skip_times(mal_id, episodenum, skip_type) -> dict:
         'types': skip_type,
         'episodeLength': 0
     }
-    r = requests.get(url, params=params, timeout=10)
+    r = requests.get(url, params=params, timeout=20)
     res = r.json() if r.ok else {}
     return res

@@ -1,5 +1,4 @@
 import json
-
 import requests
 import xbmcgui
 import xbmcplugin
@@ -9,24 +8,6 @@ from resources.lib.WatchlistIntegration import watchlist_update_episode
 from resources.lib.debrid import all_debrid, debrid_link, premiumize, real_debrid, torbox
 from resources.lib.ui import control, source_utils, player
 from resources.lib.windows.base_window import BaseWindow
-
-
-class HookMimetype:
-    __MIME_HOOKS = {}
-
-    @classmethod
-    def trigger(cls, mimetype, item):
-        if mimetype in cls.__MIME_HOOKS.keys():
-            return cls.__MIME_HOOKS[mimetype](item)
-        return item
-
-    def __init__(self, mimetype):
-        self._type = mimetype
-
-    def __call__(self, func):
-        assert self._type not in self.__MIME_HOOKS.keys()
-        self.__MIME_HOOKS[self._type] = func
-        return func
 
 class Resolver(BaseWindow):
     def __init__(self, xml_file, location, *, actionArgs=None):
@@ -107,11 +88,6 @@ class Resolver(BaseWindow):
                     self.source_select_close()
                 item = xbmcgui.ListItem(path=self.return_data['url'], offscreen=True)
 
-                if self.return_data.get('headers', {}).get('Content-Type'):
-                    item.setProperty('MimeType', self.return_data['headers']['Content-Type'])
-                    # Run any mimetype hook
-                    item = HookMimetype.trigger(self.return_data['headers']['Content-Type'], item)
-
                 if self.context:
                     params = control.window.getProperty('otaku.player.video_info')
                     control.window.clearProperty('otaku.player.video_info')
@@ -173,12 +149,12 @@ class Resolver(BaseWindow):
             return {}
 
         try:
-            r = requests.get(url, stream=True, timeout=10)
+            r = requests.get(url, stream=True, timeout=20)
         except requests.exceptions.SSLError:
             yesno = control.yesno_dialog(f'{control.ADDON_NAME}: Request Error',
                                          f'{url}\nWould you like to try without verifying TLS certificate?')
             if yesno == 1:
-                r = requests.get(url, stream=True, verify=False, timeout=10)
+                r = requests.get(url, stream=True, verify=False, timeout=20)
             else:
                 return {}
         except Exception as e:
@@ -239,62 +215,6 @@ class Resolver(BaseWindow):
             self.canceled = True
             self.close()
             control.playList.clear()
-
-@HookMimetype('application/dash+xml')
-def _DASH_HOOK(item):
-    import inputstreamhelper
-    is_helper = inputstreamhelper.Helper('mpd')
-    if is_helper.check_inputstream():
-        stream_url = item.getPath()
-        item.setProperty('inputstream', is_helper.inputstream_addon)
-        if '|' in stream_url:
-            stream_url, headers = stream_url.split('|')
-            item.setProperty('inputstream.adaptive.stream_headers', headers)
-            if control.kodi_version > 21.8:
-                item.setProperty('inputstream.adaptive.common_headers', headers)
-            else:
-                item.setProperty('inputstream.adaptive.stream_params', headers)
-                item.setProperty('inputstream.adaptive.manifest_headers', headers)
-    else:
-        raise Exception("InputStream Adaptive is not supported.")
-    return item
-
-
-@HookMimetype('application/vnd.apple.mpegurl')
-def _HLS_HOOK(item):
-    import inputstreamhelper
-    is_helper = inputstreamhelper.Helper('hls')
-    if is_helper.check_inputstream():
-        stream_url = item.getPath()
-        item.setProperty('inputstream', is_helper.inputstream_addon)
-        if '|' in stream_url:
-            stream_url, headers = stream_url.split('|')
-            item.setProperty('inputstream.adaptive.stream_headers', headers)
-            if control.kodi_version > 21.8:
-                item.setProperty('inputstream.adaptive.common_headers', headers)
-            else:
-                item.setProperty('inputstream.adaptive.stream_params', headers)
-                item.setProperty('inputstream.adaptive.manifest_headers', headers)
-    return item
-
-
-@HookMimetype('video/MP2T')
-def _HLS_HOOK(item):
-    import inputstreamhelper
-    is_helper = inputstreamhelper.Helper('hls')
-    if is_helper.check_inputstream():
-        stream_url = item.getPath()
-        item.setProperty('inputstream', is_helper.inputstream_addon)
-        if '|' in stream_url:
-            stream_url, headers = stream_url.split('|')
-            item.setProperty('inputstream.adaptive.stream_headers', headers)
-            if control.kodi_version > 21.8:
-                item.setProperty('inputstream.adaptive.common_headers', headers)
-            else:
-                item.setProperty('inputstream.adaptive.stream_params', headers)
-                item.setProperty('inputstream.adaptive.manifest_headers', headers)
-    return item
-
 
 
 class Monitor(xbmc.Monitor):

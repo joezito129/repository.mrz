@@ -15,15 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-import os
 import sys
-import xbmcplugin
 
 from resources.lib import OtakuBrowser
 from resources.lib.ui import control, database, utils
 from resources.lib.ui.router import Route, router_process
 from resources.lib import WatchlistIntegration
-
 BROWSER = OtakuBrowser.BROWSER
 
 
@@ -159,6 +156,7 @@ def SEARCH(payload: str, params: dict) -> None:
     if not query:
         query = control.keyboard(control.lang(30005))
         if not query:
+            import xbmcplugin
             xbmcplugin.endOfDirectory(control.HANDLE, succeeded=False, updateListing=False)
             return None
         if control.getInt('searchhistory') == 0:
@@ -190,6 +188,7 @@ def EDIT_SEARCH_ITEM(payload: str, params: dict) -> None:
 
 @Route('play/*')
 def PLAY(payload: str, params: dict) -> None:
+    from resources.lib.ui import player
     from resources.lib import pages
 
     payload_split = payload.split("/", 1)
@@ -220,7 +219,14 @@ def PLAY(payload: str, params: dict) -> None:
             del window
     else:
         control.notify(control.ADDON_NAME, "No Sources Found!")
-        # xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
+
+    monitor = player.Monitor()
+    while player.player().isPlayingVideo():
+        if monitor.abortRequested() or monitor.playbackerror or monitor.waitForAbort(10):
+            break
+        control.log('Player is PlayingVideo: Waiting')
+    del monitor
+
     control.exit_code()
 
 
@@ -258,13 +264,11 @@ def PLAY_MOVIE(payload: str, params: dict) -> None:
             del window
     else:
         control.notify(control.ADDON_NAME, "No Sources Found!")
-        # xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
     control.exit_code()
 
 
 @Route('marked_as_watched/*')
 def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
-    from resources.lib.WatchlistFlavor import WatchlistFlavor
     payload_list = payload.split("/")
     if len(payload_list) == 2:
         mal_id = int(payload_list[0])
@@ -273,7 +277,7 @@ def MARKED_AS_WATCHED(payload: str, params: dict) -> None:
         mal_id = int(payload_list[0])
         episode = 1
 
-    flavor = WatchlistFlavor.get_update_flavor()
+    flavor = WatchlistIntegration.WatchlistFlavor.get_update_flavor()
     if flavor is not None:
         WatchlistIntegration.watchlist_update_episode(mal_id, episode)
         control.notify(control.ADDON_NAME, f'Episode #{episode} was Marked as Watched in {flavor.flavor_name}')
@@ -408,7 +412,7 @@ def REBUILD_DATABASE(payload: str, params: dict) -> None:
 @Route('completed_sync')
 def COMPLETED_SYNC(payload: str, params: dict) -> None:
     import service
-    service.sync_watchlist()
+    service.sync_watchlist(silent=False)
     if params.get('setting'):
         control.exit_code()
 
@@ -447,7 +451,7 @@ def TOGGLE_LANGUAGE_INVOKER(payload: str, params: dict) -> None:
 @Route('import_settings')
 def IMPORT_SETTINGS(payload: str, params: dict) -> None:
     import xbmcvfs
-
+    import os
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
     import_location = control.browse(1, f"{control.ADDON_NAME}:  Import Setting", 'files', 'settings.xml')
     if import_location:
@@ -465,6 +469,8 @@ def IMPORT_SETTINGS(payload: str, params: dict) -> None:
 @Route('export_settings')
 def EXPORT_SETTINGS(payload: str, params: dict) -> None:
     import xbmcvfs
+    import os
+
     setting_xml = os.path.join(control.dataPath, 'settings.xml')
     export_location = control.browse(3, f"{control.ADDON_NAME}: Export Location", 'files')
     if not export_location:
@@ -488,4 +494,4 @@ if __name__ == "__main__":
     plugin_url = control.get_plugin_url(sys.argv[0])
     plugin_params = control.get_plugin_params(sys.argv[2])
     router_process(plugin_url, plugin_params)
-    # control.log(f'Finished Running: {plugin_url=} {plugin_params=}')
+    control.log(f'Finished Running: {plugin_url=} {plugin_params=}')

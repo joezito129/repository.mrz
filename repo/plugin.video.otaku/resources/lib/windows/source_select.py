@@ -1,5 +1,4 @@
 import xbmcgui
-import xbmcplugin
 
 from resources.lib.ui import control, database
 from resources.lib.windows.base_window import BaseWindow
@@ -76,7 +75,6 @@ class SourceSelect(BaseWindow):
 
         if actionID in [92, 10]:
             # BACKSPACE / ESCAPE
-            # xbmcplugin.setResolvedUrl(control.HANDLE, False, xbmcgui.ListItem(path=""))
             self.stream_link = False
             self.close()
             control.playList.clear()

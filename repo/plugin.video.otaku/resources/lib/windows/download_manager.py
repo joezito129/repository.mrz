@@ -213,11 +213,11 @@ class Manager:
         self.speed = 0
         self.status = "downloading"
 
-        head = requests.head(url, allow_redirects=True, timeout=10)
+        head = requests.head(url, allow_redirects=True, timeout=20)
         self.file_size = int(head.headers.get("content-length", None))
         self.file_size_display = self.get_display_size(self.file_size)
 
-        r = requests.get(url, stream=True, timeout=10)
+        r = requests.get(url, stream=True, timeout=20)
         chunks = r.iter_content(chunk_size=1024 * 1024 * 8)
 
         control.notify(control.ADDON_NAME, 'Download Started')

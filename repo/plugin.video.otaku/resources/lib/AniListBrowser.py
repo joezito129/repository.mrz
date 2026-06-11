@@ -219,7 +219,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             }
         }
         '''
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -276,7 +276,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -363,7 +363,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         json_res = results['data']['Page']
         return json_res
@@ -445,7 +445,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         json_res = results['data']['Media']['recommendations']
         return json_res
@@ -520,7 +520,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         json_res = results['data']['Media']['relations']
         return json_res
@@ -589,7 +589,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         json_res = results['data']['Media']
         return json_res
@@ -859,7 +859,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         }
         '''
 
-        r = requests.post(self._BASE_URL, json={'query': query}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query}, timeout=20)
         results = r.json()
         if not results:
             # genres_list = ['Action', 'Adventure', 'Comedy', 'Drama', 'Ecchi', 'Fantasy', 'Hentai', "Horror", 'Mahou Shoujo', 'Mecha', 'Music', 'Mystery', 'Psychological', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller']
@@ -984,7 +984,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
         return self.process_genre_view(query, variables, f"genres/{genre_list}/{tag_list}?page=%d", page)
 
     def process_genre_view(self, query: str, variables: dict, base_plugin_url: str, page: int):
-        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=10)
+        r = requests.post(self._BASE_URL, json={'query': query, 'variables': variables}, timeout=20)
         results = r.json()
         anime_res = results['data']['Page']['ANIME']
         hasNextPage = results['data']['Page']['pageInfo']['hasNextPage']

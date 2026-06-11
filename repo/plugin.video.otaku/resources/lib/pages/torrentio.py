@@ -55,7 +55,7 @@ class Sources(BrowserBase.BrowserBase):
         config_torrentio = "|".join([f"{k}={v}" for k, v in config.items()])
 
         url = f"{self._BASE_URL}/{config_torrentio}/stream/series/kitsu:{self.kitsu_id}:{self.episode}.json"
-        r = requests.get(url, headers=self.headers(), timeout=10)
+        r = requests.get(url, headers=self.headers(), timeout=20)
         if r.ok:
             data = r.json()
         else:

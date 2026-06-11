@@ -34,7 +34,6 @@ def WL_LOGOUT(payload: str, params: dict) -> None:
 def WATCHLIST(payload: str, params: dict) -> None:
     watchlist_page = WatchlistFlavor.watchlist_request(payload)
     control.draw_items(watchlist_page, 'addons')
-
     if watchlist_page:
         url, flavor, status = watchlist_page[0]['url'].split("/", 2)
         next_up = False

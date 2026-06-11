@@ -108,7 +108,6 @@ class SyncDatabase:
         with open(control.malSyncDB, 'w', encoding='utf-8'):
             pass
 
-
         self.build_sync_activities()
         self.build_show_table()
         self.build_episode_table()

@@ -75,7 +75,7 @@ class SIMKLAPI:
 
         try:
             info['aired'] = res['date'][:10]
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
         if filler_data is not None and len(filler_data) >= episode:
@@ -88,7 +88,7 @@ class SIMKLAPI:
         if not episodes or len(episodes) <= episode or episode == 1:
             self.episode_create_db.append((mal_id, episode, update_time, season, parsed_json, filler, None, None))
         elif parsed_json != episodes[episode - 1]['kodi_meta']:
-            self.episode_update_db.append((mal_id, episode, parsed_json))
+            self.episode_update_db.append((parsed_json, mal_id, episode))
 
         if control.getBool('interface.cleantitles') and info.get('playcount') != 1:
             parsed['info']['title'] = f'Episode {res["episode"]}'
@@ -182,7 +182,7 @@ class SIMKLAPI:
             'extended': 'full',
             'client_id': self.ClientID
         }
-        r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params, timeout=10)
+        r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params, timeout=20)
         res = r.json() if r.ok else None
         return res
 
@@ -195,7 +195,7 @@ class SIMKLAPI:
             'extended': 'full',
             'client_id': self.ClientID
         }
-        r = requests.get(f'{self.baseUrl}/anime/episodes/{simkl_id}', params=params, timeout=10)
+        r = requests.get(f'{self.baseUrl}/anime/episodes/{simkl_id}', params=params, timeout=20)
         res = r.json()
         return res
 
@@ -204,7 +204,7 @@ class SIMKLAPI:
             send_id: anime_id,
             "client_id": self.ClientID,
         }
-        r = requests.get(f'{self.baseUrl}/search/id', params=params, timeout=10)
+        r = requests.get(f'{self.baseUrl}/search/id', params=params, timeout=20)
         r = r.json()
         if r:
             anime_id = r[0]['ids']['simkl']
@@ -218,7 +218,7 @@ class SIMKLAPI:
             'extended': 'full',
             'client_id': self.ClientID
         }
-        r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params, timeout=10)
+        r = requests.get(f'{self.baseUrl}/anime/{simkl_id}', params=params, timeout=20)
         if r.ok:
             r = r.json()
             return r.get('ids')

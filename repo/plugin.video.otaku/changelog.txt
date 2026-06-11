@@ -1,4 +1,8 @@
-Changelog v5.1.34 (2026-04-20)
+ChangeLog v5.1.35 (2026-06-10):
+- Removed Inputstreamadaptive dependency
+- Fixed a few Bugs
+
+Changelog v5.1.34 (2026-04-20):
 - Fixed Cloud Sources
 - Fixed Skipoutro
 - Changed dub.json to dub.db
@@ -8,12 +12,7 @@ Changelog v5.1.34 (2026-04-20)
 - Removed Select Fanart Setting
 - Added Aired Last Season
 
-### future updates ###
-# add setting for filtering
-# add button to copy instead of auto copy
-# add dmm
-
-Changelog v5.1.33 (2026-04-16)
+Changelog v5.1.33 (2026-04-16):
 - Fixed Teamup for dubs release schedule
 - Changed mal_ids to ints
 - Changed getSetting to getstr|getint|getbool
@@ -26,7 +25,7 @@ Changelog v5.1.33 (2026-04-16)
 - Fixed Teamup
 - Added Uncached for Torbox
 
-Changelog v5.1.32 (2026-03-31)
+Changelog v5.1.32 (2026-03-31):
 - Fixed Clear Cache removing context menus
 - Fixed Search with '/' in search query
 - Fixed getbestmatch to autoselect if only one file
@@ -35,13 +34,13 @@ Changelog v5.1.32 (2026-03-31)
 - Improved Caching
 - Added setting for kodi caching
 
-Changelog v5.1.31 (2026-03-25)
+Changelog v5.1.31 (2026-03-25):
 - Fixed dub for relations
 - Fixed jikanmoe rate limits failing
 - Fixed opening text clearing window properties
 - Deleting windows after used
 
-Changelog v5.1.30 (2026-03-22)
+Changelog v5.1.30 (2026-03-22):
 - Improved scrapping query
 - Improved scrapping filtering
 - Added nekobt scaper
@@ -49,28 +48,28 @@ Changelog v5.1.30 (2026-03-22)
 - Added copy2clip for linux and mac
 - Removed dateutil dependency
 
-Changelog v5.1.28 (2026-02-28)
+Changelog v5.1.28 (2026-02-28):
 - add torbox sign in oath2
 - improved caching
 - Fixed filtering lang
 - Removed aniwave, Animix, animepahe, and watchnixtoons2
 
-Changelog v5.1.27 (2026-02-23)
+Changelog v5.1.27 (2026-02-23):
 - Fixed append to database
 - Updated speed of database
 - Fixed cloud for Torbox
 - Added kodi caching
 
-Changelog v5.1.26 (2025-11-29)
+Changelog v5.1.26 (2025-11-29):
 - Fixed Dub/Sub filtering
 - Improved Scraping Speeds
 - Improved Cloud Scraping
 
-Changelog v5.1.25 (2025-11-15)
+Changelog v5.1.25 (2025-11-15):
 - Added Animepahe, H!anime
 - Refresh real-debrid if token invalid
 
-Changelog v5.1.24 (2025-07-30)
+Changelog v5.1.24 (2025-07-30):
 - Improved Nyaa Scrapping
 - Improved Scrapping Uncached torrents
 - Fixed Aniwave
@@ -79,30 +78,30 @@ Changelog v5.1.24 (2025-07-30)
 - Added Animix
 - starting adding animepahe, watchnixtoons2
 
-Changelog v5.1.23 (2025-07-05)
+Changelog v5.1.23 (2025-07-05):
 - Removed GogoAnime
 - Removed caching torrents
 
-hangelog v5.1.22 (2025-06-01)
+hangelog v5.1.22 (2025-06-01):
 - Fixed Marked as Watched (WatchList) for movies
 - Fixed Anime calendar for touch screen devices
 - Fixed Duplicate Animes on MAL api
 
-Changelog v5.1.21 (2025-05-02)
+Changelog v5.1.21 (2025-05-02):
 - Fixed Teamup
 
-Changelog v5.1.20 (2025-03-31)
+Changelog v5.1.20 (2025-03-31):
 - Fixed MAL Find Relations
 - Removed fuzzypacks
 - Fix .lower()
 
-Changelog v5.1.19 (2025-03-23)
+Changelog v5.1.19 (2025-03-23):
 - Added H!Anime
 
-Changelog v5.1.18 (2025-03-20)
+Changelog v5.1.18 (2025-03-20):
 - Changed rsplit to split and maxsplit
 
-Changelog v5.1.17 (2025-02-23)
+Changelog v5.1.17 (2025-02-23):
 - Improve Animietosho speed
 - Improved Nyaa
 

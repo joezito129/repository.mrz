@@ -176,7 +176,7 @@ class RealDebrid:
         return response['download']
 
     def deleteTorrent(self, torrent_id) -> None:
-        requests.delete(f'{self.BaseUrl}/torrents/delete/{torrent_id}', headers=self.headers(), timeout=10)
+        requests.delete(f'{self.BaseUrl}/torrents/delete/{torrent_id}', headers=self.headers(), timeout=20)
 
     def resolve_single_magnet(self, hash_, magnet, episode, pack_select, filename) -> None:
         pass

@@ -55,7 +55,6 @@ class BrowserBase:
 
         # Calculate total duration in seconds
         total_seconds = hours * 3600 + minutes * 60 + seconds
-
         return total_seconds
 
     @staticmethod
