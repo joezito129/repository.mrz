@@ -25,7 +25,7 @@ class JikanAPI:
 
     def append_ep(self, icon):
         database.update_episode_kodi_meta_batch(self.episode_update_db)
-        control.notify("Jikanmoe",f"{self.kodi_meta.get('title_userPreferred') or self.kodi_meta['title']} Added to Database", icon=icon)
+        control.notify("Jikanmoe",f"{self.kodi_meta.get('title_userPreferred') or self.kodi_meta['title']} Updated Database", icon=icon)
 
 
     def get_anime_info(self, mal_id):
@@ -89,10 +89,7 @@ class JikanAPI:
         if self.eps_watched >= episode:
             info['playcount'] = 1
 
-        if filler_data is not None and len(filler_data) >= episode:
-            filler = filler_data[episode - 1]
-        else:
-            filler = None
+        filler = filler_data[episode - 1] if filler_data is not None and len(filler_data) >= episode else None
         parsed = utils.allocate_item(title, f"play/{url}", False, True, [], image, info, fanart, poster)
         parsed_json = msgpack.dumps(parsed)
         if not episodes or len(episodes) <= episode or episode == 1:

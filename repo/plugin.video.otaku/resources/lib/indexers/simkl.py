@@ -28,7 +28,7 @@ class SIMKLAPI:
 
     def append_ep(self, icon):
         database.update_episode_kodi_meta_batch(self.episode_update_db)
-        control.notify("Simkl",f"{self.kodi_meta.get('title_userPreferred') or self.kodi_meta['title']} Added to Database", icon=icon)
+        control.notify("Simkl",f"{self.kodi_meta.get('title_userPreferred') or self.kodi_meta['title']} Updated Database", icon=icon)
 
     def parse_episode_view(self, res: dict, mal_id: int, season: int, poster, fanart, update_time, dub_data, filler_data=None, episodes=None):
         episode = int(res['episode'])

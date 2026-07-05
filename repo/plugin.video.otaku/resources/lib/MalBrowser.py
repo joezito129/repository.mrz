@@ -84,8 +84,8 @@ class MalBrowser(BrowserBase.BrowserBase):
         params = {
             "q": query,
             "page": page,
-            "limit": self.perpage,
-            'sfw': self.adult
+            # "limit": self.perpage,
+            # 'sfw': self.adult
         }
 
         if self.format_in_type is not None:
@@ -108,16 +108,17 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     def get_last_season(self, page: int) -> list:
         season, year = self.get_season_year(-1)
+        season = season.lower()
         params = {
             'page': page,
-            'limit': self.perpage,
-            'sfw': self.adult
+            # 'limit': self.perpage,
+            # 'sfw': self.adult
         }
         if self.format_in_type is not None:
             params['filter'] = self.format_in_type
 
-        upcoming = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/{year}/{season}", params)
-        return self.process_mal_view(upcoming, "aired_last_season?page=%d", page)
+        last_season = database.get_(self.get_base_res, 24, f"{self._BASE_URL}/seasons/{year}/{season}", params)
+        return self.process_mal_view(last_season, "aired_last_season?page=%d", page)
 
     def get_airing_anime(self, page: int) -> list:
         params = {
@@ -133,10 +134,11 @@ class MalBrowser(BrowserBase.BrowserBase):
 
     def get_upcoming_next_season(self, page: int) -> list:
         season, year = self.get_season_year(1)
+        season = season.lower()
         params = {
             'page': page,
-            'limit': self.perpage,
-            'sfw': self.adult
+            # 'limit': self.perpage,
+            # 'sfw': self.adult
         }
         if self.format_in_type is not None:
             params['filter'] = self.format_in_type
@@ -147,8 +149,8 @@ class MalBrowser(BrowserBase.BrowserBase):
     def get_top_100_anime(self, page: int) -> list:
         params = {
             'page': page,
-            'limit': self.perpage,
-            'sfw': self.adult
+            # 'limit': self.perpage,
+            # 'sfw': self.adult
         }
         if self.format_in_type is not None:
             params['type'] = self.format_in_type
@@ -159,6 +161,7 @@ class MalBrowser(BrowserBase.BrowserBase):
     @staticmethod
     def get_base_res(url, params=None):
         r = requests.get(url, params=params, timeout=20)
+        control.log(r.url)
         return r.json()
 
 
@@ -227,9 +230,9 @@ class MalBrowser(BrowserBase.BrowserBase):
         genre = ','.join(genre_list)
         params = {
             'page': page,
-            'limit': self.perpage,
+            # 'limit': self.perpage,
             'genres': genre,
-            'sfw': self.adult,
+            # 'sfw': self.adult,
             'order_by': 'popularity'
         }
 

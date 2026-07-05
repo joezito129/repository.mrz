@@ -682,7 +682,7 @@ class AniListBrowser(BrowserBase.BrowserBase):
             pass
 
         try:
-            info['genre'] = res['genre']
+            info['genre'] = res['genres']
         except KeyError:
             pass
 

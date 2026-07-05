@@ -24,7 +24,7 @@ class ANIZIPAPI:
 
     def append_ep(self, icon):
         database.update_episode_kodi_meta_batch(self.episode_update_db)
-        control.notify("Anizip",f"{self.kodi_meta.get('title_userPreferred') or self.kodi_meta['title']} Added to Database", icon=icon)
+        control.notify("Anizip",f"{self.kodi_meta.get('title_userPreferred') or self.kodi_meta['title']} Updated Database", icon=icon)
 
 
     def get_anime_info(self, mal_id):

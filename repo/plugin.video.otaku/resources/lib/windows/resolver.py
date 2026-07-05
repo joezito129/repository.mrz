@@ -75,11 +75,13 @@ class Resolver(BaseWindow):
                         select = control.select_dialog(control.ADDON_NAME, [i['release_title']])
                         if select != -1:
                             self.return_data['url'] = stream_link
+                            self.return_data['link'] = stream_link
                     else:
                         self.return_data['url'] = stream_link
+                        self.return_data['link'] = stream_link
                     break
-
         if self.play and self.return_data.get('link'):
+
             if not self.return_data.get('url'):
                 self.return_data = self.prefetch_play_link()
 
